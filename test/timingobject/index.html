@@ -5,9 +5,9 @@
   <!-- requirejs config -->
   <script>
     var require = {
-      baseUrl : '../../source/timingobject',
+      baseUrl : '../../source',
       paths : {
-        util : '../util',
+        util : 'util',
       }
     };
   </script>
@@ -15,23 +15,23 @@
 
   <script type="text/javascript">
       var m, w;
-      require(['timingobject'], function (timingobject) {
+      require(['timingsrc'], function (timingsrc) {
       
         var run = function () {
 
           // timing object
-          var to = new timingobject.TimingObject([8,17]);
-          //var to = new timingobject.TimingObject();
+          var to = new timingsrc.TimingObject([8,17]);
+          //var to = new timingsrc.TimingObject();
 
           // wrapper object
 
-          w = new timingobject.PositionShiftWrapper(to, 2);
-          //w = new timingobject.DelayWrapper(to, 1.0);          
-          //w = new timingobject.TimeShiftWrapper(to, -1.0);
-          //w = new timingobject.ScaleWrapper(to, 2);
-          //w = new timingobject.LoopWrapper(to, [2, 8]);
-          //w = new timingobject.RangeWrapper(to, [10,15]);
-          //w = new timingobject.DerivativeWrapper(to);
+          w = new timingsrc.PositionShiftWrapper(to, 2);
+          //w = new timingsrc.DelayWrapper(to, 1.0);          
+          //w = new timingsrc.TimeShiftWrapper(to, -1.0);
+          //w = new timingsrc.ScaleWrapper(to, 2);
+          //w = new timingsrc.LoopWrapper(to, [2, 8]);
+          //w = new timingsrc.RangeWrapper(to, [10,15]);
+          //w = new timingsrc.DerivativeWrapper(to);
 
 
           var wrapperhandler = function () {

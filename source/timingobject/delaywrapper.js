@@ -1,4 +1,4 @@
-define(['timingbase'], function (timingbase) {
+define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 

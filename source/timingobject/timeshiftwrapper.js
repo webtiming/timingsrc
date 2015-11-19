@@ -1,4 +1,4 @@
-define(['timingbase', 'rangewrapper'], function (timingbase, RangeWrapper) {
+define(['./timingbase', './rangewrapper'], function (timingbase, RangeWrapper) {
 
 	'use strict';
 
