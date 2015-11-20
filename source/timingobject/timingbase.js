@@ -151,7 +151,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	TimingBase.prototype.update = function (vector) {};
 
 	/*
-		to be overridden
+		To be overridden
 		get range is useful for setting the range internally,
 		when the range depends on the range of an external (upstream)
 		timing object. Get range is invoked when first change
@@ -164,6 +164,8 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		thus is may change.
 	*/
 	TimingBase.prototype._getRange = function () {return null;};
+
+
 
 	// CHANGE EVENTS
 

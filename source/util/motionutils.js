@@ -23,7 +23,7 @@ define(function () {
 			if (tsSec === undefined) {
 			    tsSec = secClock();
 			}
-			var deltaSec = tsSec - vector.timestamp;
+			var deltaSec = tsSec - vector.timestamp;	
 			return {
 				position : vector.position + vector.velocity*deltaSec + 0.5*vector.acceleration*deltaSec*deltaSec,
 				velocity : vector.velocity + vector.acceleration*deltaSec,
