@@ -66,7 +66,7 @@ define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
 		- shorthand for query
 	*/
 	MasterClock.prototype.now = function () {
-		return motionutils.calculateVector(this._vector).position;
+		return motionutils.calculateVector(this._vector, motionutils.secClock()).position;
 	};
 
 	/* 
@@ -75,8 +75,7 @@ define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
 		- result vector includes position and velocity		
 	*/
 	MasterClock.prototype.query = function () {
-		var now = motionutils.secClock();
-		var vector = motionutils.calculateVector(this._vector, now);
+		var vector = motionutils.calculateVector(this._vector, motionutils.secClock());
 		return {
 			position : vector.position,
 			velocity : vector.velocity,

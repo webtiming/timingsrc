@@ -46,13 +46,13 @@ define([
 	TimingObject.prototype.query = function () {
 		if (this.vector === null) return null;
 		// reevaluate state to handle range violation
-		var vector = motionutils.calculateVector(this.vector);
+		var vector = motionutils.calculateVector(this.vector, this.clock.now());
 		var state = this._getCorrectRangeState(vector);
 		if (state !== STATE.INSIDE) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition
-		return motionutils.calculateVector(this.vector);
+		return motionutils.calculateVector(this.vector, this.clock.now());
 	};
 
 	TimingObject.prototype.update = function (vector) {

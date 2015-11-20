@@ -21,7 +21,7 @@ define(function () {
 	    // if t is undefined - t is set to now
 	    var calculateVector = function(vector, tsSec) {
 			if (tsSec === undefined) {
-			    tsSec = secClock();
+			    throw new Error ("no ts provided for calculateVector");
 			}
 			var deltaSec = tsSec - vector.timestamp;	
 			return {
