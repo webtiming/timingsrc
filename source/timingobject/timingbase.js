@@ -7,7 +7,7 @@
 	It makes use of motionutils.js for calculations. 
 */
 
-define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (eventutils, motionutils, MasterClock) {
+define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutils) {
 
 	'use strict';
 
@@ -63,7 +63,6 @@ define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (ev
 
 	var TimingBase = function (options) {
 		this._version = 3;
-		this._clock = new MasterClock();
 		// options
 		this._options = options || {};
 		// range timeouts off by default
@@ -99,13 +98,6 @@ define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (ev
 			return [this._range[0], this._range[1]];
 		}
 	});
-
-
-	// Accessor internal clock
-	Object.defineProperty(TimingBase.prototype, 'clock', {
-		get : function () {	return this._clock; }	
-	});
-
 
 	// Accessor internal vector
 	Object.defineProperty(TimingBase.prototype, 'vector', {
@@ -152,7 +144,7 @@ define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (ev
 	*/
 	TimingBase.prototype.query = function () {
 		if (this.vector === null) return null;
-		return motionutils.calculateVector(this.vector, this._clock.now());
+		return motionutils.calculateVector(this.vector, this.clock.now());
 	};
 
 	// to be overridden
@@ -260,7 +252,7 @@ define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (ev
 		if (this._timeout === null) return;
 		// ensure that timeout does not fire to early
 		var vector = this._timeout.vector;
-		var early = vector.timestamp - this._clock.now();
+		var early = vector.timestamp - this.clock.now();
 		if (early > 0.0) {
 			var self = this;
 			this._timeout.tid = setTimeout(function () {
@@ -388,6 +380,12 @@ define(['util/eventutils', 'util/motionutils', 'util/masterclock'], function (ev
 		this.timingsrc = timingObject;
 	};
 	inherit(WrapperBase, TimingBase);
+
+
+	// Accessor internal clock
+	Object.defineProperty(WrapperBase.prototype, 'clock', {
+		get : function () {	return this.timingsrc.clock; }	
+	});
 
 	/*
 		Accessor for timingsrc.

@@ -1,8 +1,7 @@
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';
-
-	var motionutils = timingbase.motionutils;	
+	
 	var WrapperBase = timingbase.WrapperBase;
 	var inherit = timingbase.inherit;
 
@@ -72,7 +71,7 @@ define(['./timingbase'], function (timingbase) {
 		*/
 
 		// age of incoming vector
-		var age = motionutils.secClock() - vector.timestamp;
+		var age = this.clock.now() - vector.timestamp;
 		
 		// time-shift vector timestamp
 		vector.timestamp += this._delay;

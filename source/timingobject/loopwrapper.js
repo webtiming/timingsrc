@@ -82,7 +82,7 @@ define(['./timingbase'], function (timingbase) {
 	// overrides
 	LoopWrapper.prototype.query = function () {
 		if (this.vector === null) return null;
-		var vector = motionutils.calculateVector(this.vector);
+		var vector = motionutils.calculateVector(this.vector, this.clock.now());
 		// trigger state transition if range violation is detected
 		if (vector.position > this._range[1]) {
 			vector.position = this._range[0];
@@ -95,7 +95,7 @@ define(['./timingbase'], function (timingbase) {
 			return vector;
 		}
 		// re-evaluate query after state transition
-		return motionutils.calculateVector(this.vector);
+		return motionutils.calculateVector(this.vector, this.clock.now());
 	};
 
 	// overrides

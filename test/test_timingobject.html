@@ -9,7 +9,6 @@
     };
   </script>
   <script type="text/javascript" src="../lib/require.js"></script>
-
   <script type="text/javascript">
       var m, w;
       require(['timingsrc'], function (timingsrc) {
@@ -20,8 +19,7 @@
           var to = new timingsrc.TimingObject([8,17]);
           //var to = new timingsrc.TimingObject();
 
-          // wrapper object
-
+          // wrapper objects
           w = new timingsrc.PositionShiftWrapper(to, 2);
           //w = new timingsrc.DelayWrapper(to, 1.0);          
           //w = new timingsrc.TimeShiftWrapper(to, -1.0);
@@ -86,7 +84,7 @@
 </script>
 </head>
 <body>
-<h1>Test Chaining</h1>
+<h1>Test Timing Object</h1>
 
 <h3>Source</h3>
 <div id="srcvalue"></div>

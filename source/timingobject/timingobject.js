@@ -1,14 +1,4 @@
-define([
-	'./timingbase', 
-	'./positionshiftwrapper', 
-	'./delaywrapper', 
-	'./scalewrapper', 
-	'./loopwrapper', 
-	'./rangewrapper', 
-	'./timeshiftwrapper', 
-	'./localwrapper', 
-	'./derivativewrapper'], 
-	function (timingbase) {
+define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) {
 
 	'use strict';
 
@@ -19,6 +9,8 @@ define([
 
 	var TimingObject = function (range, vector) {
 		TimingBase.call(this, {timeout:true});
+		// internal clock
+		this._clock = new MasterClock();
 		// internal vector
 		this._vector = {
 			position : 0.0,
@@ -26,6 +18,7 @@ define([
 			acceleration : 0.0,
 			timestamp : motionutils.secClock()
 		};
+		// parameter
 		if (vector) {
 			if (vector.position === null) vector.position = undefined;
 			if (vector.velocity === null) vector.velocity = undefined;
@@ -33,14 +26,18 @@ define([
 			if (vector.position !== undefined) this._vector.position = vector.position;
 			if (vector.velocity !== undefined) this._vector.velocity = vector.velocity;
 			if (vector.acceleration !== undefined) this._vector.acceleration = vector.acceleration;	
-		}
-		
+		}		
 		// range
 		this._range = (range !== undefined) ? range : [-Infinity, Infinity];
 		// adjust vector according to range
 		this._vector = this._checkRange(this._vector);
 	};
 	inherit(TimingObject, TimingBase);
+
+	// Accessor internal clock
+	Object.defineProperty(TimingObject.prototype, 'clock', {
+		get : function () {	return this._clock; }	
+	});
 
 	// overrides
 	TimingObject.prototype.query = function () {

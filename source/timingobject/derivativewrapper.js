@@ -2,7 +2,6 @@ define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
-	var motionutils = timingbase.motionutils;
 	var WrapperBase = timingbase.WrapperBase;	
 	var inherit = timingbase.inherit;
 
