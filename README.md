@@ -1,6 +1,6 @@
 # timingsrc
 
-Source code for timing related libraries managed by WebTiming (Multi-Device Timing Community Group)
+Source code for timing related libraries managed by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/)
 
 ### Timing Object
 
@@ -10,7 +10,7 @@ This implements the [Timing Object](https://github.com/webtiming/timingobject) a
 
 ### Sequencer
 
-[source/equencing](source/sequencing)
+[source/sequencing](source/sequencing)
 
 This implements timed sequencing, based on the Timing Object.
 
