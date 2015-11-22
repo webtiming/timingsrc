@@ -1,10 +1,27 @@
+/*
+	Copyright 2015 Norut Northern Research Institute
+	Author : Ingar Mæhlum Arntzen
+
+  This file is part of the Timingsrc module.
+
+  Timingsrc is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Timingsrc is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /*
-  Written by Ingar Arntzen, Norut
-
-	TimingBase defines base classes for TimingObject and TimingWrappers.
-	It makes use of eventutil.js for event stuff, including immediate events.
-	It makes use of motionutils.js for calculations. 
+	TimingBase defines base classes for TimingObject and WrapperBase used to implement timing wrappers.
+	It makes use of eventutils for event stuff, including immediate events.
+	It makes use of motionutils for calculations. 
 */
 
 define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutils) {
