@@ -8,7 +8,7 @@ define (['./timingobject/main'], function (timingobject) {
 		motionutils : timingobject.motionutils,
 		inherit : timingobject.inherit,
 		WrapperBase : timingobject.WrapperBase,
-		PositionShiftWrapper : timingobject.PositionShiftWrapper,
+		SkewWrapper : timingobject.SkewWrapper,
 		DelayWrapper : timingobject.DelayWrapper,
 		ScaleWrapper : timingobject.ScaleWrapper,
 		LoopWrapper : timingobject.LoopWrapper,

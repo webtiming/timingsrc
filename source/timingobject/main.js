@@ -20,7 +20,7 @@
 
 define([
 	'./timingbase', 
-	'./positionshiftwrapper', 
+	'./skewwrapper', 
 	'./delaywrapper', 
 	'./scalewrapper', 
 	'./loopwrapper', 
@@ -29,13 +29,13 @@ define([
 	'./localwrapper', 
 	'./derivativewrapper',
 	'./timingobject'], 
-	function (timingbase, PositionShiftWrapper, DelayWrapper, ScaleWrapper, LoopWrapper, RangeWrapper, TimeShiftWrapper, LocalWrapper, DerivativeWrapper, TimingObject) {		
+	function (timingbase, SkewWrapper, DelayWrapper, ScaleWrapper, LoopWrapper, RangeWrapper, TimeShiftWrapper, LocalWrapper, DerivativeWrapper, TimingObject) {		
 		'use strict';
 		return {
 			motionutils : timingbase.motionutils,
 			inherit : timingbase.inherit,
 			WrapperBase : timingbase.WrapperBase,
-			PositionShiftWrapper : PositionShiftWrapper,
+			SkewWrapper : SkewWrapper,
 			DelayWrapper : DelayWrapper,
 			ScaleWrapper : ScaleWrapper,
 			LoopWrapper : LoopWrapper,

@@ -19,7 +19,7 @@
 */
 
 
-define(['./timingbase', './rangewrapper'], function (timingbase, RangeWrapper) {
+define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
@@ -27,35 +27,35 @@ define(['./timingbase', './rangewrapper'], function (timingbase, RangeWrapper) {
 	var inherit = timingbase.inherit;
 
 	/*
-		POSITION SHIFT WRAPPER
+		SKEW WRAPPER
 	*/
 
-	var PositionShiftWrapper = function (timingObject, offset) {
-		this._offset = offset;
+	var SkewWrapper = function (timingObject, skew) {
+		this._skew = skew;
 		WrapperBase.call(this, timingObject);
 	};
-	inherit(PositionShiftWrapper, WrapperBase);
+	inherit(SkewWrapper, WrapperBase);
 
 	// overrides
-	PositionShiftWrapper.prototype._getRange = function () {
+	SkewWrapper.prototype._getRange = function () {
 		var range = this.timingsrc.range;
-		range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._offset;
-		range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._offset;
+		range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
+		range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
 		return range;
 	};
 	
 	// overrides
-	PositionShiftWrapper.prototype._onChange = function (vector) {
-		vector.position += this._offset;	
+	SkewWrapper.prototype._onChange = function (vector) {
+		vector.position += this._skew;	
 		return vector;
 	};
 
-	PositionShiftWrapper.prototype.update = function (vector) {
+	SkewWrapper.prototype.update = function (vector) {
 		if (vector.position !== undefined && vector.position !== null) {
-			vector.position = vector.position - this._offset;
+			vector.position = vector.position - this._skew;
 		}
 		return this.timingsrc.update(vector);
 	};
 
-	return PositionShiftWrapper;
+	return SkewWrapper;
 });
