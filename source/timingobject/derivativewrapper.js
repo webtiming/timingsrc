@@ -18,6 +18,16 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	DERIVATIVE WRAPPER
+
+	this wrapper implements the derivative of it source timing object.
+	
+	The velocity of timingsrc becomes the position of the wrapper.
+
+	This means that the derivative wrapper allows sequencing on velocity of a timing object, 
+	by attatching a sequencer on the derivative wrapper.
+*/
 
 define(['./timingbase'], function (timingbase) {
 
@@ -26,12 +36,7 @@ define(['./timingbase'], function (timingbase) {
 	var WrapperBase = timingbase.WrapperBase;	
 	var inherit = timingbase.inherit;
 
-	/*
-		DERIVATIVE WRAPPER
 
-		position variable represents velocity of source timing object
-		no range exist for velocity
-	*/
 	var DerivativeWrapper = function (timingObject, factor) {
 		WrapperBase.call(this, timingObject);
 	};

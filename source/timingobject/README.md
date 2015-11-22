@@ -8,3 +8,5 @@ A Timing Wrapper implements some transformation on a Timing Object. For instance
 The *timingsrc* property of a Timing Wrapper references the source TimingObject. A TimingWrapper object always slaves to its *timingsrc*. By subscribing to change notifications on *timingsrc*, the Timing Wrapper will always be reflect the current state of its *timingsrc*.
 
 By implementing the TimingObject API, the Timing Wrapper additionally presents itself as a new TimingObject (with transformed behavior). Timing Wrappers can slave to other Timing Wrappers. This way, complex behaviors may be built step by step.
+
+It is always safe to add a Timing Wrapper, they never affect the behavior of the *timingsrc*. However, Timing Wrappers may forward update requests.

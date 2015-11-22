@@ -21,7 +21,7 @@
 /*
 	TimingBase defines base classes for TimingObject and WrapperBase used to implement timing wrappers.
 	It makes use of eventutils for event stuff, including immediate events.
-	It makes use of motionutils for calculations. 
+	It makes use of motionutils for timing calculations. 
 */
 
 define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutils) {

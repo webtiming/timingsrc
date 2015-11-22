@@ -18,6 +18,25 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	TIMESHIFT WRAPPER
+
+	Timeshift wrapper timeshifts a timing object by timeoffset.
+	Positive timeoffset means that the timeshift wrapper will run ahead of the source timing object.
+	Negative timeoffset means that the timeshift wrapper will run behind the source timing object.
+	
+	Updates affect the wrapper immediately. This means that update vector must be re-calculated
+	to the value it would have at time-shifted time. Timestamps are not time-shifted, since the motion is still live.
+	For instance, (0, 1, ts) becomes (0+(1*timeshift), 1, ts) 
+
+	However, this transformation may cause range violation 
+		- this happens only when timing object is moving.
+		- implementation requires range-wrapper logic
+
+	To fix this, the timeshift wrapper is always wrapped in a rangewrapper. Range is inherited from timingsrc, if not specified.
+*/
+
+
 define(['./timingbase', './rangewrapper'], function (timingbase, RangeWrapper) {
 
 	'use strict';
@@ -26,23 +45,7 @@ define(['./timingbase', './rangewrapper'], function (timingbase, RangeWrapper) {
 	var WrapperBase = timingbase.WrapperBase;	
 	var inherit = timingbase.inherit;
 
-	/*
-		TIMESHIFT WRAPPER
 
-		Timeshift wrapper timeshift a timing object by timeoffset.
-		Positive timeoffset means that the timeshift wrapper will run ahead of the source timing object.
-		Negative timeoffset means that the timeshift wrapper will run behind the source timing object.
-		
-		Updates affect the wrapper immediately. This means that update vector must be re-calculated
-		to the value it would have at time-shifted time. Timestamps are not time-shifted, since the motion is still live.
-		For instance, (0, 1, ts) becomes (0+(1*timeshift), 1, ts) 
-
-		However, this transformation may cause range violation 
-			- this happens only when timing object is moving.
-			- implementation requires range-wrapper logic
-
-		To fix this, the timeshift wrapper is wrapped in a rangewrapper.
-	*/
 
 	var TimeShiftWrapper = function (timingObject, timeOffset) {
 		WrapperBase.call(this, timingObject);

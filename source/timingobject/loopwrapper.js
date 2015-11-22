@@ -18,6 +18,16 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/*
+	LOOP WRAPPER
+
+	This is a modulo type transformation where the wrapper will be looping within
+	a given range. Potentially one could create an associated timing object keeping track of the 
+	loop number.
+*/
+
+
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';

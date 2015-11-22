@@ -19,6 +19,20 @@
 */
 
 
+/*
+	TIMING OBJECT
+
+	range and initial vector may be specified.
+
+	master clock is the clock used by the timing object.
+	timestamps in vectors refer to this clock.
+
+	for local timing objects master clock is equal to performance.now
+	for timing objects with a timing provider, the master clock will be
+	maintained as a representation of the clock used by the timing provider.
+	
+*/
+
 define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) {
 
 	'use strict';

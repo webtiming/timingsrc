@@ -18,6 +18,17 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+
+	RANGE WRAPPER
+
+	The wrapper enforce a range on position.
+
+	It only has effect if given range is a restriction on the range of the timingsrc.
+	Range Wrapper will pause on range endpoints if timingsrc leaves the range. 
+	Range Wrappers will continue mirroring timingsrc once it comes into the range.
+*/
+
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';

@@ -19,16 +19,19 @@
 */
 
 
+/*
+	SKEW WRAPPER
+
+	Skewing the timeline by 2 means that the timeline position 0 of the timingsrc becomes position 2 of wrapper.
+
+*/
+
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
 	var WrapperBase = timingbase.WrapperBase;
 	var inherit = timingbase.inherit;
-
-	/*
-		SKEW WRAPPER
-	*/
 
 	var SkewWrapper = function (timingObject, skew) {
 		this._skew = skew;

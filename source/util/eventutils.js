@@ -1,15 +1,37 @@
-
 /*
-  Written by Ingar Arntzen, Norut
+	Copyright 2015 Norut Northern Research Institute
+	Author : Ingar Mæhlum Arntzen
+
+  This file is part of the Timingsrc module.
+
+  Timingsrc is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Timingsrc is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-if (typeof define !== 'function') {var define = require('amdefine')(module);}
+
+/*
+	Eventify brings eventing capabilities to any object.
+
+	In particular, eventify supports the initial event pattern.
+	Opt-in for initial events per event type.
+
+	An "events" event provides batch event support.
+*/
 
 
 define(function () {
 
 	'use strict';
-
 
 	// UNIQUE ID GENERATOR 
 	var id = (function(length) {
@@ -39,8 +61,6 @@ define(function () {
 			// apply the concatAll function to flatten the two-dimensional array
 			concatAll();
 	};
-
-
 
 	/*
 		Eventify
@@ -249,66 +269,4 @@ define(function () {
 		eventify:eventify
 	};
 });
-
-
-/* 
-	MAIN
-*/
-
-if (typeof module !== 'undefined' && require.main === module) {
-
-	var eventify = require('./eventify');
-
-	var Source = function () {
-		this.name = "source";
-		this.value = 0;
-		eventify(Source.prototype);
-		this._defineEvent("change", {init:true}); // define change event (supporting init-event)
-	};
-
-	Source.prototype._makeInitEvents = function (type) {
-		if (type === "change") {
-			return [{value : this.value}];
-		}
-		return [];
-	};
-
-	Source.prototype._eventFormatter = function (type, e) {
-		return e;
-	};
-
-	Source.prototype._callbackFormatter = function (type, e, eInfo) {
-		if (type === "change") {
-			return [{type: type, data:e}];
-		}
-		return [type, e, eInfo];
-	};
-
-	Source.prototype.inc = function () {
-		this.value += 1;
-		this._triggerEvents("change", [{value : this.value}]);
-	};
-
-
-
-	var Target = function (name) {
-		this.name = "target";
-	};
-	Target.prototype.handler = function (e) {
-		console.log(e);
-	};
-
-	var target = new Target();
-	var source = new Source();
-
-	source.on("change", target.handler, target);
-	
-	var h = function (type, e, eInfo) {console.log(type, e, eInfo);};
-	source.on("events", h);
-
-	setTimeout(function () {source.inc();}, 100);
-
-
-
-}
 

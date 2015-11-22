@@ -18,6 +18,27 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/*
+	LOCAL WRAPPER
+
+	Update requests are cached locally, visible to the query
+	operation, thus allowing them to take effect immediately
+	(speculatively).
+
+	This allows as remote timing object to emulate the low latency of a local timing object.
+
+	A timeout clears the speculative internal vector after some time,
+	unless a change notification is received in the mean time.
+
+	NO SUPPORT for STREAMING updates. 
+	- This implementation is simple, and does not provide support
+	for streaming updates.
+
+	This would require the ability to bind update request to update notification, and to have this
+	supported by the timing provider.
+*/
+
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';
@@ -25,20 +46,6 @@ define(['./timingbase'], function (timingbase) {
 	var WrapperBase = timingbase.WrapperBase;	
 	var inherit = timingbase.inherit;
 
-	/*
-		LOCAL WRAPPER
-
-		Update requests are cached locally, visible to the query
-		operation, thus allowing them to take effect immediately
-		(speculatively).
-
-		A timeout clears the speculative internal vector after some time,
-		unless a change notification is received in the mean time.
-
-		NO SUPPORT for STREAMING updates. 
-		- bind update request to update notification
-
-	*/
 
 	var LocalWrapper = function (timingObject) {
 		WrapperBase.call(this, timingObject);

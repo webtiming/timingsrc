@@ -19,6 +19,20 @@
 */
 
 
+/*
+	DELAY WRAPPER
+
+	Delay Wrapper introduces a positive time delay on a source timing object.
+
+	Generally - if the source timing object has some value at time t, 
+	then the delaywrapper will provide the same value at time t + delay.
+
+	Since the delay wrapper is effectively replaying past events after the fact,
+	it is not LIVE and not open to interactivity (i.e. update)
+	
+*/
+
+
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';
@@ -26,43 +40,7 @@ define(['./timingbase'], function (timingbase) {
 	var WrapperBase = timingbase.WrapperBase;
 	var inherit = timingbase.inherit;
 
-	/*
-		DELAY WRAPPER
-
-		Delay Wrapper introduces a positive time delay on a source timing object.
-
-		Generally - if the source timing object has some value at time t, 
-		then the delaywrapper will provide the same value at time t + delay.
-
-		For the delay wrapper one could be imagine two different modes - LIVE and NON-LIVE.
-		- LIVE:false : time-shifted vector && delayed update events
-			implies an exact replica of source timing object only time-shifted, so it is not live
-		- LIVE:true : time-shifted vector && immediate update events
-			implies live with respect to interactivity
-			
-			However, right after an update, the values of the delay wrapper are not consistent with earlier values
-			of timing source. Keep in mind that an update is essentially jumping from one movement to another.
-			Instead, we might say that the delay wrapper remains consistent with WHAT earlier values WOULD HAVE BEEN, 
-			IF THE TIMING SOURCE HAD MADE A JUMP BETWEEN THE SAME TWO MOVEMENTS EARLIER.
-
-			However, with LIVE mode there is an issue
-			
-			Normal operation is no delay of vector, apply immediately.			
-			update vector must be re-evaluated
-			example update (0, 1, ts) to update (-delta, 1, ts) 
-
-			This transformation may cause range violation 
-			- happens only when timing object is moving.
-			- requires range-wrapper logic
-
-			For this reason, the LIVE mode is implemented as independent wrapper type, with implementation based 
-			on rangewrapper.
-		
-
-
-		So, DelayWrapper only supports NON-LIVE	
 	
-	*/
 
 	var DelayWrapper = function (timingObject, delay) {
 		if (delay < 0) {throw new Error ("negative delay not supported");}
