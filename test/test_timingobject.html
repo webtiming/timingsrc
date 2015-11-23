@@ -19,24 +19,24 @@
           var to = new timingsrc.TimingObject([8,17]);
           //var to = new timingsrc.TimingObject();
 
-          // wrapper objects
-          w = new timingsrc.SkewWrapper(to, 2);
-          //w = new timingsrc.DelayWrapper(to, 1.0);          
-          //w = new timingsrc.TimeShiftWrapper(to, -1.0);
-          //w = new timingsrc.ScaleWrapper(to, 2);
-          //w = new timingsrc.LoopWrapper(to, [2, 8]);
-          //w = new timingsrc.RangeWrapper(to, [10,15]);
-          //w = new timingsrc.DerivativeWrapper(to);
+          // Converter objects
+          w = new timingsrc.SkewConverter(to, 2);
+          //w = new timingsrc.DelayConverter(to, 1.0);          
+          //w = new timingsrc.TimeShiftConverter(to, -1.0);
+          //w = new timingsrc.ScaleConverter(to, 2);
+          //w = new timingsrc.LoopConverter(to, [2, 8]);
+          //w = new timingsrc.RangeConverter(to, [10,15]);
+          //w = new timingsrc.DerivativeConverter(to);
 
 
-          var wrapperhandler = function () {
-            if (wrapperhandler.init === false) {
-              console.log("wrapper range", w.range);
-              wrapperhandler.init = true;
+          var converterhandler = function () {
+            if (converterhandler.init === false) {
+              console.log("Converter range", w.range);
+              converterhandler.init = true;
             }
-            console.log("wrapper onchange", w.vector);
+            console.log("Converter onchange", w.vector);
           };
-          wrapperhandler.init = false;
+          converterhandler.init = false;
 
           var sourcehandler = function () {
             if (sourcehandler.init === false) {
@@ -47,7 +47,7 @@
           };
           sourcehandler.init = false;
 
-          if (w) w.on("change", wrapperhandler);
+          if (w) w.on("change", converterhandler);
           to.on("change", sourcehandler);
 
           // Hook up buttons UI
@@ -57,21 +57,21 @@
           document.getElementById('srcback').onclick = function () {to.update({velocity:-1.0});};
         
           if (w) {    
-            document.getElementById('wrapperplay').onclick = function () {w.update({velocity:1.0});};
-            document.getElementById('wrapperpause').onclick = function () {w.update({velocity:0.0});};
-            document.getElementById('wrapperreset').onclick = function () {w.update({position: 0.0, velocity:0.0});};
-            document.getElementById('wrapperback').onclick = function () {w.update({velocity:-1.0});};
+            document.getElementById('converterplay').onclick = function () {w.update({velocity:1.0});};
+            document.getElementById('converterpause').onclick = function () {w.update({velocity:0.0});};
+            document.getElementById('converterreset').onclick = function () {w.update({position: 0.0, velocity:0.0});};
+            document.getElementById('converterback').onclick = function () {w.update({velocity:-1.0});};
           }
 
           // Hook up text UI
           var srcvalue = document.getElementById('srcvalue');
-          var wrappervalue = document.getElementById('wrappervalue');
+          var convertervalue = document.getElementById('convertervalue');
           to.on("timeupdate", function () {
             srcvalue.innerHTML = to.query().position.toFixed(2); 
           });
           if (w) {
             w.on("timeupdate", function () {
-              wrappervalue.innerHTML = w.query().position.toFixed(2);
+              convertervalue.innerHTML = w.query().position.toFixed(2);
               srcvalue.innerHTML = to.query().position.toFixed(2); 
             });
           }
@@ -93,12 +93,12 @@
 <button id="srcreset">Reset</button>
 <button id="srcback">Back</button>
 
-<h3>Wrapper</h3>
-<div id="wrappervalue"></div>
-<button id="wrapperplay">Play</button>
-<button id="wrapperpause">Pause</button>
-<button id="wrapperreset">Reset</button>
-<button id="wrapperback">Back</button>
+<h3>Converter</h3>
+<div id="convertervalue"></div>
+<button id="converterplay">Play</button>
+<button id="converterpause">Pause</button>
+<button id="converterreset">Reset</button>
+<button id="converterback">Back</button>
 
 </body>
 </html>

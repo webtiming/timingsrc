@@ -19,7 +19,7 @@
 */
 
 /*
-	SCALE WRAPPER
+	SCALE CONVERTER
 
 	Scaling by a factor 2 means that the timeline is streached, i.e. the unit length is doubled.
 	As a consequencer, the motion of the timing object will slow down by the same factor.
@@ -30,38 +30,35 @@ define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
-	var WrapperBase = timingbase.WrapperBase;	
+	var ConverterBase = timingbase.ConverterBase;	
 	var inherit = timingbase.inherit;
 
-	/*
-		SCALE WRAPPER
-	*/
-	var ScaleWrapper = function (timingObject, factor) {
+	var ScaleConverter = function (timingObject, factor) {
 		this._factor = factor;
-		WrapperBase.call(this, timingObject);
+		ConverterBase.call(this, timingObject);
 	};
-	inherit(ScaleWrapper, WrapperBase);
+	inherit(ScaleConverter, ConverterBase);
 
 	// overrides
-	ScaleWrapper.prototype._getRange = function () {
+	ScaleConverter.prototype._getRange = function () {
 		var range = this.timingsrc.range;
 		return [range[0]/this._factor, range[1]/this._factor];
 	};
 
 	// overrides
-	ScaleWrapper.prototype._onChange = function (vector) {
+	ScaleConverter.prototype._onChange = function (vector) {
 		vector.position = vector.position / this._factor;
 		vector.velocity = vector.velocity / this._factor;
 		vector.acceleration = vector.acceleration / this._factor;
 		return vector;
 	};
 	
-	ScaleWrapper.prototype.update = function (vector) {
+	ScaleConverter.prototype.update = function (vector) {
 		if (vector.position !== undefined && vector.position !== null) vector.position = vector.position * this._factor;
 		if (vector.velocity !== undefined && vector.velocity !== null) vector.velocity = vector.velocity * this._factor;
 		if (vector.acceleration !== undefined && vector.acceleration !== null) vector.acceleration = vector.acceleration * this._factor;
 		return this.timingsrc.update(vector);
 	};
 
-	return ScaleWrapper;
+	return ScaleConverter;
 });

@@ -20,9 +20,9 @@
 
 
 /*
-	SKEW WRAPPER
+	SKEW CONVERTER
 
-	Skewing the timeline by 2 means that the timeline position 0 of the timingsrc becomes position 2 of wrapper.
+	Skewing the timeline by 2 means that the timeline position 0 of the timingsrc becomes position 2 of Converter.
 
 */
 
@@ -30,17 +30,17 @@ define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
-	var WrapperBase = timingbase.WrapperBase;
+	var ConverterBase = timingbase.ConverterBase;
 	var inherit = timingbase.inherit;
 
-	var SkewWrapper = function (timingObject, skew) {
+	var SkewConverter = function (timingObject, skew) {
 		this._skew = skew;
-		WrapperBase.call(this, timingObject);
+		ConverterBase.call(this, timingObject);
 	};
-	inherit(SkewWrapper, WrapperBase);
+	inherit(SkewConverter, ConverterBase);
 
 	// overrides
-	SkewWrapper.prototype._getRange = function () {
+	SkewConverter.prototype._getRange = function () {
 		var range = this.timingsrc.range;
 		range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
 		range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
@@ -48,17 +48,17 @@ define(['./timingbase'], function (timingbase) {
 	};
 	
 	// overrides
-	SkewWrapper.prototype._onChange = function (vector) {
+	SkewConverter.prototype._onChange = function (vector) {
 		vector.position += this._skew;	
 		return vector;
 	};
 
-	SkewWrapper.prototype.update = function (vector) {
+	SkewConverter.prototype.update = function (vector) {
 		if (vector.position !== undefined && vector.position !== null) {
 			vector.position = vector.position - this._skew;
 		}
 		return this.timingsrc.update(vector);
 	};
 
-	return SkewWrapper;
+	return SkewConverter;
 });

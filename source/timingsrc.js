@@ -7,15 +7,15 @@ define (['./timingobject/main'], function (timingobject) {
 	return {
 		motionutils : timingobject.motionutils,
 		inherit : timingobject.inherit,
-		WrapperBase : timingobject.WrapperBase,
-		SkewWrapper : timingobject.SkewWrapper,
-		DelayWrapper : timingobject.DelayWrapper,
-		ScaleWrapper : timingobject.ScaleWrapper,
-		LoopWrapper : timingobject.LoopWrapper,
-		RangeWrapper : timingobject.RangeWrapper,
-		TimeShiftWrapper : timingobject.TimeShiftWrapper,
-		LocalWrapper : timingobject.LocalWrapper,
-		DerivativeWrapper : timingobject.DerivativeWrapper,
+		ConverterBase : timingobject.ConverterBase,
+		SkewConverter : timingobject.SkewConverter,
+		DelayConverter : timingobject.DelayConverter,
+		ScaleConverter : timingobject.ScaleConverter,
+		LoopConverter : timingobject.LoopConverter,
+		RangeConverter : timingobject.RangeConverter,
+		TimeShiftConverter : timingobject.TimeShiftConverter,
+		LocalConverter : timingobject.LocalConverter,
+		DerivativeConverter : timingobject.DerivativeConverter,
 		TimingObject : timingobject.TimingObject
 	};
 });

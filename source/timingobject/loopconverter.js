@@ -20,9 +20,9 @@
 
 
 /*
-	LOOP WRAPPER
+	LOOP CONVERTER
 
-	This is a modulo type transformation where the wrapper will be looping within
+	This is a modulo type transformation where the converter will be looping within
 	a given range. Potentially one could create an associated timing object keeping track of the 
 	loop number.
 */
@@ -33,7 +33,7 @@ define(['./timingbase'], function (timingbase) {
 	'use strict';
 
 	var motionutils = timingbase.motionutils;
-	var WrapperBase = timingbase.WrapperBase;	
+	var ConverterBase = timingbase.ConverterBase;	
 	var inherit = timingbase.inherit;
 
 	/* 
@@ -82,25 +82,25 @@ define(['./timingbase'], function (timingbase) {
 
 
 	/*
-		LOOP WRAPPER
+		LOOP CONVERTER
 	*/
 
-	var LoopWrapper = function (timingObject, range) {
-		WrapperBase.call(this, timingObject, {timeout:true});
+	var LoopConverter = function (timingObject, range) {
+		ConverterBase.call(this, timingObject, {timeout:true});
 		this._range = range;
 		this._coords = new SegmentCoords(range[0], range[1]-range[0]);
 	};
-	inherit(LoopWrapper, WrapperBase);
+	inherit(LoopConverter, ConverterBase);
 
 	// transform value from coordiantes X of timing source
 	// to looper coordinates Y
-	LoopWrapper.prototype._transform = function (x) {
+	LoopConverter.prototype._transform = function (x) {
 		return this._coords.transformFloat(x);
 	};
 
 	// transform value from looper coordinates Y into 
 	// coordinates X of timing object - maintain relative diff 
-	LoopWrapper.prototype._inverse = function (y) {
+	LoopConverter.prototype._inverse = function (y) {
 		var current_y = this.query().position;
 		var current_x = this.timingsrc.query().position;
 		var diff = y - current_y;
@@ -110,7 +110,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopWrapper.prototype.query = function () {
+	LoopConverter.prototype.query = function () {
 		if (this.vector === null) return null;
 		var vector = motionutils.calculateVector(this.vector, this.clock.now());
 		// trigger state transition if range violation is detected
@@ -129,7 +129,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopWrapper.prototype.update = function (vector) {
+	LoopConverter.prototype.update = function (vector) {
 		if (vector.position !== undefined && vector.position !== null) {
 			vector.position = this._inverse(vector.position);
 		}
@@ -137,7 +137,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopWrapper.prototype._calculateTimeoutVector = function () {
+	LoopConverter.prototype._calculateTimeoutVector = function () {
 		var freshVector = this.query();
 		var res = motionutils.calculateDelta(freshVector, this.range);
 		var deltaSec = res[0];
@@ -149,7 +149,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopWrapper.prototype._onTimeout = function (vector) {
+	LoopConverter.prototype._onTimeout = function (vector) {
 		if (vector.position >= this._range[1]) {
 			vector.position = this._range[0];
 		} else if (vector.position <= this._range[0]) {
@@ -159,10 +159,10 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopWrapper.prototype._onChange = function (vector) {
+	LoopConverter.prototype._onChange = function (vector) {
 		vector.position = this._transform(vector.position);
 		return vector;
 	};
 
-	return LoopWrapper;
+	return LoopConverter;
 });

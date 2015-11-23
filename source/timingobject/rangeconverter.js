@@ -20,13 +20,13 @@
 
 /*
 
-	RANGE WRAPPER
+	RANGE CONVERTER
 
-	The wrapper enforce a range on position.
+	The converter enforce a range on position.
 
 	It only has effect if given range is a restriction on the range of the timingsrc.
-	Range Wrapper will pause on range endpoints if timingsrc leaves the range. 
-	Range Wrappers will continue mirroring timingsrc once it comes into the range.
+	Range converter will pause on range endpoints if timingsrc leaves the range. 
+	Range converters will continue mirroring timingsrc once it comes into the range.
 */
 
 define(['./timingbase'], function (timingbase) {
@@ -34,7 +34,7 @@ define(['./timingbase'], function (timingbase) {
 	'use strict';
 
 	var motionutils = timingbase.motionutils;
-	var WrapperBase = timingbase.WrapperBase;	
+	var ConverterBase = timingbase.ConverterBase;	
 	var STATE = timingbase.STATE;
 	var inherit = timingbase.inherit;
 
@@ -63,19 +63,19 @@ define(['./timingbase'], function (timingbase) {
 
 
 	/*
-		RangeWrapper allows a new (smaller) range to be specified for a MotionWrapper.
+		Range converter allows a new (smaller) range to be specified.
 	*/
 
-	var RangeWrapper = function (timingObject, range) {
-		WrapperBase.call(this, timingObject, {timeout:true});
+	var RangeConverter = function (timingObject, range) {
+		ConverterBase.call(this, timingObject, {timeout:true});
 		this._state = state();
 		// todo - check range
 		this._range = range;
 	};
-	inherit(RangeWrapper, WrapperBase);
+	inherit(RangeConverter, ConverterBase);
 
 	// overrides
-	RangeWrapper.prototype.query = function () {
+	RangeConverter.prototype.query = function () {
 		if (this.vector === null) return null;
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this.timingsrc.vector, this.clock.now());
@@ -88,7 +88,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 	
 	// overridden
-	RangeWrapper.prototype._calculateTimeoutVector = function () {
+	RangeConverter.prototype._calculateTimeoutVector = function () {
 		var freshVector = this.timingsrc.query();
 		var res = motionutils.calculateDelta(freshVector, this.range);
 		var deltaSec = res[0];
@@ -100,12 +100,12 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	RangeWrapper.prototype._onTimeout = function (vector) {		
+	RangeConverter.prototype._onTimeout = function (vector) {		
 		return this._onChange(vector);
 	};
 
 	// overrides
-	RangeWrapper.prototype._onChange = function (vector) {
+	RangeConverter.prototype._onChange = function (vector) {
 		var new_state = this._getCorrectRangeState(vector);
 		var state_changed = this._state.set(new_state);	
 		if (state_changed.real) {
@@ -143,5 +143,5 @@ define(['./timingbase'], function (timingbase) {
 		return vector;
 	};
 
-	return RangeWrapper;
+	return RangeConverter;
 });

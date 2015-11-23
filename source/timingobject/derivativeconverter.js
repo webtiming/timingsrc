@@ -19,34 +19,33 @@
 */
 
 /*
-	DERIVATIVE WRAPPER
+	DERIVATIVE CONVERTER
 
-	this wrapper implements the derivative of it source timing object.
+	this Converter implements the derivative of it source timing object.
 	
-	The velocity of timingsrc becomes the position of the wrapper.
+	The velocity of timingsrc becomes the position of the Converter.
 
-	This means that the derivative wrapper allows sequencing on velocity of a timing object, 
-	by attatching a sequencer on the derivative wrapper.
+	This means that the derivative Converter allows sequencing on velocity of a timing object, 
+	by attatching a sequencer on the derivative Converter.
 */
 
 define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
-	var WrapperBase = timingbase.WrapperBase;	
+	var ConverterBase = timingbase.ConverterBase;	
 	var inherit = timingbase.inherit;
 
-
-	var DerivativeWrapper = function (timingObject, factor) {
-		WrapperBase.call(this, timingObject);
+	var DerivativeConverter = function (timingObject, factor) {
+		ConverterBase.call(this, timingObject);
 	};
-	inherit(DerivativeWrapper, WrapperBase);
+	inherit(DerivativeConverter, ConverterBase);
 
 	// overrides
-	DerivativeWrapper.prototype._getRange = function () { return [-Infinity, Infinity];};
+	DerivativeConverter.prototype._getRange = function () { return [-Infinity, Infinity];};
 
 	// overrides
-	DerivativeWrapper.prototype._onChange = function (vector) {
+	DerivativeConverter.prototype._onChange = function (vector) {
 		var newVector = {
 			position : vector.velocity,
 			velocity : vector.acceleration,
@@ -56,9 +55,9 @@ define(['./timingbase'], function (timingbase) {
 		return newVector;
 	};
 	
-	DerivativeWrapper.prototype.update = function (vector) {
+	DerivativeConverter.prototype.update = function (vector) {
 		throw new Error("updates illegal on derivative of timingobject");
 	};
 
-	return DerivativeWrapper;
+	return DerivativeConverter;
 });

@@ -20,7 +20,7 @@
 
 
 /*
-	LOCAL WRAPPER
+	LOCAL CONVERTER
 
 	Update requests are cached locally, visible to the query
 	operation, thus allowing them to take effect immediately
@@ -43,18 +43,17 @@ define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 
-	var WrapperBase = timingbase.WrapperBase;	
+	var ConverterBase = timingbase.ConverterBase;	
 	var inherit = timingbase.inherit;
 
-
-	var LocalWrapper = function (timingObject) {
-		WrapperBase.call(this, timingObject);
+	var LocalConverter = function (timingObject) {
+		ConverterBase.call(this, timingObject);
 		this._speculative = false;
 	};
-	inherit(LocalWrapper, WrapperBase);
+	inherit(LocalConverter, ConverterBase);
 
 	// overrides
-	LocalWrapper.prototype.update = function (vector) {		
+	LocalConverter.prototype.update = function (vector) {		
 		var newVector = this.timingsrc.update(vector);
 		this._speculative = true;
 		// process update immediately
@@ -66,7 +65,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LocalWrapper.prototype._onChange = function (vector) {
+	LocalConverter.prototype._onChange = function (vector) {
 		if (this._speculative) {
 			this._speculative = false;
 			// todo - suppress change only if it corresponds to change request sent by self
@@ -74,5 +73,5 @@ define(['./timingbase'], function (timingbase) {
 		return vector;
 	};
 
-	return LocalWrapper;
+	return LocalConverter;
 });

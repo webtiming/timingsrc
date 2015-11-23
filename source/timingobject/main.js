@@ -20,29 +20,29 @@
 
 define([
 	'./timingbase', 
-	'./skewwrapper', 
-	'./delaywrapper', 
-	'./scalewrapper', 
-	'./loopwrapper', 
-	'./rangewrapper', 
-	'./timeshiftwrapper', 
-	'./localwrapper', 
-	'./derivativewrapper',
+	'./skewconverter', 
+	'./delayconverter', 
+	'./scaleconverter', 
+	'./loopconverter', 
+	'./rangeconverter', 
+	'./timeshiftconverter', 
+	'./localconverter', 
+	'./derivativeconverter',
 	'./timingobject'], 
-	function (timingbase, SkewWrapper, DelayWrapper, ScaleWrapper, LoopWrapper, RangeWrapper, TimeShiftWrapper, LocalWrapper, DerivativeWrapper, TimingObject) {		
+	function (timingbase, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter, TimingObject) {		
 		'use strict';
 		return {
 			motionutils : timingbase.motionutils,
 			inherit : timingbase.inherit,
-			WrapperBase : timingbase.WrapperBase,
-			SkewWrapper : SkewWrapper,
-			DelayWrapper : DelayWrapper,
-			ScaleWrapper : ScaleWrapper,
-			LoopWrapper : LoopWrapper,
-			RangeWrapper : RangeWrapper,
-			TimeShiftWrapper : TimeShiftWrapper,
-			LocalWrapper : LocalWrapper,
-			DerivativeWrapper : DerivativeWrapper,
+			ConverterBase : timingbase.ConverterBase,
+			SkewConverter : SkewConverter,
+			DelayConverter : DelayConverter,
+			ScaleConverter : ScaleConverter,
+			LoopConverter : LoopConverter,
+			RangeConverter : RangeConverter,
+			TimeShiftConverter : TimeShiftConverter,
+			LocalConverter : LocalConverter,
+			DerivativeConverter : DerivativeConverter,
 			TimingObject : TimingObject
 		};
 	}

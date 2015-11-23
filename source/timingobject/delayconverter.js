@@ -20,14 +20,14 @@
 
 
 /*
-	DELAY WRAPPER
+	DELAY CONVERTER
 
-	Delay Wrapper introduces a positive time delay on a source timing object.
+	Delay Converter introduces a positive time delay on a source timing object.
 
 	Generally - if the source timing object has some value at time t, 
-	then the delaywrapper will provide the same value at time t + delay.
+	then the delayConverter will provide the same value at time t + delay.
 
-	Since the delay wrapper is effectively replaying past events after the fact,
+	Since the delay Converter is effectively replaying past events after the fact,
 	it is not LIVE and not open to interactivity (i.e. update)
 	
 */
@@ -37,22 +37,20 @@ define(['./timingbase'], function (timingbase) {
 
 	'use strict';
 	
-	var WrapperBase = timingbase.WrapperBase;
+	var ConverterBase = timingbase.ConverterBase;
 	var inherit = timingbase.inherit;
 
-	
-
-	var DelayWrapper = function (timingObject, delay) {
+	var DelayConverter = function (timingObject, delay) {
 		if (delay < 0) {throw new Error ("negative delay not supported");}
-		if (delay === 0) {throw new Error ("zero delay makes delaywrapper pointless");}
-		WrapperBase.call(this, timingObject);
+		if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
+		ConverterBase.call(this, timingObject);
 		// fixed delay
 		this._delay = delay;
 	};
-	inherit(DelayWrapper, WrapperBase);
+	inherit(DelayConverter, ConverterBase);
 
 	// overrides
-	DelayWrapper.prototype._onChange = function (vector) {
+	DelayConverter.prototype._onChange = function (vector) {
 		/* 			
 			Vector's timestamp always time-shifted (back-dated) by delay
 
@@ -88,10 +86,10 @@ define(['./timingbase'], function (timingbase) {
 		return vector;
 	};
 
-	DelayWrapper.prototype.update = function (vector) {
+	DelayConverter.prototype.update = function (vector) {
 		// Updates are prohibited on delayed timingobjects
 		throw new Error ("update is not legal on delayed (non-live) timingobject");
 	};
 
-	return DelayWrapper;
+	return DelayConverter;
 });

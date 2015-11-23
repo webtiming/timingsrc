@@ -19,7 +19,7 @@
 */
 
 /*
-	TimingBase defines base classes for TimingObject and WrapperBase used to implement timing wrappers.
+	TimingBase defines base classes for TimingObject and ConverterBase used to implement timing converters.
 	It makes use of eventutils for event stuff, including immediate events.
 	It makes use of motionutils for timing calculations. 
 */
@@ -48,7 +48,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 
 	// TIMING BASE
 	/*
-		Base class for TimingObject and WrapperBase
+		Base class for TimingObject and ConverterBase
 
 		essential internal state
 		- range, vector
@@ -207,7 +207,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		to be ovverridden
 		specify transformation
 		on the incoming vector before processing.
-		useful for wrappers that do mathematical transformations,
+		useful for Converters that do mathematical transformations,
 		or as a way to enforse range restrictions.
 		invoming vectors from external change events or internal
 		timeout events
@@ -377,30 +377,30 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	};
 
 
-	// WRAPPER BASE
+	// CONVERTER BASE
 
 	/*
-		WrapperBase extends TimingBase to provide a
-		base class for chainable wrappers/emulators of timing objects
-		WrapperBase conceptually add the notion of a timing source,
+		ConverterBase extends TimingBase to provide a
+		base class for chainable Converters/emulators of timing objects
+		ConverterBase conceptually add the notion of a timing source,
 		a pointer to a timing object up the chain. Change events 
 		may be received from the timing object, and update requests 
 		are forwarded in the opposite direction. 
 	*/
 
 
-	var WrapperBase = function (timingObject, options) {
+	var ConverterBase = function (timingObject, options) {
 		TimingBase.call(this, options);
 		// timing source
 		this._timingsrc = null;	
 		// set timing source
 		this.timingsrc = timingObject;
 	};
-	inherit(WrapperBase, TimingBase);
+	inherit(ConverterBase, TimingBase);
 
 
 	// Accessor internal clock
-	Object.defineProperty(WrapperBase.prototype, 'clock', {
+	Object.defineProperty(ConverterBase.prototype, 'clock', {
 		get : function () {	return this.timingsrc.clock; }	
 	});
 
@@ -408,11 +408,11 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		Accessor for timingsrc.
 		Supports dynamic switching of timing source by assignment.
 	*/
-	Object.defineProperty(WrapperBase.prototype, 'timingsrc', {
+	Object.defineProperty(ConverterBase.prototype, 'timingsrc', {
 		get : function () {return this._timingsrc;},
 		set : function (timingObject) {
 			if (this._timingsrc) {
-				this._timingsrc.off("change", this._preProcessWrapper);
+				this._timingsrc.off("change", this._preProcessConverter);
 			}
 			// reset internal state
 			this._range = null;
@@ -420,7 +420,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 			this._clearTimeout();
 			clearTimeout(this._tid);
 			this._timingsrc = timingObject;
-			this._timingsrc.on("change", this._preProcessWrapper, this);
+			this._timingsrc.on("change", this._preProcessConverter, this);
 		}
 	});
 
@@ -428,15 +428,15 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		to be overridden
 		default forwards update request to timingsrc unchanged.
 	*/
-	WrapperBase.prototype.update = function (p, v, a) {
+	ConverterBase.prototype.update = function (p, v, a) {
 		return this.timingsrc.update(p,v,a);
 	};
 
 	/*
 		to be overridden
-		by default the wrapper adopts the range of timingsrc 
+		by default the Converter adopts the range of timingsrc 
 	*/
-	WrapperBase.prototype._getRange = function () {
+	ConverterBase.prototype._getRange = function () {
 		return this.timingsrc.range;
 	};
 
@@ -446,14 +446,14 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		fetches initial vector from timingsrc and dispatches
 		it to preProcess() 
 	*/
-	WrapperBase.prototype._preProcessWrapper = function () {
+	ConverterBase.prototype._preProcessConverter = function () {
 		var vector = this.timingsrc.vector;
 		this._preProcess(vector);
 	};
 
 	return {
 		TimingBase : TimingBase,
-		WrapperBase : WrapperBase,
+		ConverterBase : ConverterBase,
 		STATE : STATE,
 		inherit: inherit,
 		motionutils : motionutils
