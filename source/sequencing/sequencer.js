@@ -766,11 +766,9 @@ define(['util/timeoututils', 'util/motionutils', 'util/interval', './axis'],
         	var secAnchor = this._clock.now();	
 			var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 			var self = this;
-			this._timeout = new timeoututils.Timeout(
-					function () {self._main();}, 
-					secDelay*1000, 
-					{anchor: secAnchor*1000, early: 0.5}
-				);
+			this._timeout = this._clock.setTimeout(function () {
+				self._main();
+			}, secDelay, {anchor: secAnchor, early: 0.0005});
 	    }
 	};
 

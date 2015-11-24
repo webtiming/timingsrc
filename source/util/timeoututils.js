@@ -23,8 +23,6 @@ define (function () {
 
 	'use strict';
 
-	var clock_ms = function () { return performance.now();}; 
-
 	/*
 	  TIMEOUT
 
@@ -32,45 +30,56 @@ define (function () {
 	  - guarantee that timeout does not wake up too early
 	  - offers precise timeout by "busy"-looping just before timeout 
 	  - wraps a single timeout
-	  - operates on milliseconds
-	  - wake up 3 seconds before on long timeouts to readjust
+	  - clock operates in seconds
+	  - parameters expected in seconds - breaking conformance with setTimeout
+	  - wakes up 3 seconds before on long timeouts to readjust
 	*/
 
-	var Timeout = function (callback, delay, options) {	
-		this.tid = null;
-		this.callback = callback;
-		this.delay_counter = 0;
-		this.options = options || {};
-		var now = clock_ms();
-		this.options.anchor = this.options.anchor || now; // epoch millis
-		this.options.early = Math.abs(this.options.early) || 0; // millis
-		this.target = this.options.anchor + delay; // epoch millis
+	var Timeout = function (clock, callback, delay, options) {	
+		// clock
+		this._clock = clock; // seconds
+		this._clock.on("change", this._onClockChange, this);
+		var now = this._clock.now(); // seconds
+		// timeout
+		this._tid = null;
+		this._callback = callback;
+		this._delay_counter = 0;
+		this._options = options || {};
+
+		// options
+		this._options.anchor = this._options.anchor || now; // seconds
+		this._options.early = Math.abs(this._options.early) || 0; // seconds
+		this._target = this._options.anchor + delay; // seconds
 
 		// Initialise
 		var self = this;
 		window.addEventListener("message", this, true); // this.handleEvent
-		var time_left = this.target - clock_ms(); // millis
-		if (time_left > 10000) {
+		var time_left = this._target - this._clock.now(); // seconds
+		if (time_left > 10) {
 			// long timeout > 10s - wakeup 3 seconds earlier to readdjust
-			this.tid = setTimeout(function () {self._ontimeout();}, time_left - 3000);
+			this._tid = setTimeout(function () {self._ontimeout();}, time_left - 3000);
 		} else {
 			// wake up just before
-			this.tid = setTimeout(function () {self._ontimeout();}, time_left - self.options.early);
+			this._tid = setTimeout(function () {self._ontimeout();}, (time_left - self._options.early)*1000);
 		}
+	};
+
+	Timeout.prototype._onClockChange = function () {
+		// re-evaluate timeouts?
 	};
 
 	// Internal function
 	Timeout.prototype._ontimeout = function () {
-	    if (this.tid !== null) {
-	    	var time_left = this.target - clock_ms(); // millis
+	    if (this._tid !== null) {
+	    	var time_left = this._target - this._clock.now(); // seconds
 			if (time_left <= 0) {
 			    // callback due
 			    this.cancel();
-			    this.callback();
-			} else if (time_left > this.options.early) {
+			    this._callback();
+			} else if (time_left > this._options.early) {
 				// wakeup before target - options early sleep more
 				var self = this;
-				this.tid = setTimeout(function () {self._ontimeout();}, time_left - this.options.early);
+				this._tid = setTimeout(function () {self._ontimeout();}, (time_left - this._options.early)*1000);
 			} else {
 				// wake up just before (options early) - event loop
 			    this._smalldelay();
@@ -84,22 +93,22 @@ define (function () {
 			event.stopPropagation();
 			// ignore if timeout has been canceled
 			var the_tid = parseInt(event.data.split("_")[1]);
-			if (this.tid !== null && this.tid === the_tid) {
+			if (this._tid !== null && this._tid === the_tid) {
 			    this._ontimeout();
 			}
 	    }
 	};
 
 	Timeout.prototype._smalldelay = function () {
-	    this.delay_counter ++;
+	    this._delay_counter ++;
 	    var self = this;
-	    window.postMessage("smalldelaymsg_" + self.tid, "*");
+	    window.postMessage("smalldelaymsg_" + self._tid, "*");
 	};
 
 	Timeout.prototype.cancel = function () {
-	    if (this.tid !== null) {
-			clearTimeout(this.tid);
-			this.tid = null;
+	    if (this._tid !== null) {
+			clearTimeout(this._tid);
+			this._tid = null;
 			var self = this;
 			window.removeEventListener("message", this, true);	
 	    }
@@ -107,7 +116,9 @@ define (function () {
 	
 	// return module object
 	return {
-		Timeout: Timeout
+		setTimeout: function (clock, callback, delay, options) {
+			return new Timeout(clock, callback, delay, options);
+		}
 	};
 });
 

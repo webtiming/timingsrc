@@ -55,12 +55,17 @@
 	{position: now, velocity: 1.0, timestamp: now};
 */
 
-define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
+define(['./eventutils', './motionutils', './timeoututils'], function (eventutils, motionutils, timeoututils) {
 
 	'use strict';
 
+	// local clock in seconds
+	var localClock = {
+		now : function () {return performance.now()/1000.0;}
+	}; 
+
 	var MasterClock = function (vector) {
-		var now = motionutils.secClock();
+		var now = localClock.now();
 		vector = vector || {position: now, velocity: 1.0, acceleration: 0.0, timestamp: now};	
 		this._vector = vector;
 		// event support
@@ -87,7 +92,7 @@ define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
 		- shorthand for query
 	*/
 	MasterClock.prototype.now = function () {
-		return motionutils.calculateVector(this._vector, motionutils.secClock()).position;
+		return motionutils.calculateVector(this._vector, localClock.now()).position;
 	};
 
 	/* 
@@ -96,7 +101,7 @@ define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
 		- result vector includes position and velocity		
 	*/
 	MasterClock.prototype.query = function () {
-		var vector = motionutils.calculateVector(this._vector, motionutils.secClock());
+		var vector = motionutils.calculateVector(this._vector, localClock.now());
 		return {
 			position : vector.position,
 			velocity : vector.velocity,
@@ -126,6 +131,13 @@ define(['./eventutils', './motionutils'], function (eventutils, motionutils) {
 	*/
 	MasterClock.prototype._callbackFormatter = function (type, e, eInfo) { return [e];};
 
+
+	/*
+		Timeout support
+	*/
+	MasterClock.prototype.setTimeout = function (callback, delay, options) {
+		return timeoututils.setTimeout(this, callback, delay, options);
+	};
 
 	return MasterClock;
 });
