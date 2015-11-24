@@ -23,7 +23,7 @@ define (function () {
 
 	'use strict';
 
-	var clock_ms = function (){performance.now();}; 
+	var clock_ms = function () { return performance.now();}; 
 
 	/*
 	  TIMEOUT
@@ -106,6 +106,8 @@ define (function () {
 	};
 	
 	// return module object
-	return Timeout;
+	return {
+		Timeout: Timeout
+	};
 });
 

@@ -3,10 +3,17 @@
   Written by Ingar Arntzen, Norut
 */
 
-define (['./timingobject/main'], function (timingobject) {
+define (['./timingobject/main', './sequencing/main'], function (timingobject, sequencing) {
 	return {
-		motionutils : timingobject.motionutils,
+		
+		// Utils
 		inherit : timingobject.inherit,
+
+
+		// Timing Object
+		TimingObject : timingobject.TimingObject,
+
+		// Timing Converters
 		ConverterBase : timingobject.ConverterBase,
 		SkewConverter : timingobject.SkewConverter,
 		DelayConverter : timingobject.DelayConverter,
@@ -16,6 +23,10 @@ define (['./timingobject/main'], function (timingobject) {
 		TimeShiftConverter : timingobject.TimeShiftConverter,
 		LocalConverter : timingobject.LocalConverter,
 		DerivativeConverter : timingobject.DerivativeConverter,
-		TimingObject : timingobject.TimingObject
+		
+		// Sequencing
+		Sequencer : sequencing.Sequencer,
+		Interval : sequencing.Interval
+	
 	};
 });

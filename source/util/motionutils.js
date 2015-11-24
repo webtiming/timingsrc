@@ -284,7 +284,7 @@ define(function () {
 			    }
 			}
 			// no turning point or turning point was not reached
-			return new [Math.min(p0,p1), Math.max(p0,p1)];
+			return [Math.min(p0,p1), Math.max(p0,p1)];
 	    };
 
 
