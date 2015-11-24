@@ -55,14 +55,36 @@
 	{position: now, velocity: 1.0, timestamp: now};
 */
 
-define(['./eventutils', './motionutils', './timeoututils'], function (eventutils, motionutils, timeoututils) {
+define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 
 	'use strict';
+
+	// Need a polyfill for performance,now as Safari on ios doesn't have it...
+	(function(){
+	    if ("performance" in window === false) {
+	        window.performance = {};
+	        window.performance.offset = new Date().getTime();
+	    }
+	    if ("now" in window.performance === false){
+	      window.performance.now = function now(){
+	        return new Date().getTime() - window.performance.offset;
+	      };
+	    }
+ 	})();
 
 	// local clock in seconds
 	var localClock = {
 		now : function () {return performance.now()/1000.0;}
 	}; 
+
+	var calculateVector = function (vector, tsSec) {
+		var deltaSec = tsSec - vector.timestamp;	
+		return {
+			position : vector.position + vector.velocity*deltaSec,
+			velocity : vector.velocity, 
+			timestamp : tsSec
+		};
+	};
 
 	var MasterClock = function (vector) {
 		var now = localClock.now();
@@ -92,7 +114,7 @@ define(['./eventutils', './motionutils', './timeoututils'], function (eventutils
 		- shorthand for query
 	*/
 	MasterClock.prototype.now = function () {
-		return motionutils.calculateVector(this._vector, localClock.now()).position;
+		return calculateVector(this._vector, localClock.now()).position;
 	};
 
 	/* 
@@ -101,14 +123,8 @@ define(['./eventutils', './motionutils', './timeoututils'], function (eventutils
 		- result vector includes position and velocity		
 	*/
 	MasterClock.prototype.query = function () {
-		var vector = motionutils.calculateVector(this._vector, localClock.now());
-		return {
-			position : vector.position,
-			velocity : vector.velocity,
-			timestamp : vector.timestamp
-		};
+		return calculateVector(this._vector, localClock.now());
 	};
-
 
 	/*
 	  	overrides how immediate events are constructed

@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['util/timeoututils', 'util/motionutils', 'util/interval', './axis'], 
-	function (timeoututils, motionutils, Interval, axis)  {
+define(['util/motionutils', 'util/interval', './axis'], 
+	function (motionutils, Interval, axis)  {
 
 	'use strict';
 
