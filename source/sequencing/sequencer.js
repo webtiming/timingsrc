@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['util/motionutils', 'util/interval', './axis'], 
-	function (motionutils, Interval, axis)  {
+define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'], 
+	function (motionutils, eventutils, Interval, axis)  {
 
 	'use strict';
 
@@ -29,18 +29,6 @@ define(['util/motionutils', 'util/interval', './axis'],
 	var isNumber = function(n) {
 	    return !isNaN(parseFloat(n));
 	};
-
-	// UNIQUE ID GENERATOR 
-	var id = (function(length) {
-	 	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	    return function (len) { // key length
-	    	len = len || length; 
-	    	var text = "";
-		    for( var i=0; i < len; i++ )
-	    	    text += possible.charAt(Math.floor(Math.random() * possible.length));
-	    	return text;
-		};
-	})(10); // default key length	
 
 	var isMoving = function (vector) {
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
@@ -72,14 +60,17 @@ define(['util/motionutils', 'util/interval', './axis'],
     var VerbType = Object.freeze({
 		ENTER: "enter",
 		EXIT: "exit",
-		toString : function (s) {
-		    if (s === VerbType.ENTER) return "enter";
-		    if (s === VerbType.EXIT) return "exit";
+		CHANGE: "change",
+		toInteger: function (s) {
+		    if (s === VerbType.ENTER) return 1;
+		    if (s === VerbType.EXIT) return -1;
+		    if (s === VerbType.CHANGE) return 0;
 		    throw new SequencerError("illegal string value verb type " + s);
 		},
 		fromInteger : function (i) {
 			if (i === -1) return VerbType.EXIT;
 			else if (i === 1) return VerbType.ENTER;
+			else if (i === 0) return VerbType.CHANGE;
 			throw new SequencerError("illegal integer value for direction type " + i);
 		}
     });
@@ -342,7 +333,7 @@ define(['util/motionutils', 'util/interval', './axis'],
 		this.dueTs = dueTs;
 		this.delay = ts - dueTs;
 		this.directionType = directionType;
-		this.verbType = verbType;
+		this.type = verbType;
 		this.data = data;
 	};
 
@@ -350,7 +341,7 @@ define(['util/motionutils', 'util/interval', './axis'],
 		var s = "[" +  this.point.toFixed(2) + "]";
         s += " " + this.key;
         s += " " + this.interval.toString();
-        s += " " + this.verbType;
+        s += " " + this.type;
         s += " " + this.directionType;
         s += " " + this.pointType;
         s += " delay:" + this.delay.toFixed(4);
@@ -387,20 +378,51 @@ define(['util/motionutils', 'util/interval', './axis'],
 		this._schedule = null;
 		this._timeout = null; // timeout	
 		this._activeKeys = []; // active intervals
-		this._callbacks = { // event handlers
-			events: [],
-			enter: [],
-			exit: [],
-			change: [],
-			changes: [] // for data that has changed on active objects (no enter-exit event)
-		}; 
-		this.ID = id(4);
-			
+
+		// set up eventing stuff
+		eventutils.eventify(this, Sequencer.prototype);
+		this._defineEvent("enter", {init:true}); // define enter event (supporting init-event)
+		this._defineEvent("exit"); 
+		this._defineEvent("change");
+
 		// initialise
 		this._to.on("change", this._onTimingChange, this);
 		// Allow subclass to load data into the sequencer
 		this.loadData();
 	};
+
+
+	/*
+	  	overrides how immediate events are constructed
+	  	specific to eventutils
+		change event fires immediately if timing object is well 
+		defined, i.e. query() not null
+		no event args are passed (undefined) 
+	*/
+	Sequencer.prototype._makeInitEvents = function (type) {
+		if (type === "enter") {
+			// TODO - make init events
+			var now = this._clock.now();
+			if (this._activeKeys.length > 0) {
+				var activeItems = this._activeKeys.map(function (key) {
+					return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
+				}, this);
+			    return this._processIntervalEvents(now, [], activeItems, []);
+			}
+		}
+		return [];
+	};
+
+	/*
+		overrides how event callbacks are delivered 
+		- i.e. how many parameters, only one parameter - e
+		specific to eventutils
+	*/
+	Sequencer.prototype._callbackFormatter = function (type, e, eInfo) { 
+		return [e];
+	};
+
+
 
 	// To be overridden by subclass specializations
 	Sequencer.prototype.loadData = function () {};
@@ -531,9 +553,11 @@ define(['util/motionutils', 'util/interval', './axis'],
 	    var enterItems = enterKeys.map(function (key) {
 	    	return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
 	    }, this);
-	    // Notify interval events
-	    this._processIntervalEvents(now, exitItems, enterItems);
-	        
+
+	    // Trigger interval events
+	    var eList = this._processIntervalEvents(now, exitItems, enterItems, []);
+	    this._triggerEvents(eList);
+
 	    /*
 	      	Rollback falsely reported events
 	      	Non-singular Intervals entered/left wrongly before update was sorted out above.
@@ -728,10 +752,9 @@ define(['util/motionutils', 'util/interval', './axis'],
 		// break control flow with setTimeout so that events are emitted after addCue has completed
 		var self = this;
 		setTimeout(function () {
-			// notify interval events
-			self._processIntervalEvents(now, exitItems, enterItems);
-			// notify change events
-			self._processChangeEvents(now, changeItems);
+			// notify interval events and change events
+			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+			self._triggerEvents(eList);
 			// kick off main loop
 			self._main(now);
 		}, 0);
@@ -744,6 +767,7 @@ define(['util/motionutils', 'util/interval', './axis'],
         as the timing object is moving.
 	*/
 	Sequencer.prototype._main = function (now) {
+		var eList;
 	    // cancel_timeout
 	    if (this._timeout !== null) {
 			this._timeout.cancel();
@@ -751,7 +775,8 @@ define(['util/motionutils', 'util/interval', './axis'],
 	    }
 	    now = now || this._clock.now();
 	    // process tasks (empty due tasks from schedule)
-        this._processScheduleEvents(now, this._schedule.pop(now));
+        eList = this._processScheduleEvents(now, this._schedule.pop(now));
+        this._triggerEvents(eList);
         // advance schedule window
         var _isMoving = isMoving(this._to.vector);
         if (_isMoving && this._schedule.isExpired(now)) {		
@@ -759,7 +784,8 @@ define(['util/motionutils', 'util/interval', './axis'],
             this._schedule.advance(now);
             this._load(now);
             // process tasks again
-            this._processScheduleEvents(now, this._schedule.pop(now));
+            eList = this._processScheduleEvents(now, this._schedule.pop(now));
+	    	this._triggerEvents(eList);
 	    }
         // set timeout if moving
         if (_isMoving) {
@@ -930,7 +956,7 @@ define(['util/motionutils', 'util/interval', './axis'],
 		var ts = this._clock.now(); 
 	    eventList.forEach(function (e) {
 			if (e.task.interval.isSingular()) {
-				// make two events messages for singular
+				// make two event messages for singular
 				msg = this._makeEArgs(e.task.key, e.task.interval, e.task.data, directionInt, VerbType.ENTER,e.task.point, ts, e.ts);
 				msgList.push(msg);
 				msg = this._makeEArgs(e.task.key, e.task.interval, e.task.data, directionInt, VerbType.EXIT,e.task.point, ts, e.ts);
@@ -940,15 +966,13 @@ define(['util/motionutils', 'util/interval', './axis'],
 		    	msgList.push(msg);	
 			}			
 	    }, this);
-	    if (msgList) {
-	     	this._notifyCallback(now, msgList);
-	    }
+	    return this._makeEvents(now, msgList);
 	};
 
-	// Process interval events orignating from axis change, timing object change or initHandler
-	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, handler) {
-	    if (exitItems.length + enterItems.length === 0) {
-			return;
+	// Process interval events orignating from axis change, timing object change or active keys
+	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
+	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
+			return [];
 	    }
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
@@ -960,105 +984,48 @@ define(['util/motionutils', 'util/interval', './axis'],
 		enterItems.forEach(function (item){
 			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.ENTER, nowVector.position, ts, now));
 		}, this);
-	    this._notifyCallback(now, msgList, handler);
-	};
-
-	// Process change events
-	Sequencer.prototype._processChangeEvents = function (now, changeItems) {
-		this._doCallbacks("changes", changeItems);
-		changeItems.forEach(function (e) {
-			this._doCallbacks("change", e);
+		changeItems.forEach(function (item) {
+			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.CHANGE, nowVector.position, ts, now));
 		}, this);
-	};
-
-	// used to create initial callback from active keys
-	Sequencer.prototype._initHandler = function (handler) {
-		// only do initial callback if sequencer (timingobject) is ready
-		if (this._isReady()) {
-			var now = this._clock.now();
-			if (this._activeKeys.length > 0) {
-				var activeItems = this._activeKeys.map(function (key) {
-					return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
-				}, this);
-			    this._processIntervalEvents(now, [], activeItems, handler);
-				return true;
-			}
-		}
-		return false;
+		return this._makeEvents(now, msgList);
 	};
 	
 	/*
-		Notify callback ensures consistency of active keys as changes
+		make events ensures consistency of active keys as changes
 		to active keys are driven by actual notifications
 	*/
 
-	Sequencer.prototype._notifyCallback = function (now, msgList, handler) {
+	Sequencer.prototype._makeEvents = function (now, msgList) {
+		if (msgList.length === 0) {
+			return [];
+		}
+		// manage active keys
 		var index, eventList = [];
 		msgList.forEach(function (msg) {
 			// exit interval - remove keys 
-		    if (msg.verbType === VerbType.EXIT) {
+		    if (msg.type === VerbType.EXIT) {
 				index = this._activeKeys.indexOf(msg.key);
 				if (index > -1) {
 			    	this._activeKeys.splice(index, 1);		
-				} else {
-					// drop duplicates, except for immediate events (handler !== undefined)
-					if (handler === undefined) return;
 				}
 		    }
 		    // enter interval - add key
-		    if (msg.verbType === VerbType.ENTER) {
+		    if (msg.type === VerbType.ENTER) {
 				index = this._activeKeys.indexOf(msg.key);
 				if (index === -1) {
 				    this._activeKeys.push(msg.key);
-				} else {
-					// drop duplicates, except for immediate events (handler !== undefined)
-					if (handler === undefined) return;
-				}
+				} 
 		    }
 		    eventList.push(msg);
 		}, this);
-
-		if (eventList.length > 0) {
-			// make sure event_list is correctly ordered
-			eventList = this._reorderEventList(eventList);
-			// invoke
-	    	this._doCallbacks("events", eventList, handler);
-	    	eventList.forEach(function (e) {
-	    		if (e.verbType === VerbType.ENTER) {
-	    			this._doCallbacks("enter", e, handler);
-	    		} else {
-	    			if (e.verbType === VerbType.EXIT) {
-	    				this._doCallbacks("exit", e, handler);
-	    			}
-	    		}
-	    	}, this);
-	    }	    
+		// make sure events are correctly ordered
+		eventList = this._reorderEventList(eventList);
+		// finalise events
+		return eventList.map(function (item) {
+			return {type: item.type, e:item};
+		});	    	    
 	};
 
-	Sequencer.prototype._doCallbacks = function(what, e, handler) {
-	 	var err;
-		// invoke callback handlers
-		this._callbacks[what].forEach(function(h) {
-			if (handler === undefined) {
-	      		// all handlers to be invoked, except those with pending immeditate
-	      		if (h["_immediatePending_" + what + this.ID]) {
-	      			return;
-	      		}
-	      	} else {
-	      		// only given handler to be called
-	      		if (h === handler) handler["_immediatePending_" + what + this.ID] = false;
-	      		else {
-	      			return;
-	      		}
-	      	}
-	        try {
-	          h.call(h["_ctx_" + what + this.ID], e);
-	        } catch (err) {
-	          console.log("Error in " + what + ": " + h + ": " + err);
-	        }
-		}, this);
-    };
-	
 	/*
 		Event list is sorted by time. 
 		There can be multiple events on the same time.
@@ -1091,7 +1058,7 @@ define(['util/motionutils', 'util/interval', './axis'],
 			}
 			// push on stack
 			if (msg.pointType === axis.PointType.SINGULAR) {
-				if (msg.verbType === VerbType.ENTER) {
+				if (msg.type === VerbType.ENTER) {
 					// enter singular
 					s["b"].push(msg);
 				} else {
@@ -1110,7 +1077,7 @@ define(['util/motionutils', 'util/interval', './axis'],
 				} else if ((msg.pointType === axis.PointType.HIGH) && msg.interval.highInclude) {
 					closed = true;
 				}
-				if (msg.verbType === VerbType.ENTER) {
+				if (msg.type === VerbType.ENTER) {
 					// enter interval
 					if (closed) s["x"].push(msg);
 					else s["d"].push(msg);
@@ -1133,47 +1100,6 @@ define(['util/motionutils', 'util/interval', './axis'],
 	};
 
 	
-	
-
-    // regiser callback
-	Sequencer.prototype.on = function (what, handler, ctx) {
-    	if (!handler || typeof handler !== "function") 
-    		throw new SequencerError("Illegal handler");
-    	if (!this._callbacks.hasOwnProperty(what)) 
-    		throw new SequencerError("Unsupported event " + what);
-    	var index = this._callbacks[what].indexOf(handler);
-        if (index === -1) {
-        	// register handler
-        	handler["_ctx_" + what + this.ID] = ctx || this;
-        	this._callbacks[what].push(handler);
-        	if (what === "events" || what === "enter") {
-		    	// flag handler
-		    	handler["_immediatePending_" + what + this.ID] = true;
-		    	// do immediate callback
-		    	var self = this;
-		    	setTimeout(function () {
-		    		var immediateDone = self._initHandler(handler);
-		    		if (!immediateDone) {
-		    			handler["_immediatePending_" + what + self.ID] = false;
-		    		}
-		    	}, 0);
-		    }
-        }
-        return this;
-    };
-
-	// unregister callback
-    Sequencer.prototype.off = function (what, handler) {
-    	if (this._callbacks[what] !== undefined) {
-    		var index = this._callbacks[what].indexOf(handler);
-        	if (index > -1) {
-        		this._callbacks[what].splice(index, 1);
-	  		}
-    	}
-    	return this;
-    };
-
-
     // get request builder object
 	Sequencer.prototype.request = function () {
 		return new Builder(this);

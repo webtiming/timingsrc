@@ -140,9 +140,9 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	TimingBase.prototype._makeInitEvents = function (type) {
 		var res = this.query();
 		if (type === "change") {
-			return (res !== null) ? [undefined] : []; 
+			return (res !== null) ? [{type: type, e: undefined}] : []; 
 		} else if (type === "timeupdate") {
-			return (res !== null) ? [undefined] : []; 
+			return (res !== null) ? [{type:type, e: undefined}] : []; 
 		}
 		return [];
 	};

@@ -26,6 +26,13 @@
 	Opt-in for initial events per event type.
 
 	An "events" event provides batch event support.
+
+	
+	if init events are used
+	eventified object must implement this._makeInitEvents(type)
+	- expect [{type:type, e:eArg}]
+
+
 */
 
 
@@ -89,35 +96,25 @@ define(function () {
 			if (type !== "events") {
 				typeList = [type];
 			} else {
+				// type === 'events'
 				typeList = Object.keys(this._callbacks).filter(function (key) {
 					return (key !== "events");
 				}, this);
 			}
-			return typeList.
-				concatMap(function (type) {
-					return this._makeInitEvents(type).map(function (e) {
-						return {
-							type: type,
-							e: e
-						};
-					}, this);
-				}, this);		
+			return typeList.concatMap(function (type) {
+				return this._makeInitEvents(type);
+			}, this);		
 		};
 
 		_prototype._internalEventFormatter = function (type, e) {
-			if (!this._eventFormatter) return e;
-			// formatting changes for events not supported 
+			var eventFormatter = this._eventFormatter || function (type, e) {return e;};
 			if (type === "events") {
-				// e is list of [{type: , e: }] pairs
-				return e.map(function (eItem) {
-					return {
-						type: eItem.type,
-						e: this._eventFormatter(eItem.type, eItem.e)
-					};
-				}, this);
-			} else {
-				return this._eventFormatter(type, e);
-			}
+				// e is really eList - run eventformatter on every item
+				e = e.map(function(item){
+					return eventFormatter(item.type, item.e);
+				});
+			}			
+			return eventFormatter(type,e);
 		};
 
 		/*
@@ -132,25 +129,17 @@ define(function () {
 
 		/* 
 			Public : Trigger Events
-			- triggers entire eventlist of special eventname "events"
-			- triggers individual events on their specific event names
+			- [{type: "type", e: e}]
 		*/
-		_prototype._triggerEvents = function (type, eList) {
-			if (type === undefined) throw new Error("Illegal event type; undefined");
-			if (type === "events") throw new Error("Illegal event type; triggering of events on protocted event type 'events'" );
-			if (eList.length === 0 ) throw new Error("eList empty");
-			var eItemList = eList.map(function (e){
-				return {
-					type : type,
-					e: e
-				};
-			}, this);
-			// regular events
+		_prototype._triggerEvents = function (eItemList) {
+			// check list for illegal events
 			eItemList.forEach(function (eItem) {
-				this._internalTriggerEvent(type, eItem);
+				if (eItem.type === undefined) throw new Error("Illegal event type; undefined");
+				if (eItem.type === "events") throw new Error("Illegal event type; triggering of events on protocted event type 'events'" );
 			}, this);
-			// special event "events"
-			this._internalTriggerEvents("events", eItemList);
+			if (eItemList.length === 0) return;
+			this._internalTriggerEvents(eItemList);
+			return this;
         };
 
         /*
@@ -158,7 +147,7 @@ define(function () {
          	Shorthand for triggering single events
         */
         _prototype._triggerEvent = function (type, e) {
-        	this._triggerEvents(type, [e]);
+        	this._triggerEvents([{type:type, e:e}]);
         	return this;
         };
 
@@ -166,17 +155,14 @@ define(function () {
 			Internal method for triggering events
 			- distinguish "events" from other event names
     	*/
-      	_prototype._internalTriggerEvents = function (type, eItemList, handler) {
-      		// protected event type "events"
-      		if (type === "events") {
-      			this._internalTriggerEvent("events", {type: "events", e: eItemList}, handler);
-      		} else {
-      			eItemList.forEach(function (eItem) {
-      				this._internalTriggerEvent(eItem.type, eItem, handler);
-	      		}, this);
-      		}      	
+      	_prototype._internalTriggerEvents = function (eItemList, handler) {
+      		// trigger event list on protected event type "events"      		
+      		this._internalTriggerEvent("events", {type:"events", e:eItemList}, handler);
+      		// trigger events on individual event types
+      		eItemList.forEach(function (eItem) {
+      			this._internalTriggerEvent(eItem.type, eItem, handler);
+	      	}, this);
       	};
-
 
     	/*
 			Internal method for triggering events.
@@ -187,7 +173,6 @@ define(function () {
 			var argList, e, eInfo = {};
 			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type); 
 			var init = this._callbacks[type]._options.init;
-
     		this._callbacks[type].forEach(function (h) {
     			if (handler === undefined) {
            			// all handlers to be invoked, except those with initial pending
@@ -241,7 +226,7 @@ define(function () {
 		    	    setTimeout(function () {
 		    	    	var eItemList = self._makeInitialEvents(type);
 	    	    		if (eItemList.length > 0) {
-	    	    			self._internalTriggerEvents(type, eItemList, handler);
+	    	    			self._internalTriggerEvents(eItemList, handler);
 	    	    		} else {
 	    	    			// initial callback is noop
 		              		handler["_init_pending_" + type + self._ID] = false;

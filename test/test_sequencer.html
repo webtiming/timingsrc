@@ -11,7 +11,7 @@
     <script type="text/javascript" src="../lib/require.js"></script>
     <!--  main -->
     <script text="javascript">
-      var to, s, createCue, updateCue, removeCue;
+      var to, s, createCue, updateCue, removeCue, repeatCue;
 
       require(['timingsrc'], function (timingsrc) {
 
@@ -32,8 +32,13 @@
               .addCue("four", new Interval(4.0, 5.0))
               .submit();
 
-            s.on("enter", function (e) {console.log(e.toString());});
-            s.on("exit", function (e) {console.log(e.toString());});
+            //s.on("enter", function (e) {console.log(e.toString())});
+            //s.on("exit", function (e) {console.log(e.toString())});
+            s.on("events", function (eList) {
+              eList.forEach(function (e) {
+                  console.log(e.toString());
+              });
+            });
 
             var jumpRunBtn = document.getElementById("jumprun");
             jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
@@ -50,18 +55,23 @@
             });
 
             createCue = function () {
-                console.log("create");
+                console.log("create six");
                 s.addCue("six", new Interval(5.0, 8.0));
             };
 
             updateCue = function () {
-                console.log("update");
+                console.log("update six");
                 s.addCue("six", new Interval(7.0, 7.0));
             };
 
             removeCue = function () {
-                console.log("remove");
+                console.log("remove six");
                 s.removeCue("six");
+            };
+
+            repeatCue = function () {
+              console.log("repeat three");
+              s.addCue("three", new Interval(3.0, 4.0));
             };
 
         };
@@ -86,6 +96,7 @@
       <button onclick="javascript:createCue()">Create Cue</button>
       <button onclick="javascript:updateCue()">Modify Cue</button>
       <button onclick="javascript:removeCue()">Remove Cue</button>
+      <button onclick="javascript:repeatCue()">Repeat Cue</button>
     </p>
   </body>
 </html>

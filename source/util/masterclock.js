@@ -135,7 +135,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 	*/
 	MasterClock.prototype._makeInitEvents = function (type) {
 		if (type === "change") {
-			return [undefined];
+			return [{type:type, e:undefined}];
 		}
 		return [];
 	};
