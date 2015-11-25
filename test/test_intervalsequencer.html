@@ -20,12 +20,6 @@
         var toA = new timingsrc.SkewConverter(to, -5.0);
         var toB = new timingsrc.SkewConverter(to, 5.0);
         
-        setTimeout(function () {
-          console.log(toA);
-          console.log(toB);
-        }, 50);
-       
-
         // Sequencer
         s = new timingsrc.IntervalSequencer(toA, toB);
 
@@ -59,18 +53,7 @@
             y: {data: 'Y', start: 48, end: 49 },
             z: {data: 'Z', start: 50, end: 51 } 
           };
-
-          
-          setTimeout(function () {
-            console.log(s._toA.query());
-            console.log(s._toB.query());
-
-            Object.keys(s._onTimingChangeA).forEach(function (key) {console.log(key, s._onTimingChangeA[key]);});
-            Object.keys(s._onTimingChangeB).forEach(function (key) {console.log(key, s._onTimingChangeB[key]);});
-          }, 100);
-
-        
-
+ 
           var Interval = timingsrc.Interval;
 
           // load data into sequencer
@@ -79,8 +62,8 @@
           });
 
           // register event handlers
-          s.on("enter", function (e) {console.log(e.toString())});
-          s.on("exit", function (e) {console.log(e.toString())});          
+          s.on("enter", function (e) {console.log(e)});
+          s.on("exit", function (e) {console.log(e)});          
 
           var jumpRunBtn = document.getElementById("jumprun");
           jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};

@@ -37,6 +37,28 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	
 	'use strict';
 
+	/*
+      unique
+      return list of elements that are unique to array 1
+     */
+    var unique = function (array1, array2) {
+		var res = [];
+		for (var i=0; i<array1.length;i++) {
+		    var found = false;
+		    for (var j=0; j<array2.length;j++) {
+				if (array1[i] === array2[j]) {
+				    found = true;
+				    break;
+				} 
+	    	}
+	   		if (!found) {
+				res.push(array1[i]);
+	    	}	 
+		}
+		return res;
+    };
+
+
 	var Interval = seq.Interval;
 
 	var IntervalSequencer = function (timingObjectA, timingObjectB) {
@@ -108,7 +130,6 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 
 	IntervalSequencer.prototype._onAxisChange = function (opList) {
 		// should handle opList?
-		console.log("onaxischange");
 		this.eventifyTriggerEvents(this._resolve());
 	};
 
@@ -151,15 +172,15 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 		var nowB = this._toB.clock.now();
 
 		// where are the timingObjects now?
-		var vectorA = motionutils.computeVector(this._motionA.vector, nowA);
-		var vectorB = motionutils.computeVector(this._motionB.vector, nowB);
+		var vectorA = motionutils.calculateVector(this._toA.vector, nowA);
+		var vectorB = motionutils.calculateVector(this._toB.vector, nowB);
 		var start = Math.min(vectorA.position, vectorB.position);
 		var end = Math.max(vectorA.position, vectorB.position);
 		var searchInterval = new Interval(start, end, true, true);
 
 		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
 		var oldKeys = Object.keys(this._activeKeys);		
-		var newKeys = this._axis.getCuesByInterval(searchInterval).map(function (item) {
+		var newKeys = this._seqA.getCuesByInterval(searchInterval).map(function (item) {
 			return item.key;
 		});	
 	    var exitKeys = unique(oldKeys, newKeys);

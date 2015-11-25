@@ -404,7 +404,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		get : function () {return this._timingsrc;},
 		set : function (timingObject) {
 			if (this._timingsrc) {
-				this._timingsrc.off("change", this._preProcessConverter);
+				this._timingsrc.off("change", this._internalOnChange, this);
 			}
 			// reset internal state
 			this._range = null;
@@ -412,7 +412,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 			this._clearTimeout();
 			clearTimeout(this._tid);
 			this._timingsrc = timingObject;
-			this._timingsrc.on("change", this._preProcessConverter, this);
+			this._timingsrc.on("change", this._internalOnChange, this);
 		}
 	});
 
@@ -438,7 +438,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		fetches initial vector from timingsrc and dispatches
 		it to preProcess() 
 	*/
-	ConverterBase.prototype._preProcessConverter = function () {
+	ConverterBase.prototype._internalOnChange = function () {
 		var vector = this.timingsrc.vector;
 		this._preProcess(vector);
 	};

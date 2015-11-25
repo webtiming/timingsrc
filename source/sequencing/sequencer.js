@@ -1173,8 +1173,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	// shutdown
 	Sequencer.prototype.close = function () {
-	    this._to.off("change", this._onTimingChange);
-	    this._axis.off("change", this._onAxisChange);
+	    this._to.off("change", this._onTimingChange, this);
+	    this._axis.off("change", this._onAxisChange, this);
 	    if (this._timeout !== null) {
 			this._timeout.cancel();
 			this._timeout = null;		

@@ -58,6 +58,61 @@ define(function () {
 			concatAll();
 	};
 
+
+
+	// handler bookkeeping for one event type
+	var HandlerMap = function () {
+		this._id = 0;
+		this._map = {}; // ID -> {handler:, ctx:, pending:, count: }
+	};
+	
+	HandlerMap.prototype._newID = function () {
+		this._id += 1;
+		return this._id;
+	};
+
+	HandlerMap.prototype.getID = function (handler, ctx) {
+		var item;
+		var res = Object.keys(this._map).filter(function (id) {
+			item = this._map[id];
+			return (item.handler === handler && item.ctx === ctx);
+		}, this);
+		return (res.length > 0) ? res[0] : -1;
+	};
+
+	HandlerMap.prototype.getItem = function (id) {
+		return this._map[id];
+	};
+
+	HandlerMap.prototype.register = function (handler, ctx) {
+		var ID = this._newID();
+		this._map[ID] = {
+			ID : ID,
+			handler: handler,
+			ctx : ctx,
+			count : 0,
+			pending : false
+		};
+		return ID;
+	};
+
+	HandlerMap.prototype.unregister = function (handler, ctx) {
+		var id = this.getID(handler, ctx);
+		if (id !== -1) {
+			delete this._map[id];
+		}
+	};
+
+	HandlerMap.prototype.getItems = function () {
+		return Object.keys(this._map).map(function (id) {
+			return this.getItem(id);
+		}, this);
+	};
+
+
+
+
+
 	/*
 	
 		EVENTIFY
@@ -82,10 +137,12 @@ define(function () {
 			Default event name "events" will fire a list of events
 		*/
 		object._ID = id(4);
-		object._callbacks = {}; // type -> []
+		object._callbacks = {}; // type -> HandlerMap
 		// special event "events"
-		object._callbacks["events"] = [];
+		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:true};
+
+
 
 
 		/*
@@ -97,7 +154,7 @@ define(function () {
 			if (type === "events") throw new Error("Illegal event type : 'events' is protected");
 			options = options || {};
 			options.init = (options.init === undefined) ? false : options.init;
-			this._callbacks[type] = [];
+			this._callbacks[type] = new HandlerMap();
 			this._callbacks[type]._options = options;
 		};
 
@@ -216,40 +273,40 @@ define(function () {
 			- if handler specificed - trigger only on given handler (for internal use only)
 			- awareness of init-events	
         */
-        _prototype._eventifyTriggerEvent = function (type, eItem, handler) {
+        _prototype._eventifyTriggerEvent = function (type, eItem, handlerID) {
 			var argList, e, eInfo = {};
 			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type); 
 			var init = this._callbacks[type]._options.init;
-    		this._callbacks[type].forEach(function (h) {
-    			if (handler === undefined) {
+    		this._callbacks[type].getItems().forEach(function (item) {
+    			if (handlerID === undefined) {
            			// all handlers to be invoked, except those with initial pending
-            		if (h["_init_pending_" + type + this._ID]) { 
+            		if (item.pending) { 
               			return false;
             		}
           		} else {
             		// only given handler to be called - ensuring that it is not removed
-            		if (h === handler) {
+            		if (item.ID === handlerID) {
             			eInfo.init = true;
-            			handler["_init_pending_" + type + this._ID] = false;
+            			item.pending = false;
             		} else {
               			return false;
             		}
           		}
           		// eInfo
           		if (init) {
-          			eInfo.init = (h === handler) ? true : false;
+          			eInfo.init = (item.ID === handlerID) ? true : false;
           		}
-          		eInfo.count = h["_count_" + type + this._ID];
+          		eInfo.count = item.count;
           		eInfo.src = this;
           		// formatters
           		e = this._eventifyEventFormatter(eItem.type, eItem.e);
           		argList = this._eventifyCallbackFormatter(type, e, eInfo);
           		try {
-            		h.apply(h["_ctx_" + type + this._ID], argList);
-            		h["_count_" + type + this._ID] += 1;
+            		item.handler.apply(item.ctx, argList);
+            		item.count += 1;
           			return true;
 	          	} catch (err) {
-    	        	console.log("Error in " + type + ": " + h + ": ", err);
+    	        	console.log("Error in " + type + ": " + item.handler + " " + item.ctx + ": ", err);
           		}
     		}, this);
     		return false;
@@ -264,29 +321,29 @@ define(function () {
 		_prototype.on = function (type, handler, ctx) {
 			if (!handler || typeof handler !== "function") throw new Error("Illegal handler");
 		    if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type);
-		    //options.init = (options.init === undefined) ? false : options.init;
-		    var index = this._callbacks[type].indexOf(handler);
-	   	   	if (index === -1) {
+			ctx = ctx || this;
+			var handlerMap = this._callbacks[type];
+		    var handlerID = handlerMap.getID(handler, ctx);
+	   	   	if (handlerID === -1) {
 	  			// register handler
-	  			this._callbacks[type].push(handler);
-		        handler["_ctx_" + type + this._ID] = ctx || this;
-		        handler["_count_" + type + this._ID] = 0;
+	  			handlerID = handlerMap.register(handler, ctx);
 	    	    // do initial callback - if supported by source
-	    	    if (this._callbacks[type]._options.init) {
+	    	    if (handlerMap._options.init) {
 	    	    	// flag handler
-		        	handler["_init_pending_" + type + this._ID] = true;
+	    	    	var item = handlerMap.getItem(handlerID);
+	    	    	item.pending = true;
 	    	    	var self = this;
 		    	    setTimeout(function () {
 		    	    	var eItemList = self._eventifyMakeInitEvents(type);
 	    	    		if (eItemList.length > 0) {
-	    	    			self._eventifyTriggerEvents(eItemList, handler);
+	    	    			self._eventifyTriggerEvents(eItemList, handlerID);
 	    	    		} else {
 	    	    			// initial callback is noop
-		              		handler["_init_pending_" + type + self._ID] = false;
+	    	    			item.pending = false;
 	    	    		}
 		    	    }, 0);
 	    	    }
-	      	}
+	      	} else {console.log("warning : handler already registered");}
 	      	return this;
 		};
 
@@ -294,12 +351,18 @@ define(function () {
 			OFF
 			Available directly on object
 			Un-register a handler from a specfic event type
+
+			
 		*/
 
-		_prototype.off = function (type, handler) {
+		_prototype.off = function (type, handler, ctx) {
 			if (this._callbacks[type] !== undefined) {
-	        	var index = this._callbacks[type].indexOf(handler);
-    	    	if (index > -1) this._callbacks[type].splice(index, 1);
+				var handlerMap = this._callbacks[type];
+				ctx = ctx || this;
+				var handlerID = handlerMap.getID(handler, ctx);
+				if (handlerID > -1) {
+					handlerMap.unregister(handler, ctx);
+				}
       		}
       		return this;
 		};
