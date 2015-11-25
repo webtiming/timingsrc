@@ -19,28 +19,17 @@
 */
 
 
-/*
-	Eventify brings eventing capabilities to any object.
-
-	In particular, eventify supports the initial event pattern.
-	Opt-in for initial events per event type.
-
-	An "events" event provides batch event support.
-
-	
-	if init events are used
-	eventified object must implement this._makeInitEvents(type)
-	- expect [{type:type, e:eArg}]
-
-
-*/
 
 
 define(function () {
 
 	'use strict';
 
-	// UNIQUE ID GENERATOR 
+	/*
+		UTILITY
+	*/
+
+	// unique ID generator 
 	var id = (function(length) {
 	 	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	    return function (len) { // key length
@@ -52,7 +41,7 @@ define(function () {
 		};
 	})(10); // default key length
 
-	// utility
+
 	Array.prototype.concatAll = function() {
 		var results = [];
 		this.forEach(function(subArray) {
@@ -70,8 +59,23 @@ define(function () {
 	};
 
 	/*
-		Eventify
+	
+		EVENTIFY
+
+		Eventify brings eventing capabilities to any object.
+
+		In particular, eventify supports the initial-event pattern.
+		Opt-in for initial events per event type.
+
+		A protected event type "events" provides a callback with a batch of events in a list,
+		instead as individual callbacks.
+
+		if initial-events are used
+		eventified object must implement this._makeInitEvents(type)
+		- expect [{type:type, e:eArg}]
+
 	*/
+
 	var eventify = function (object, _prototype) {
 
 		/*
@@ -83,6 +87,12 @@ define(function () {
 		object._callbacks["events"] = [];
 		object._callbacks["events"]._options = {init:true};
 
+
+		/*
+			DEFINE EVENT TYPE
+			type is event type (string)
+			{init:true} specifies init-event semantics for this event type
+		*/
 		_prototype._defineEvent = function (type, options) {
 			if (type === "events") throw new Error("Illegal event type : 'events' is protected");
 			options = options || {};
@@ -91,44 +101,83 @@ define(function () {
 			this._callbacks[type]._options = options;
 		};
 
-		_prototype._makeInitialEvents = function (type) {
+		/*
+			MAKE INIT EVENTS
+
+			Produce init events for a specific callback handler - right after on("type", callback)
+			Return list consistent with input .eventifyTriggerEvents
+			[{type: "type", e: e}]
+			If [] list is returned there will be no init events.
+
+			Protected event type 'events' is handled automatically
+
+			Implement
+			.eventifyMakeInitEvents(type)
+
+		*/
+		_prototype._internalmakeInitEvents = function (type) {
+			var makeInitEvents = this._makeInitEvents || function (type) {return [];};
 			var typeList;
 			if (type !== "events") {
 				typeList = [type];
 			} else {
 				// type === 'events'
 				typeList = Object.keys(this._callbacks).filter(function (key) {
-					return (key !== "events");
+					return (key !== "events" && this._callbacks[type]._options.init);
 				}, this);
 			}
 			return typeList.concatMap(function (type) {
-				return this._makeInitEvents(type);
+				return makeInitEvents.call(this, type);
 			}, this);		
 		};
 
+		/*
+			EVENT FORMATTER
+
+			Format the structure of EventArgs. 
+			Parameter e is the object that was supplied to triggerEvent
+			Parameter type is the event type that was supplied to triggerEvent
+			Default is to use 'e' given in triggerEvent unchanged.
+
+			Note, for protected event type 'events', eventFormatter is also applied recursively
+			within the list of events
+			ex: { type: "events", e: [{type:"change",e:e1},])  
+
+			Implement
+			.eventifyEventFormatter(type, e) to override default
+		*/
 		_prototype._internalEventFormatter = function (type, e) {
 			var eventFormatter = this._eventFormatter || function (type, e) {return e;};
 			if (type === "events") {
-				// e is really eList - run eventformatter on every item
+				// e is really eList - run eventformatter on every item in list
 				e = e.map(function(item){
-					return eventFormatter(item.type, item.e);
+					return eventFormatter.call(this, item.type, item.e);
 				});
 			}			
 			return eventFormatter(type,e);
 		};
 
 		/*
-			Format parameters in callback. 
-			Return list of arguments given to 
+			CALLBACK FORMATTER
+
+			Format which parameters are included in event callback.
+			Returns a list of parameters. 
+			Default is to exclude type and eInfo and just deliver the event supplied to triggerEvent
+
+			Implement
+			.eventifyCallbackForamtter(type, e, eInfo) to override default
 		*/
 		_prototype._internalCallbackFormatter = function (type, e, eInfo) {
-			if (!this._callbackFormatter) return [type, e, eInfo];
-			return this._callbackFormatter(type, e, eInfo);
+			var callbackFormatter = this._callbackFormatter || function (type, e, eInfo) { return [e];};
+			return callbackFormatter.call(this, type, e, eInfo);
 		};
 
 
 		/* 
-			Public : Trigger Events
+			TRIGGER EVENTS
+
+			Parameter is a list of objects where 'type' specifies the event type and 'e' specifies the event object.
+			'e' may be undefined
 			- [{type: "type", e: e}]
 		*/
 		_prototype._triggerEvents = function (eItemList) {
@@ -143,8 +192,8 @@ define(function () {
         };
 
         /*
-         	Public : Trigger Event
-         	Shorthand for triggering single events
+         	TRIGGER EVENT
+         	Shorthand for triggering a single event
         */
         _prototype._triggerEvent = function (type, e) {
         	this._triggerEvents([{type:type, e:e}]);
@@ -165,9 +214,9 @@ define(function () {
       	};
 
     	/*
-			Internal method for triggering events.
+			Internal method for triggering a single event.
 			- if handler specificed - trigger only on given handler (for internal use only)
-			- awareness of initial events	
+			- awareness of init-events	
         */
         _prototype._internalTriggerEvent = function (type, eItem, handler) {
 			var argList, e, eInfo = {};
@@ -208,6 +257,12 @@ define(function () {
     		return false;
     	};
 
+    	/*
+			ON
+
+			register callback on event type.
+			optionally supply context object (this) used on callback invokation.
+    	*/
 		_prototype.on = function (type, handler, ctx) {
 			if (!handler || typeof handler !== "function") throw new Error("Illegal handler");
 		    if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type);
@@ -224,7 +279,7 @@ define(function () {
 		        	handler["_init_pending_" + type + this._ID] = true;
 	    	    	var self = this;
 		    	    setTimeout(function () {
-		    	    	var eItemList = self._makeInitialEvents(type);
+		    	    	var eItemList = self._internalmakeInitEvents(type);
 	    	    		if (eItemList.length > 0) {
 	    	    			self._internalTriggerEvents(eItemList, handler);
 	    	    		} else {
@@ -236,6 +291,12 @@ define(function () {
 	      	}
 	      	return this;
 		};
+
+		/*
+			OFF
+
+			Un-register a handler from a specfic event type
+		*/
 
 		_prototype.off = function (type, handler) {
 			if (this._callbacks[type] !== undefined) {

@@ -23,7 +23,8 @@ define(['./sequencer'],
 		'use strict';
 		return {
 			Sequencer : seq.Sequencer,
-			Interval : seq.Interval 
+			Interval : seq.Interval,
+			inherit : seq.inherit
 		};
 	}
 );

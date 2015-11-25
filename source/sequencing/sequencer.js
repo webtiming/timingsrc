@@ -25,11 +25,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	// UTILITY
 
-	// check if n is a number
-	var isNumber = function(n) {
-	    return !isNaN(parseFloat(n));
-	};
-
 	var isMoving = function (vector) {
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
 	};
@@ -412,17 +407,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		}
 		return [];
 	};
-
-	/*
-		overrides how event callbacks are delivered 
-		- i.e. how many parameters, only one parameter - e
-		specific to eventutils
-	*/
-	Sequencer.prototype._callbackFormatter = function (type, e, eInfo) { 
-		return [e];
-	};
-
-
 
 	// To be overridden by subclass specializations
 	Sequencer.prototype.loadData = function () {};

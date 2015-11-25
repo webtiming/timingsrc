@@ -19,7 +19,7 @@
 */
 
 
-define (function () {
+define(function () {
 
 	'use strict';
 
@@ -110,7 +110,8 @@ define (function () {
 			clearTimeout(this._tid);
 			this._tid = null;
 			var self = this;
-			window.removeEventListener("message", this, true);	
+			window.removeEventListener("message", this, true);
+			this._clock.off("change", this._onClockChange);
 	    }
 	};
 	

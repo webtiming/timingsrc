@@ -141,14 +141,6 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 	};
 
 	/*
-		overrides how event callbacks are delivered 
-		- i.e. how many parameters, only one parameter - e
-		specific to eventutils
-	*/
-	MasterClock.prototype._callbackFormatter = function (type, e, eInfo) { return [e];};
-
-
-	/*
 		Timeout support
 	*/
 	MasterClock.prototype.setTimeout = function (callback, delay, options) {

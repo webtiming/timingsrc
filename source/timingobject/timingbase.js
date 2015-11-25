@@ -148,14 +148,6 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	};
 
 	/*
-		overrides how event callbacks are delivered 
-		- i.e. how many parameters, only one parameter - e
-		specific to eventutils
-	*/
-	TimingBase.prototype._callbackFormatter = function (type, e, eInfo) { return [e];};
-
-
-	/*
 		Basic query. Insensitive to range violations.
 		Must be overrided by subclasses with specified range.
 	*/

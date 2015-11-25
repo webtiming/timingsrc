@@ -51,7 +51,7 @@ define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) 
 			position : 0.0,
 			velocity : 0.0,
 			acceleration : 0.0,
-			timestamp : motionutils.secClock()
+			timestamp : this._clock.now()
 		};
 		// parameter
 		if (vector) {
@@ -97,7 +97,7 @@ define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) 
 		if (pos === undefined && vel === undefined && acc === undefined) {
 			throw new Error ("drop update, noop");
 		}
-		var now = motionutils.secClock();
+		var now = this._clock.now();
 		var nowVector = motionutils.calculateVector(this.vector, now);
 		var p = nowVector.position;
 		var v = nowVector.velocity;
