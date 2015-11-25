@@ -92,7 +92,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		this._vector = vector;
 		// event support
 		eventutils.eventify(this, MasterClock.prototype);
-		this._defineEvent("change", {init:true}); // define change event (supporting init-event)
+		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 	};
 
 	/*
@@ -105,7 +105,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		this._vector.position = nowVector.position;
 		this._vector.velocity = velocity;
 		this._vector.timestamp = nowVector.timestamp;
-		this._triggerEvent("change");
+		this.eventigyTriggerEvent("change");
 	};
 
 	/*
@@ -133,7 +133,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		defined, i.e. query() not null
 		no event args are passed (undefined) 
 	*/
-	MasterClock.prototype._makeInitEvents = function (type) {
+	MasterClock.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
 			return [{type:type, e:undefined}];
 		}

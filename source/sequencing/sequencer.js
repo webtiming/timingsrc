@@ -376,9 +376,9 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 		// set up eventing stuff
 		eventutils.eventify(this, Sequencer.prototype);
-		this._defineEvent("enter", {init:true}); // define enter event (supporting init-event)
-		this._defineEvent("exit"); 
-		this._defineEvent("change");
+		this.eventifyDefineEvent("enter", {init:true}); // define enter event (supporting init-event)
+		this.eventifyDefineEvent("exit"); 
+		this.eventifyDefineEvent("change");
 
 		// initialise
 		this._to.on("change", this._onTimingChange, this);
@@ -394,7 +394,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		defined, i.e. query() not null
 		no event args are passed (undefined) 
 	*/
-	Sequencer.prototype._makeInitEvents = function (type) {
+	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
 			// TODO - make init events
 			var now = this._clock.now();
@@ -540,7 +540,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	    // Trigger interval events
 	    var eList = this._processIntervalEvents(now, exitItems, enterItems, []);
-	    this._triggerEvents(eList);
+	    this.eventifyTriggerEvents(eList);
 
 	    /*
 	      	Rollback falsely reported events
@@ -738,7 +738,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		setTimeout(function () {
 			// notify interval events and change events
 			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-			self._triggerEvents(eList);
+			self.eventifyTriggerEvents(eList);
 			// kick off main loop
 			self._main(now);
 		}, 0);
@@ -760,7 +760,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    now = now || this._clock.now();
 	    // process tasks (empty due tasks from schedule)
         eList = this._processScheduleEvents(now, this._schedule.pop(now));
-        this._triggerEvents(eList);
+        this.eventifyTriggerEvents(eList);
         // advance schedule window
         var _isMoving = isMoving(this._to.vector);
         if (_isMoving && this._schedule.isExpired(now)) {		
@@ -769,7 +769,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
             this._load(now);
             // process tasks again
             eList = this._processScheduleEvents(now, this._schedule.pop(now));
-	    	this._triggerEvents(eList);
+	    	this.eventifyTriggerEvents(eList);
 	    }
         // set timeout if moving
         if (_isMoving) {

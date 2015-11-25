@@ -95,8 +95,8 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		this._tid = null; // timeoutid for timeupdate
 		// event support
 		eventutils.eventify(this, TimingBase.prototype);
-		this._defineEvent("change", {init:true}); // define change event (supporting init-event)
-		this._defineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
+		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
+		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 	};
 
 
@@ -137,7 +137,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		defined, i.e. query() not null
 		no event args are passed (undefined) 
 	*/
-	TimingBase.prototype._makeInitEvents = function (type) {
+	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
 		var res = this.query();
 		if (type === "change") {
 			return (res !== null) ? [{type: type, e: undefined}] : []; 
@@ -308,14 +308,14 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	*/
 	TimingBase.prototype._postProcess = function (vector) {
 		// trigger change events
-		this._triggerEvent("change");
+		this.eventifyTriggerEvent("change");
 		// trigger timeupdate events
-		this._triggerEvent("timeupdate");
+		this.eventifyTriggerEvent("timeupdate");
 		var moving = vector.velocity !== 0.0 || vector.acceleration !== 0.0;
 		if (moving && this._tid === null) {
 			var self = this;
 			this._tid = setInterval(function () {
-				self._triggerEvent("timeupdate");
+				self.eventifyTriggerEvent("timeupdate");
 			}, 200);
 		} else if (!moving && this._tid !== null) {
 			clearTimeout(this._tid);
