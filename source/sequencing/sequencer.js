@@ -388,15 +388,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 
 	/*
-	  	overrides how immediate events are constructed
-	  	specific to eventutils
-		change event fires immediately if timing object is well 
-		defined, i.e. query() not null
-		no event args are passed (undefined) 
+	  	overrides how immediate events are constructed 
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
-			// TODO - make init events
 			var now = this._clock.now();
 			if (this._activeKeys.length > 0) {
 				var activeItems = this._activeKeys.map(function (key) {

@@ -18,13 +18,14 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./sequencer'], 
-	function (seq) {		
+define(['./sequencer', './intervalsequencer'], 
+	function (seq, IntervalSequencer) {		
 		'use strict';
 		return {
 			Sequencer : seq.Sequencer,
 			Interval : seq.Interval,
-			inherit : seq.inherit
+			inherit : seq.inherit,
+      IntervalSequencer : IntervalSequencer 
 		};
 	}
 );

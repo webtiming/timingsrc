@@ -9,7 +9,6 @@ define (['./timingobject/main', './sequencing/main'], function (timingobject, se
 		// Utils
 		inherit : timingobject.inherit,
 
-
 		// Timing Object
 		TimingObject : timingobject.TimingObject,
 
@@ -26,7 +25,7 @@ define (['./timingobject/main', './sequencing/main'], function (timingobject, se
 		
 		// Sequencing
 		Sequencer : sequencing.Sequencer,
-		Interval : sequencing.Interval
-	
+		Interval : sequencing.Interval,
+		IntervalSequencer : sequencing.IntervalSequencer	
 	};
 });
