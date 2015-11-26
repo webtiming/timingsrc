@@ -121,35 +121,30 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	*/
 
 	IntervalSequencer.prototype._onTimingChangeA = function () {
-		if (this._readyB) console.log("ready");
+		if (!this._readyA && this._readyB) console.log("ready");
 		this._readyA = true;
-		console.log("timing A change");
 		// should handle eList?
 		this._resolve();
 	}; 
 
 	IntervalSequencer.prototype._onTimingChangeB = function () {
-		if (this._readyA) console.log("ready");
+		if (this._readyA && !this._readyB) console.log("ready");
 		this._readyB = true;
-		console.log("timing B change");
 		// should handle eList?
 		this._resolve();
 	};
 
 	IntervalSequencer.prototype._onAxisChange = function (opList) {
 		// should handle opList?
-		console.log("axis change");
 		this._resolve();
 	};
 
 	IntervalSequencer.prototype._onSequencerChangeA = function (eList) {
-		console.log("sequencer A change");
 		// should handle eList?
 		this._resolve();
 	}; 
 
 	IntervalSequencer.prototype._onSequencerChangeB = function (eList) {
-		console.log("sequencer B change");
 		// should handle eList?
 		this._resolve();
 	};
@@ -159,7 +154,6 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	*/
 	IntervalSequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
-			console.log("make init events");
 			return this._resolve();
 		}
 		return [];
@@ -176,24 +170,18 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 			return [];
 		}
 
-
-
-		var nowA = this._toA.clock.now();
-		var nowB = this._toB.clock.now();
-
 		// where are the timingObjects now?
-		var vectorA = motionutils.calculateVector(this._toA.vector, nowA);
-		var vectorB = motionutils.calculateVector(this._toB.vector, nowB);
+		var vectorA = this._toA.query();
+		var vectorB = this._toB.query();
 		var start = Math.min(vectorA.position, vectorB.position);
 		var end = Math.max(vectorA.position, vectorB.position);
 		var searchInterval = new Interval(start, end, true, true);
-		console.log(searchInterval.toString());
+
 		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
 		var oldKeys = this._activeKeys;		
 		var newKeys = this._seqA.getCuesByInterval(searchInterval).map(function (item) {
 			return item.key;
 		});	
-
 	    var exitKeys = unique(oldKeys, newKeys);
 	    var enterKeys = unique(newKeys, oldKeys);
 

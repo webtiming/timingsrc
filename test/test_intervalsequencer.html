@@ -16,7 +16,7 @@
       require(['timingsrc'], function (timingsrc) {
 
         // Timing Object
-        to = new timingsrc.TimingObject([0,20]);
+        to = new timingsrc.TimingObject([0,52]);
         var toA = new timingsrc.SkewConverter(to, -5.0);
         var toB = new timingsrc.SkewConverter(to, 4.0);
         
@@ -62,8 +62,8 @@
           });
 
           // register event handlers
-          s.on("enter", function (e) {console.log(e)});
-          s.on("exit", function (e) {console.log(e)});          
+          s.on("enter", function (e) {console.log("enter", e)});
+          s.on("exit", function (e) {console.log("exit", e)});          
 
           var jumpRunBtn = document.getElementById("jumprun");
           jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
