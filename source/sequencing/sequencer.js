@@ -1175,14 +1175,14 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 				return this.getCue(key);
 			}, this).
 			filter(function (cue) {
-				return (searchInterval.coversInterval(cue.interval));
+				return (searchInterval.overlapsInterval(cue.interval));
 			}, this);
 	};
 
 	// return all cues covered by searchInterval
 	Sequencer.prototype.getCuesCoveredByInterval = function (searchInterval) {
 		return this.getCuesByInterval(searchInterval).filter(function (cue) {
-			return (searchInterval.overlapsInterval(cue.interval)) ? true : false;
+			return (searchInterval.coversInterval(cue.interval)) ? true : false;
 		}, this);
 	};
 
