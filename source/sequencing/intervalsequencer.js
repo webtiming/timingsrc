@@ -121,34 +121,37 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	*/
 
 	IntervalSequencer.prototype._onTimingChangeA = function () {
+		if (this._readyB) console.log("ready");
 		this._readyA = true;
-		console.log("readyA");
+		console.log("timing A change");
 		// should handle eList?
-		this.eventifyTriggerEvents(this._resolve());
+		this._resolve();
 	}; 
 
 	IntervalSequencer.prototype._onTimingChangeB = function () {
+		if (this._readyA) console.log("ready");
 		this._readyB = true;
-		console.log("readyB");
+		console.log("timing B change");
 		// should handle eList?
-		this.eventifyTriggerEvents(this._resolve());
+		this._resolve();
 	};
 
 	IntervalSequencer.prototype._onAxisChange = function (opList) {
 		// should handle opList?
-		this.eventifyTriggerEvents(this._resolve());
+		console.log("axis change");
+		this._resolve();
 	};
 
 	IntervalSequencer.prototype._onSequencerChangeA = function (eList) {
-		console.log("sequencerA events");
+		console.log("sequencer A change");
 		// should handle eList?
-		this.eventifyTriggerEvents(this._resolve());
+		this._resolve();
 	}; 
 
 	IntervalSequencer.prototype._onSequencerChangeB = function (eList) {
-		console.log("sequencerB events");
+		console.log("sequencer B change");
 		// should handle eList?
-		this.eventifyTriggerEvents(this._resolve());
+		this._resolve();
 	};
 
 	/*
@@ -156,7 +159,8 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	*/
 	IntervalSequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
-			return this._resolve();	
+			console.log("make init events");
+			return this._resolve();
 		}
 		return [];
 	};
@@ -172,7 +176,7 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 			return [];
 		}
 
-		console.log("ready");
+
 
 		var nowA = this._toA.clock.now();
 		var nowB = this._toB.clock.now();
@@ -183,16 +187,20 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 		var start = Math.min(vectorA.position, vectorB.position);
 		var end = Math.max(vectorA.position, vectorB.position);
 		var searchInterval = new Interval(start, end, true, true);
-
+		console.log(searchInterval.toString());
 		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
-		var oldKeys = Object.keys(this._activeKeys);		
+		var oldKeys = this._activeKeys;		
 		var newKeys = this._seqA.getCuesByInterval(searchInterval).map(function (item) {
 			return item.key;
 		});	
+
 	    var exitKeys = unique(oldKeys, newKeys);
 	    var enterKeys = unique(newKeys, oldKeys);
 
-	    // make event items
+		// update active keys
+	    this._activeKeys = newKeys;
+
+	    // make event items from enter/exit keys
 	    var eList = [];
 	    var exitItems = exitKeys.forEach(function (key) {
 	    	eList.push({type: "exit", e: {key:key, interval: this._axis.getIntervalByKey(key)}});
@@ -200,13 +208,13 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	    var enterItems = enterKeys.forEach(function (key) {
 	    	eList.push({type: "enter", e: {key:key, interval: this._axis.getIntervalByKey(key)}});
 	    }, this);
-
-	    // update active keys
-	    this._activeKeys = newKeys; 
-
-		return eList;
+	    this.eventifyTriggerEvents(eList);
+ 
+	    // make event items from active keys
+	    return this._activeKeys.map(function (key) {
+	    	return {type: "enter", e: {key:key, interval: this._axis.getIntervalByKey(key)}};
+	    }, this);
 	};
-		
 
 	return IntervalSequencer;
 });

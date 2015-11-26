@@ -396,13 +396,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
-			var now = this._clock.now();
-			if (this._activeKeys.length > 0) {
-				var activeItems = this._activeKeys.map(function (key) {
-					return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
-				}, this);
-			    return this._processIntervalEvents(now, [], activeItems, []);
-			}
+			return this._processInitialEvents();
 		}
 		return [];
 	};
@@ -479,6 +473,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var exitKeys = unique(oldKeys, newKeys);
 	    var enterKeys = unique(newKeys, oldKeys);
 
+
+
 	    /*
 			Corner Case: Exiting Singularities
 			and
@@ -536,10 +532,9 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var enterItems = enterKeys.map(function (key) {
 	    	return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
 	    }, this);
-
 	    // Trigger interval events
-	    var eList = this._processIntervalEvents(now, exitItems, enterItems, []);
-	    this.eventifyTriggerEvents(eList);
+	    this._processIntervalEvents(now, exitItems, enterItems, []);
+
 
 	    /*
 	      	Rollback falsely reported events
@@ -589,7 +584,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 
 	Sequencer.prototype._onAxisChange = function (origOpList) {
-
 		var i, e, key, interval, data;	
 
 		// Wrap update function of axis to capture axis operations
@@ -736,8 +730,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var self = this;
 		setTimeout(function () {
 			// notify interval events and change events
-			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-			self.eventifyTriggerEvents(eList);
+			self._processIntervalEvents(now, exitItems, enterItems, changeItems);
 			// kick off main loop
 			self._main(now);
 		}, 0);
@@ -955,13 +948,14 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	// Process interval events orignating from axis change, timing object change or active keys
 	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
 	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
-			return [];
+			return;
 	    }
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now(); 
-		var msgList = [];
-		exitItems.forEach(function (item){
+	    var msgList = [];
+    	// trigger events
+    	exitItems.forEach(function (item){
 			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.EXIT, nowVector.position, ts, now));
 		}, this); 
 		enterItems.forEach(function (item){
@@ -970,8 +964,25 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		changeItems.forEach(function (item) {
 			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.CHANGE, nowVector.position, ts, now));
 		}, this);
-		return this._makeEvents(now, msgList);
+		this.eventifyTriggerEvents(this._makeEvents(now, msgList));
 	};
+
+
+	Sequencer.prototype._processInitialEvents = function () {
+		// called by makeInitEvents - return event list based on activeKeys
+		var interval, data, eArg;
+		var now = this._clock.now();
+		var nowVector = motionutils.calculateVector(this._to.vector, now);
+		var directionInt = motionutils.calculateDirection(nowVector, now);
+		var ts = this._clock.now();
+		return this._activeKeys.map(function (key) {
+			interval = this._axis.getIntervalByKey(key);
+			data = this.getData(key);
+			eArg = this._makeEArgs(key, interval, data, directionInt, VerbType.ENTER, nowVector.position, ts, now);
+			return {type: VerbType.ENTER, e: eArg}; 
+		}, this);
+	};
+
 	
 	/*
 		make events ensures consistency of active keys as changes
