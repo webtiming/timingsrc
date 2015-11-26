@@ -97,6 +97,16 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		eventutils.eventify(this, TimingBase.prototype);
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
+
+		/*
+			store a wrapper function on the instance used as a callback handler from timingsrc
+			(if this was a prototype function - it would be shared by multiple objects thus
+			prohibiting them from subscribing to the same timingsrc)
+		*/
+		this._internalOnChange = function () {
+			var vector = this.timingsrc.vector;
+			this._preProcess(vector);
+		};
 	};
 
 
@@ -432,16 +442,8 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		return this.timingsrc.range;
 	};
 
-	/*
-		not to be overridden
-		event handler for "change" events on the timingsrc.
-		fetches initial vector from timingsrc and dispatches
-		it to preProcess() 
-	*/
-	ConverterBase.prototype._internalOnChange = function () {
-		var vector = this.timingsrc.vector;
-		this._preProcess(vector);
-	};
+
+
 
 	return {
 		TimingBase : TimingBase,

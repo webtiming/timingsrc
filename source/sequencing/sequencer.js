@@ -380,8 +380,12 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this.eventifyDefineEvent("exit"); 
 		this.eventifyDefineEvent("change");
 
+		// wrap prototype handlers and store ref on instance
+		this._wrappedOnTimingChange = function () {this._onTimingChange();};
+		this._wrappedOnAxisChange = function () {this._onAxisChange();};
+
 		// initialise
-		this._to.on("change", this._onTimingChange, this);
+		this._to.on("change", this._wrappedOnTimingChange, this);
 		// Allow subclass to load data into the sequencer
 		this.loadData();
 	};
@@ -453,7 +457,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
-			this._axis.on("change", this._onAxisChange, this);
+			this._axis.on("change", this._wrappedOnAxisChange, this);
 	    } else {
 	    	// Deliberately set time (a little) back for delayed updates
 	    	now = initVector.timestamp;
@@ -1173,8 +1177,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	// shutdown
 	Sequencer.prototype.close = function () {
-	    this._to.off("change", this._onTimingChange, this);
-	    this._axis.off("change", this._onAxisChange, this);
+	    this._to.off("change", this._wrappedOnTimingChange, this);
+	    this._axis.off("change", this._wrappedOnAxisChange, this);
 	    if (this._timeout !== null) {
 			this._timeout.cancel();
 			this._timeout = null;		

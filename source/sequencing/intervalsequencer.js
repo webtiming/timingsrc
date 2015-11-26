@@ -80,12 +80,18 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 		this.eventifyDefineEvent("exit") 
 		this.eventifyDefineEvent("change"); 
 
-		// Initialise
-		this._axis.on("change", this._onAxisChange, this);	
-		this._toA.on("change", this._onTimingChangeA, this);
-		this._toB.on("change", this._onTimingChangeB, this);
-		this._seqA.on("events", this._onSequencerEventsA, this);
-		this._seqB.on("events", this._onSequencerEventsB, this);
+		// Wrapping prototype event handlers and store references on instance
+		this._wrappedOnAxisChange = function () {this._onAxisChange();};
+		this._wrappedOnTimingChangeA = function () {this._onTimingChangeA();};
+		this._wrappedOnTimingChangeB = function () {this._onTimingChangeB();};
+		this._wrappedOnSequencerChangeA = function () {this._onSequencerChangeA();};
+		this._wrappedOnSequencerChangeB = function () {this._onSequencerChangeB();};
+
+		this._axis.on("change", this._wrappedOnAxisChange, this);	
+		this._toA.on("change", this._wrappedOnTimingChangeA, this);
+		this._toB.on("change", this._wrappedOnTimingChangeB, this);
+		this._seqA.on("events", this._wrappedOnSequencerChangeA, this);
+		this._seqB.on("events", this._wrappedOnSequencerChangeB, this);
 	};
 
 	IntervalSequencer.prototype._isReady = function() {
@@ -133,13 +139,13 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 		this.eventifyTriggerEvents(this._resolve());
 	};
 
-	IntervalSequencer.prototype._onSequencerEventsA = function (eList) {
+	IntervalSequencer.prototype._onSequencerChangeA = function (eList) {
 		console.log("sequencerA events");
 		// should handle eList?
 		this.eventifyTriggerEvents(this._resolve());
 	}; 
 
-	IntervalSequencer.prototype._onSequencerEventsB = function (eList) {
+	IntervalSequencer.prototype._onSequencerChangeB = function (eList) {
 		console.log("sequencerB events");
 		// should handle eList?
 		this.eventifyTriggerEvents(this._resolve());
