@@ -32,8 +32,8 @@
 */
 
 
-define(['util/eventutils', 'util/motionutils', './sequencer'], 
-	function (eventutils, motionutils, seq) {
+define(['util/eventutils', 'util/motionutils', './axis', './sequencer'], 
+	function (eventutils, motionutils, axis, seq) {
 	
 	'use strict';
 
@@ -62,7 +62,7 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	var Interval = seq.Interval;
 
 	var IntervalSequencer = function (timingObjectA, timingObjectB) {
-		this._axis = new seq.Axis();
+		this._axis = new axis.Axis();
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;
 		this._seqA = new seq.Sequencer(this._toA, this._axis);
@@ -179,7 +179,6 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	};
 
 	IntervalSequencer.prototype._onAxisChange = function (opList) {
-		console.log(opList);
 		this._reevaluate(opList);
 	};
 
@@ -212,11 +211,18 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 		return new Interval(start, end, true, true);
 	};
 
-	IntervalSequencer.prototype._getDataFromAxisOpList = function (axisOpList, key) {
-		var list = axisOpList.filter (function (op) {
-			return (op.key === key && op.type === axis.OpType.REMOVE);
-		})
-		if (list.length > 0) return list[0].data;
+	IntervalSequencer.prototype._getOpFromAxisOpList = function (axisOpList, key) {
+		var op = {};
+		if (axisOpList) {
+			for (var i=0; i<axisOpList.length; i++) {
+				var item = axisOpList[i];
+				if (item.key === key) {
+					op = item;
+					break;
+				}
+			}
+		}
+		return op;
 	};
 
 	/*
@@ -260,13 +266,22 @@ define(['util/eventutils', 'util/motionutils', './sequencer'],
 	    // make event items from enter/exit keys
 	    var eList = [];
 	    var exitItems = exitKeys.forEach(function (key) {
+	    	var op = this._getOpFromAxisOpList(axisOpList, key);
+	    	var interval, data;
+	    	if (op.type === axis.OpType.REMOVE) {
+	    		interval = op.interval;
+	    		data = op.data;
+	    	} else {
+	    		interval = this._axis.getIntervalByKey(key);
+	    		data = this.getData(key);
+	    	}
 	    	eList.push({
 	    		type: "exit", 
 	    		e: {
-	    			key:key, 
-	    			interval: this._axis.getIntervalByKey(key),
+	    			key : key, 
+	    			interval : interval,
 	    			type : "exit",
-	    			data : this._getDataFromAxisOpList(key) || this.getData(key)
+	    			data : data
 	    		}
 	    	});
 	    }, this);
