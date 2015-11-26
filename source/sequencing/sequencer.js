@@ -382,7 +382,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 		// wrap prototype handlers and store ref on instance
 		this._wrappedOnTimingChange = function () {this._onTimingChange();};
-		this._wrappedOnAxisChange = function () {this._onAxisChange();};
+		this._wrappedOnAxisChange = function (e) {this._onAxisChange(e);};
 
 		// initialise
 		this._to.on("change", this._wrappedOnTimingChange, this);
