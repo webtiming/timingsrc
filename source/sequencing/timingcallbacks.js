@@ -18,18 +18,16 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define (['util/motionutils', 'util/eventutils'], 
-  function (motionutils, eventutils) {
+define (['util/motionutils'], function (motionutils) {
 
     'use strict';
 
 
-    var SetTimingCallback = function (timingObject, position, handler, ctx) {
+    var SetTimingCallback = function (timingObject, position, handler) {
       this._timingsrc = to;
       this._handler = handler;
-      this._ctx = ctx;
       this._target = position;
-      this._tid = null;
+      this._timeout = null;
       this._wrappedOnChange = function () {this._onChange();};
 
       // initialise
@@ -38,9 +36,39 @@ define (['util/motionutils', 'util/eventutils'],
 
     // update event from timing object
     SetTimingCallback.prototype._onChange = function () {
-
+      this._clearTimeout();
+      var vector = this._timingsrc.query();
+      var secDelay = motionutils.calculateMinPositiveRealSolution(vector, this._target);
+      console.log(secDelay);
+      if (secDelay === null) return null;
+      var self = this;
+      this._timeout = this._timingsrc.clock.setTimeout(function () {
+        self._onTimeout();
+      }, secDelay, {anchor: vector.timestamp, early: 0.0005});    
     };
 
+     // update event from timing object
+    SetTimingCallback.prototype._onTimeout = function () {
+      this.cancel();
+      this._handler();
+    };
+
+    // update event from timing object
+    SetTimingCallback.prototype._clearTimeout = function () {
+      // cleanup
+      if (this._timeout !== null) {
+        this._timeout.cancel();
+        this._timeout = null;
+      }
+    };
+
+    // update event from timing object
+    SetTimingCallback.prototype.cancel = function () {
+      // cleanup
+      this._clearTimeout();
+      this._timingsrc.off("change", this._wrappedOnChange, this);  
+    };
+ 
     /*
       Accessor for timingsrc.
       Supports dynamic switching of timing source by assignment.
@@ -56,8 +84,6 @@ define (['util/motionutils', 'util/eventutils'],
         this._timingsrc.on("change", this._wrappedOnChange, this);
       }
     });
-
-
 
     // module definition
     return {

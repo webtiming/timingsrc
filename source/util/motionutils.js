@@ -124,7 +124,10 @@ define(function () {
     // Determine if equation p(t) = p + vt + 0.5at^2 = x 
     // has solutions for some real number t.
     // Calculate and return the least positive real solution.
-    var calculateMinPositiveRealSolution = function (p,v,a,x) {
+    var calculateMinPositiveRealSolution = function (vector,x) {
+		var p = vector.position;
+		var v = vector.velocity;
+		var a = vector.acceleration;
 		var res = calculatePositiveRealSolutions(p,v,a,x);
 		if (res.length === 0) return null;
 		else return res[0];
@@ -142,14 +145,11 @@ define(function () {
     // Note t1 == (delta + t0) is only guaranteed to be in the 
     // future as long as the function
     // is evaluated at time t0 or immediately after.
-    var calculateDelta = function (vector, range ) {
-		var p = vector.position;
-		var v = vector.velocity;
-		var a = vector.acceleration;
+    var calculateDelta = function (vector, range) {
 		// Time delta to hit posBefore
-		var deltaBeforeSec = calculateMinPositiveRealSolution(p,v,a, range[0]);
+		var deltaBeforeSec = calculateMinPositiveRealSolution(vector, range[0]);
 		// Time delta to hit posAfter
-		var deltaAfterSec = calculateMinPositiveRealSolution(p,v,a, range[1]);
+		var deltaAfterSec = calculateMinPositiveRealSolution(vector, range[1]);
 		// Pick the appropriate solution
 		if (deltaBeforeSec !== null && deltaAfterSec !== null) {
 		    if (deltaBeforeSec < deltaAfterSec)
@@ -282,6 +282,7 @@ define(function () {
 	return {
 		calculateVector : calculateVector,
 		calculateDirection : calculateDirection,
+		calculateMinPositiveRealSolution : calculateMinPositiveRealSolution,
 		calculateDelta : calculateDelta,
 		calculateInterval : calculateInterval,
 		calculateSolutionsInInterval : calculateSolutionsInInterval

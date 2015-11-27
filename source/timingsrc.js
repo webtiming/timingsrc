@@ -28,6 +28,7 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 		Sequencer : sequencing.Sequencer,
 		Interval : sequencing.Interval,
 		IntervalSequencer : sequencing.IntervalSequencer,
+		SetTimingCallback : sequencing.SetTimingCallback,
 
 		// MediaSync
 		MediaSync: mediasync.MediaSync,

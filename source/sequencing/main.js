@@ -18,14 +18,15 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./sequencer', './intervalsequencer'], 
-	function (seq, IntervalSequencer) {		
+define(['./sequencer', './intervalsequencer', './timingcallbacks'], 
+	function (seq, IntervalSequencer, timingcallbacks) {		
 		'use strict';
 		return {
 			Sequencer : seq.Sequencer,
 			Interval : seq.Interval,
 			inherit : seq.inherit,
-      IntervalSequencer : IntervalSequencer 
+      IntervalSequencer : IntervalSequencer,
+      SetTimingCallback : timingcallbacks.SetTimingCallback
 		};
 	}
 );
