@@ -7,7 +7,9 @@
  * License: LGPL
  */
 
-var mediascape = function(_MS_) {
+define (function () {
+
+  'use strict';
 
   /**
    * Detect if we need to kick the element
@@ -30,7 +32,7 @@ var mediascape = function(_MS_) {
     elem.pause();
     elem.muted = m;
     return _need_kick;
-  }
+  };
 
   /**
    * The mediaSync object will try to synchronize an HTML 
@@ -117,7 +119,6 @@ var mediascape = function(_MS_) {
         _motion.__defineGetter__("vel", function() {return _motion.query().velocity});
         _motion.__defineGetter__("acc", function() {return _motion.query().acceleration});
       }
-
       _motion.on("change", onchange);
     };
 
@@ -544,7 +545,6 @@ var mediascape = function(_MS_) {
       elem.removeEventListener("canplay", init);
       elem.removeEventListener("playing", init);
       _setUpdateFunc(_update_func);
-      _motion.on("change", onchange);
     } 
 
     elem.addEventListener("canplay", init);
@@ -710,9 +710,6 @@ var mediascape = function(_MS_) {
       }
     }
 
-
-
-
     // Export the API
     API = {
       setSkew: setSkew,
@@ -726,18 +723,62 @@ var mediascape = function(_MS_) {
       off: off
     };
     return API;
-  }
-
-  _MS_.mediaSync = mediaSync;
-  _MS_.mediaNeedKick = needKick;
-  return _MS_;
-} (mediascape || {});
+  };
+  
 
 
-// Support mcorp integration too
-if (!window.hasOwnProperty("MCorp")) {
-  MCorp = {};
-}
 
-MCorp.mediaSync = mediascape.mediaSync;
-MCorp.mediaNeedKick = mediascape.mediaNeedKick;
+  var MediaSync = function (elem, timingObject, options) {
+    this._sync = mediaSync(elem, timingObject, options);
+  };
+
+  MediaSync.prototype.setSkew = function (skew) {
+    this._sync.setSkew(skew);
+  };
+
+  MediaSync.prototype.getSkew = function () {
+    this._sync.getSkew();
+  };
+
+  MediaSync.prototype.setOption = function (option, value) {
+    this._sync.setOption(option, value);
+  };
+
+  MediaSync.prototype.getMethod = function () {
+    this._sync.getMethod();
+  };
+
+  /*
+    Accessor for timingsrc.
+    Supports dynamic switching of timing source by assignment.
+  */
+  Object.defineProperty(MediaSync.prototype, 'timingsrc', {
+    get : function () {return this._sync._motion;},
+    set : function (timingObject) {
+      this._sync.setMotion(timingObject);
+    }
+  });
+
+  MediaSync.prototype.stop = function () {
+    this._sync.stop();
+  };
+
+  MediaSync.prototype.pause = function (val) {
+    this._sync.pause(val);
+  };
+
+  MediaSync.prototype.on = function (what, handler, agentid) {
+    this._sync.on(what, handler, agentid);
+  };
+
+  MediaSync.prototype.off = function (type, handler) {
+    this._sync.off(type, handler);
+  };
+
+  // export module
+  return {
+    mediaSync : mediaSync,
+    MediaSync: MediaSync,
+    mediaNeedKick : needKick
+  };
+});

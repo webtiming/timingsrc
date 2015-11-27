@@ -3,7 +3,8 @@
   Written by Ingar Arntzen, Norut
 */
 
-define (['./timingobject/main', './sequencing/main'], function (timingobject, sequencing) {
+define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'], 
+	function (timingobject, sequencing, mediasync) {
 	return {
 		
 		// Utils
@@ -26,6 +27,10 @@ define (['./timingobject/main', './sequencing/main'], function (timingobject, se
 		// Sequencing
 		Sequencer : sequencing.Sequencer,
 		Interval : sequencing.Interval,
-		IntervalSequencer : sequencing.IntervalSequencer	
+		IntervalSequencer : sequencing.IntervalSequencer,
+
+		// MediaSync
+		MediaSync: mediasync.MediaSync,
+    	mediaNeedKick : mediasync.needKick
 	};
 });
