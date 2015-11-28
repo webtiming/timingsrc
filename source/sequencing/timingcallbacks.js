@@ -20,73 +20,106 @@
 
 define (['util/motionutils'], function (motionutils) {
 
-    'use strict';
+  'use strict';
+
+    // Utility inheritance function.
+  var inherit = function (Child, Parent) {
+    var F = function () {}; // empty object to break prototype chain - hinder child prototype changes to affect parent
+    F.prototype = Parent.prototype;
+    Child.prototype = new F(); // child gets parents prototypes via F
+    Child.uber = Parent.prototype; // reference in parent to superclass
+    Child.prototype.constructor = Child; // resetting constructor pointer 
+  };
 
 
-    var SetTimingCallback = function (timingObject, position, handler) {
-      this._timingsrc = to;
-      this._handler = handler;
-      this._target = position;
+  var TimingCallbackBase = function (timingObject, handler, position) {
+   
+    this._timingsrc = to;
+    this._handler = handler;
+    this._timeout = null;
+    this._wrappedOnChange = function () {this._onChange();};
+    // initialise
+    this.timingsrc = to;
+  }; 
+
+  // update event from timing object
+  TimingCallbackBase.prototype._onChange = function () {
+    this._clearTimeout();
+    var res = this._calculateTimeout();
+    if (res.delay === null) return null;
+    var self = this;
+    this._timeout = this._timingsrc.clock.setTimeout(function () {
+      var _continue = self._onTimeout();
+      if (!_continue) {
+        console.log("cancel");
+        self.cancel();
+      }
+      self._handler();
+    }, res.delay, {anchor: res.anchor, early: 0.0005});    
+  };
+
+  // update event from timing object
+  TimingCallbackBase.prototype._clearTimeout = function () {
+    // cleanup
+    if (this._timeout !== null) {
+      this._timeout.cancel();
       this._timeout = null;
-      this._wrappedOnChange = function () {this._onChange();};
+    }
+  };
 
-      // initialise
-      this.timingsrc = to;
-    }; 
+  // update event from timing object
+  TimingCallbackBase.prototype.cancel = function () {
+    // cleanup
+    this._clearTimeout();
+    this._timingsrc.off("change", this._wrappedOnChange, this);  
+  };
 
-    // update event from timing object
-    SetTimingCallback.prototype._onChange = function () {
-      this._clearTimeout();
-      var vector = this._timingsrc.query();
-      var secDelay = motionutils.calculateMinPositiveRealSolution(vector, this._target);
-      console.log(secDelay);
-      if (secDelay === null) return null;
-      var self = this;
-      this._timeout = this._timingsrc.clock.setTimeout(function () {
-        self._onTimeout();
-      }, secDelay, {anchor: vector.timestamp, early: 0.0005});    
-    };
-
-     // update event from timing object
-    SetTimingCallback.prototype._onTimeout = function () {
-      this.cancel();
-      this._handler();
-    };
-
-    // update event from timing object
-    SetTimingCallback.prototype._clearTimeout = function () {
-      // cleanup
-      if (this._timeout !== null) {
-        this._timeout.cancel();
-        this._timeout = null;
+  /*
+    Accessor for timingsrc.
+    Supports dynamic switching of timing source by assignment.
+  */
+  Object.defineProperty(TimingCallbackBase.prototype, 'timingsrc', {
+    get : function () {return this._timingsrc;},
+    set : function (timingObject) {
+      if (this._timingsrc) {
+        this._timingsrc.off("change", this._wrappedOnChange, this);
       }
-    };
+      clearTimeout(this._tid);
+      this._timingsrc = timingObject;
+      this._timingsrc.on("change", this._wrappedOnChange, this);
+    }
+  });
 
-    // update event from timing object
-    SetTimingCallback.prototype.cancel = function () {
-      // cleanup
-      this._clearTimeout();
-      this._timingsrc.off("change", this._wrappedOnChange, this);  
-    };
- 
-    /*
-      Accessor for timingsrc.
-      Supports dynamic switching of timing source by assignment.
-    */
-    Object.defineProperty(SetTimingCallback.prototype, 'timingsrc', {
-      get : function () {return this._timingsrc;},
-      set : function (timingObject) {
-        if (this._timingsrc) {
-          this._timingsrc.off("change", this._wrappedOnChange, this);
-        }
-        clearTimeout(this._tid);
-        this._timingsrc = timingObject;
-        this._timingsrc.on("change", this._wrappedOnChange, this);
-      }
-    });
 
-    // module definition
+
+
+  var SetTimingCallback = function (timingObject, handler, target, options) {
+    TimingCallbackBase.call(this, timingObject, handler);
+    this._options = options || {}; 
+    this._options.repeat = (this._options.repeat !== undefined) ? this._options.repeat : false;
+    this._target = target;
+  };
+  inherit(SetTimingCallback, TimingCallbackBase);
+
+  // update event from timing object
+  SetTimingCallback.prototype._onTimeout = function () {
+    return this._options.repeat;
+  };
+
+  SetTimingCallback.prototype._calculateTimeout = function () {
+    var vector = this._timingsrc.query();
+    var delay = motionutils.calculateMinPositiveRealSolution(vector, this._target);
     return {
-      SetTimingCallback: SetTimingCallback
+      anchor: vector.timestamp,
+      delay: delay
     };
+  };
+
+
+
+
+  // module definition
+  return {
+    SetTimingCallback: SetTimingCallback
+  };
 }); 

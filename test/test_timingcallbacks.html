@@ -31,9 +31,9 @@
           });
 
 
-          var timeout = new timingsrc.SetTimingCallback(to, 4, function () {
-            console.log("timeout", to.query().position - 4);
-          });
+          var timeout = new timingsrc.SetTimingCallback(to, function () {
+            console.log("timeout", to.query().position.toFixed(2));
+          }, 4, {repeat:true});
 
                     
         };
