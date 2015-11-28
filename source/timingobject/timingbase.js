@@ -234,9 +234,13 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		if (this._options.timeout === true) {
 			this._clearTimeout();
 			var vector = this._calculateTimeoutVector();
-			if (vector === null) {return;}
-	 		this._timeout = {vector:vector};
-	 		this._internalTimeout();
+			if (vector === null) {return;}	 		
+			var now = this.clock.now();
+	 		var secDelay = vector.timestamp - now;
+	 		var self = this;
+	 		this._timeout = this.clock.setTimeout(function () {
+				self._process(self._onTimeout(vector));
+	      	}, secDelay, {anchor: now, early: 0.0005}); 
 		}
 	};
 
@@ -256,31 +260,9 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	*/
 	TimingBase.prototype._clearTimeout = function () {
 		if (this._timeout !== null) {
-			clearTimeout(this._timeout.tid);
+			this._timeout.cancel();
 			this._timeout = null;
 		}
-	};
-
-	/*
-		do not override
-		Internal handler for vector timeouts
-		guarantee that timeouts are not delivered too soon.
-
-	*/
-	TimingBase.prototype._internalTimeout = function () {
-		if (this._timeout === null) return;
-		// ensure that timeout does not fire to early
-		var vector = this._timeout.vector;
-		var early = vector.timestamp - this.clock.now();
-		if (early > 0.0) {
-			var self = this;
-			this._timeout.tid = setTimeout(function () {
-				self._internalTimeout();
-			}, early*1000);
-			return;
-		}
-		vector = this._onTimeout(vector);
-		this._process(vector);
 	};
 
 	/*
