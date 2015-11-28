@@ -30,10 +30,15 @@
             value.innerHTML = to.query().position.toFixed(2); 
           });
 
+          
+          var t1 = new timingsrc.SetPointCallback(to, function () {
+            console.log("point callback", to.query().position.toFixed(2));
+          }, 6, {repeat:true});
+          
 
-          var timeout = new timingsrc.SetTimingCallback(to, function () {
-            console.log("timeout", to.query().position.toFixed(2));
-          }, 4, {repeat:true});
+          var t2 = new timingsrc.SetIntervalCallback(to, function () {
+            console.log("interval callback", to.query().position.toFixed(2));
+          }, 5, {offset:0});
 
                     
         };

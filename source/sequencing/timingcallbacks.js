@@ -33,7 +33,6 @@ define (['util/motionutils'], function (motionutils) {
 
 
   var TimingCallbackBase = function (timingObject, handler, position) {
-   
     this._timingsrc = to;
     this._handler = handler;
     this._timeout = null;
@@ -42,19 +41,16 @@ define (['util/motionutils'], function (motionutils) {
     this.timingsrc = to;
   }; 
 
-  // update event from timing object
-  TimingCallbackBase.prototype._onChange = function () {
+
+
+  TimingCallbackBase.prototype._renewTimeout = function () {
     this._clearTimeout();
     var res = this._calculateTimeout();
     if (res.delay === null) return null;
     var self = this;
     this._timeout = this._timingsrc.clock.setTimeout(function () {
-      var _continue = self._onTimeout();
-      if (!_continue) {
-        console.log("cancel");
-        self.cancel();
-      }
-      self._handler();
+      self._onTimeout();
+
     }, res.delay, {anchor: res.anchor, early: 0.0005});    
   };
 
@@ -91,24 +87,118 @@ define (['util/motionutils'], function (motionutils) {
   });
 
 
+  /*
+      SET POINT CALLBACK
+      callback when timing object position is equal to point
+      options {repeat:true} implies that callback will occur repeatedly
+      every time timing object passes point.
+      Default is to fire only once, similar to setTimeout
+  */
 
-
-  var SetTimingCallback = function (timingObject, handler, target, options) {
+  var SetPointCallback = function (timingObject, handler, point, options) {
     TimingCallbackBase.call(this, timingObject, handler);
     this._options = options || {}; 
     this._options.repeat = (this._options.repeat !== undefined) ? this._options.repeat : false;
-    this._target = target;
+    this._point = point;
   };
-  inherit(SetTimingCallback, TimingCallbackBase);
+  inherit(SetPointCallback, TimingCallbackBase);
+
 
   // update event from timing object
-  SetTimingCallback.prototype._onTimeout = function () {
-    return this._options.repeat;
+  SetPointCallback.prototype._onChange = function () {
+    if (this._timingsrc.query().position === this._point) {
+      this._onTimeout();
+    }
+    this._renewTimeout();
   };
 
-  SetTimingCallback.prototype._calculateTimeout = function () {
+  // update event from timing object
+  SetPointCallback.prototype._onTimeout = function () {
+    if (!this._options.repeat) {
+      this.cancel();
+    };
+    this._handler();
+    this._renewTimeout();
+  };
+
+  SetPointCallback.prototype._calculateTimeout = function () {
     var vector = this._timingsrc.query();
-    var delay = motionutils.calculateMinPositiveRealSolution(vector, this._target);
+    var delay = motionutils.calculateMinPositiveRealSolution(vector, this._point);
+    return {
+      anchor: vector.timestamp,
+      delay: delay
+    };
+  };
+
+  
+  /*
+    
+    SET INTERVAL CALLBACK
+
+    callback callback for every point x, where (x - offset) % length === 0
+    options : {offset:offset}
+    Default is offset 0
+  */
+
+  var SetIntervalCallback = function (timingObject, handler, length, options) {
+    TimingCallbackBase.call(this, timingObject, handler);
+    this._options = options || {}; 
+    this._options.offset = (this._options.offset !== undefined) ? this._options.offset : 0;
+    this._length = length;
+  };
+  inherit(SetIntervalCallback, TimingCallbackBase);
+
+  // ovverride modulo to behave better for negative numbers 
+  SetIntervalCallback.prototype._mod = function (n, m) {
+    return ((n % m) + m) % m;
+  };
+
+  // get point representation from float
+  SetIntervalCallback.prototype._getPoint = function (x) {
+    var skew = this._options.offset;
+    return {
+      n : Math.floor((x-skew)/this._length),
+      offset : this._mod(x-skew, this._length)
+    };
+  };
+
+    // get float value from point representation
+  SetIntervalCallback.prototype._getFloat = function (p) {
+    var skew = this._options.offset;
+    return skew + (p.n * this._length) + p.offset;
+  };
+
+  // update event from timing object
+  SetIntervalCallback.prototype._onChange = function () {
+    this._renewTimeout();
+  };
+
+  // update event from timing object
+  SetIntervalCallback.prototype._onTimeout = function () {
+    this._handler();
+    this._renewTimeout();
+  };
+
+  SetIntervalCallback.prototype._calculateTimeout = function () {
+    var vector = this._timingsrc.query();
+    var point = this._getPoint(vector.position);
+    var beforePoint = {}, afterPoint = {};
+    if (point.offset === 0) {
+      beforePoint.n = point.n - 1;
+      beforePoint.offset = point.offset;
+      afterPoint.n = point.n + 1;
+      afterPoint.offset = point.offset;
+      // TODO - avoid duplicated callbacks on range?
+      this._handler();
+    } else {
+      beforePoint.n = point.n;
+      beforePoint.offset = 0;
+      afterPoint.n = point.n + 1;
+      afterPoint.offset = 0;
+    }
+    var before = this._getFloat(beforePoint);
+    var after = this._getFloat(afterPoint);
+    var delay = motionutils.calculateDelta(vector, [before, after])[0];
     return {
       anchor: vector.timestamp,
       delay: delay
@@ -116,10 +206,9 @@ define (['util/motionutils'], function (motionutils) {
   };
 
 
-
-
   // module definition
   return {
-    SetTimingCallback: SetTimingCallback
+    SetPointCallback: SetPointCallback,
+    SetIntervalCallback : SetIntervalCallback
   };
 }); 
