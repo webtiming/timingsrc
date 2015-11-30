@@ -32,7 +32,6 @@ define([
 	function (timingbase, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter, TimingObject) {		
 		'use strict';
 		return {
-			motionutils : timingbase.motionutils,
 			inherit : timingbase.inherit,
 			ConverterBase : timingbase.ConverterBase,
 			SkewConverter : SkewConverter,

@@ -25,8 +25,8 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 		DerivativeConverter : timingobject.DerivativeConverter,
 		
 		// Sequencing
-		Sequencer : sequencing.Sequencer,
 		Interval : sequencing.Interval,
+		Sequencer : sequencing.Sequencer,
 		IntervalSequencer : sequencing.IntervalSequencer,
 		SetPointCallback : sequencing.SetPointCallback,
 		SetIntervalCallback : sequencing.SetIntervalCallback,
