@@ -31,8 +31,7 @@ define (['util/motionutils'], function (motionutils) {
     Child.prototype.constructor = Child; // resetting constructor pointer 
   };
 
-
-  var TimingCallbackBase = function (timingObject, handler, position) {
+  var TimingCallbackBase = function (timingObject, handler) {
     this._timingsrc = to;
     this._handler = handler;
     this._timeout = null;
@@ -41,8 +40,6 @@ define (['util/motionutils'], function (motionutils) {
     this.timingsrc = to;
   }; 
 
-
-
   TimingCallbackBase.prototype._renewTimeout = function () {
     this._clearTimeout();
     var res = this._calculateTimeout();
@@ -50,7 +47,6 @@ define (['util/motionutils'], function (motionutils) {
     var self = this;
     this._timeout = this._timingsrc.clock.setTimeout(function () {
       self._onTimeout();
-
     }, res.delay, {anchor: res.anchor, early: 0.0005});    
   };
 
@@ -107,7 +103,7 @@ define (['util/motionutils'], function (motionutils) {
   // update event from timing object
   SetPointCallback.prototype._onChange = function () {
     if (this._timingsrc.query().position === this._point) {
-      this._onTimeout();
+      this._handler();
     }
     this._renewTimeout();
   };
@@ -170,6 +166,10 @@ define (['util/motionutils'], function (motionutils) {
 
   // update event from timing object
   SetIntervalCallback.prototype._onChange = function () {
+    var points = this._calculatePoints(this._timingsrc.query().position);
+    if (points.isTarget) {
+      this._handler();
+    }
     this._renewTimeout();
   };
 
@@ -179,26 +179,40 @@ define (['util/motionutils'], function (motionutils) {
     this._renewTimeout();
   };
 
-  SetIntervalCallback.prototype._calculateTimeout = function () {
-    var vector = this._timingsrc.query();
-    var point = this._getPoint(vector.position);
+  /*
+    Calculate target points before and after a given position.
+    If the given position is itself a target point, this will
+    be reported as isTarget===true.
+  */
+
+  SetIntervalCallback.prototype._calculatePoints = function (position) {
     var beforePoint = {}, afterPoint = {};
+    var target;
+    var point = this._getPoint(position);
     if (point.offset === 0) {
+      target = true;
       beforePoint.n = point.n - 1;
       beforePoint.offset = point.offset;
       afterPoint.n = point.n + 1;
       afterPoint.offset = point.offset;
-      // TODO - avoid duplicated callbacks on range?
-      this._handler();
     } else {
+      target = false;
       beforePoint.n = point.n;
       beforePoint.offset = 0;
       afterPoint.n = point.n + 1;
       afterPoint.offset = 0;
     }
-    var before = this._getFloat(beforePoint);
-    var after = this._getFloat(afterPoint);
-    var delay = motionutils.calculateDelta(vector, [before, after])[0];
+    return {
+      isTarget : target,
+      before : this._getFloat(beforePoint),
+      after : this._getFloat(afterPoint)
+    }
+  };
+
+  SetIntervalCallback.prototype._calculateTimeout = function () {
+    var vector = this._timingsrc.query();
+    var points = this._calculatePoints(vector.position);
+    var delay = motionutils.calculateDelta(vector, [points.before, points.after])[0];
     return {
       anchor: vector.timestamp,
       delay: delay

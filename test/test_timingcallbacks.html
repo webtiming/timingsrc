@@ -33,13 +33,13 @@
           
           var t1 = new timingsrc.SetPointCallback(to, function () {
             console.log("point callback", to.query().position.toFixed(2));
-          }, 6, {repeat:true});
+          }, 0, {repeat:true});
           
-
+          
           var t2 = new timingsrc.SetIntervalCallback(to, function () {
             console.log("interval callback", to.query().position.toFixed(2));
           }, 5, {offset:0});
-
+          
                     
         };
         if (document.readyState === "complete") run();
