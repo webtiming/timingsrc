@@ -1,9 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
+
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../source', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../lib/require.js"></script>
+
+    <!--
     <script text="javascript" src="../lib/timingsrc.js"></script>
+    -->
+
     <!--  main -->
     <script text="javascript">
+
+    require(['timingsrc'], function (TIMINGSRC) {
 
       // Timing Object
       var to = new TIMINGSRC.TimingObject([0,52]);
@@ -12,10 +27,7 @@
       
       // Sequencer
       var Interval = TIMINGSRC.Interval; // shortcut
-      var s = new TIMINGSRC.IntervalSequencer(toA, toB);
-      // register event handlers
-      //s.on("enter", function (e) {console.log("enter", e)});
-      //s.on("exit", function (e) {console.log("exit", e)});          
+      var s = new TIMINGSRC.IntervalSequencer(toA, toB);    
       
       // Timed Data
       var data = {
@@ -54,56 +66,30 @@
       });
       r.submit();
 
-      // viewer visualises the set of active keys of the sequencer
-      var viewer = function (elem, s) {
-        var _list = [];
-        var _handler = function (eList) {
-          eList.forEach(function (e) {
-            if (e.type === "enter") {
-              _list.push(e.key);
-            }
-            if (e.type === "exit") {
-              var index = _list.indexOf(e.key);
-              if (index > -1) {
-                _list.splice(index, 1);
-              }
-            }
-          });
-          _refresh();
-        };
-        var _refresh = function () {
-          _list.sort();
-          var html = "";
-          _list.forEach(function (key) {
-            html += "<div>" + key + "</div>";
-          });
-          elem.innerHTML = html;
-        };
-        s.on("events", _handler);
-      };
-
-
       var run = function () {
+
         // Set up controls for timing object
         document.getElementById("pause").onclick = function () {to.update({velocity: 0.0});};
         document.getElementById("reset").onclick = function () {to.update({position:0.0, velocity: 0.0});};
         document.getElementById("play").onclick = function () {to.update({velocity:1.0});};
         document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
-        // Report position of timing object
-        var pos = document.getElementById("position");
+
+        // Report position of timing objects
+        var posBefore = document.getElementById("posBefore");
         to.on("timeupdate", function () {
-          pos.innerHTML = to.query().position.toFixed(2);
+          posBefore.innerHTML = toA.query().position.toFixed(2);
+        });
+        var posAfter = document.getElementById("posAfter");
+        to.on("timeupdate", function () {
+          posAfter.innerHTML = toB.query().position.toFixed(2);
         });
 
         // Visualize timed data
-        var dataElem = document.getElementById("data");
         var html = "";
         Object.keys(data).forEach(function (key) {
-          html += "<span id='"+ key +"'>" + data[key].data + " </span>";
+          html += "<div id='"+ key +"'>" + JSON.stringify(data[key]) + "</div>";
         });
-        dataElem.innerHTML = html;
-
-        // register event handlers on sequencer
+        document.getElementById("data").innerHTML = html;     
         s.on("enter", function (e) {
           var el =  document.getElementById(e.key);
           el.classList.add("active");
@@ -113,24 +99,29 @@
           el.classList.remove("active");
         });
 
-        // Report active keys of sequencer
-        //var v = viewer(document.getElementById("list"), s);
       };
 
       // kick off
       if (document.readyState === "complete") run();
       else window.onload = run;
 
+    });
+
     </script>
-    <style>
-    .active {color:red;font-weight: bold}   
+    <style type="text/css">
+    .active {color:red}
     </style>  
   </head>
   <body>
-    <h1>Example Interval Sequencer</h1>
+    <h1>Example : Interval Sequencer</h1>
+    
     <p>
-    <!-- Timing Object position --> 
-      <div id="position"></div>
+      The Interval Sequencer provides enter and exit events based on a moving interval. Interval endpoints are implemented by two timing objects.
+      The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. The Interval Sequencer may be helpful for timed prefetching, or visualizations of sliding window of timed data.
+    </p>
+    <p>
+      <!-- Timing Objects position --> 
+      Active Interval : [ <span id="posBefore"></span>, <span id="posAfter"></span> ]
     </p>
     <p>
       <!-- Timing Object Controls -->
