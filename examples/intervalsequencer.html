@@ -1,24 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../source', 
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../lib/require.js"></script>
-
-    <!--
     <script text="javascript" src="../lib/timingsrc.js"></script>
-    -->
-
+    
     <!--  main -->
     <script text="javascript">
 
-    require(['timingsrc'], function (TIMINGSRC) {
+
 
       // Timing Object
       var to = new TIMINGSRC.TimingObject([0,52]);
@@ -105,7 +93,7 @@
       if (document.readyState === "complete") run();
       else window.onload = run;
 
-    });
+    
 
     </script>
     <style type="text/css">
