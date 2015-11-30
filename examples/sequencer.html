@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script text="javascript" src="../lib/timingsrc.js"></script>
-
+    <script text="javascript" src="../lib/timingsrc.js"></script>    
+    
     <script text="javascript">
 
       // Timing Object
       var to = new TIMINGSRC.TimingObject([0,52]);
-      var toA = new TIMINGSRC.SkewConverter(to, -5.0);
-      var toB = new TIMINGSRC.SkewConverter(to, 4.0);
       
       // Sequencer
       var Interval = TIMINGSRC.Interval; // shortcut
-      var s = new TIMINGSRC.IntervalSequencer(toA, toB);    
+      var s = new TIMINGSRC.Sequencer(to);    
       
       // Timed Data
       var data = {
@@ -60,15 +58,11 @@
         document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
 
         // Report position of timing objects
-        var posBefore = document.getElementById("posBefore");
+        var pos = document.getElementById("pos");
         to.on("timeupdate", function () {
-          posBefore.innerHTML = toA.query().position.toFixed(2);
+          pos.innerHTML = to.query().position.toFixed(2);
         });
-        var posAfter = document.getElementById("posAfter");
-        to.on("timeupdate", function () {
-          posAfter.innerHTML = toB.query().position.toFixed(2);
-        });
-
+    
         // Visualize timed data
         var html = "";
         Object.keys(data).forEach(function (key) {
@@ -91,20 +85,21 @@
       else window.onload = run;
 
     </script>
+
     <style type="text/css">
     .active {color:red}
-    </style>  
+    </style>
+
   </head>
   <body>
-    <h1>Example : Interval Sequencer</h1>
+    <h1>Example : Sequencer</h1>
     
     <p>
-      The Interval Sequencer provides enter and exit events based on a moving interval. Interval endpoints are implemented by two timing objects.
-      The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. The Interval Sequencer may be helpful for timed prefetching, or visualizations of sliding window of timed data.
+      The Sequencer provides enter and exit events based on a moving point. This moving point is implemented and controlled by a timing object.
     </p>
     <p>
       <!-- Timing Objects position --> 
-      Active Interval : [ <span id="posBefore"></span>, <span id="posAfter"></span> ]
+      Timing Object position <span id="pos"></span>
     </p>
     <p>
       <!-- Timing Object Controls -->
