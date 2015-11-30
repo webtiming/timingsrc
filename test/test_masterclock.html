@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- requirejs config -->
+  <script>
+    var require = {
+      baseUrl : '../source',
+    };
+  </script>
+  <script type="text/javascript" src="../lib/require.js"></script>
+  <script type="text/javascript">
+    var c;
+    var initialSkew;
+    var skew = function () {
+        return c.now() - performance.now()/1000.0;
+    };
+    var refresh = function () {
+      value.innerHTML = skew() - initialSkew;
+    };
+    var run = function () {
+      var tid;
+      c.on("change", function () {
+        console.log("masterclock change event");
+        // master clock = local clock + skew
+        initialSkew = skew();
+        refresh();
+        if (!tid) {
+          tid = setInterval(refresh, 1000);
+        }
+      });
+      var value = document.getElementById('value');
+      document.getElementById('zero').onclick = function () {
+        // reset velocity
+        c.adjust(1.0);
+      };
+      document.getElementById('1plus').onclick = function () {
+        // add 1 microseconds per second
+        c.adjust(c.query().velocity + 0.000001);
+      };
+      document.getElementById('1minus').onclick = function () {
+        // add 10 microseconds per second
+        c.adjust(c.query().velocity - 0.000001);
+      };
+      document.getElementById('10plus').onclick = function () {
+        // add 1 microseconds per second
+        c.adjust(c.query().velocity + 0.00001);
+      };
+      document.getElementById('10minus').onclick = function () {
+        // add 10 microseconds per second
+        c.adjust(c.query().velocity - 0.00001);
+      };
+      document.getElementById('100plus').onclick = function () {
+        // add 100 microseconds per second
+        c.adjust(c.query().velocity + 0.0001);
+      };
+      document.getElementById('100minus').onclick = function () {
+        // add 100 microseconds per second
+        c.adjust(c.query().velocity - 0.0001);
+      };
+    };
+    require(['util/masterclock'], function (MasterClock) {
+      c = new MasterClock();        
+      if (document.readyState === "complete") run();
+      else window.onload = run;
+    });
+</script>
+</head>
+<body>
+<h1>Test MasterClock</h1>
+<div id="value"></div>
+<p>
+<h3>Standard speed</h3>
+<button id="zero">Zero</button>
+</p>
+<p>
+<h3>100 Microseconds</h3>
+<button id="100plus">Plus</button>
+<button id="100minus">Minus</button>
+</p>
+<p>
+<h3>10 Microseconds</h3>
+<button id="10plus">Plus</button>
+<button id="10minus">Minus</button>
+</p>
+<p>
+<h3>1 Microsecond</h3>
+<button id="1plus">Plus</button>
+<button id="1minus">Minus</button>
+</p>
+</body>
+</html>

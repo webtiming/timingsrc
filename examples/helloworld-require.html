@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../source', // module name <timingsrc> points to timingsrc.js in source directory 
+        paths: {
+          //'timingsrc': '../lib/timingsrc-require', // module name <timingsrc> points to built js file - non-minified
+          'timingsrc': '../lib/timingsrc-require-min', // module name <sequencer> points to built js file - minified 
+        },
+      };
+    </script>
+    <!-- requirejs -->
+    <script src="../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+      var to;
+      var init = function () {
+        // Hook up buttons UI to timing object
+        document.getElementById('play').onclick = function () {to.update({velocity:1.0});};
+        document.getElementById('pause').onclick = function () {to.update({velocity:0.0});};
+        document.getElementById('reset').onclick = function () {to.update({position:0.0, velocity:0.0});};
+        // Print timing object position
+        var value = document.getElementById('value');
+        to.on("timeupdate", function () {
+          value.innerHTML = to.query().position.toFixed(2); 
+        });
+      };
+      require(['timingsrc'], function (timingsrc) {
+        to = new timingsrc.TimingObject();
+        if (document.readyState === "complete") init();
+        else window.onload = init;
+      });    
+    </script>    
+  </head>
+  <body>
+    <h1>Hello World Timing Object</h1>
+    <div id="value"></div>
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+  </body>
+</html>
