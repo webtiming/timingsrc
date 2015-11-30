@@ -368,7 +368,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	*/
 	var Sequencer = function (timingObject, _axis) {
 		this._to = timingObject;
-		this._clock = to.clock;
+		this._clock = timingObject.clock;
 		this._axis = _axis || new axis.Axis();
 		this._schedule = null;
 		this._timeout = null; // timeout	
