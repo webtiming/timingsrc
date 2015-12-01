@@ -8,7 +8,7 @@ The timingsrc library is available under the LGPL licence.
 
 [source/timingobject](source/timingobject) 
 
-This implements the [Timing Object](https://github.com/webtiming/timingobject) as well as a set of Timing Converters. 
+This implements the [Timing Object Draft Spec](https://github.com/webtiming/timingobject) as well as a set of Timing Converters. 
 
 ### Sequencing
 
