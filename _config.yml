@@ -1,0 +1,12 @@
+name: timingsrc
+markdown: redcarpet
+highlighter: pygments
+#safe: true
+#lsi: false
+baseurl: /timingsrc
+
+
+
+syntax-highlighting:
+  enabled : true
+  css: css/syntax.css
