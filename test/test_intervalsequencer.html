@@ -66,10 +66,10 @@
           }, 200);
  
           // register event handlers
-          
-          s.on("enter", function (e) {console.log("single - enter", e)});
-          s.on("exit", function (e) {console.log("single - exit", e)});          
-          
+          /*
+          s.on("enter", function (e) {console.log("enter", e)});
+          s.on("exit", function (e) {console.log("exit", e)});          
+          */
           s.on("events", function (eList) {
             eList.forEach(function (e) {
                 console.log("events", e);
@@ -118,7 +118,7 @@
     </script>    
   </head>
   <body>
-    <h1>Testing</h1>
+    <h1>Test Interval Sequencer</h1>
     <p>
       <div id="value"></div>
     </p>

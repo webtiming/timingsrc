@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script text="javascript" src="../lib/timingsrc.js"></script>    
+    
+    <script text="javascript">
+
+      var run = function () {
+
+        // Set up controls for timing object
+        document.getElementById("pause").onclick = function () {to.update({velocity: 0.0});};
+        document.getElementById("reset").onclick = function () {to.update({position:0.0, velocity: 0.0});};
+        document.getElementById("play").onclick = function () {to.update({velocity:1.0});};
+        document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
+
+        var array = []; // timing object/converter -> dom element
+
+        // Create timing objects and converters        
+        var to = new TIMINGSRC.TimingObject([0,50]);
+        array.push([to, document.getElementById("to")]);
+        var toSkew = new TIMINGSRC.SkewConverter(to, 2);
+        array.push([toSkew, document.getElementById("toskew")]);
+        var toDelay = new TIMINGSRC.DelayConverter(to, 1.0);
+        array.push([toDelay, document.getElementById("todelay")]);       
+        var toTimeshift = new TIMINGSRC.TimeShiftConverter(to, -1.0);
+        array.push([toTimeshift, document.getElementById("totimeshift")]);
+        var toScale = new TIMINGSRC.ScaleConverter(to, 2);
+        array.push([toScale, document.getElementById("toscale")]);
+        var toLoop = new TIMINGSRC.LoopConverter(to, [0, 10]);
+        array.push([toLoop, document.getElementById("toloop")]);
+        var toRange = new TIMINGSRC.RangeConverter(to, [10,15]);
+        array.push([toRange, document.getElementById("torange")]);
+        var toDerivative = new TIMINGSRC.DerivativeConverter(to);
+        array.push([toDerivative, document.getElementById("toderivative")]);
+
+        // periodic refresh
+        setInterval(function () {
+          var elem, to, pos;
+          array.forEach(function (item) {
+            to = item[0];
+            elem = item[1];
+            pos = to.query();
+            if (pos !== null) {
+              elem.innerHTML = to.query().position.toFixed(2);
+            }
+          });
+        }, 200);                
+      };
+
+      // kick off
+      if (document.readyState === "complete") run();
+      else window.onload = run;
+
+    </script>
+
+    <style type="text/css">
+    .pos {font-weight:bold}
+    </style>
+
+  </head>
+  <body>
+    <h1>Example : Timing Converters</h1>
+    
+    <p>
+      Timing Converters provide new representations of a timing object, by converting some aspect of its behavior. Timing converters slave after
+      a source timing object or another timing converter.
+    </p>
+
+    <p>
+      Controls for root timing object
+    </p>
+  
+    <p>    
+      <div class="pos"> Root Timing Object </div>
+      <p>
+        <!-- Timing Object Controls -->
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="backwards">Backwards</button>
+      </p>
+      <div class="pos" id="to"></div>        
+    </p>
+    <p>
+      <div class="pos">Skew Converter </div>  
+      Skews source timing object timeline with 2 units
+      <div class="pos" id="toskew"></div>  
+    </p>
+    <p>
+      <div class="pos"> Scale Converter </div>
+      Scales source timing object timeline with factor 2
+      <div class="pos" id="toscale"></div> 
+    </p>
+    <p>
+      <div class="pos"> Delay Converter </div>
+      Echo source timing object, delayed by 1 second.
+      <div class="pos" id="todelay"></div>        
+    </p>
+    <p>
+      <div class="pos"> Timeshift Converter </div> 
+      Timeshifts source timing object by -1 second
+      <div class="pos" id="totimeshift"></div> 
+    </p>
+    <p>
+      <div class="pos"> Loop Converter </div>
+      Loops source timing object in the interval [0,10]
+      <div class="pos" id="toloop"></div> 
+    </p>
+    <p>
+      <div class="pos"> Range Converter </div>
+      Enforces range [10,15] on source timing object
+      <div class="pos" id="torange"></div> 
+    </p>
+    <p>
+      <div class="pos"> Derivative Converter </div>
+      Derivative of source timing object.
+      <div class="pos" id="toderivative"></div> 
+    </p>
+
+  </body>
+</html>
