@@ -24,8 +24,8 @@ Additionally, timing converters are a special kind of timing objects that depend
 Timing converters are useful when you need an alternative representations for a single timing object. For instance, 
 timing converters may be used to shift or scale the timeline.
 
-- [TimingObject Doc](doc/doc_timingobject.html)
-- [TimingObject API](doc/api_timingobject.html)
+- [TimingObject Doc](doc_timingobject.html)
+- [TimingObject API](api_timingobject.html)
 
 <a name="sequencing"></a>
 ## Sequencing
@@ -39,8 +39,8 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
-- [Sequencing Doc](doc/doc_sequencing.html)
-- [Sequencing API](doc/api_sequencing.html)
+- [Sequencing White Paper](doc_sequencing.html)
+- [Sequencing API](api_sequencing.html)
 
 
 <a name="mediasync"></a>
@@ -48,8 +48,8 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as _timingsrc_. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
 
-- [MediaSync Doc](doc/doc_mediasync.html)
-- [MediaSync API](doc/api_mediasync.html)
+- [MediaSync Doc](doc_mediasync.html)
+- [MediaSync API](api_mediasync.html)
 
 
 <a name="timingprovider"></a>
