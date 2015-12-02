@@ -29,7 +29,7 @@ The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webti
 - separation of concernes
 	- online timing providers may focus on the challenges of distributed timing, while application developers may focus on exploing timing for the purpose of creating great user experiences.     
 
-There is a strong analogy to the introduction of *sockets* in the 80'ies. Sockets provided a unified API to different forms of communication, and the importance of this is hard to dispute. Now we wish to do the same for different types of timing resources. It's about time!
+There is a strong analogy to the introduction of *sockets* in the 80'ies. Sockets provided a unified API to different types of communication. Now we wish to do the same for different types of timing resources. It's about time!
 
 
 ## Relation to timing object specification
@@ -40,15 +40,13 @@ The timinsrc library serves a reference implementation for the [Timing Object Dr
 
 Ingar M. Arntzen 
 
-- [ingar.arntzen@norut.no](mailto://ingar.arntzen@norut.no)
-- [ingar.arntzen@motioncorporation.com](mailto://ingar.arntzen@motioncorporation.com)
+- [ingar.arntzen@norut.no](mailto://ingar.arntzen@norut.no), [ingar.arntzen@motioncorporation.com](mailto://ingar.arntzen@motioncorporation.com)
 - [github.com/ingararntzen](https://github.com/ingararntzen)
 - [twitter.com/ingararntzen](https://twitter.com/ingararntzen)
 
 Njål T. Borch
 
-- [njaal.borch@norut.no](mailto://njaal.borch@norut.no)
-- [njaal.borch@motioncorporation.com](mailto://njaal.borch@motioncorporation.com)
+- [njaal.borch@norut.no](mailto://njaal.borch@norut.no), [njaal.borch@motioncorporation.com](mailto://njaal.borch@motioncorporation.com)
 - [github.com/snarkdoof](https://github.com/snarkdoof)
 - [twitter.com/njaalborch](https://twitter.com/njaalborch)
 
