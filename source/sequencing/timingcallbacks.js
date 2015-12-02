@@ -222,7 +222,7 @@ define (['util/motionutils'], function (motionutils) {
 
   // module definition
   return {
-    SetPointCallback: SetPointCallback,
-    SetIntervalCallback : SetIntervalCallback
+    setPointCallback: function (timingObject, handler, point, options) { return new SetPointCallback(timingObject, handler, point, options);},
+    setIntervalCallback : function (timingObject, handler, length, options) { return new SetIntervalCallback(timingObject, handler, length, options);}
   };
 }); 

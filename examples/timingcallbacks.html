@@ -33,7 +33,7 @@
         setpointcallbackonceBtn.onclick = function () {
           if (once) return;
           var btn = this;
-          once = new TIMINGSRC.SetPointCallback(to, function () {
+          once = TIMINGSRC.setPointCallback(to, function () {
             append("point callback (once) at position " + to.query().position.toFixed(2));
             // reset
             toggleDisabled(setpointcallbackonceBtn, cancelpointcallbackonceBtn);
@@ -55,7 +55,7 @@
         var setpointcallbackrepeatBtn = document.getElementById('setpointcallbackrepeat');
         setpointcallbackrepeatBtn.onclick = function () {
           if (repeat) return;
-          repeat = new TIMINGSRC.SetPointCallback(to, function () {
+          repeat = TIMINGSRC.setPointCallback(to, function () {
             append("point callback (repeated) at position " + to.query().position.toFixed(2));
           }, 6, {repeat:true});
           toggleDisabled(setpointcallbackrepeatBtn, cancelpointcallbackrepeatBtn);
@@ -75,7 +75,7 @@
         var setintervalcallbackBtn = document.getElementById('setintervalcallback');
         setintervalcallbackBtn.onclick = function () {
           if (interval) return;
-          interval = new TIMINGSRC.SetIntervalCallback(to, function () {
+          interval = TIMINGSRC.setIntervalCallback(to, function () {
             append("interval callback at position " + to.query().position.toFixed(2));
           }, 6, {offset:2});
           toggleDisabled(setintervalcallbackBtn, cancelintervalcallbackBtn);

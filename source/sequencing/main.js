@@ -26,8 +26,8 @@ define(['./sequencer', './intervalsequencer', './timingcallbacks'],
 			Interval : seq.Interval,
 			inherit : seq.inherit,
       IntervalSequencer : IntervalSequencer,
-      SetPointCallback : timingcallbacks.SetPointCallback,
-      SetIntervalCallback : timingcallbacks.SetIntervalCallback
+      setPointCallback : timingcallbacks.setPointCallback,
+      setIntervalCallback : timingcallbacks.setIntervalCallback
 		};
 	}
 );

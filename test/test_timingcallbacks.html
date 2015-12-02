@@ -31,12 +31,12 @@
           });
 
           
-          var t1 = new timingsrc.SetPointCallback(to, function () {
+          var t1 = timingsrc.setPointCallback(to, function () {
             console.log("point callback", to.query().position.toFixed(2));
           }, 0, {repeat:true});
           
           
-          var t2 = new timingsrc.SetIntervalCallback(to, function () {
+          var t2 = timingsrc.setIntervalCallback(to, function () {
             console.log("interval callback", to.query().position.toFixed(2));
           }, 5, {offset:0});
           
