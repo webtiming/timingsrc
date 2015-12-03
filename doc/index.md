@@ -29,7 +29,7 @@ var timingsrc = require("./timingsrc");
 var timingObject = new timingsrc.TimingObject();
 ```
 
-The timingsrc module depends is implemented in plain JavaScript and should run in every modern Web browser.
+The timingsrc module is implemented in plain JavaScript and should run in every modern Web browser.
 
 The timingsrc library is available from GitHub.
 
@@ -82,9 +82,9 @@ distinction concerning the specific type of data, and instead aim to provide gen
 <a name="mediasync"></a>
 ## Media Synchronization Tools
 
-Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as _timingsrc_. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
+Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as timingsrc. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
 
-- [MediaSync Doc](doc_mediasync.html)
+- [MediaSync Doc](background_mediasync.html)
 - [MediaSync API](api_mediasync.html)
 
 

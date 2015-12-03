@@ -10,16 +10,15 @@ This describes the API of **Sequencer** and **IntervalSequencer**.
 
 ## Introduction
 
-> A Sequencer manages a collection of (key,[Interval](#interval)) associations, also called [Cue](#cue) objects. An Interval simply represents the concept of a mathematical interval, such as [12.75, 13.1>, or a singular points [3.02]. 
-
 The core idea is that programmers express temporal validity of objects by associating them with Intervals. For instance, a subtitle may be associated with [12.1, 17.44] indicating when the object should be *active*, in reference to some media timeline. Furthermore, in order to decouple Sequencers from the data model, Intervals are not directly associated with data objects, but indirectly through some unique identifier. For instance, programmers may use identifiers from an application specific data model as keys into a Sequencer.
 
-> the Sequencer manages a collection of (key,Interval) associations, where *Intervals* define when *keys* are *active* or *inactive*. 
-> A (key,Interval) association is also known as a [Cue](#cue).
+> A Sequencer manages a collection of (key,[Interval](#interval)) associations, also called [SequencerCue](#cue) objects. 
+An *Interval* is simply the mathematical concept [12.75, 13.1>. Singular points [3.02] are considered a special case of *Interval* where length is 0. 
+An *Interval* defines when a *key* is *active* or *inactive*, according to a time source. 
 
-Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.io/timingobject) as timing source. The main function of a Sequencer is to emit [enter](#enter) and [exit](#exit) events at the correct time, as cue intervals dynamically transition between *active* and *inactive* state. Sequencers also maintain a list of *active cues*, always consistent with history of event callbacks and the state of the timing object. The Sequencer API is to the [TrackElement](http://www.html5rocks.com/en/tutorials/track/basics/) API.
+Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.io/timingobject) as timing source. The main function of a Sequencer is to emit [enter](#enter) and [exit](#exit) events at the correct time, as cue intervals dynamically transition between *active* and *inactive*. Sequencers also maintain a list of *active cues*, always consistent with the history of event callbacks and the state of the timing object. The Sequencer API is similar to the [TrackElement](http://www.html5rocks.com/en/tutorials/track/basics/) API.
 
-> the Sequencer is data agnostic and can therefore be used by any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
+> A Sequencer is data agnostic and can therefore be used by any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
 
 
 <a name="toc"></a>
@@ -32,6 +31,7 @@ This documentation includes the following sections:
 - [SequencerCue](#cue)
 - [SequencerEArg](#earg)
 - [Sequencer](#sequencer)
+- [IntervalSequencer](#intervalsequencer)
 
 <a name="interval"></a>
 ## Interval
@@ -78,7 +78,7 @@ if (i.isSingular()) {}
 
 #### .coversPoint(point)
 - param: {float} [point]
-- returns: {boolean} true if point is within interval
+- returns: {boolean} true if point is inside interval
 
 #### .coversInterval(otherInterval)
 - param: {Interval} [otherInterval] another Interval
@@ -105,7 +105,7 @@ if (i.isSingular()) {}
 <a name="cue"></a>
 ## Sequencer Cue
 
-[SequencerCue](#cue) is a simple datatype used by [Sequencer](#sequencer) for query responses (and in some cases as parameter to event callback parameters). A SequencerCue is essentially an association between a key (string) and an [Interval](#interval). It is representated as a simple JavaScript object. The property *data* is only used in context of [sequencer specialization](#specialization). 
+[SequencerCue](#cue) is a simple datatype used by [Sequencer](#sequencer) for query responses (and in some cases as parameter to event callback parameters). A SequencerCue is essentially an association between a key (string) and an [Interval](#interval). It is representated as a simple JavaScript object. The property *data* is only used in context of [sequencer specialization](usage_sequencer.html#specialization). 
 
 ```javascript
 var cue = {
@@ -134,7 +134,7 @@ var eArg = {
     dueTs : 1441266518486, 			 // timestamp when the event should ideally be emitted - from performance.now()
     delay : 0.9,					 // lateness in milliseconds relative to dueTs
     directionType : "forwards",		 // direction of timingobject at point {"backwards"|"forwards"|"nodirection"}
-    verbType : "enter"				 // entering or leaving interval {"enter"|"exit"}
+    type : "enter"				     // entering or leaving interval, or cue change {"enter"|"exit"|"change"}
 };
 
 ```
@@ -156,7 +156,7 @@ var s = new Sequencer(timingObject);
 
 #### .addCue(key, interval)
 - param: {string} [key] unique key identifying an Interval.  
-- param: {Interval} [interval] defining the validity of the associated key. 
+- param: {Interval} [interval] defines when the associated key is active. 
 - returns : {undefined}
 
 Associate a unique key with an Interval. addCue() will replace any previous association for given key. Since Intervals are immutable objects, modification of a cue must be be done by generating a new Interval and replacing the association using .addCue() with the same key.
@@ -172,14 +172,14 @@ s.addCue("key", new Interval(12.1, 24.22));
 - param: {string} [key] unique key identifying an Interval.
 - param: optional: {object} [removeData] data associated with cue that is to be removed
 
-Removes existing association (if any) between key and Interval. The removeData parameter is only useful in context of [Sequencer specialization](#specialization). If some data item has been removed from a datamodel, the removed item can still be provided in [exit](#exit) events from the Sequencer.
+Removes existing association (if any) between key and Interval. The removeData parameter is only useful in context of [sequencer specialization](usage_sequencer.html#specialization). If some data item has been removed from a datamodel, the removed item can still be provided in [exit](#exit) events from the Sequencer.
 
 ```javascript
 s.removeCue("key");
 ```
 
 #### .request().submit()
-Using the builder pattern .addCue() and .removeCue() operations may be batched and processed together. This allows related operations to be performed together by the Sequencer. Resulting events will also be batched, reducing the number of event callbacks and allowing application code to make decision on the level of event-batches of the event type [events](#events), as opposed to individual events. 
+Using the builder pattern .addCue() and .removeCue() operations may be batched and processed together. This allows related operations to be performed together by the Sequencer. Resulting events will also be batched, reducing the number of event callbacks and allowing application code to make decisions on the level of event-batches of the event type [events](#events), as opposed to individual events. 
 
 - returns {object} request object, where Sequencer operations can be registered and submitted.
 
@@ -194,7 +194,7 @@ var r = s.request()
 
 ### Sequencer: Search
 
-The Sequencer supports a number of operations on its collection of [SequencerCues](#cue).
+The Sequencer supports a number of efficient search operations on its collection of [SequencerCues](#cue).
 
 #### keys()
 - returns: {list} list of keys of all [SequencerCues](#cue)
@@ -287,11 +287,11 @@ The cost of this operation is logarithmic O(logN), with N being the number of [S
 <a name="events"></a>
 ### Sequencer: Events
 
-The Sequencer supports four event types; <code>"enter", "exit", "events" "change"</code>. "Enter" and "exit" correspond to motion entering or exiting a specific [SequencerCue](#cue). "Events" delivers a batch (list) of events and may include both "enter" and "exit" events. The programmer should likely choose to handle events in batch mode using "events" callback, or handle events individually using "enter" and "exit" events. 
+The Sequencer supports four event types; <code>"enter", "exit", "change", "events"</code>. "Enter" and "exit" correspond to the timing object entering or exiting the interval of a specific [SequencerCue](#cue). "Events" delivers a batch (list) of events and may include both "enter", "exit" and "change" events. The programmer should likely choose to handle events in batch mode using "events" callback, or handle events individually using "enter", "exit" and "change" events. 
 
-Event types "enter", "exit" and "events" all relate to changes to [active cues](#activecue). In constrast, "change" events report modifications to cues which do NOT cause any changes to [active cues](#activecue). In other words, the cue was modified, but remained *active* or remained *inactive*. 
+Event types "enter", "exit" relate to changes to the set of [active cues](#activecue). In constrast, "change" events report modifications to [active cues](#activecue) that **remain** active, even though they have been modified in some way. This allow visualizations to pick up all events relevant to active cues.
 
-Intervals that are singular points will still emit both "enter" and "exit" events during playback. If the timing object is paused precisely within a singular Interval, only the "enter" event is emitted, just like non-singular Interval. The "exit" event will be emitted as the position is later changed.
+Intervals that are singular points will emit both "enter" and "exit" events during playback. If the timing object is paused precisely within a singular Interval, only the "enter" event is emitted, just like non-singular Interval. The "exit" event will be emitted as the position is later changed.
 
 #### EventHandler(e)
 - param: {[SequencerEArg](#earg)|[SequencerCue](#cue)} [e] event argument.
@@ -302,18 +302,18 @@ var handler = function (e) {};
 ```
 Events "enter", "exit" and "events" provide [SequencerEArgs](#earg) as event parameter, whereas event "change" provides [SequencerCue](#cue) as event parameter.
 
-#### .on(type, handler, context)
+#### .on(type, handler, ctx)
 - param: {string} [type] event type
 - param: {function} [handler] event handler
-- param: optional {object} [context] *this* === context in event handler, if contex is provided, else *this* === Sequencer instance.
+- param: optional {object} [ctx] *this* === ctx in event handler, if ctxt is provided, else *this* === Sequencer instance.
 
 ```javascript
 this.handler = function (e) {};
 // register callback
-s.on("enter", this.handler, this)
+s.on("enter", this.handler, this);
 
 // callback invocation from sequencer
-handler.call(context, e)
+handler.call(ctx, e);
 ```
 
 #### .off(type, handler)
@@ -330,11 +330,12 @@ s.off("enter", handler);
 
 #### Immediate Events
 
-The classical pattern for programming towards an event provider typically involves two steps
-- get the current state of the event provider
-- register event handlers for listening to subsequent changes to the state of the event provider
+The classical pattern for programming towards an event source typically involves two steps
 
-The Sequencer simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *immediately after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "enter" or "events" will cause a batch of immediate "enter" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *immediately after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the .on() call has completed.  
+1. fetch the current state from the event source
+2. register event handlers for listening to subsequent changes to the state of the event source
+
+The Sequencer event API simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *immediately after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "enter" or "events" will cause a batch of immediate "enter" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *immediately after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the .on() call has completed.  
 
 
 #### Event delay
@@ -344,12 +345,26 @@ Note that event delay is not a direct measure of the timeliness of the Sequencer
 
 If multiple Intervals are bound to the same endpoint, multiple events will be emitted according to the following ordering, given that direction of the timing object is forwards. If direction is backwards, the ordering is reversed.
 
-- > exit non-singular Interval with > exit-endpoint
-- [ enter non-singular Interval with [ enter-endpoint
+- > exit Interval with > exit-endpoint
+- [ enter Interval with [ enter-endpoint
 - [ enter singular Interval
 - ] exit singular Interval
-- ] exit non-singular Interval with ] exit-endpoint
-- \< enter non-singular Intervals with \< enter-endpoint
+- ] exit Interval with ] exit-endpoint
+- \< enter Intervals with \< enter-endpoint
 
 
 
+<a name="intervalsequencer"></a>
+## Interval Sequencer
+
+The Interval Sequencer construction requires two timing objects.
+It implements the same API as the Sequencer, with the single exeption that [SequencerCues](#cue) are provided with events instead of [EArg](#earg).  
+
+### IntervalSequencer: Constructor
+Returns an IntervalSequencer object. There is no need to start the IntervalSequencer. Execution is driven by the given timing objects, and the IntervalSequencer is operational when the constructed finalizes.
+
+```javascript
+var s = new IntervalSequencer(timingObjectA, timingObjectB);
+```
+- param: {object} [timingObjectA] Timing object A represents one endpoint of the *active interval* of the IntervaSequencer. 
+- param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 

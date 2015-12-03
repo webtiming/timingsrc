@@ -27,6 +27,8 @@ The [TimingObject](http://webtiming.github.io/timingobject) is a simple concept 
 - [related work](#relatedwork) 
 - [importance](#importance)
 - [future work](#futurework)
+- [credits](#credits)
+- [licence](#licence)
 
 
 <a name="introduction"></a>
@@ -201,4 +203,32 @@ Sequencers in the timingsrc library are completed, yet there may still be avenue
 The value of this timing model and concepts like timing objects and sequencers is not limited to JavaScript and the Web. Implementations of these concepts for other programming languages and environments would ultimately allow temporal interoperability across a variety of platforms. For a programmer, the experience of controlling a multi-device Web presentation from a terminal application, and vice versa, would likely highlight the great value of temporal interoperability.
 
 
+<a name="credits"></a>
+## Credits
 
+Ingar M. Arntzen 
+
+- [ingar.arntzen@motioncorporation.com](mailto://ingar.arntzen@motioncorporation.com)
+- [github.com/ingararntzen](https://github.com/ingararntzen)
+- [twitter.com/ingararntzen](https://twitter.com/ingararntzen)
+
+The development of the Sequencer is funded in part by the [EU FP7 MediaScape project](http://mediascapeproject.eu), and results are contributed as reference implementation to the W3C Multi-device Timing Community Group.
+
+The Sequencer is joint work with Njål T. Borch
+
+- [njaal.borch@motioncorporation.com](mailto://njaal.borch@motioncorporation.com)
+- [github.com/snarkdoof](https://github.com/snarkdoof)
+- [twitter.com/njaalborch](https://twitter.com/njaalborch)
+
+<a name="licence"></a>
+## License
+
+Copyright 2015 Norut Northern Research Institute.
+
+Author : Ingar Mæhlum Arntzen
+
+The Sequencer is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+The Sequencer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with the Sequencer.  If not, see [http://www.gnu.org/licenses/](http://www.gnu.org/licenses/).

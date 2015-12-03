@@ -1,25 +1,16 @@
 ---
 layout: default
-title: Home
-demoappid: 8456579076771837888
-demojs: index
+title: Background MediaSync
 ---
 
-## MediaSync demo
+## Introduction
 
-Open this page on multiple (audio-capable) devices to appreciate live multi-device synchronization. If you've got video playback up and running on multiple devices, try reloading one of them to see how that works.
+Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as timingsrc. However, until this becomes a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for a specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
 
-<div id="demo" style="height:50px"></div>
-<video id="player" style="height:200px">
-	<source src="http://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
-	<source src="http://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
-</video>
 
-Also, check out more demos on YouTube - [Motion Corporation](https://www.youtube.com/channel/UCJ6nDda6IWhEAJ0TUTQ0P1w)
+## HTML5 Media Sync Report
 
-## MediaSync report
-
-The MediaSync libray pushes on quite a few limits in regards to media elements and synchronization.  A report is being written with various analysis of both media elements and the results of the MediaSync libray.  Please have a look at the report if you have or wish to avoid issues.
+The MediaSync libray pushes on quite a few limits in regards to media elements and synchronization.  A report has been written with various analysis of both media elements and the effects of the MediaSync libray. Please have a look at the report if you have or wish to avoid issues.
 
 [Preliminary report (GDoc)](https://docs.google.com/document/d/1d2P3o3RZmilBx1MzMFFDDj5JnF8Yoi-t9EkJKzV90Ak/edit?usp=sharing)
 
@@ -35,24 +26,14 @@ However, as *timed playback mode* is not yet a part of the HTML standard, the Me
 MediaSync is a common purpose library, not optimised for any particular combination of OS, media codecs or browser implementation. Despite this, and despite a number weaknesses in HTML5 media elements with respect to precise timing, MediaSync has been demonstrated the feasibility of echoless synchronization in multi-device media playback, across the Internet. See for instance the [Carnival](https://www.youtube.com/watch?v=lfoUstnusIE) demonstration on YouTube. 
 
 
-## Relation to timing object specification
-
-The draft specification for the [timing object](http://webtiming.github.io/timingobject) specifies [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) as an extension for HTML media elements. While the JavaScript MediaSync library may provide a good user experience for timed media media, given certain assumptions, standardization is assumed to bring further improvement with respect to precision, time-to-sync, effectiveness, reliability and interoperability. This is particularly important for a successful experience on mobile. 
-
-
-## Dependencies
-
-The MediaSync implementation currently depends on [Shared Motion](http://motioncorporation.com), a JavaScript implementation of the [TimingObject](http://webtiming.github.io/timingobject), provided by the [Motion Corporation](http://motioncorporation.com). Shared Motion comes with built-in support for online synchronization. MediaSync will be updated to interface with implementation of TimingObject API. Both MediaSync and Shared Motion are vanilla JavaScript and should run in every modern Web browser.
-
-## Authors
+<a name="credits"></a>
+## Credits
 
 Njål T. Borch
 
 - [njaal.borch@motioncorporation.com](mailto://njaal.borch@motioncorporation.com)
 - [github.com/snarkdoof](https://github.com/snarkdoof)
 - [twitter.com/njaalborch](https://twitter.com/njaalborch)
-
-## Acknowledgements
 
 The development of the MediaSync library is funded in part by the [EU FP7 MediaScape project](http://mediascapeproject.eu), and results are contributed as reference implementation to the W3C Multi-device Timing Community Group.
 
@@ -62,6 +43,7 @@ MediaSync is joint work with Ingar M. Arntzen
 - [github.com/ingararntzen](https://github.com/ingararntzen)
 - [twitter.com/ingararntzen](https://twitter.com/ingararntzen)
 
+<a name="licence"></a>
 ## License
 
 Copyright 2015 Norut Northern Research Institute.

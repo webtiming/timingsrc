@@ -3,20 +3,25 @@ layout: default
 title: Sequencer Usage
 ---
 
-The Sequencer is useful for constructing timed presentations in a Web page. In particular, as the Sequencer integrates with the [TimingObject](http://webtiming.github.io/timingobject), the resulting presentation may be synchronized precisely with other timed components anywhere in the world. 
+This describes usage of **Sequencer** and **IntervalSequencer**.
+
+- [Sequencer Background](background_sequencer.html) provides a more detailed introduction to the Sequencer concept.
+- [Sequencer API](api_sequencer.html) docuements the API of Sequencer and IntervalSequencer.
+
+## Introduction
+
+Sequencers are useful for constructing timed presentations in a Web page. In particular, as Sequencers integrate with the [TimingObject](http://webtiming.github.io/timingobject), the resulting presentation may be synchronized precisely with other timed components in the same Web page, or anywhere in the world. Here we document the basic steps.
 
 1. [Create a Sequencer](#create)
 2. [Load timed data](#load)
 3. [Develop UI](#ui)
 4. [Start presentation](#control)
 
-Finally, it is documented how the Sequencer may be integrated with a specific data model by means of [Sequencer specialization](#specialization).
+Finally, it is documented how the Sequencer may be integrated with a specific data model by means of [sequencer specialization](#specialization).
 
 <a name="create"></a>
 ## Create Sequencer
-Before a Sequencer may be created a [TimingObject](http://webtiming.github.io/timingobject) must be loaded into the Web page. The TimingObject may become part of the future HTML standard, however, in the mean time a temporary implementation is provided by [Motion Corporation](http://motioncorporation.com). In this example we will use a timing object that is globally shared. In order to define your own timing objects, register as a developer with Motion Corporation and create your own [Motion apps](http://dev.mcorp.no).
-
-The Sequencer module is available packaged for regular script inclusion as well as an [AMD](http://requirejs.org/) module for use with requirejs, see [helloworld](examples.html#helloworld) and [helloworld-require](examples.html#helloworld-require) for full examples. In the following example we use regular script includes for loading both the timing object (i.e. Shared Motion) and the SEQUENCER module.
+Before a Sequencer may be created a [TimingObject](http://webtiming.github.io/timingobject) must be available. The TimingObject may become part of the future HTML standard, however, in the mean time a temporary implementation is provided by the timingsrc library.
 
 
 Create index.html
@@ -25,18 +30,16 @@ Create index.html
 <!DOCTYPE html>
 <html>
   <head>
-    <script text="javascript" src="http://mcorp.no/lib/mcorp-2.0.js"></script>
-    <script text="javascript" src="/lib/sequencer.js"></script>
+    <script text="javascript" src="http://github.com/webtiming/timingsrc/lib/timingsrc.js"></script>
     <script text="javascript">
-      var app = MCorp.app("mcorp_app_id", {anon:true});
-      app.run = function () {
-        var timingObject = app.motions['mcorp_name_of_motion'];
-        var s = new SEQUENCER.Sequencer(timingObject);
-        // timing object ready and sequencer created
-        // kick off application logic from here
+      var init = function () {
+        // create timing object
+        var to = new TIMINGSRC.TimingObject();
+        // create sequencer
+        var s = new TIMINGSRC.Sequencer(to);
       };
-      if (document.readyState === "complete") app.init();
-      else window.onload = app.init;
+      if (document.readyState === "complete") init();
+      else window.onload = init;
     </script>
   </head>
   <body>
@@ -93,7 +96,7 @@ for (var i=0; i<array.length; i++) {
 
 To implement a timed Web presentation using the Sequencer, simply translate "enter" and "exit" events into approapriate effects in the DOM. The following example shows how a timing sensitive data viewer can easily be built by virtue of connecting a Sequencer to a DOM element. The Sequencer effectively takes care of adding active cues to the DOM, and removing inactive cues from the DOM, always at the correct time.
 
-```js
+```javascript
 /*
     Simple viewer limited to presenting only a single active cue at the time. 
     In the case of multiple concurrent active cues, 
@@ -123,11 +126,11 @@ viewer(s, document.getElementById("viewer"));
 <a name="control"></a>
 ## Start presentation
 
-Having loaded data into the Sequencer and defined the UI, the Sequencer is already operational. However, the Sequencer itself does not provide any playback controls. Instead it is simply a slave to a timing object. So, in order to start playback, pause the presentation, or control it in other ways, use the timing object. 
+Having loaded data into the Sequencer and defined the UI, the Sequencer is already operational. However, the Sequencer itself does not provide any playback controls. Instead it is simply a slave to the timing object. So, in order to start playback, pause the presentation, or control it in other ways, use the timing object. 
 
 The timing object may be controlled manually from the developer console (assign it to a global variable). Alternatively, controls may be added to the Web page. Below is an example of how play and pause buttons may be connected to the timing object.
 
-Finally, if the timing object is connected to an online timing resource, it may be controlled from other Web pages. It may be a good idea to make a new Web page as a dedicated control interface for the timing object, and the timed Web presentation by implication.
+Finally, if the timing object is connected to an online timing resource, it may be controlled from other Web pages. It may be a good idea to make a new Web page as a dedicated control interface for the timing object, and control the timed Web presentation by implication.
 
 ```html
 <body>
@@ -138,32 +141,36 @@ Finally, if the timing object is connected to an online timing resource, it may 
 ```
 
 ```javascript
-document.getElementById('play').onclick = function () {timingObject.update(null, 1.0, 0.0);};
-document.getElementById('pause').onclick = function () {timingObject.update(null, 0.0, 0.0);};
-document.getElementById('reset').onclick = function () {timingObject.update(0.0, 0.0, 0.0);};
+document.getElementById('play').onclick = function () {timingObject.update({velocity:1.0});};
+document.getElementById('pause').onclick = function () {timingObject.update({velocity:0.0});};
+document.getElementById('reset').onclick = function () {timingObject.update({position: 0.0});};
 ```
 
 
 <a name="specialization"></a>
 ## Sequencer Specialization
 
-The Sequencer is by default data agnostic and can therefore be used by any application-specific data model. However in some cases it may be useful to integrate the Sequencer with a specific data model. In particular, if the programmer would like Sequencer events to include objects from the data model (instead of just keys), [Sequencer specialization](#specialization) supports this. Sequencer specialization is implemented through inheritance. Sequencer specialization only requires implementation of two methods. A complete example is provided in [special](examples/special.html).
+> Warning! Sequencer specialization is not recommended. The data independency of the Sequencer is generally valuable. Make sure you have good reasons for violating this principle. 
+
+The Sequencer is by default data agnostic and can therefore be used by any application-specific data model. However in some cases it may be useful to integrate the Sequencer with a specific data model. A specialized Sequencer can hide the separation of datamodel and cues, by including objects from datamodel in events. Sequencer specialization is implemented through inheritance. Sequencer specialization only requires implementation of two methods.
 
 #### .loadData()
 
-This method is called by the Sequencer constructor and allows the programmer to load (key,Interval) associations from an application specific data model into the Sequencer. If the data model is dynamic, this is the place to set up event handlers so that the Sequencer may adapt to future changes in the data model.
+This method is called by the Sequencer constructor and allows the programmer to load (key,Interval) associations from an application specific data model into the Sequencer. If the data model is dynamic, this is the place to set up event handlers so that the Sequencer may adapt dynamically to future changes in the data model.
 
 #### .getData(key)
 - param {string} [key] unique key
 
-This method is used by the Sequencer internally whenever it needs to resolve the mapping from key to object in data model. The Sequencer uses this so that it can make objects from the data model available in "enter" and "exit" events - under data property of [SequencerEArg](docs.html#earg) or [SequencerCue](docs.html#cue) objects.
+This method is used by the Sequencer internally whenever it needs to resolve the mapping from key to object in data model. The Sequencer uses this so that it can make objects from the data model available in "enter" and "exit" events - under the *data* property of [SequencerEArg](docs.html#earg) or [SequencerCue](docs.html#cue) objects.
 
 
 ### Template Sequencer Specialization
 
 The Sequencer is data agnostic, but may easily be integrated with a particular application specific data model.
 
-```js
+```javascript
+var inherit = timingsrc.inherit; // inheritance function provied by timingsrc module
+
 var SpecialSequencer = function (timingObject, datamodel) {
     this.datamodel = datamodel;
 	Sequencer.call(this, timingObject);
@@ -181,9 +188,9 @@ SpecialSequencer.prototype.getData = function (key) {
 
 ```
 
-The [Sequencer module](/sequencer/docs#module) provides a utility function *inherit* for making sure the inheritance is correctly implemented. The implementation is a commonly used pattern for inheritance in JavaScript. 
+The timingsrc module provides a utility function *inherit* for making sure the inheritance is correctly implemented. The implementation is a commonly used pattern for inheritance in JavaScript. 
 
-```js
+```javascript
 var inherit = function (Child, Parent) {
 	var F = function () {}; 
 	F.prototype = Parent.prototype;
@@ -194,9 +201,9 @@ var inherit = function (Child, Parent) {
 
 ### Example ArraySequencer
 
-ArraySequencer is a [specialized Sequencer](#specialized) integrated with an array of timed data. The array is not assumed to be modified. The implementation uses the array index as unique key into Sequencer, and use "start" and "end" properties of array elements in order to create Intervals. 
+ArraySequencer is a [specialized Sequencer](#specialized) integrated with an array of timed data. The array is assumed to be static. The implementation uses the array index as unique key into Sequencer, and use "start" and "end" properties of array elements in order to create Intervals. 
 
-```js
+```javascript
 
 /* Timed data */
 var array = [
