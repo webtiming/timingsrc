@@ -3,15 +3,41 @@ layout: default
 title: Documentation
 ---
 
-The timing object programming model currently includes four concepts;
+The timingsrc library implements the timing object programming model.
 
 - [timing objects](#timingobject)
+- [timing providers](#timingprovider)
 - [sequencing tools](#sequencing)
 - [media synchronization tools](#mediasync)
-- [timing providers](#timingprovider)
+
 
 This document briefly introduces these concepts and provides links for further documentation. Finally,
 terms and definitions used in this documentation are clarified in [terminology](#terminology).  
+
+
+<a name="timingsrc"></a>
+## Module
+
+The timingsrc module provides [timing objects](#timingobject), [timing providers](#timingprovider), and tools for [sequencing](#sequencing) and [media synchronization](#mediasync). The module is implemented as plain JavaScript and packaged for regular script inclusion as well as [AMD](http://requirejs.org/) module for use with requirejs, see [helloworld](../examples/helloworld.html) and [helloworld-require](../examples/helloworld-require.html) for full examples. 
+
+```javascript
+// regular script import - 'TIMINGSRC' property on global object 
+var timingsrc = TIMINGSRC;              
+// require js module import
+var timingsrc = require("./timingsrc");
+// use the module
+var timingObject = new timingsrc.TimingObject();
+```
+
+The timingsrc module depends is implemented in plain JavaScript and should run in every modern Web browser.
+
+The timingsrc library is available from GitHub.
+
+- [timingsrc.js](../lib/timingsrc.js)
+- [timingsrc-min.js](../lib/timingsrc-min.js)
+- [timingsrc-require.js](../lib/timingsrc-require.js)
+- [timingsrc-require-min.js](../lib/timingsrc-require-min.js)
+
 
 <a name="timingobject"></a>
 ## Timing Objects
@@ -27,8 +53,15 @@ timing converters may be used to shift or scale the timeline.
 - [TimingObject Doc](doc_timingobject.html)
 - [TimingObject API](api_timingobject.html)
 
+
+<a name="timingprovider"></a>
+## Timing Providers
+
+work in progress..
+
+
 <a name="sequencing"></a>
-## Sequencing
+## Sequencing Tools
 
 Given a timing object, a common challenge is to correctly align timed data. This challenge is known under many names;
 timed events, triggers, upcalls etc. Such timed data are also commonly collected into scripts, tracks, logs or time-series. 
@@ -37,25 +70,22 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 **setPointCallback** and **setIntervalCallback** are simple tools inspired by _setTimeout_ and _setInterval_. setPointCallback triggers a callback when the timing object passes by a specific point on the timeline. setIntervalCallback is associated with periodic points along the timeline.
 
+- [TimingCallback API](api_timingdallback.html)
+
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
-- [Sequencing White Paper](doc_sequencing.html)
-- [Sequencing API](api_sequencing.html)
+- [Sequencer Background](background_sequencer.html)
+- [Sequencer API](api_sequencer.html)
+- [Sequencer Usage](usage_sequencer.html)
 
 
 <a name="mediasync"></a>
-## MediaSync
+## Media Synchronization Tools
 
 Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as _timingsrc_. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
 
 - [MediaSync Doc](doc_mediasync.html)
 - [MediaSync API](api_mediasync.html)
-
-
-<a name="timingprovider"></a>
-## Timing Providers
-
-work in progress..
 
 
 <a name="terminology"></a>

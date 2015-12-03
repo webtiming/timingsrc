@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Sequencing
+title: Sequencer Background
 ---
 
 ## Abstract
