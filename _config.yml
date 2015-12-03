@@ -1,6 +1,6 @@
 name: timingsrc
 markdown: redcarpet
-highlighter: pygments
+highlighter: rouge
 #safe: true
 #lsi: false
 baseurl: /timingsrc
