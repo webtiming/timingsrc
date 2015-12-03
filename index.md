@@ -5,7 +5,7 @@ title: Home
 
 ## Timing Object
 
-The timingsrc library is a JavaScript implementation of the timing object and the implied programming model, both introduced in the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/). Here are some key points:
+The timingsrc library is a JavaScript implementation of the timing object programming model, introduced in the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/). Here are some key points:
 
 - timing object defines a common API for timing resources
 - timing sensitive components take direction from (slave to) timing objects
