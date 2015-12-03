@@ -27,38 +27,11 @@ Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.
 
 This documentation includes the following sections:
 
-- [Module](#module)
 - [Interval](#interval)
 - [SequencerError](#error)
 - [SequencerCue](#cue)
 - [SequencerEArg](#earg)
 - [Sequencer](#sequencer)
-
-
-
-<a name="module"></a> 
-## Sequencer Module
-
-The sequencer module provides constructor functions for [Sequencer](#sequencer) and [Interval](#interval). The module is implemented as plain JavaScript and packaged for regular script inclusion as well as an [AMD](http://requirejs.org/) module for use with requirejs, see [helloworld](examples.html#helloworld) and [helloworld-require](examples.html#helloworld-require) for full examples. 
-
-```javascript
-var mod;                                // sequencer module
-
-// regular script import
-mod = SEQUENCER;                        // 'SEQUENCER' property on global object 
-// require js module import
-mod = require("./sequencer");           // import sequencer module
-
-// shortcuts
-var Sequencer = mod.Sequencer;          // Sequencer constructor function
-var Interval = mod.Interval;            // Interval constructor function
-var inherit = mod.inherit;              // utility function, used only in the context of specializing the Sequencer
-var SequencerError = mod.SequencerError // Error type used by Sequencer
-```
-
-The sequencer module depends on [Shared Motion](http://motioncorporation.com), a JavaScript implementation of the [TimingObject](http://webtiming.github.io/timingobject), provided by the [Motion Corporation](http://motioncorporation.com). Shared Motion comes with built-in support for online synchronization. The Sequencer will serve as reference implementation for sequencing logic integrated with the TimingObject. Both the Sequencer and Shared Motion are plain JavaScript and should run in every modern Web browser.
-
-
 
 <a name="interval"></a>
 ## Interval
