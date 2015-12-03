@@ -1,6 +1,8 @@
 # timingsrc
 
-Source code for timing related libraries managed by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/)
+Web Documentation for timngsrc available at [http://webtiming.github.io/timingsrc/](index.html)
+
+Timingsrc includes source code and documentation for timing related libraries managed by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/)
 
 The timingsrc library is available under the LGPL licence.
 
