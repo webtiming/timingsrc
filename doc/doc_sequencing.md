@@ -160,7 +160,7 @@ Synchronized Multimedia Integration Language [SMIL](http://www.w3.org/TR/SMIL) i
 <a name="importance"></a>
 ## Importance
 
-#### Any kind of timed data, for any purpose
+#### Any kind of timed data, any purpose
 
 The Sequencer function and API is inspired by text tracks supported by HTML media elements. Unfortunately, the close integration between text tracks and media elements may have obscured the full potential of such sequencing mechanisms. It is commonly believed that the utility is limited to media supplementing video. In contrast, by isolating sequencer logic from media elements, specific data formats and UI solutions, the value of the sequencer as a generic programming tool becomes much more evident. 
 
@@ -190,7 +190,7 @@ Approach 2) is somewhat similar to the classical model for state representation 
 <a name="futurework"></a>
 ## Future work
 
-Sequencers in the timrinsrc library are completed, yet there may still be avenues for further work.
+Sequencers in the timingsrc library are completed, yet there may still be avenues for further work.
 
 #### New Sequencer types and features
 
