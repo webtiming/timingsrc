@@ -1,6 +1,6 @@
 # timingsrc
 
-Web Documentation for timngsrc available at [http://webtiming.github.io/timingsrc/](index.html)
+Web Documentation for timngsrc available at [http://webtiming.github.io/timingsrc/](http://webtiming.github.io/timingsrc/)
 
 Timingsrc includes source code and documentation for timing related libraries managed by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/)
 
