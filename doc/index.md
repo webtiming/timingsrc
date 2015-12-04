@@ -50,9 +50,9 @@ Additionally, timing converters are a special kind of timing objects that depend
 Timing converters are useful when you need an alternative representations for a single timing object. For instance, 
 timing converters may be used to shift or scale the timeline.
 
-- [TimingObject Doc](background_timingobject.html)
-- [TimingObject API](api_timingobject.html)
 
+- [TimingObject API](api_timingobject.html)
+- [TimingConverter API](api_timingconverter.html)
 
 <a name="timingprovider"></a>
 ## Timing Providers

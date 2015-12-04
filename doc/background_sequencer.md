@@ -3,6 +3,10 @@ layout: default
 title: Sequencer Background
 ---
 
+- [Sequencer Background](background_sequencer.html)
+- [Sequencer API](api_sequencer.html) 
+- [Sequencer Usage](usage_sequencer.html) 
+
 ## Abstract
 
 > *Sequencer* and *IntervalSequencer* are generic tools for *timed execution* of *timed data*.
