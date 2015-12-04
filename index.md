@@ -30,7 +30,7 @@ The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webti
 - separation of concernes
 	- online timing providers may focus on the challenges of distributed timing, while application developers may focus on exploiting timing for the purpose of creating great user experiences.     
 
-There is a strong analogy to the introduction of *sockets* in the 80'ies. Sockets provided a unified API to different types of communication. Now we similarly wish to provide a unified API for different types of timing resources. It's about time!
+There is an analogy to the introduction of *sockets* in the 80'ies. Sockets provided a unified API to different types of communication. Now we similarly wish to provide a unified API for different types of timing resources. It's about time!
 
 
 ## Relation to timing object specification
