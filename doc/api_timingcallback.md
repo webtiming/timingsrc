@@ -18,7 +18,7 @@ specified setPointCallback will provide repeated callbacks on each occasion when
 
 
 ```javascript
-var handle = setPointCallback(timingObject, callback, point, options);
+var handle = timingsrc.setPointCallback(timingObject, callback, point, options);
 handle.cancel();
 ```
 - param: {Object} [timingObject] the timing object
@@ -37,7 +37,7 @@ For example, if offset is 2 and length is 4, setIntervalCallback will invoke cal
 for points <code>[... -2, 2, 6, 10, 14, ...]</code>
 
 ```javascript
-var handle = setIntervalCallback(timingObject, callback, length, options);
+var handle = timingsrc.setIntervalCallback(timingObject, callback, length, options);
 handle.cancel();
 ```
 

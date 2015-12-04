@@ -45,7 +45,7 @@ Interval objects are immutable.
 ### Interval: Constructor
 
 ```javascript
-var i = new Interval(low, high, lowInclude, highInclude);
+var i = new timingsrc.Interval(low, high, lowInclude, highInclude);
 ```
 - param: {float} [low] value of lower endpoint of interval 
 - param: {float} [high] value of higher endpoint of interval
@@ -148,7 +148,7 @@ var eArg = {
 Returns a Sequencer object. There is no need to start the Sequencer. Execution is driven by the given timing object, and the Sequencer is operational when the constructed finalizes. 
 
 ```javascript
-var s = new Sequencer(timingObject);
+var s = new timingsrc.Sequencer(timingObject);
 ```
 - param: {object} [timingObject] The [TimingObject](http://webtiming.github.io/timingobject) that drives the execution of the Sequencer. 
 
@@ -364,7 +364,7 @@ It implements the same API as the Sequencer, with the single exeption that [Sequ
 Returns an IntervalSequencer object. There is no need to start the IntervalSequencer. Execution is driven by the given timing objects, and the IntervalSequencer is operational when the constructed finalizes.
 
 ```javascript
-var s = new IntervalSequencer(timingObjectA, timingObjectB);
+var s = new timingsrc.IntervalSequencer(timingObjectA, timingObjectB);
 ```
 - param: {object} [timingObjectA] Timing object A represents one endpoint of the *active interval* of the IntervaSequencer. 
 - param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 

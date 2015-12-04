@@ -50,7 +50,7 @@ Additionally, timing converters are a special kind of timing objects that depend
 Timing converters are useful when you need an alternative representations for a single timing object. For instance, 
 timing converters may be used to shift or scale the timeline.
 
-- [TimingObject Doc](doc_timingobject.html)
+- [TimingObject Doc](background_timingobject.html)
 - [TimingObject API](api_timingobject.html)
 
 
@@ -70,7 +70,7 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 **setPointCallback** and **setIntervalCallback** are simple tools inspired by _setTimeout_ and _setInterval_. setPointCallback triggers a callback when the timing object passes by a specific point on the timeline. setIntervalCallback is associated with periodic points along the timeline.
 
-- [TimingCallback API](api_timingdallback.html)
+- [TimingCallback API](api_timingcallback.html)
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
