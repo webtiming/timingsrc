@@ -24,11 +24,11 @@ An introduction to the timing object programming model is available in [Doc](doc
 The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) advocates standardization of the timing object. Agreement on a common API for timing resources would enable:
 
 - temporal composition
-	- very different timing sensitive components could easily be integrated into a single timing sensitive application. This would allow the classical fruits of composition (i.e. mash-up, integration, code-reuse, flexibility, and extensibility) to be fully exploited by timing sensitive Web applications.
+	- very different timing sensitive components could easily be integrated into a single consitent presentation. This would allow the classical fruits of composition, i.e. mash-up, integration, code-reuse, flexibility and extensibility, to be fully exploited by timing sensitive Web applications.
 - common concepts and tools
 	- timing challenges can be addressed using the same concepts and tools, across separate application domains (e.g. music, broadcast, Web-media). New concepts and tools building on a standard will also apply to a much broader community.  
 - separation of concernes
-	- online timing providers may focus on the challenges of distributed timing, while application developers may focus on exploing timing for the purpose of creating great user experiences.     
+	- online timing providers may focus on the challenges of distributed timing, while application developers may focus on exploiting timing for the purpose of creating great user experiences.     
 
 There is a strong analogy to the introduction of *sockets* in the 80'ies. Sockets provided a unified API to different types of communication. Now we similarly wish to provide a unified API for different types of timing resources. It's about time!
 
