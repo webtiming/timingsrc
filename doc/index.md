@@ -3,16 +3,17 @@ layout: default
 title: Documentation
 ---
 
-The timingsrc library implements the timing object programming model.
+The timingsrc library implements the timing object programming model. 
+This document briefly introduces the following concepts and provides links for further documentation.
 
 - [timing objects](#timingobject)
 - [timing providers](#timingprovider)
 - [sequencing tools](#sequencing)
 - [media synchronization tools](#mediasync)
+ 
+Note that the timingsrc library implements [Immediate Events Background](background_eventing.html) semantics for many of its event types. 
 
-
-This document briefly introduces these concepts and provides links for further documentation. Finally,
-terms and definitions used in this documentation are clarified in [terminology](#terminology).  
+Finally, terms and definitions used in this documentation are clarified in [terminology](#terminology).  
 
 
 <a name="timingsrc"></a>

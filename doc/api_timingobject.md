@@ -66,7 +66,9 @@ Timing objects supports two event types ["change", "timeupdate"].
 
 Event handlers currently do not provide event arguments.
 
-See also [eventing in timingsrc](#background_eventing.html) for *important* information about specific event semantics used in the timingsrc library. 
+Timing Object implements immediate events semantics for event types "change", "timeupdate"].
+Read more about immediate events in [Immediate Events Background](background_eventing.html).
+
 
 ---
 #### .on()
