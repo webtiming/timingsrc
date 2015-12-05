@@ -121,26 +121,33 @@ Immediate event semantic is not really a violation of the original event semanti
 If a programmer does not understand immediate events, or is not aware of it, the consequences are not dire. Essentially there will be an obsolete event in the system.
 
 
-#### Immediate Events complicates the event source.
+#### The immediate event semantic complicates the event source.
 
-Yes they do, and that is an important advantage! Immediate events is about shifting complexity from the event consumer to the event source. This is a good idea for several reasons:
+Yes it does, and that is a good thing! Immediate events is about shifting complexity from the event consumer to the event source. This is a good idea for several reasons:
 
 - good api design is generally targets a the programming experience of the api consumer, not the programmer of the api.
 - the event model generally encourages multiple event consumers per event source. If a problem is not solved by the event source, this means that the problem must be solved independently by each event consumer
-- the designer of the events source api is likely more qualified for implementing this correctly.
+- the designer of the events source api is likely better placed for implementing this correctly.
 
-Furthermore, the original problem of montoring the state of an event source may not be as trivial as it seems, at least if guaranteed correctness is required. For instance, if setTimeout(dispatch,0) is used by the event source to dispatch events, an event consumer can observe effects of state changes with <code>object.get_state()</code> before corresponding event upcalls have been delivered. Use of setTimeout(dispatch,0) also introduces the question of when to evaluate the list of callback handlers, before setTimeout(dispatch,0) or inside dispatch? Reasoning about correctness in these circumstances is hard, and programmers using an event api generally have little knowledge about internals. In contrast, with immediate events, the responsibility rests on the api designer to deals with such complexity where it can best be solved - within the event source.
+The original problem of montoring the state of an event source may not be as trivial as it seems, at least if guaranteed correctness is required. For instance, if setTimeout(dispatch,0) is used by the event source to dispatch events, an event consumer can observe effects of state changes with <code>object.get_state()</code> before corresponding event upcalls have been delivered. Use of setTimeout(dispatch,0) also introduces the question of when to evaluate the list of callback handlers, before setTimeout(dispatch,0) or inside dispatch? Reasoning about correctness in these circumstances is hard, and programmers using an event api generally have little knowledge about internals. In contrast, with immediate events, the responsibility rests on the api designer to deals with such complexity where it can best be solved - within the event source.
 
+Finally, the costs of implementing immediate events for different event sources can be greately reduced by isolating and reusing the logic. In the timinsrc library event sources share and specialize a single implememtation of the immediate event pattern [source/util/eventutils.js](../source/util/eventutils.js).
 
 
 
 <a name="timingsrc"></a>
 ## Use of Immediate events in timingsrc
 
-- switching becomes easy
-- nesting becomes easy
+The timingsrc library employs the immediate event pattern in its central concepts.
 
+- TimingObject and TimingConverter: evnet types: "change" and "timeupdate"
+- Sequencer and IntervalSequencer: event types: "enter" and "events"
 
+This is particularly attractive for the timingsrc library because the model encourages a reactive programming model with chained event sources. For instance, a timed UI component may depend on sequencer events, which in turn depends on timing converter events, which in turn depends on events from a root timing object. The immediate event pattern also gives flexibility to safely make dynamic changes to this dependency chain. For instance, all components in this programming model supports dynamic replacement of timing object (i.e. setting the timingsrc properety). 
 
-
+```javascript
+old_timingsrc.off("change", handler);
+new_timingsrc.on("change", handler);
+```
+Due to the immediate event pattern, the component will take on the state of the new timingsrc immediately. From the perspective of the component, switching timingsrc is no different from receiveing a new change event. Note that event consumers that cache state from their event source must empty this cache before connecting to a new event source. This could for example be part of the .off() method. 
 
