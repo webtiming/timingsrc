@@ -12,7 +12,7 @@ This document briefly introduces the following concepts and provides links for f
 - [sequencing tools](#sequencing)
 - [media synchronization tools](#mediasync)
  
-Note that the timingsrc library implements [Immediate Events Background](background_eventing.html) semantics for many of its event types. 
+Note that the timingsrc library implements [Immediate Events](background_eventing.html) semantics for many of its event types. 
 
 Finally, terms and definitions used in this documentation are clarified in [terminology](#terminology).  
 
