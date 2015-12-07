@@ -2,10 +2,13 @@
 layout: default
 title: Sequencer API
 ---
-
+ 
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
-- [Sequencer Usage](usage_sequencer.html) 
+- [Sequencer Usage](usage_sequencer.html)
+- [Sequencer Example](exp_sequencer.html)
+- [IntervalSequencer Example](exp_intervalsequencer.html)
+
 
 This describes the API of **Sequencer** and **IntervalSequencer**.
 

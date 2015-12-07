@@ -5,6 +5,7 @@ title: Timing Converter Background
 
 - [Timing Converter Background](background_timingconverter.html)
 - [Timing Converter API](api_timingconverter.html)
+- [Timing Converter Example](exp_timingconverter.html)
 
 Timing Converters are useful when you need an alternative representation for a Timing Object. For instance, 
 if different media components refer to different timelines, *skewed* representations of a common timing object could make up for this.

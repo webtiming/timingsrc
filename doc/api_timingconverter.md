@@ -3,7 +3,17 @@ layout: default
 title: Timing Converter API
 ---
 
+- [Timing Converter Background](background_timingconverter.html)
+- [Timing Converter API](api_timingconverter.html)
+- [Timing Converter Example](exp_timingconverter.html)
+
 This describes the Timing Converter API
+
+
+#### Timing Converter
+
+All timing converters implement the [Timing Object API](api_timingobject.html),
+and extend this API with a *timingsrc* property that identifies the source timing object (on which the timing converter depends).
 
 - [SkewConverter](#skewconverter)
 - [ScaleConverter](#scaleconverter)
@@ -14,11 +24,6 @@ This describes the Timing Converter API
 - [LocalConverter](#localconverter)
 - [DerivativeConverter](#derivativeconverter)
 
-
-#### Timing Converter
-
-All timing converters implement the [Timing Object API](api_timingobject.html),
-and extend this API with a *timingsrc* property that identifies the source timing object (on which the timing converter depends).
 
 #### .timingsrc
 Getter and setter for source timing object.

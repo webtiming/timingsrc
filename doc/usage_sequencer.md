@@ -6,6 +6,8 @@ title: Sequencer Usage
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
 - [Sequencer Usage](usage_sequencer.html) 
+- [Sequencer Example](exp_sequencer.html)
+- [IntervalSequencer Example](exp_intervalsequencer.html)
 
 This describes usage of **Sequencer** and **IntervalSequencer**.
 

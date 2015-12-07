@@ -53,7 +53,9 @@ timing converters may be used to shift or scale the timeline.
 
 
 - [TimingObject API](api_timingobject.html)
+- [TimingObject Example](exp_timingobject.html)
 - [TimingConverter API](api_timingconverter.html)
+- [TimingConverter Example](exp_timingconverter.html)
 
 <a name="timingprovider"></a>
 ## Timing Providers
@@ -72,12 +74,15 @@ distinction concerning the specific type of data, and instead aim to provide gen
 **setPointCallback** and **setIntervalCallback** are simple tools inspired by _setTimeout_ and _setInterval_. setPointCallback triggers a callback when the timing object passes by a specific point on the timeline. setIntervalCallback is associated with periodic points along the timeline.
 
 - [TimingCallback API](api_timingcallback.html)
+- [TimingCallback Example](exp_timingcallback.html)
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
+- [Sequencer Example](exp_sequencer.html)
+- [IntervalSequencer Example](exp_intervalsequencer.html)
 
 
 <a name="mediasync"></a>
@@ -85,8 +90,9 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as timingsrc. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.
 
-- [MediaSync Doc](background_mediasync.html)
+- [MediaSync Background](background_mediasync.html)
 - [MediaSync API](api_mediasync.html)
+- [MediaSync Example](exp_mediasync.html)
 
 
 <a name="terminology"></a>

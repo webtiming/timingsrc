@@ -10,22 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{{site.baseurl}}/stylesheets/github-light.css" media="screen">
 <link href="{{site.baseurl}}/stylesheets/syntax.css" rel="stylesheet" type='text/css'>
 
-<!--   
-{% if page.demoappid %}
+
+{% if page.demojs %}
 <script text="javascript" src="http://webtiming.github.io/timingsrc/lib/timingsrc.js"></script>
-<script text="javascript" src="{{page.demojs}}.js"></script>
-
-<script text="javascript">
-	var m;
-	var app = MCorp.app("{{page.demoappid}}", {anon:true});
-	app.run = function () {
-  		m = app.motions.shared;
-  		DEMO.run(app.motions);
-  	};
-  	if (document.readyState === "complete") app.init();
-  	else window.onload = app.init;
-</script>
-
+<script text="javascript" src="js/{{page.demojs}}.js"></script>
 {% endif %}
 
--->

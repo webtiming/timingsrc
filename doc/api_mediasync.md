@@ -3,9 +3,11 @@ layout: default
 title: MediaSync API
 ---
 
-This describes the API of MediaSync.
+- [MediaSync Background](background_mediasync.html) 
+- [MediaSync API](api_mediasync.html)
+- [MediaSync Example](exp_mediasync.html)
 
-- [Background MediaSync](background_mediasync.html) provides a more detailed introduction to the MediaSync concept.
+This describes the API of MediaSync.
 
 #### Constructor
 Returns a media sync object
