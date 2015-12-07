@@ -7,6 +7,7 @@ The timingsrc library implements the timing object programming model.
 This document briefly introduces the following concepts and provides links for further documentation.
 
 - [timing objects](#timingobject)
+- [timing converters](#timingconverter)
 - [timing providers](#timingprovider)
 - [sequencing tools](#sequencing)
 - [media synchronization tools](#mediasync)
@@ -47,13 +48,17 @@ The timing objects is the basic concept of this programming model. You may think
 If you start it, its value progresses as a clock, until you pause or resume it later. The timing object additionally 
 supports behavior like time-shifting, different velocities (including backwards), and acceleration.
 
-Additionally, timing converters are a special kind of timing objects that depend on an other timing object.
+- [TimingObject API](api_timingobject.html)
+- [TimingObject Example](exp_timingobject.html)
+
+<a name="timingconverter"></a>
+## Timing Converters
+
+Timing converters are a special kind of timing objects that depend on an other timing object.
 Timing converters are useful when you need an alternative representations for a single timing object. For instance, 
 timing converters may be used to shift or scale the timeline.
 
-
-- [TimingObject API](api_timingobject.html)
-- [TimingObject Example](exp_timingobject.html)
+- [TimingConverter Background](background_timingconverter.html)
 - [TimingConverter API](api_timingconverter.html)
 - [TimingConverter Example](exp_timingconverter.html)
 
