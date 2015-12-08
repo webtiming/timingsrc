@@ -586,9 +586,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var i, e, key, interval, data;	
 
-		// Wrap update function of axis to capture axis operations
-		//var origOpList = this._axis.updateAll(argList);
-
 		// filter out NOOPs
 		var opList = origOpList.filter(function (op) {
 			return (op.type !== axis.OpType.NOOP);
