@@ -23,7 +23,7 @@
             });
           };
          
-          Object.observe(p, observer);
+          Object.observe(p, observer, ['update']);
 
           p._setSkew(2);
           p._setVector({position:2});
