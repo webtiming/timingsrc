@@ -19,7 +19,7 @@
 */
 
 
-define(['./eventutils'], function (eventutils) {
+define(function () {
 
 	// Need a polyfill for performance, now as Safari on ios doesn't have it...
 	(function(){
@@ -46,15 +46,37 @@ define(['./eventutils'], function (eventutils) {
 			position: 0,
 			velocity: 0,
 			acceleration: 0,
-			timestamp: localClock.now() + this._skew;
+			timestamp: localClock.now() + this._skew
 		};
 		this._range = [-Infinity, Infinity];
-
-		// event support
-		eventutils.eventify(this, TimingProvider.prototype);
-		this.eventifyDefineEvent("vector", {init:true}); // define vector event (supporting init-event)
-		this.eventifyDefineEvent("skew", {init:true}); // define skew event (supporting init-event)
 	};
+
+
+	// internal method used by timing provider to set skew
+	TimingProvider.prototype._setSkew = function (newSkew) {
+		// notify
+		Object.getNotifier(this).notify({
+			type: 'update',
+			name: 'skew',
+			oldValue: this._skew
+		});
+		// update
+		this._skew = newSkew;
+	};
+
+
+	// internal method used by timing provider to set vector
+	TimingProvider.prototype._setVector = function (newVector) {
+		// notify
+		Object.getNotifier(this).notify({
+			type: 'update',
+			name: 'vector',
+			oldValue: this._vector
+		});
+		// update
+		this._vector = newVector;
+	};
+
 
 	Object.defineProperty(TimingProvider.prototype, 'range', {
 		get : function () { 
@@ -75,14 +97,7 @@ define(['./eventutils'], function (eventutils) {
 		}
 	});
 
-	TimingProvider.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "vector") {
-			return (this._vector !== null) ? [{type: type, e: undefined}] : []; 
-		} else if (type === "skew") {
-			return (this._skew !== null) ? [{type:type, e: undefined}] : []; 
-		}
-		return [];
-	};
+
 
 	return TimingProvider;
 });

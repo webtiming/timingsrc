@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <!-- requirejs config -->
+  <script>
+    var require = {
+      baseUrl : '../source',
+    };
+  </script>
+  <script type="text/javascript" src="../lib/require.js"></script>
+  <script type="text/javascript">
+      var m, w;
+      require(['./timingobject/timingprovider'], function (TimingProvider) {
+      
+        var run = function () {
+
+          var p = new TimingProvider();
+
+          var observer = function (changes) {
+            changes.forEach(function(change) {
+              console.log(change);
+            });
+          };
+         
+          Object.observe(p, observer);
+
+          p._setSkew(2);
+          p._setVector({position:2});
+          p.jalla = "palla";
+          
+        };
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+</script>
+</head>
+<body>
+<h1>Test Timing Provider</h1>
+
+</body>
+</html>
