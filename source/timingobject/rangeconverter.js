@@ -35,21 +35,21 @@ define(['./timingbase'], function (timingbase) {
 
 	var motionutils = timingbase.motionutils;
 	var ConverterBase = timingbase.ConverterBase;	
-	var STATE = timingbase.STATE;
+	var RangeState = motionutils.RangeState;
 	var inherit = timingbase.inherit;
 
 	var state = function () {
-		var _state = STATE.INIT;
+		var _state = RangeState.INIT;
 		var is_real_state_change = function (old_state, new_state) {
 			// only state changes between INSIDE and OUTSIDE* are real state changes.
-			if (old_state === STATE.OUTSIDE_HIGH && new_state === STATE.OUTSIDE_LOW) return false;
-			if (old_state === STATE.OUTSIDE_LOW && new_state === STATE.OUTSIDE_HIGH) return false;
-			if (old_state === STATE.INIT) return false;
+			if (old_state === RangeState.OUTSIDE_HIGH && new_state === RangeState.OUTSIDE_LOW) return false;
+			if (old_state === RangeState.OUTSIDE_LOW && new_state === RangeState.OUTSIDE_HIGH) return false;
+			if (old_state === RangeState.INIT) return false;
 			return true;
 		}
 		var get = function () {return _state;};
 		var set = function (new_state) {
-			if (new_state === STATE.INSIDE || new_state === STATE.OUTSIDE_LOW || new_state === STATE.OUTSIDE_HIGH) {
+			if (new_state === RangeState.INSIDE || new_state === RangeState.OUTSIDE_LOW || new_state === RangeState.OUTSIDE_HIGH) {
 				if (new_state !== _state) {
 					var old_state = _state;
 					_state = new_state;
@@ -79,8 +79,8 @@ define(['./timingbase'], function (timingbase) {
 		if (this.vector === null) return null;
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this.timingsrc.vector, this.clock.now());
-		var state = this._getCorrectRangeState(vector);
-		if (state !== STATE.INSIDE) {
+		var state = motionutils.getCorrectRangeState(vector, this._range);
+		if (state !== RangeState.INSIDE) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition
@@ -106,22 +106,22 @@ define(['./timingbase'], function (timingbase) {
 
 	// overrides
 	RangeConverter.prototype._onChange = function (vector) {
-		var new_state = this._getCorrectRangeState(vector);
+		var new_state = motionutils.getCorrectRangeState(vector, this._range);
 		var state_changed = this._state.set(new_state);	
 		if (state_changed.real) {
 			// state transition between INSIDE and OUTSIDE
-			if (this._state.get() === STATE.INSIDE) {
+			if (this._state.get() === RangeState.INSIDE) {
 				// OUTSIDE -> INSIDE, generate fake start event
 				// vector delivered by timeout 
 				// forward event unchanged
 			} else {
 				// INSIDE -> OUTSIDE, generate fake stop event
-				vector = this._checkRange(vector);
+				vector = motionutils.checkRange(vector, this._range);
 			}
 		}
 		else {
 			// no state transition between INSIDE and OUTSIDE
-			if (this._state.get() === STATE.INSIDE) {
+			if (this._state.get() === RangeState.INSIDE) {
 				// stay inside or first event inside
 				// forward event unchanged
 			} else {
@@ -131,8 +131,7 @@ define(['./timingbase'], function (timingbase) {
 				// - skip from outside-high to outside-low
 				// - skip from outside-low to outside-high
 				if (state_changed.abs) {
-
-					vector = this._checkRange(vector);
+					vector = motionutils.checkRange(vector, this._range);
 				} else {
 					// drop event
 

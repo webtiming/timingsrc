@@ -11,24 +11,15 @@
   <script type="text/javascript" src="../lib/require.js"></script>
   <script type="text/javascript">
       var m, w;
-      require(['./timingobject/timingprovider'], function (TimingProvider) {
+      require(['./timingobject/timingprovider'], function (LocalTimingProvider) {
       
         var run = function () {
 
-          var p = new TimingProvider();
-
-          var observer = function (changes) {
-            changes.forEach(function(change) {
-              console.log(change);
-            });
-          };
-         
-          Object.observe(p, observer, ['update']);
-
-          p._setSkew(2);
-          p._setVector({position:2});
-          p.jalla = "palla";
-          
+          var p = new LocalTimingProvider();
+          p.on("vector", function () {
+            console.log(p.vector);
+          });        
+          setTimeout(function () {p.update({position:2});}, 300);
         };
         if (document.readyState === "complete") run();
         else window.onload = run;

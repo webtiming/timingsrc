@@ -29,12 +29,15 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	'use strict';
 
 	//	STATE is used for managing/detecting range violations.
+	/*
 	var STATE = Object.freeze({
 	    INIT : "init",
 	    INSIDE: "inside",
 	    OUTSIDE_LOW: "outsidelow",
 	    OUTSIDE_HIGH: "outsidehigh"
 	});
+	*/
+
 
 	// Utility inheritance function.
 	var inherit = function (Child, Parent) {
@@ -316,11 +319,13 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	};
 
 
+
 	/*
 		do not override
 		Given a snapshot vector, the internal range is used to 
 		calculate the correct STATE (INSIDE|OUTSIDE)
 	*/
+	/*
 	TimingBase.prototype._getCorrectRangeState = function (vector) {
 		var p = vector.position,
 			v = vector.velocity,
@@ -337,6 +342,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		}
 		return STATE.INSIDE;
 	};
+	*/
 
 	/*
 		do not override
@@ -347,6 +353,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		thus guraranteeing that the returned vector is 
 		INSIDE
 	*/
+	/*
 	TimingBase.prototype._checkRange = function (vector) {
 		var state = this._getCorrectRangeState(vector);
 		if (state !== STATE.INSIDE) {
@@ -359,7 +366,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		}
 		return vector;
 	};
-
+	*/
 
 	// CONVERTER BASE
 
@@ -412,8 +419,8 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		to be overridden
 		default forwards update request to timingsrc unchanged.
 	*/
-	ConverterBase.prototype.update = function (p, v, a) {
-		return this.timingsrc.update(p,v,a);
+	ConverterBase.prototype.update = function (vector) {
+		return this.timingsrc.update(vector);
 	};
 
 	/*
@@ -430,7 +437,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	return {
 		TimingBase : TimingBase,
 		ConverterBase : ConverterBase,
-		STATE : STATE,
+		//STATE : STATE,
 		inherit: inherit,
 		motionutils : motionutils
 	};

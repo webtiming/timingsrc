@@ -38,6 +38,56 @@ define(function () {
 			timestamp : tsSec
 		};
     };
+
+
+    //	RANGE STATE is used for managing/detecting range violations.
+	var RangeState = Object.freeze({
+	    INIT : "init",
+	    INSIDE: "inside",
+	    OUTSIDE_LOW: "outsidelow",
+	    OUTSIDE_HIGH: "outsidehigh"
+	});
+
+	/*
+		A snapshot vector is checked with respect to range,
+		calclulates correct RangeState (i.e. INSIDE|OUTSIDE)
+	*/
+	var getCorrectRangeState = function (vector, range) {
+		var p = vector.position,
+			v = vector.velocity,
+			a = vector.acceleration;
+		if (p > range[1]) return RangeState.OUTSIDE_HIGH;
+		if (p < range[0]) return RangeState.OUTSIDE_LOW;
+		// corner cases
+		if (p === range[1]) {
+			if (v > 0.0) return RangeState.OUTSIDE_HIGH;
+			if (v === 0.0 && a > 0.0) return RangeState.OUTSIDE_HIGH;
+		} else if (p === range[0]) {
+		    if (v < 0.0) return RangeState.OUTSIDE_LOW;
+		    if (v == 0.0 && a < 0.0) return RangeState.OUTSIDE_HIGH;
+		}
+		return RangeState.INSIDE;
+	};
+
+	/*
+
+		A snapshot vector is checked with respect to range.
+		Returns vector corrected for range violations, or input vector unchanged.
+	*/
+	var checkRange = function (vector, range) {
+		var state = getCorrectRangeState(vector, range);
+		if (state !== RangeState.INSIDE) {
+			// protect from range violation
+			vector.velocity = 0.0;
+			vector.acceleration = 0.0;
+			if (state === RangeState.OUTSIDE_HIGH) {
+				vector.position = range[1];
+			} else vector.position = range[0];
+		}
+		return vector;
+	};
+
+
     
     // Compare values
     var cmp = function (a, b) {
@@ -285,7 +335,10 @@ define(function () {
 		calculateMinPositiveRealSolution : calculateMinPositiveRealSolution,
 		calculateDelta : calculateDelta,
 		calculateInterval : calculateInterval,
-		calculateSolutionsInInterval : calculateSolutionsInInterval
+		calculateSolutionsInInterval : calculateSolutionsInInterval,
+		getCorrectRangeState : getCorrectRangeState,
+		checkRange : checkRange,
+		RangeState : RangeState
 	};
 });
 

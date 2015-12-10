@@ -33,45 +33,69 @@
 	
 */
 
-define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) {
+define(['./timingbase', './timingprovider', 'util/masterclock'], function (timingbase, LocalTimingProvider, MasterClock) {
 
 	'use strict';
 
 	var motionutils = timingbase.motionutils;	
 	var TimingBase = timingbase.TimingBase;
-	var STATE = timingbase.STATE;
 	var inherit = timingbase.inherit;
 
-	var TimingObject = function (range, vector) {
+	var TimingObject = function (options) {
 		TimingBase.call(this, {timeout:true});
-		// internal clock
-		this._clock = new MasterClock();
-		// internal vector
-		this._vector = {
-			position : 0.0,
-			velocity : 0.0,
-			acceleration : 0.0,
-			timestamp : this._clock.now()
-		};
-		// parameter
-		if (vector) {
-			if (vector.position === null) vector.position = undefined;
-			if (vector.velocity === null) vector.velocity = undefined;
-			if (vector.acceleration === null) vector.acceleration = undefined;
-			if (vector.position !== undefined) this._vector.position = vector.position;
-			if (vector.velocity !== undefined) this._vector.velocity = vector.velocity;
-			if (vector.acceleration !== undefined) this._vector.acceleration = vector.acceleration;	
-		}		
-		// range
-		this._range = (range !== undefined) ? range : [-Infinity, Infinity];
-		// adjust vector according to range
-		this._vector = this._checkRange(this._vector);
+		this._clock = null;
+		this._range = null;
+		this._vector = null;
+
+		// timing provider
+		this._provider = options.provider || new LocalTimingProvider(options);
+		this._onSkewChangeWrapper = function () {this._onSkewChange();};
+		this._onVectorChangeWrapper = function () {this._onVectorChange();};
+		this._provider.on("skewchange", this._onSkewChangeWrapper, this);
+		this._provider.on("vectorchange", this._onVectorChangeWrapper, this);
+
+		// initialise
+		this._initialise();
+		if (this._isReady()) {
+			this._preProcess(this._provider.vector);		
+		}
 	};
 	inherit(TimingObject, TimingBase);
 
-	// Accessor internal clock
+	TimingObject.prototype._isReady = function () {return this._clock !== null;};
+	TimingObject.prototype._initialise = function () {
+		if (!this._provider.isReady()) return;
+		if (!this._isReady()) {
+			this._clock = new MasterClock(this._provider.skew);
+			this._range = this._provider.range;
+		}
+	};
+
+	TimingObject.prototype._onSkewChange = function () {
+		var wasReady = this._isReady();
+		this._initialise();
+		if (this._isReady()) {
+			var skew = this._provider.skew;
+			// todo : feed new skew to clock
+		}
+		if (!wasReady && this._isReady()) {
+			this._preProcess(this._provider.vector);
+		}
+	};
+
+	TimingObject.prototype._onVectorChange = function () {
+		this._initialise();
+		if (this._isReady()) {
+			this._preProcess(this._provider.vector);		
+		}
+	};
+
+	// Accessors for timing object
 	Object.defineProperty(TimingObject.prototype, 'clock', {
 		get : function () {	return this._clock; }	
+	});
+	Object.defineProperty(TimingObject.prototype, 'provider', {
+		get : function () {return this._provider; }
 	});
 
 	// overrides
@@ -79,8 +103,8 @@ define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) 
 		if (this.vector === null) return null;
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this.vector, this.clock.now());
-		var state = this._getCorrectRangeState(vector);
-		if (state !== STATE.INSIDE) {
+		var state = motionutils.getCorrectRangeState(vector, this._range);
+		if (state !== motionutils.RangeState.INSIDE) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition
@@ -88,40 +112,11 @@ define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) 
 	};
 
 	TimingObject.prototype.update = function (vector) {
-		if (vector === undefined || vector === null) {throw new Error ("drop update, illegal updatevector");}
-
-		var pos = (vector.position === undefined || vector.position === null) ? undefined : vector.position;
-		var vel = (vector.velocity === undefined || vector.velocity === null) ? undefined : vector.velocity;
-		var acc = (vector.acceleration === undefined || vector.acceleration === null) ? undefined : vector.acceleration;
-
-		if (pos === undefined && vel === undefined && acc === undefined) {
-			throw new Error ("drop update, noop");
-		}
-		var now = this._clock.now();
-		var nowVector = motionutils.calculateVector(this.vector, now);
-		var p = nowVector.position;
-		var v = nowVector.velocity;
-		var a = nowVector.acceleration;
-		pos = (pos !== undefined) ? pos : p;
-		vel = (vel !== undefined) ? vel : v;
-		acc = (acc !== undefined) ? acc : a;
-		if (pos === p && vel === v && acc === a) return;
-		var newVector = {
-			position : pos,
-			velocity : vel,
-			acceleration : acc,
-			timestamp : now
-		};
-		// process update
-		var self = this;
-		setTimeout(function () {
-			self._preProcess(newVector);
-		}, 0);
-		return newVector;
+		return this._provider.update(vector);
 	};
 
 	TimingObject.prototype._onChange = function (vector) {
-		return this._checkRange(vector);
+		return motionutils.checkRange(vector, this._range);
 	};
 
 	// overrides
@@ -138,7 +133,7 @@ define(['./timingbase', 'util/masterclock'], function (timingbase, MasterClock) 
 
 	// overrides
 	TimingObject.prototype._onTimeout = function (vector) {		
-		return this._checkRange(vector);
+		return motionutils.checkRange(vector, this._range);
 	};
 
 	return TimingObject;
