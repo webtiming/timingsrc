@@ -71,7 +71,7 @@ Controls for root timing object
 #### JavaScript
 
 ```javascript
-var to = new TIMINGSRC.TimingObject([0,50]);
+var to = new TIMINGSRC.TimingObject({range:[0,50]});
 var toSkew = new TIMINGSRC.SkewConverter(to, 2);
 var toDelay = new TIMINGSRC.DelayConverter(to, 1.0);
 var toTimeshift = new TIMINGSRC.TimeShiftConverter(to, -1.0);

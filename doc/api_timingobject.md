@@ -27,11 +27,12 @@ var vector = {
 #### Constructor
 
 ```javascript
-var timingObject = new timingsrc.TimingObject(range, vector);
+var timingObject = new timingsrc.TimingObject(options);
 ```
-
-- param: optional {[start,end]} [range] range restrictions on timeline, start and and are floats (may be Infinity)
-- param: optional {StateVector} [vector] initial state of timing object
+- param: optional {Object} [options] options given to timing object
+- param: optional {[start,end]} [options.range] range restrictions on timeline, start and end are floats (may be Infinity)
+- param: optional {StateVector} [options.vector] initial state of timing object
+- param: optional {Object} [options.provider] timing provider object
 - return: {Object} timing object
 
 ---

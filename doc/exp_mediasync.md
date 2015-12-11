@@ -47,7 +47,7 @@ Synchronization and control of two video elements using timing object. Both vide
 
 ```javascript
 // timing object
-var to = new TIMINGSRC.TimingObject([0,100]);
+var to = new TIMINGSRC.TimingObject({range:[0,100]});
 
 // set up video sync
 var sync1 = new TIMINGSRC.MediaSync(document.getElementById('player1'), to);

@@ -42,7 +42,7 @@ Sequencer events is used to control styling (red color).
 
 ```javascript
 // Timing Object
-var to = new TIMINGSRC.TimingObject([0,52]);
+var to = new TIMINGSRC.TimingObject({range:[0,52]});
 
 // Sequencer
 var s = new TIMINGSRC.Sequencer(to); 

@@ -42,6 +42,7 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 	var inherit = timingbase.inherit;
 
 	var TimingObject = function (options) {
+		options = options || {};
 		TimingBase.call(this, {timeout:true});
 		this._clock = null;
 		this._range = null;

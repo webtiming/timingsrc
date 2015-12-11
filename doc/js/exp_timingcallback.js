@@ -88,6 +88,6 @@ var run = function () {
   
   	
 };
-var to = new TIMINGSRC.TimingObject([0,21]);
+var to = new TIMINGSRC.TimingObject({range:[0,21]});
 if (document.readyState === "complete") run();
 else window.onload = run;

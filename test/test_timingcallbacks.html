@@ -16,7 +16,7 @@
         var run = function () {
 
           // timing object
-          to = new timingsrc.TimingObject([0,20]);
+          to = new timingsrc.TimingObject({range:[0,20]});
  
           // Hook up buttons UI
           document.getElementById('play').onclick = function () {to.update({velocity:1.0});};

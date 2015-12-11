@@ -1,7 +1,7 @@
 var run = function () {
 
 	// Timing Object
-	var to = new TIMINGSRC.TimingObject([0,52]);
+	var to = new TIMINGSRC.TimingObject({range:[0,52]});
 
 	// Sequencer
 	var Interval = TIMINGSRC.Interval; // shortcut

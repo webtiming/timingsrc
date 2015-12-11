@@ -58,7 +58,7 @@ demojs : exp_timingobject
 
 ```javascript
 // timing object
-var to = new TIMINGSRC.TimingObject([0,100]);
+var to = new TIMINGSRC.TimingObject({range:[0,100]});
 
 // Hook up text UI
 var value = document.getElementById('position');
