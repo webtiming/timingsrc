@@ -10,19 +10,15 @@
   <script type="text/javascript" src="../lib/require.js"></script>
   <script type="text/javascript">
     var c;
-    var initialSkew;
-    var skew = function () {
-        return c.now() - performance.now()/1000.0;
-    };
     var refresh = function () {
-      value.innerHTML = skew() - initialSkew;
+      // print diff from local clock
+      var vector = c.query();
+      value.innerHTML = vector.position - vector.timestamp;
     };
     var run = function () {
       var tid;
       c.on("change", function () {
-        console.log("masterclock change event");
-        // master clock = local clock + skew
-        initialSkew = skew();
+        console.log(c._vector);
         refresh();
         if (!tid) {
           tid = setInterval(refresh, 1000);
@@ -31,31 +27,59 @@
       var value = document.getElementById('value');
       document.getElementById('zero').onclick = function () {
         // reset velocity
-        c.adjust(1.0);
+        c.adjust({rate:1.0});
+      };
+      document.getElementById('fullzero').onclick = function () {
+        // reset velocity
+        c.adjust({skew:0.0, rate:1.0});
       };
       document.getElementById('1plus').onclick = function () {
         // add 1 microseconds per second
-        c.adjust(c.query().velocity + 0.000001);
+        c.adjust({rate: c.query().velocity + 0.000001});
       };
       document.getElementById('1minus').onclick = function () {
-        // add 10 microseconds per second
-        c.adjust(c.query().velocity - 0.000001);
+        // remove 10 microseconds per second
+        c.adjust({rate: c.query().velocity - 0.000001});
       };
       document.getElementById('10plus').onclick = function () {
         // add 1 microseconds per second
-        c.adjust(c.query().velocity + 0.00001);
+        c.adjust({rate: c.query().velocity + 0.00001});
       };
       document.getElementById('10minus').onclick = function () {
-        // add 10 microseconds per second
-        c.adjust(c.query().velocity - 0.00001);
+        // remove 10 microseconds per second
+        c.adjust({rate: c.query().velocity - 0.00001});
       };
       document.getElementById('100plus').onclick = function () {
         // add 100 microseconds per second
-        c.adjust(c.query().velocity + 0.0001);
+        c.adjust({rate: c.query().velocity + 0.0001});
       };
       document.getElementById('100minus').onclick = function () {
+        // remove 100 microseconds per second
+        c.adjust({rate: c.query().velocity - 0.0001});
+      };
+      document.getElementById('1000plus').onclick = function () {
         // add 100 microseconds per second
-        c.adjust(c.query().velocity - 0.0001);
+        c.adjust({rate: c.query().velocity + 0.001});
+      };
+      document.getElementById('1000minus').onclick = function () {
+        // remove 100 microseconds per second
+        c.adjust({rate: c.query().velocity - 0.001});
+      };
+      document.getElementById('query').onclick = function () {
+        var vector = c.query();
+        console.log(vector.position - vector.timestamp);
+      }
+      document.getElementById('1000skewplus').onclick = function () {
+        // add 100 microseconds per second
+        var vector = c.query();
+        var currentSkew = vector.position - vector.timestamp;
+        c.adjust({skew: currentSkew+0.001});
+      };
+      document.getElementById('1000skewminus').onclick = function () {
+        // remove 100 microseconds per second
+        var vector = c.query();
+        var currentSkew = vector.position - vector.timestamp;
+        c.adjust({skew: currentSkew-0.001});
       };
     };
     require(['util/masterclock'], function (MasterClock) {
@@ -68,24 +92,40 @@
 <body>
 <h1>Test MasterClock</h1>
 <div id="value"></div>
+
+
 <p>
-<h3>Standard speed</h3>
-<button id="zero">Zero</button>
+<h3>Standard rate</h3>
+<button id="zero">Zero Rate</button>
+<button id="fullzero">Zero Skew and Rate</button>
 </p>
 <p>
-<h3>100 Microseconds</h3>
+<h3>Adjust rate : 1 Milliseconds per second</h3>
+<button id="1000plus">Plus</button>
+<button id="1000minus">Minus</button>
+</p>
+<p>
+<h3>Adjust rate : 100 Microseconds per second</h3>
 <button id="100plus">Plus</button>
 <button id="100minus">Minus</button>
 </p>
 <p>
-<h3>10 Microseconds</h3>
+<h3>Adjust rate : 10 Microseconds per second</h3>
 <button id="10plus">Plus</button>
 <button id="10minus">Minus</button>
 </p>
 <p>
-<h3>1 Microsecond</h3>
+<h3>Adjust rate : 1 Microsecond per second</h3>
 <button id="1plus">Plus</button>
 <button id="1minus">Minus</button>
+</p>
+<p>
+<h3>Query</h3>
+<button id="query">Query</button>
+</p>
+<h3>Adjust skew : 1 Millisecond </h3>
+<button id="1000skewplus">Plus</button>
+<button id="1000skewminus">Minus</button>
 </p>
 </body>
 </html>

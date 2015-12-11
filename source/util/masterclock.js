@@ -23,26 +23,21 @@
 	MASTER CLOCK
 
 
-	MasterClock is the reference clock 
-	shared between TimingObjects and TimeoutModules
+	MasterClock is the reference clock used by TimingObjects.
 	
 	It is implemented using performance.now,
 	but is skewed and rate-adjusted relative to this local clock.
 
 	This allows it to be used as a master clock in a distributed system,
-	where synchronization is ultimately relative to some other clock that is differnt from the local clock. 
+	where synchronization is generally relative to some other clock than the local clock. 
 
 	The master clock may need to be adjusted in time, for instance as a response to 
-	varying estimation of clock skew or drift. 
-
-	The master clock supports an adjust primitive for this purpose.
-	However, it only supports gradual adjustments, so all change must be
-	implemented by specifying changes to the velocity. 
-
+	varying estimation of clock skew or drift. The master clock supports an adjust primitive for this purpose.
+ 
 	What policy is used for adjusting the master clock may depend on the circumstances
 	and is out of scope for the implementation of the MasterClock.
-
-	Monotonicity is guaranteed by only accepting velocities that are positive.
+	This policy is implemented by the timing object. This policy may or may not
+	provide monotonicity.
 
 	A change event is emitted every time the masterclock is adjusted.
 	
@@ -53,6 +48,7 @@
 
 	If initial vector is not provided, default value is 
 	{position: now, velocity: 1.0, timestamp: now};
+	implying that master clock is equal to local clock.
 */
 
 define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
@@ -78,6 +74,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 	}; 
 
 	var calculateVector = function (vector, tsSec) {
+		if (tsSec === undefined) tsSec = localClock.now();
 		var deltaSec = tsSec - vector.timestamp;	
 		return {
 			position : vector.position + vector.velocity*deltaSec,
@@ -88,7 +85,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 
 	var MasterClock = function (vector) {
 		var now = localClock.now();
-		vector = vector || {position: now, velocity: 1.0, acceleration: 0.0, timestamp: now};	
+		vector = vector || {position: now, velocity: 1.0, timestamp: now};	
 		this._vector = vector;
 		// event support
 		eventutils.eventify(this, MasterClock.prototype);
@@ -98,14 +95,23 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 	/*
 		ADJUST
 		- could also accept timestamp for velocity if needed?
+		- given skew is relative to local clock 
+		- given rate is relative to local clock
 	*/
-	MasterClock.prototype.adjust = function (velocity) {
-		if (velocity <= 0.0) throw new Error("negative velocity not supported");		
-		var nowVector = this.query();		
-		this._vector.position = nowVector.position;
-		this._vector.velocity = velocity;
-		this._vector.timestamp = nowVector.timestamp;
-		this.eventigyTriggerEvent("change");
+	MasterClock.prototype.adjust = function (options) {
+		options = options || {};
+		var now = localClock.now();
+		var nowVector = this.query(now);
+		if (options.skew === undefined && options.rate === undefined) {
+			console.log("Warning: clock adjust is noop");
+			return;
+		}
+		this._vector = {
+			position : (options.skew !== undefined) ? now + options.skew : nowVector.position,
+			velocity : (options.rate !== undefined) ? options.rate : nowVector.velocity,
+			timestamp : nowVector.timestamp
+		}
+		this.eventifyTriggerEvent("change");
 	};
 
 	/*
@@ -122,8 +128,8 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		- calculates the state of the clock right now
 		- result vector includes position and velocity		
 	*/
-	MasterClock.prototype.query = function () {
-		return calculateVector(this._vector, localClock.now());
+	MasterClock.prototype.query = function (now) {
+		return calculateVector(this._vector, now);
 	};
 
 	/*

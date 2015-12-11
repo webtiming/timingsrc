@@ -77,7 +77,7 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 		this._initialise();
 		if (this._isReady()) {
 			var skew = this._provider.skew;
-			// todo : feed new skew to clock
+			this._clock.adjust({skew:skew});
 		}
 		if (!wasReady && this._isReady()) {
 			this._preProcess(this._provider.vector);
