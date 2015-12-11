@@ -62,7 +62,7 @@ define(['util/motionutils'], function (motionutils) {
 			position : 0.0,
 			velocity : 0.0,
 			acceleration : 0.0,
-			timestamp : clock.now()
+			timestamp : clock.now() // skew 0
 		};	
 		// support partial vector in options
 		if (vector.position === null || vector.position === undefined) vector.position = 0.0;

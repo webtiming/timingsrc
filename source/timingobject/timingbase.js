@@ -143,6 +143,28 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		}
 	});
 
+	// Shorthand accessors
+	Object.defineProperty(TimingBase.prototype, 'pos', {
+		get : function () {
+			return this.query().position;
+		}
+	});
+
+	Object.defineProperty(TimingBase.prototype, 'vel', {
+		get : function () {
+			return this.query().velocity;
+		}
+	});
+
+	Object.defineProperty(TimingBase.prototype, 'acc', {
+		get : function () {
+			return this.query().acceleration;
+		}
+	});
+
+
+
+
 	/*
 	  	overrides how immediate events are constructed
 	  	specific to eventutils
@@ -318,55 +340,6 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		}
 	};
 
-
-
-	/*
-		do not override
-		Given a snapshot vector, the internal range is used to 
-		calculate the correct STATE (INSIDE|OUTSIDE)
-	*/
-	/*
-	TimingBase.prototype._getCorrectRangeState = function (vector) {
-		var p = vector.position,
-			v = vector.velocity,
-			a = vector.acceleration;
-		if (p > this._range[1]) return STATE.OUTSIDE_HIGH;
-		if (p < this._range[0]) return STATE.OUTSIDE_LOW;
-		// corner cases
-		if (p === this._range[1]) {
-			if (v > 0.0) return STATE.OUTSIDE_HIGH;
-			if (v === 0.0 && a > 0.0) return STATE.OUTSIDE_HIGH;
-		} else if (p === this._range[0]) {
-		    if (v < 0.0) return STATE.OUTSIDE_LOW;
-		    if (v == 0.0 && a < 0.0) return STATE.OUTSIDE_HIGH;
-		}
-		return STATE.INSIDE;
-	};
-	*/
-
-	/*
-		do not override
-		Given a snapshot vector, the range is used to 
-		calculate the correct STATE (INSIDE|OUTSIDE)
-		and change the vector by stopping motion
-		if range restrictions are violated (OUTSIDE).
-		thus guraranteeing that the returned vector is 
-		INSIDE
-	*/
-	/*
-	TimingBase.prototype._checkRange = function (vector) {
-		var state = this._getCorrectRangeState(vector);
-		if (state !== STATE.INSIDE) {
-			// protect from range violation
-			vector.velocity = 0.0;
-			vector.acceleration = 0.0;
-			if (state === STATE.OUTSIDE_HIGH) {
-				vector.position = this._range[1];
-			} else vector.position = this._range[0];
-		}
-		return vector;
-	};
-	*/
 
 	// CONVERTER BASE
 
