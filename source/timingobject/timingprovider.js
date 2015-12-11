@@ -44,7 +44,6 @@ define(['util/motionutils'], function (motionutils) {
 		return performance.now()/1000.0;}
 	}; 
 
-
 	// readystates
 	var TimingProviderState = Object.freeze({
 	    CONNECTING :"connecting",
