@@ -44,6 +44,16 @@ define(['util/motionutils'], function (motionutils) {
 		return performance.now()/1000.0;}
 	}; 
 
+
+	// readystates
+	var TimingProviderState = Object.freeze({
+	    CONNECTING :"connecting",
+	    OPEN : "open",
+	    CLOSING : "closing",
+    	CLOSED : "closed"
+	});
+	   
+
 	var LocalTimingProvider = function (options) {
 		options = options || {};
 		// range
@@ -58,19 +68,15 @@ define(['util/motionutils'], function (motionutils) {
 		if (vector.position === null || vector.position === undefined) vector.position = 0.0;
 		if (vector.velocity === null || vector.velocity === undefined) vector.velocity = 0.0;
 		if (vector.acceleration === null || vector.acceleration === undefined) vector.acceleration = 0.0;
-					
-		// not necessary to check range - timing object is responsible for this anyway 
+		vector = motionutils.checkRange(vector, this._range);
 
 		// callbacks 
-		this._callbacks = {'skewchange': [], 'vectorchange': []};
+		this._callbacks = {'skewchange': [], 'vectorchange': [], 'readystatechange': []};
 
 		// initialise
 		this._skew = 0;
 		this._vector = vector;
-	};
-
-	LocalTimingProvider.prototype.isReady = function () {
-		return (this._skew !== null && this._vector !== null);
+		this._readyState = TimingProviderState.OPEN;
 	};
 
 	LocalTimingProvider.prototype._setSkew = function (skew) {
@@ -123,7 +129,7 @@ define(['util/motionutils'], function (motionutils) {
     };
 
 	LocalTimingProvider.prototype.update = function (vector) {
-		if (!this.isReady()) throw new Error ("timing provider not ready to accept update");
+		if (!this._clock === null) throw new Error ("timing provider not ready to accept update");
 		if (vector === undefined || vector === null) {throw new Error ("drop update, illegal updatevector");}
 
 		var pos = (vector.position === undefined || vector.position === null) ? undefined : vector.position;
@@ -174,6 +180,12 @@ define(['util/motionutils'], function (motionutils) {
 		get : function () { return this._vector; }
 	});
 
+	Object.defineProperty(LocalTimingProvider.prototype, 'readyState', {
+		get : function () { return this._readyState; }
+	});
 
-	return LocalTimingProvider;
+	return {
+		LocalTimingProvider: LocalTimingProvider,
+		TimingProviderState : TimingProviderState
+	};
 });

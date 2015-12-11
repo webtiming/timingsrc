@@ -83,13 +83,15 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		};
 	};
 
-	var MasterClock = function (vector) {
+	var MasterClock = function (options) {
 		var now = localClock.now();
-		vector = vector || {position: now, velocity: 1.0, timestamp: now};	
-		this._vector = vector;
+		options = options || {};
+		this._vector  = {position: now, velocity: 1.0, timestamp: now};	
 		// event support
 		eventutils.eventify(this, MasterClock.prototype);
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
+		// adjust
+		this.adjust(options);
 	};
 
 	/*
@@ -103,7 +105,6 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		var now = localClock.now();
 		var nowVector = this.query(now);
 		if (options.skew === undefined && options.rate === undefined) {
-			console.log("Warning: clock adjust is noop");
 			return;
 		}
 		this._vector = {

@@ -33,13 +33,15 @@
 	
 */
 
-define(['./timingbase', './timingprovider', 'util/masterclock'], function (timingbase, LocalTimingProvider, MasterClock) {
+define(['./timingbase', './timingprovider', 'util/masterclock'], function (timingbase, timingprovider, MasterClock) {
 
 	'use strict';
 
 	var motionutils = timingbase.motionutils;	
 	var TimingBase = timingbase.TimingBase;
 	var inherit = timingbase.inherit;
+	var LocalTimingProvider = timingprovider.LocalTimingProvider;
+	var TimingProviderState = timingprovider.TimingProviderState;
 
 	var TimingObject = function (options) {
 		options = options || {};
@@ -52,43 +54,35 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 		this._provider = options.provider || new LocalTimingProvider(options);
 		this._onSkewChangeWrapper = function () {this._onSkewChange();};
 		this._onVectorChangeWrapper = function () {this._onVectorChange();};
-		this._provider.on("skewchange", this._onSkewChangeWrapper, this);
-		this._provider.on("vectorchange", this._onVectorChangeWrapper, this);
+		this._onReadystateChangeWrapper = function () {this._onReadystateChange();};
+		this._provider.on("readystatechange", this._onReadystateChangeWrapper, this);
 
 		// initialise
 		this._initialise();
-		if (this._isReady()) {
-			this._preProcess(this._provider.vector);		
-		}
 	};
 	inherit(TimingObject, TimingBase);
 
-	TimingObject.prototype._isReady = function () {return this._clock !== null;};
 	TimingObject.prototype._initialise = function () {
-		if (!this._provider.isReady()) return;
-		if (!this._isReady()) {
-			this._clock = new MasterClock(this._provider.skew);
+		if (this._provider.readyState !== TimingProviderState.OPEN) return;
+		if (this._clock === null) {
 			this._range = this._provider.range;
+			this._clock = new MasterClock({skew: this._provider.skew});
+			this._preProcess(this._provider.vector);
+			this._provider.on("vectorchange", this._onVectorChangeWrapper, this);
+			this._provider.on("skewchange", this._onSkewChangeWrapper, this);
 		}
+	};
+
+	TimingObject.prototype._onReadystateChange = function () {
+		this._initialise();
 	};
 
 	TimingObject.prototype._onSkewChange = function () {
-		var wasReady = this._isReady();
-		this._initialise();
-		if (this._isReady()) {
-			var skew = this._provider.skew;
-			this._clock.adjust({skew:skew});
-		}
-		if (!wasReady && this._isReady()) {
-			this._preProcess(this._provider.vector);
-		}
+		this._clock.adjust({skew: this._provider.skew});
 	};
 
 	TimingObject.prototype._onVectorChange = function () {
-		this._initialise();
-		if (this._isReady()) {
-			this._preProcess(this._provider.vector);		
-		}
+		this._preProcess(this._provider.vector);		
 	};
 
 	// Accessors for timing object

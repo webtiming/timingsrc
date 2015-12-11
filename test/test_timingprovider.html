@@ -11,12 +11,12 @@
   <script type="text/javascript" src="../lib/require.js"></script>
   <script type="text/javascript">
       var m, w;
-      require(['./timingobject/timingprovider'], function (LocalTimingProvider) {
+      require(['./timingobject/timingprovider'], function (timingprovider) {
       
         var run = function () {
 
-          var p = new LocalTimingProvider();
-          p.on("vector", function () {
+          var p = new timingprovider.LocalTimingProvider();
+          p.on("vectorchange", function () {
             console.log(p.vector);
           });        
           setTimeout(function () {p.update({position:2});}, 300);
