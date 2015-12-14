@@ -16,3 +16,20 @@
 <script text="javascript" src="js/{{page.demojs}}.js"></script>
 {% endif %}
 
+{% if page.appidmcorp %}
+<script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
+<script type="text/javascript">
+	var APPID_MCORP = "{{page.appidmcorp}}";
+	var app = MCorp.app(APPID_MCORP, {anon:true});
+	app.run = function () {
+		if (document.readyState === "complete") run(app.motions.shared);
+		else window.onload = function () {run(app.motions.shared);};
+	};
+	app.init();
+</script>
+{% else %}
+<script type="text/javascript">
+	if (document.readyState === "complete") run();
+	else window.onload = run;
+</script>
+{% endif %}

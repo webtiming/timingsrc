@@ -1,7 +1,7 @@
-var run = function () {
+var run = function (timingProvider) {
 
     // timing object
-    var to = new TIMINGSRC.TimingObject({range:[0,100]});
+    var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,100]});
     
     // set up button click handlers
     var buttonsElem = document.getElementById("buttons");
@@ -44,5 +44,3 @@ var run = function () {
     // set up video sync
     var sync2 = new TIMINGSRC.MediaSync(document.getElementById('player2'), to);
 };
-if (document.readyState === "complete") run();
-else window.onload = run;

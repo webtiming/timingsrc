@@ -50,6 +50,7 @@ supports behavior like time-shifting, different velocities (including backwards)
 
 - [TimingObject API](api_timingobject.html)
 - [TimingObject Example](exp_timingobject.html)
+- [TimingObject Example (multi-device)](online_timingobject.html)
 
 <a name="timingconverter"></a>
 ## Timing Converters
@@ -61,12 +62,15 @@ timing converters may be used to shift or scale the timeline.
 - [TimingConverter Background](background_timingconverter.html)
 - [TimingConverter API](api_timingconverter.html)
 - [TimingConverter Example](exp_timingconverter.html)
+- [TimingConverter Example (multi-device)](online_timingconverter.html)
 
 <a name="timingprovider"></a>
 ## Timing Providers
 
-work in progress..
+Timing objects may become multi-device by connecting with an online timing provider. *Shared Motion* by Motion Corporation implements the [Timing Provider API](api_timingprovider.html) and can therefore be used directly with the timing object.
 
+- [TimingProvider API](api_timingprovider.html)
+- [Shared Motion Timing Provider](shared_motion.html)
 
 <a name="sequencing"></a>
 ## Sequencing Tools
@@ -80,6 +84,7 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 - [TimingCallback API](api_timingcallback.html)
 - [TimingCallback Example](exp_timingcallback.html)
+- [TimingCallback Example (multi-device)](online_timingcallback.html)
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
@@ -87,7 +92,9 @@ distinction concerning the specific type of data, and instead aim to provide gen
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
 - [Sequencer Example](exp_sequencer.html)
+- [Sequencer Example (multi-device)](online_sequencer.html)
 - [IntervalSequencer Example](exp_intervalsequencer.html)
+- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
 
 
 <a name="mediasync"></a>
@@ -98,6 +105,7 @@ Ideally, we would like HTML5 Media Elements to implement [timed playback mode](h
 - [MediaSync Background](background_mediasync.html)
 - [MediaSync API](api_mediasync.html)
 - [MediaSync Example](exp_mediasync.html)
+- [MediaSync Example (multi-device)](online_mediasync.html)
 
 
 <a name="terminology"></a>

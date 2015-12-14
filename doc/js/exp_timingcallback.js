@@ -1,6 +1,8 @@
-var run = function () {
+var run = function (timingProvider) {
 
-   // Hook up buttons UI to timing object
+    var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,21]});
+
+    // Hook up buttons UI to timing object
     document.getElementById('play').onclick = function () {to.update({velocity:1.0});};
     document.getElementById('pause').onclick = function () {to.update({velocity:0.0});};
     document.getElementById('reset').onclick = function () {to.update({position:0.0, velocity:0.0});};
@@ -85,9 +87,4 @@ var run = function () {
         interval = undefined;
       }
     };
-  
-  	
 };
-var to = new TIMINGSRC.TimingObject({range:[0,21]});
-if (document.readyState === "complete") run();
-else window.onload = run;

@@ -1,7 +1,7 @@
-var run = function () {
+var run = function (timingProvider) {
 
 	// Timing Object
-	var to = new TIMINGSRC.TimingObject({range:[0,52]});
+	var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,52]});
 	var toA = new TIMINGSRC.SkewConverter(to, -5.0);
 	var toB = new TIMINGSRC.SkewConverter(to, 4.0);
 
@@ -78,6 +78,3 @@ var run = function () {
     });
    
 };
-
-if (document.readyState === "complete") run();
-else window.onload = run;

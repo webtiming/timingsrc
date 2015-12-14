@@ -1,4 +1,4 @@
-var run = function () {
+var run = function (timingProvider) {
 
     // Set up controls for timing object
     document.getElementById("pause").onclick = function () {to.update({velocity: 0.0});};
@@ -9,7 +9,7 @@ var run = function () {
     var array = []; // timing object/converter -> dom element
 
     // Create timing objects and converters        
-    var to = new TIMINGSRC.TimingObject({range:[0,50]});
+    var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,50]});
     array.push([to, document.getElementById("to")]);
     var toSkew = new TIMINGSRC.SkewConverter(to, 2);
     array.push([toSkew, document.getElementById("toskew")]);
@@ -39,6 +39,3 @@ var run = function () {
       });
     }, 200);                  
 };
-
-if (document.readyState === "complete") run();
-else window.onload = run;

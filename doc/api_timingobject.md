@@ -35,6 +35,8 @@ var timingObject = new timingsrc.TimingObject(options);
 - param: optional {Object} [options.provider] timing provider object
 - return: {Object} timing object
 
+Note that options *range* and *vector* are ignored if option *provider* is supplied.
+
 ---
 #### .query()
 Returns a snapshot vector of the timing object

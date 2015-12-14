@@ -12,6 +12,7 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 
 		// Timing Object
 		TimingObject : timingobject.TimingObject,
+		TimingProviderState : timingobject.TimingProviderState,
 
 		// Timing Converters
 		ConverterBase : timingobject.ConverterBase,

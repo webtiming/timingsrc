@@ -1,7 +1,7 @@
-var run = function () {
+var run = function (timingProvider) {
 
     // timing object
-    var to = new TIMINGSRC.TimingObject({range:[0,100]});
+    var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,100]});
 
     // Hook up text UI
     var value = document.getElementById('position');
@@ -31,6 +31,3 @@ var run = function () {
 	    }
     }
 };
-
-if (document.readyState === "complete") run();
-else window.onload = run;

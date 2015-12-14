@@ -1,7 +1,7 @@
-var run = function () {
+var run = function (timingProvider) {
 
 	// Timing Object
-	var to = new TIMINGSRC.TimingObject({range:[0,52]});
+	var to = new TIMINGSRC.TimingObject({provider:timingProvider, range:[0,52]});
 
 	// Sequencer
 	var Interval = TIMINGSRC.Interval; // shortcut
@@ -71,6 +71,3 @@ var run = function () {
       el.classList.remove("active");
     });
 };
-
-if (document.readyState === "complete") run();
-else window.onload = run;
