@@ -111,7 +111,6 @@ define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutil
 		pos = (pos !== undefined) ? pos : p;
 		vel = (vel !== undefined) ? vel : v;
 		acc = (acc !== undefined) ? acc : a;
-		if (pos === p && vel === v && acc === a) return;
 		var newVector = {
 			position : pos,
 			velocity : vel,
