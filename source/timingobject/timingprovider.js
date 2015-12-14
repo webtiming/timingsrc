@@ -18,15 +18,10 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-	Local Timing Provider
-*/
 
+define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutils) {
 
-
-define(['util/motionutils'], function (motionutils) {
-
-	// Need a polyfill for performance, now as Safari on ios doesn't have it...
+	// Polyfill for performance.now as Safari on ios doesn't have it...
 	(function(){
 	    if ("performance" in window === false) {
 	        window.performance = {};
@@ -51,81 +46,49 @@ define(['util/motionutils'], function (motionutils) {
 	    CLOSING : "closing",
     	CLOSED : "closed"
 	});
-	   
+	
+
+	/*
+		LOCAL TIMING Provider
+
+		Used by timing object if no timing provider is specified.
+	*/
 
 	var LocalTimingProvider = function (options) {
 		options = options || {};
-		// range
+		// initialise internal state
 		this._range = options.range || [-Infinity, Infinity];
-		var vector = options.vector || {
+		this._vector = {
 			position : 0.0,
 			velocity : 0.0,
 			acceleration : 0.0,
 			timestamp : clock.now() // skew 0
-		};	
-		// support partial vector in options
-		if (vector.position === null || vector.position === undefined) vector.position = 0.0;
-		if (vector.velocity === null || vector.velocity === undefined) vector.velocity = 0.0;
-		if (vector.acceleration === null || vector.acceleration === undefined) vector.acceleration = 0.0;
-		vector = motionutils.checkRange(vector, this._range);
-
-		// callbacks 
-		this._callbacks = {'skewchange': [], 'vectorchange': [], 'readystatechange': []};
-
-		// initialise
+		};
 		this._skew = 0;
-		this._vector = vector;
 		this._readyState = TimingProviderState.OPEN;
+		// events
+		eventutils.eventify(this, LocalTimingProvider.prototype);
+		this.eventifyDefineEvent("vectorchange", {init:false}); // define vector change event (not supporting init-event)
+		this.eventifyDefineEvent("skewchange", {init:false}); // define skew change event (not supporting init-event) 
+		this.eventifyDefineEvent("readystatechange", {init:false}) // define readystatechange event (not supporting init-event)
+
+		// set initial vector if provided
+		if (options.vector) {
+			this.update(options.vector);
+		}
 	};
 
 	LocalTimingProvider.prototype._setSkew = function (skew) {
 		this._skew = skew;
-		this._doCallbacks("skewchange");
+		this.eventifyTriggerEvent("skewchange");
+		//this._doCallbacks("skewchange");
 	};
 
 	LocalTimingProvider.prototype._setVector = function (vector) {
 		this._vector = vector;
-		this._doCallbacks("vectorchange");
+		this.eventifyTriggerEvent("vectorchange");
+		//this._doCallbacks("vectorchange");
 	};
-
-	// register callback
-	LocalTimingProvider.prototype.on = function (what, handler, ctx) {
-    	if (!handler || typeof handler !== "function") 
-    		throw new Error("Illegal handler");
-    	if (!this._callbacks.hasOwnProperty(what)) 
-    		throw new Error("Unsupported event " + what);
-    	var index = this._callbacks[what].indexOf(handler);
-        if (index === -1) {
-        	// register handler
-        	handler["_ctx_"] = ctx || this;
-        	this._callbacks[what].push(handler);
-        }
-        return this;
-    };
-
-	// unregister callback
-    LocalTimingProvider.prototype.off = function (what, handler) {
-    	if (this._callbacks[what] !== undefined) {
-    		var index = this._callbacks[what].indexOf(handler);
-        	if (index > -1) {
-        		this._callbacks[what].splice(index, 1);
-	  		}
-    	}
-    	return this;
-    };
-
-	// perform callback
-    LocalTimingProvider.prototype._doCallbacks = function(what, e) {
-	 	var err;
-		// invoke callback handlers
-		this._callbacks[what].forEach(function(h) {
-			try {
-	          h.call(h["_ctx_"], e);
-	        } catch (err) {
-	          console.log("Error in " + what + ": " + h + ": " + err);
-	        }	    
-		}, this);
-    };
 
 	LocalTimingProvider.prototype.update = function (vector) {
 		if (!this._clock === null) throw new Error ("timing provider not ready to accept update");
@@ -172,7 +135,7 @@ define(['util/motionutils'], function (motionutils) {
 	});
 
 	Object.defineProperty(LocalTimingProvider.prototype, 'skew', {
-		get : function () { return 0.0;}
+		get : function () { return this._skew;}
 	});
 
 	Object.defineProperty(LocalTimingProvider.prototype, 'vector', {

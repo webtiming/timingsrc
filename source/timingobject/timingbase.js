@@ -28,17 +28,6 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 
 	'use strict';
 
-	//	STATE is used for managing/detecting range violations.
-	/*
-	var STATE = Object.freeze({
-	    INIT : "init",
-	    INSIDE: "inside",
-	    OUTSIDE_LOW: "outsidelow",
-	    OUTSIDE_HIGH: "outsidehigh"
-	});
-	*/
-
-
 	// Utility inheritance function.
 	var inherit = function (Child, Parent) {
 		var F = function () {}; // empty object to break prototype chain - hinder child prototype changes to affect parent
@@ -404,13 +393,10 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		return this.timingsrc.range;
 	};
 
-
-
-
+	// module
 	return {
 		TimingBase : TimingBase,
 		ConverterBase : ConverterBase,
-		//STATE : STATE,
 		inherit: inherit,
 		motionutils : motionutils
 	};
