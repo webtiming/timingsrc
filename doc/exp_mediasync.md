@@ -1,12 +1,13 @@
 ---
 layout: default
-title: Example MediaSync
+title: Example MediaSync (page-local)
 demojs : exp_mediasync
 ---
 
 - [MediaSync Background](background_mediasync.html) 
 - [MediaSync API](api_mediasync.html)
-- [MediaSync Example](exp_mediasync.html)
+- [MediaSync Example (page-local)](exp_mediasync.html)
+- [MediaSync Example (multi-device)](online_mediasync.html)
 
 Synchronization and control of two video elements using timing object. Both videos produce audio independently. Listening to the audio is likely the best way to detect synchronization errors.
 

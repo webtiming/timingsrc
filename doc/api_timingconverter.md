@@ -5,7 +5,8 @@ title: Timing Converter API
 
 - [Timing Converter Background](background_timingconverter.html)
 - [Timing Converter API](api_timingconverter.html)
-- [Timing Converter Example](exp_timingconverter.html)
+- [Timing Converter Example (page-local)](online_timingconverter.html)
+- [Timing Converter Example (multi-device)](online_timingconverter.html)
 
 This describes the Timing Converter API
 

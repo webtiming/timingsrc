@@ -1,16 +1,19 @@
 ---
 layout: default
-title: Shared Motion Timing Provider
+title: Shared Motion
 ---
 
-Shared Motion is provided by [Motion Corporation](http://motioncorporation.com) through **InMotion**, a generic, online timing service for Web agents and other IP-connected clients. Shared Motion by Motion Corporation implements the [Timing Provider API](api_timingprovider.html) and can therefore be used directly with the [TimingObject](http://webtiming.github.io/timingobject/), as implemented by the [timingsrc library](http://webtiming.github.io/timingsrc/).
+
+> Timing Objects may become **online timing objects** if they are connected to an **online timing provider**.
+
+Shared Motion is provided by [Motion Corporation](http://motioncorporation.com) through *InMotion*, a generic, online timing service for Web agents (i.e. IP-connected clients). Shared Motion by Motion Corporation implements the [Timing Provider API](api_timingprovider.html) and can therefore be used directly with the [TimingObject](http://webtiming.github.io/timingobject/).
+
+> **Shared Motion** solves **multi-device timing** and turns **timing** into a **local** challenge.
 
 
 #### Timing Provider by Motion Corporation
 
-> Shared Motion effectively transforms the challenge of **multi-device timing** into the challenge of **single-device timing**. 
-
-So, if your application already uses the timing object for single-device timing, turning it into a multi-device application is trivial. All you need is to plug an online timing provider into the timing object. 
+If your application already uses the timing object for single-device timing, turning it into a multi-device application is trivial. All you need to do is to plug an online timing provider into the timing object.
 
 
 ```javascript
@@ -23,20 +26,20 @@ var run = function (timingProvider) {
 To test this with Shared Motions yourself, please follow these simple steps:
 
 
-#### Create an MCorp App
+#### 1. Create MCorp App
 
 - goto [http://dev.mcorp.no](http://dev.mcorp.no)
 - create your app
 - create a **named** motion inside your app
 - copy the APPID of your app
 
-#### Include MCorp script in your web page
+#### 2. Include MCorp script in your web page
 
 ```html
 <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
 ```
 
-#### Initialise the MCorp App object within your web page 
+#### 3. Initialise MCorp App object in your web page 
 
 ```javascript
 var MCORP_MOTION_NAME = "your_motion_name";

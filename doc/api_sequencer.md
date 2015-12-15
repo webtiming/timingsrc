@@ -6,8 +6,10 @@ title: Sequencer API
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
 - [Sequencer Usage](usage_sequencer.html)
-- [Sequencer Example](exp_sequencer.html)
-- [IntervalSequencer Example](exp_intervalsequencer.html)
+- [Sequencer Example (page-local)](exp_sequencer.html)
+- [Sequencer Example (multi-device)](online_sequencer.html)
+- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
+- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
 
 
 This describes the API of **Sequencer** and **IntervalSequencer**.

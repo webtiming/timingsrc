@@ -5,7 +5,8 @@ title: Background MediaSync
 
 - [MediaSync Background](background_mediasync.html) 
 - [MediaSync API](api_mediasync.html)
-- [MediaSync Example](exp_mediasync.html)
+- [MediaSync Example (page-local)](exp_mediasync.html)
+- [MediaSync Example (multi-device)](online_mediasync.html)
 
 ## Introduction
 

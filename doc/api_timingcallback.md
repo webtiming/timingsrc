@@ -4,7 +4,8 @@ title: Timing Callback API
 ---
 
 - [TimingCallback API](api_timingcallback.html)
-- [TimingCallback Example](exp_timingcallback.html)
+- [TimingCallback Example (page-local)](exp_timingcallback.html)
+- [TimingCallback Example (multi-device)](online_timingcallback.html)
 
 
 This describes the API of [setPointCallback](#setpointcallback) and [setIntervalCallback](#setintervalcallback).

@@ -14,8 +14,7 @@ This document briefly introduces the following concepts and provides links for f
  
 Note that the timingsrc library implements [Immediate Events](background_eventing.html) semantics for many of its event types. 
 
-Finally, terms and definitions used in this documentation are clarified in [terminology](#terminology).  
-
+ 
 
 <a name="timingsrc"></a>
 ## Module
@@ -48,8 +47,9 @@ The timing objects is the basic concept of this programming model. You may think
 If you start it, its value progresses as a clock, until you pause or resume it later. The timing object additionally 
 supports behavior like time-shifting, different velocities (including backwards), and acceleration.
 
+- [TimingObject Background](background_timingobject.html)
 - [TimingObject API](api_timingobject.html)
-- [TimingObject Example](exp_timingobject.html)
+- [TimingObject Example (page-local)](exp_timingobject.html)
 - [TimingObject Example (multi-device)](online_timingobject.html)
 
 <a name="timingconverter"></a>
@@ -61,7 +61,7 @@ timing converters may be used to shift or scale the timeline.
 
 - [TimingConverter Background](background_timingconverter.html)
 - [TimingConverter API](api_timingconverter.html)
-- [TimingConverter Example](exp_timingconverter.html)
+- [TimingConverter Example (page-local)](exp_timingconverter.html)
 - [TimingConverter Example (multi-device)](online_timingconverter.html)
 
 <a name="timingprovider"></a>
@@ -83,7 +83,7 @@ distinction concerning the specific type of data, and instead aim to provide gen
 **setPointCallback** and **setIntervalCallback** are simple tools inspired by _setTimeout_ and _setInterval_. setPointCallback triggers a callback when the timing object passes by a specific point on the timeline. setIntervalCallback is associated with periodic points along the timeline.
 
 - [TimingCallback API](api_timingcallback.html)
-- [TimingCallback Example](exp_timingcallback.html)
+- [TimingCallback Example (page-local)](exp_timingcallback.html)
 - [TimingCallback Example (multi-device)](online_timingcallback.html)
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
@@ -91,9 +91,9 @@ distinction concerning the specific type of data, and instead aim to provide gen
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
-- [Sequencer Example](exp_sequencer.html)
+- [Sequencer Example (page-local)](exp_sequencer.html)
 - [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example](exp_intervalsequencer.html)
+- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
 - [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
 
 
@@ -104,25 +104,6 @@ Ideally, we would like HTML5 Media Elements to implement [timed playback mode](h
 
 - [MediaSync Background](background_mediasync.html)
 - [MediaSync API](api_mediasync.html)
-- [MediaSync Example](exp_mediasync.html)
+- [MediaSync Example (page-local)](exp_mediasync.html)
 - [MediaSync Example (multi-device)](online_mediasync.html)
 
-
-<a name="terminology"></a>
-## Terminology
-
-- **Timeline** A timeline is simply the set of floating point numbers p where min \<= p \<= max. min and max are floating point numbers and may take on values -Infinity or Infinity. Values on the timeline are usually associated with a unit, such as seconds, frame counter or slide number.
-
-- **Timing object** Defines a timeline and movement of a point along this timeline. Point *not moving* (i.e. standing still or paused) is considered a special case of movement. The timing object supports continuous movements (expressed through velocity and acceleration) as well as discrete jumps on the timeline. A discrete jumps from A to B here implies that no time was spent on the transition and that no point p between A and B was visited.
-
-- **Timed data** Objects, whose validity is defined in reference to a timeline. For instance, the validity of subtitles are typically defined in reference to a media timeline. Points and intervals on the timeline is a common way of defining object validity, but not the only way. Timed scripts are a special case of timed data where objects represent operations or commands to be executed.
-
-- **Sequencing** The process of translating timed data or a timed script into timed execution.
-
-- **Timed Media** A timed media presentation is created by mapping timed media content (i.e. timed data) to a common timeline, and applying movement along this timeline. *So, timed media is ultimately created from two distinct entities; timing resources and timed content resources.* No timed content (i.e. empty) is considered a special case. This way, a media presentation may dynamically replace all its timed content during playback/presentation, yet remain well defined at all times. Multiple timingobjects/timelines may be defined for a single media presentation, and media content may define validity with respect to multiple timelines.
-
-- **Online Timed Media** Online timed media is media presentation where at least one resource (timing resource or content resource) is connected to an online resource.
-
-- **Multi-device Timed Media** A timed media presentation where at least one timing object is connected to an online timing resource. It follows that multi-device timed media is also online timed media.
-
-> Timed media is created from two distinct entities; timing objects and timed content.

@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Multi-device Timing Callback
+title: Example Timing Callback (multi-device)
 demojs : exp_timingcallback
 appidmcorp: 8456579076771837888
 ---
@@ -15,15 +15,23 @@ appidmcorp: 8456579076771837888
 </style>
 
 - [TimingCallback API](api_timingcallback.html)
-- [TimingCallback Example](exp_timingcallback.html)
+- [TimingCallback Example (page-local)](exp_timingcallback.html)
+- [TimingCallback Example (multi-device)](online_timingcallback.html)
 
-This is a modification of [Timing Callback Example](exp_timingcallback.html), using [Shared Motion](shared_motion.html) as online timing provider. 
+This is a modification of [Timing Callback Example (page-local)](exp_timingcallback.html), using [Shared Motion](shared_motion.html) as online timing provider. 
 
 To play with an online timing provider yourself, please consult [Shared Motion Timing Provider](shared_motion.html)
 
-#### Demo
 
-> Please open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
+#### Demo Tips
+
+- open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
+
+- the timing provider is shared globally, so others might be playing with demo too...
+
+- try reloading the demo on one device/tab while the demo is running on others.
+
+#### Demo
 
 **Timing Object**
 

@@ -5,7 +5,8 @@ title: Timing Object API
 
 - [Timing Object Background](background_timingobject.html)
 - [Timing Object API](api_timingobject.html)
-- [Timing Object Example](exp_timingobject.html)
+- [Timing Object Example (page-local)](exp_timingobject.html)
+- [Timing Object Example (multi-device)](online_timingobject.html)
 
 This describes the API of the Timing Object, as implemented in the timingsrc library.
 

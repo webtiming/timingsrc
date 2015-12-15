@@ -3,21 +3,25 @@ layout: default
 title: Examples
 ---
 
-#### Single-device Examples (local timing provider)
+#### Page-local Examples
 
-- [TimingObject Example](exp_timingobject.html)
-- [TimingConverter Example](exp_timingconverter.html)
-- [TimingCallback Example](exp_timingcallback.html)
-- [Sequencer Example](exp_sequencer.html)
-- [IntervalSequencer Example](exp_intervalsequencer.html)
-- [MediaSync Example](exp_mediasync.html)
+No timing provider supplied to the timing object.
+
+- [TimingObject Example (page-local)](exp_timingobject.html)
+- [TimingConverter Example (page-local)](exp_timingconverter.html)
+- [TimingCallback Example (page-local)](exp_timingcallback.html)
+- [Sequencer Example (page-local)](exp_sequencer.html)
+- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
+- [MediaSync Example (page-local)](exp_mediasync.html)
 
 
-#### Multi-device Examples (online timing provider)
+#### Multi-device Examples
 
-- [TimingObject Example](online_timingobject.html)
-- [TimingConverter Example](online_timingconverter.html)
-- [TimingCallback Example](online_timingcallback.html)
-- [Sequencer Example](online_sequencer.html)
-- [IntervalSequencer Example](online_intervalsequencer.html)
-- [MediaSync Example](online_mediasync.html)
+Using [Shared Motion](shared_motion.html) as online timing provider for timing object.
+
+- [TimingObject Example (multi-device)](online_timingobject.html)
+- [TimingConverter Example (multi-device)](online_timingconverter.html)
+- [TimingCallback Example (multi-device)](online_timingcallback.html)
+- [Sequencer Example (multi-device)](online_sequencer.html)
+- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
+- [MediaSync Example (multi-device)](online_mediasync.html)

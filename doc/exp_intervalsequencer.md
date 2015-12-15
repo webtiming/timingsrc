@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Interval Sequencer
+title: Example Interval Sequencer (page-local)
 demojs : exp_intervalsequencer
 ---
 
@@ -11,11 +11,11 @@ demojs : exp_intervalsequencer
 
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
-- [Sequencer Usage](usage_sequencer.html) 
-- [Sequencer Example](exp_sequencer.html)
-- [IntervalSequencer Example](exp_intervalsequencer.html)
-
-
+- [Sequencer Usage](usage_sequencer.html)
+- [Sequencer Example (page-local)](exp_sequencer.html)
+- [Sequencer Example (multi-device)](online_sequencer.html)
+- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
+- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html) 
 
 The Interval Sequencer provides enter and exit events based on a moving interval. Interval endpoints are implemented by two timing objects.
 The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. The Interval Sequencer may be helpful for timed prefetching, visualization of a sliding window of timed data, etc.

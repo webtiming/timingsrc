@@ -5,7 +5,8 @@ title: MediaSync API
 
 - [MediaSync Background](background_mediasync.html) 
 - [MediaSync API](api_mediasync.html)
-- [MediaSync Example](exp_mediasync.html)
+- [MediaSync Example (page-local)](exp_mediasync.html)
+- [MediaSync Example (multi-device)](online_mediasync.html)
 
 This describes the API of MediaSync.
 
@@ -37,6 +38,8 @@ Update the skew
 sync.setSkew(0.4);
 ```
 param: {double} skew : new skew
+
+The same effect can be achieved by using a [SkewConverter](api_timingconverter.html).
 
 ---
 #### .getSkew()

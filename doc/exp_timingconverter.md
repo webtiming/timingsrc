@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Timing Converter
+title: Example Timing Converter (page-local)
 demojs : exp_timingconverter
 ---
 
@@ -11,7 +11,8 @@ demojs : exp_timingconverter
 
 - [Timing Converter Background](background_timingconverter.html)
 - [Timing Converter API](api_timingconverter.html)
-- [Timing Converter Example](exp_timingconverter.html)
+- [Timing Converter Example (page-local)](online_timingconverter.html)
+- [Timing Converter Example (multi-device)](online_timingconverter.html)
 
 #### Demo
 

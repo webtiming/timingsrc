@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Timing Callback
+title: Example Timing Callback (page-local)
 demojs : exp_timingcallback
 ---
 
@@ -14,7 +14,8 @@ demojs : exp_timingcallback
 </style>
 
 - [TimingCallback API](api_timingcallback.html)
-- [TimingCallback Example](exp_timingcallback.html)
+- [TimingCallback Example (page-local)](exp_timingcallback.html)
+- [TimingCallback Example (multi-device)](online_timingcallback.html)
 
 #### Demo
 
