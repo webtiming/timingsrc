@@ -13,9 +13,10 @@ demojs : exp_timingcallback
 }
 </style>
 
-- [TimingCallback API](api_timingcallback.html)
-- [TimingCallback Example (page-local)](exp_timingcallback.html)
-- [TimingCallback Example (multi-device)](online_timingcallback.html)
+- [Timing Callback API](api_timingcallback.html)
+
+**setPointCallback** and **setIntervalCallback** are simple tools inspired by _setTimeout_ and _setInterval_. setPointCallback triggers a callback when the timing object passes by a specific point on the timeline. setIntervalCallback is associated with periodic points along the timeline.
+
 
 #### Demo
 

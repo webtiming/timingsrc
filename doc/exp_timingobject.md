@@ -6,8 +6,6 @@ demojs : exp_timingobject
 
 - [Timing Object Background](background_timingobject.html)
 - [Timing Object API](api_timingobject.html)
-- [Timing Object Example (page-local)](exp_timingobject.html)
-- [Timing Object Example (multi-device)](online_timingobject.html)
 
 #### Demo
 

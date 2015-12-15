@@ -7,15 +7,14 @@ appidmcorp: 8456579076771837888
 
 - [MediaSync Background](background_mediasync.html) 
 - [MediaSync API](api_mediasync.html)
-- [MediaSync Example (page-local)](exp_mediasync.html)
-- [MediaSync Example (multi-device)](online_mediasync.html)
 
 Synchronization and control of two video elements using timing object. Both videos produce audio independently. Listening to the audio is likely the best way to detect synchronization errors.
 
-This is a modification of [MediaSync Example (page-local)](exp_mediasync.html), using [Shared Motion](shared_motion.html) as online timing provider. 
+#### Demo Tips
 
-To play with an online timing provider yourself, please consult [Shared Motion Timing Provider](shared_motion.html)
-
+- open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
+- the timing provider is shared globally, so others might be playing with demo too...
+- try reloading the demo on one device/tab while the demo is running on others.
 
 #### Demo
 
@@ -51,13 +50,6 @@ To play with an online timing provider yourself, please consult [Shared Motion T
 
 
 
-#### Demo Tips
-
-- open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
-
-- the timing provider is shared globally, so others might be playing with demo too...
-
-- try reloading the demo on one device/tab while the demo is running on others.
 
 
 #### JavaScript

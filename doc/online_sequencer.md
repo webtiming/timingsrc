@@ -9,30 +9,17 @@ appidmcorp: 8456579076771837888
 	.active {color:red}
 </style>
 
-
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
-- [Sequencer Usage](usage_sequencer.html) 
-- [Sequencer Example (page-local)](exp_sequencer.html)
-- [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
-
+- [Sequencer Usage](usage_sequencer.html)
 
 The Sequencer provides enter and exit events based on a moving point. This moving point is implemented and controlled by a timing object.
 Sequencer events is used to control styling (red color).
 
-This is a modification of [Sequencer Example (page-local)](exp_sequencer.html), using [Shared Motion](shared_motion.html) as online timing provider. 
-
-To play with an online timing provider yourself, please consult [Shared Motion Timing Provider](shared_motion.html)
-
-
 #### Demo Tips
 
 - open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
-
 - the timing provider is shared globally, so others might be playing with demo too...
-
 - try reloading the demo on one device/tab while the demo is running on others.
 
 #### Demo

@@ -5,27 +5,15 @@ demojs : exp_timingobject
 appidmcorp: 8456579076771837888
 ---
 
-- [Timing Provider Background](background_timingprovider.html)
-- [Timing Provider API](api_timingprovider.html)
-- [Timing Object Example (page-local)](exp_timingobject.html)
-- [Timing Object Example (multi-device)](online_timingobject.html)
+- [Timing Object Background](background_timingobject.html)
+- [Timing Object API](api_timingobject.html)
 
-Timing Objects may become *online timing objects* if they are connected to an *online timing provider*.
-
-This way, turning a single-device demo into a multi-device demo is almost trivial.
-
-This is a modification of [Timing Object Example (page-local)](exp_timingobject.html), using [Shared Motion](shared_motion.html) as online timing provider. 
-
-
-To play with an online timing provider yourself, please consult [Shared Motion Timing Provider](shared_motion.html)
-
+Timing Objects may become *online timing objects* if they are connected to an *online timing provider*. This way, turning a single-device demo into a multi-device demo is almost trivial.
 
 #### Demo Tips
 
 - open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
-
 - the timing provider is shared globally, so others might be playing with demo too...
-
 - try reloading the demo on one device/tab while the demo is running on others.
 
 #### Demo

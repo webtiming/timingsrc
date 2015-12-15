@@ -8,14 +8,9 @@ demojs : exp_sequencer
 	.active {color:red}
 </style>
 
-
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
 - [Sequencer Usage](usage_sequencer.html)
-- [Sequencer Example (page-local)](exp_sequencer.html)
-- [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
 
 
 The Sequencer provides enter and exit events based on a moving point. This moving point is implemented and controlled by a timing object.

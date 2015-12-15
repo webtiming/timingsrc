@@ -8,18 +8,14 @@ demojs : exp_timingconverter
 .pos {font-weight:bold}
 </style>
 
-
 - [Timing Converter Background](background_timingconverter.html)
 - [Timing Converter API](api_timingconverter.html)
-- [Timing Converter Example (page-local)](online_timingconverter.html)
-- [Timing Converter Example (multi-device)](online_timingconverter.html)
-
-#### Demo
 
 Timing Converters provide new representations of a timing object, by converting some aspect of its behavior. Timing converters slave after a timing object or another timing converter.
 
-Controls for root timing object
+#### Demo
 
+Controls for root timing object
 
 <p>    
   <div class="pos"> Root Timing Object </div>

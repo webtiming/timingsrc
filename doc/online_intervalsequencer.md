@@ -9,31 +9,19 @@ appidmcorp: 8456579076771837888
 	.active {color:red}
 </style> 
 
-
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
-- [Sequencer Usage](usage_sequencer.html) 
-- [Sequencer Example (page-local)](exp_sequencer.html)
-- [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
-
+- [Sequencer Usage](usage_sequencer.html)
 
 The Interval Sequencer provides enter and exit events based on a moving interval. Interval endpoints are implemented by two timing objects.
 The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. The Interval Sequencer may be helpful for timed prefetching, visualization of a sliding window of timed data, etc.
 
-This is a modification of [IntervalSequencer Example (page-local)](exp_intervalsequencer.html), using [Shared Motion](shared_motion.html) as online timing provider. 
-
-To play with an online timing provider yourself, please consult [Shared Motion Timing Provider](shared_motion.html)
-
-
 #### Demo Tips
 
 - open this page on multiple devices (or at least multiple browser tabs) (simultaneously) to verify multi-device timing.
-
 - the timing provider is shared globally, so others might be playing with demo too...
-
 - try reloading the demo on one device/tab while the demo is running on others.
+
 
 #### Demo
 
