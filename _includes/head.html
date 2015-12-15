@@ -14,7 +14,6 @@
 {% if page.demojs %}
 <script text="javascript" src="http://webtiming.github.io/timingsrc/lib/timingsrc.js"></script>
 <script text="javascript" src="js/{{page.demojs}}.js"></script>
-{% endif %}
 
 {% if page.appidmcorp %}
 <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
@@ -22,6 +21,7 @@
 	var APPID_MCORP = "{{page.appidmcorp}}";
 	var app = MCorp.app(APPID_MCORP, {anon:true});
 	app.run = function () {
+		//console.log(app.motions.shared);
 		if (document.readyState === "complete") run(app.motions.shared);
 		else window.onload = function () {run(app.motions.shared);};
 	};
@@ -30,6 +30,9 @@
 {% else %}
 <script type="text/javascript">
 	if (document.readyState === "complete") run();
-	else window.onload = run;
+	else window.onload = function () {run();};
 </script>
 {% endif %}
+
+{% endif %}
+

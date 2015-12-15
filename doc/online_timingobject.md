@@ -54,7 +54,7 @@ var run = function () {
 };
 ``` 
 
-To turn this into a multi-device demo, simply plug an online timing provider into the timing object.
+Turn this into a multi-device demo by plugging an online timing provider into the timing object.
 
 ```javascript
 var run = function (timingProvider) {
