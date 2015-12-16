@@ -7,7 +7,7 @@ Multi-device timing has come to the Web.
 
 > **Timingsrc** provides a new programming model for precisely timed **multi-device** Web applications, based on the [timing object](http://webtiming.github.io/timingobject/).
 
-For multi-device timing support, simply plug a *timing provider* into your timing object. [Shared Motion](shared_motion.html) by [Motion Corporation](http://motioncorporation.com) provides millisecond precise timing **globally** for Web clients, and is open for non-commercial use.
+For multi-device timing support, simply plug a *timing provider* into your *timing object*. [Shared Motion](shared_motion.html) by [Motion Corporation](http://motioncorporation.com) provides millisecond precise timing **globally** for Web clients, and is open for non-commercial use.
 
 - Want to provide echoless sync of HTML5 video, globally, in 3 lines of code? 
 	- Check out the [MediaSync demo](doc/online_mediasync.html).
@@ -23,15 +23,15 @@ For multi-device timing support, simply plug a *timing provider* into your timin
 
 The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) advocates standardization of the timing object. 
 
-> In the 80'ies *sockets* provided a unified API for different types of communication. Similarly, we now wish to provide a unified API for timing. It's about time!
+> In the 80's *sockets* provided a unified API for different types of communication. Similarly, we now wish to provide a unified API for timing. It's about time!
 
 Agreement on a common API for timing resources would enable:
 
 #### 1) temporal interoperability
-very different timing sensitive components could easily be integrated into a single consitent presentation. This would allow the classical fruits of composition, i.e. mash-up, integration, code-reuse, flexibility and extensibility, to be fully exploited by timing sensitive Web applications.
+very different timing sensitive components could easily be integrated into a single consitent presentation. This would allow the classical fruits of composition, i.e. mash-up, integration, code-reuse, flexibility and extensibility to be fully exploited by timing sensitive Web applications.
 
 #### 2) multi-device timing
-timing objects integrate with online timing providers, allowing multi-device application to exploit temporal composition in the global scope.
+timing objects integrate with online timing providers allowing multi-device application to exploit temporal composition in the global scope.
 
 #### 3) common programming concepts, tools and practices
 timing challenges can be addressed using the same concepts and tools, across separate application domains (e.g. music, broadcast, Web-media). New concepts and tools building on a standard will apply to a much broader community.
@@ -44,7 +44,7 @@ online timing providers may focus on the challenges of distributed timing, while
 
 ## Relation to timing object specification
 
-The timinsrc library serves a reference implementation for the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/) and will be maintained by the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/).
+The timingsrc library serves as a reference implementation for the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/) and will be maintained by the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/).
 
 ## Authors
 
