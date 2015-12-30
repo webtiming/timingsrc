@@ -28,7 +28,7 @@ The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webti
 Agreement on a common API for timing resources would enable:
 
 #### 1) temporal interoperability
-very different timing sensitive components could easily be integrated into a single consitent presentation. This would allow the classical fruits of composition, i.e. mash-up, integration, code-reuse, flexibility and extensibility to be fully exploited by timing sensitive Web applications.
+very different timing sensitive components could easily be integrated into a single consistent presentation. This would allow the classical fruits of composition, i.e. mash-up, integration, code-reuse, flexibility and extensibility to be fully exploited by timing sensitive Web applications.
 
 #### 2) multi-device timing
 timing objects integrate with online timing providers allowing multi-device application to exploit temporal composition in the global scope.
