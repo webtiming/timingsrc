@@ -88,6 +88,8 @@ distinction concerning the specific type of data, and instead aim to provide gen
 
 **Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
+[check out impressive old style sequencing video here!](https://www.facebook.com/Excite.Espana/videos/10154330747448032/)
+
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
