@@ -32,12 +32,12 @@ define (['util/motionutils'], function (motionutils) {
   };
 
   var TimingCallbackBase = function (timingObject, handler) {
-    this._timingsrc = to;
+    this._timingsrc = timingObject;
     this._handler = handler;
     this._timeout = null;
     this._wrappedOnChange = function () {this._onChange();};
     // initialise
-    this.timingsrc = to;
+    this.timingsrc = timingObject;
   }; 
 
   TimingCallbackBase.prototype._renewTimeout = function () {
