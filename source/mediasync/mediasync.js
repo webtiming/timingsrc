@@ -335,7 +335,7 @@ define (function () {
 
           // Actual sync
           _dbg({type:"dbg", diff:diff, bad:_bad, vpbr:_vpbr});
-          function getRate(limit, suggested) {
+          var getRate = function (limit, suggested) {
             //return _motion.vel + (diff*1000*diff*1000)/1000;
             return Math.min(_motion.vel+limit, Math.max(_motion.vel-limit, _motion.vel + suggested));
             /*
@@ -531,7 +531,7 @@ define (function () {
     }
 
     var _initialized = false;
-    function init() {
+    var init = function () {
       if (_initialized) return;
       _initialized = true;
       if (_motion === undefined) {
