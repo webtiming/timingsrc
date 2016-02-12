@@ -1,6 +1,7 @@
 name: timingsrc
-markdown: redcarpet
-highlighter: pygments
+markdown: kramdown
+#highlighter: pygments.rb
+highligher: rouge
 #safe: true
 #lsi: false
 baseurl: /timingsrc
