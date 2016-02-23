@@ -14,6 +14,7 @@ Timing provider objects are given to the timing object as parameter in the const
 
 
 <a name="timingproviderstate"></a>
+
 #### TimingProviderState
 
 The following values are used as readystates for the timing provider. TimingProviderState is available in 
@@ -29,6 +30,7 @@ var TimingProviderState = Object.freeze({
 ```
 
 <a name="statevector"></a>
+
 #### StateVector
 
 State vectors are communicated between timing provider and timing object. 
@@ -89,6 +91,7 @@ var range = timingProvider.range;
 ```
 
 ---
+
 #### .update()
 Update is used by the timing object to request modification to the current vector. 
 For online timing providers, this request is likely forwarded to an online timing provider service for processing.

@@ -39,6 +39,7 @@ timingConverter.timingsrc = timingObject;
 
 
 <a name="skewconverter"></a>
+
 #### Skew Converter
 
 Skewing the timeline of a timing object by 2 means that the timeline position 0 of the timingsrc becomes position 2 of the converter.
@@ -52,6 +53,7 @@ var skewConverter = new timingsrc.SkewConverter(timingObject, skew);
 - return: {Object} [skewConverter] 
 
 <a name="scaleconverter"></a>
+
 #### Scale Converter
 
 Scaling the timeline of timing object by a factor 2 means that the timeline is streached, i.e. the unit length is doubled.
@@ -66,6 +68,7 @@ var scaleConverter = new timingsrc.ScaleConverter(timingObject, factor);
 - return: {Object} [scaleConverter] 
 
 <a name="delayconverter"></a>
+
 #### Delay Converter
 
 Delay converter repeats the exact behavior of the source timing object, but adds a positive time delay. 
@@ -82,6 +85,7 @@ var delayConverter = new timingsrc.DelayConverter(timingObject, delay);
 - return: {Object} [delayConverter]
 
 <a name="timeshiftconverter"></a>
+
 #### Timeshift Converter
 
 Timeshift converter timeshifts a timing object by timeoffset. 
@@ -109,6 +113,7 @@ var timeshiftConverter = new timingsrc.TimeshiftConverter(timingObject, timeoffs
 - return: {Object} [timeshiftConverter]
 
 <a name="rangeconverter"></a>
+
 #### Range Converter
 
 The range converter enforces a range restriction on position. This range converter replicates the behaviour of
@@ -124,6 +129,7 @@ var rangeConverter = new timingsrc.RangeConverter(timingObject, range);
 - return: {Object} [rangeConverter]
 
 <a name="loopconverter"></a>
+
 #### Loop Converter
 
 Loop converter makes a modulo type transformation on the position of the timing object, 
@@ -139,6 +145,7 @@ var loopConverter = new timingsrc.LoopConverter(timingObject, range);
 
 
 <a name="localconverter"></a>
+
 #### Local Converter
 
 Timing objects that are connected with online timing providers will have increased latency for update operations.
@@ -154,6 +161,7 @@ var localConverter = new timingsrc.LocalConverter(timingObject);
 
 
 <a name="derivativeconverter"></a>
+
 #### Derivative Converter
 
 Derivative converter implements the derivative movements of the source timing object.

@@ -28,6 +28,7 @@ Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.
 
 
 <a name="toc"></a>
+
 ## Toc
 
 This documentation includes the following sections:
@@ -40,6 +41,7 @@ This documentation includes the following sections:
 
 
 <a name="interval"></a>
+
 ## Interval
 
 An [Interval](#interval) is expressed by two floating point values <code>low, high</code>, where <code>low <= high</code>. <code>-Infinity</code> or <code>Infinity</code> may be used to create un-bounded Intervals, e.g. <code>[low, Infinity)</code> or <code>(-Infinity, high]</code>. If <code>low === high</code> the Interval is said to represent a singular point <code>[low]</code>.
@@ -76,6 +78,7 @@ var low = i.low,
 ```javascript
 console.log(i.toString());
 ```
+
 #### .isSingular()
 - returns: {boolean} true if (low === high) 
 ```js
@@ -96,6 +99,7 @@ if (i.isSingular()) {}
 
 
 <a name="error"></a>
+
 ## SequencerError
 
 [SequencerError](#error) is thrown by the Sequencer as a response to illegal input data. The SequencerError is defined as follows.
@@ -109,6 +113,7 @@ if (i.isSingular()) {}
 ```
 
 <a name="cue"></a>
+
 ## Sequencer Cue
 
 [SequencerCue](#cue) is a simple datatype used by [Sequencer](#sequencer) for query responses (and in some cases as parameter to event callback parameters). A SequencerCue is essentially an association between a key (string) and an [Interval](#interval). It is representated as a simple JavaScript object. The property *data* is only used in context of [sequencer specialization](usage_sequencer.html#specialization). 
@@ -122,6 +127,7 @@ var cue = {
 ```
 
 <a name="earg"></a>
+
 ## Sequencer EArg
 
 
@@ -147,6 +153,7 @@ var eArg = {
 
 
 <a name="sequencer"></a>
+
 ## Sequencer
 
 
@@ -250,6 +257,7 @@ var cue = s.getCue("key1");
 ```
 
 <a name="activecue"></a>
+
 ### Active Cues
 
 The Sequencer maintains a list of [Active SequencerCues](#activecue). A [SequencerCue](#cue) is *active* if <code>cue.interval.low <= timingobject.query().position <= cue.interval.high</code>. In other words, if the position of the timing object is inside the [Interval](#interval) of a cue, that cue is said to be active. More generally, for timed media, the union of *active* cues may define the state of media, at any given point in time. 
@@ -306,6 +314,7 @@ s.getCuesCoveredByInterval(new Interval(4.0, 8.0)).forEach(function(cue){});
 The cost of this operation is logarithmic O(logN), with N being the number of [SequencerCues](#cue) managed by the Sequencer.
 
 <a name="events"></a>
+
 ### Sequencer: Events
 
 The Sequencer supports four event types; <code>"enter", "exit", "change", "events"</code>. "Enter" and "exit" correspond to the timing object entering or exiting the interval of a specific [SequencerCue](#cue). "Events" delivers a batch (list) of events and may include both "enter", "exit" and "change" events. The programmer should likely choose to handle events in batch mode using "events" callback, or handle events individually using "enter", "exit" and "change" events. 

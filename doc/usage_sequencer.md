@@ -26,6 +26,7 @@ Sequencers are useful for constructing timed presentations in a Web page. In par
 Finally, it is documented how the Sequencer may be integrated with a specific data model by means of [sequencer specialization](#specialization).
 
 <a name="create"></a>
+
 ## Create Sequencer
 Before a Sequencer may be created a [TimingObject](http://webtiming.github.io/timingobject) must be available. The TimingObject may become part of the future HTML standard, however, in the mean time a temporary implementation is provided by the timingsrc library.
 
@@ -55,6 +56,7 @@ Create index.html
 
 
 <a name="load"></a>
+
 ## Load Timed Data
 
 Loading timed data into the Sequencer involves extracting the timing information from the data, and representing this as Intervals.
@@ -98,6 +100,7 @@ for (var i=0; i<array.length; i++) {
 ```
 
 <a name="ui"></a>
+
 ## Develop UI
 
 To implement a timed Web presentation using the Sequencer, simply translate "enter" and "exit" events into approapriate effects in the DOM. The following example shows how a timing sensitive data viewer can easily be built by virtue of connecting a Sequencer to a DOM element. The Sequencer effectively takes care of adding active cues to the DOM, and removing inactive cues from the DOM, always at the correct time.
@@ -130,6 +133,7 @@ viewer(s, document.getElementById("viewer"));
 
 
 <a name="control"></a>
+
 ## Start presentation
 
 Having loaded data into the Sequencer and defined the UI, the Sequencer is already operational. However, the Sequencer itself does not provide any playback controls. Instead it is simply a slave to the timing object. So, in order to start playback, pause the presentation, or control it in other ways, use the timing object. 
@@ -154,6 +158,7 @@ document.getElementById('reset').onclick = function () {timingObject.update({pos
 
 
 <a name="specialization"></a>
+
 ## Sequencer Specialization
 
 > Warning! Sequencer specialization is not recommended. The data independency of the Sequencer is generally valuable. Make sure you have good reasons for violating this principle. 

@@ -135,6 +135,7 @@ Finally, the costs of implementing immediate events for different event sources 
 
 
 <a name="timingsrc"></a>
+
 ## Use of Immediate Events in timingsrc
 
 The timingsrc library employs the immediate event semantics in its central concepts.

@@ -32,6 +32,7 @@ MediaSync is a common purpose library, not optimised for any particular combinat
 
 
 <a name="credits"></a>
+
 ## Credits
 
 Njål T. Borch
@@ -49,6 +50,7 @@ MediaSync is joint work with Ingar M. Arntzen
 - [twitter.com/ingararntzen](https://twitter.com/ingararntzen)
 
 <a name="licence"></a>
+
 ## License
 
 Copyright 2015 Norut Northern Research Institute.

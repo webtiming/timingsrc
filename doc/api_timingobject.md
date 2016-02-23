@@ -39,6 +39,7 @@ var timingObject = new timingsrc.TimingObject(options);
 Note that options *range* and *vector* are ignored if option *provider* is supplied.
 
 ---
+
 #### .query()
 Returns a snapshot vector of the timing object
 
@@ -49,6 +50,7 @@ var snapshotVector = timingObject.query();
 - return: {StateVector} current state
 
 ---
+
 #### .update()
 Update issues a request for modification to the timing object.
 
@@ -66,6 +68,7 @@ timingObject.update({position:14.0});
 ```
 
 ---
+
 #### Event types
 Timing objects supports two event types ["change", "timeupdate"].
 
@@ -79,6 +82,7 @@ Read more about immediate events in [Immediate Events Background](background_eve
 
 
 ---
+
 #### .on()
 Registers an event handler on the timing object.
 
@@ -91,6 +95,7 @@ timingObject.on(type, handler, ctx);
 - param: optional {Object} [ctx] context for handler callback invocation, default is timingObject
 
 ---
+
 #### .off()
 Un-registers an event handler from the timing object.
 
@@ -102,6 +107,7 @@ timingObject.off(type, handler);
 - param: {Function} [handler] event handler
 
 ---
+
 #### .range
 Getter for range of timing object
 
@@ -110,6 +116,7 @@ var range = timingObject.range;
 ```
 
 ---
+
 #### .clock
 Getter for clock used by timing object.
 
@@ -117,6 +124,7 @@ Getter for clock used by timing object.
 var timestamp = timingObject.clock.now();
 ```
 ---
+
 #### .vector
 Getter for internal vector of timing object. The internal vector is changed by update() and used by query() to calculate snapshots. 
 
@@ -125,6 +133,7 @@ var vector = timingObject.vector;
 ```
 
 ---
+
 #### .version
 Getter for version of Timing Object implementation.
 

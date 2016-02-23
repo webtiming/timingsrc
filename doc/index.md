@@ -17,6 +17,7 @@ Note that the timingsrc library implements [Immediate Events](background_eventin
  
 
 <a name="timingsrc"></a>
+
 ## Module
 
 The timingsrc module provides [timing objects](#timingobject), [timing providers](#timingprovider), and tools for [sequencing](#sequencing) and [media synchronization](#mediasync). The module is implemented as plain JavaScript and packaged for regular script inclusion as well as [AMD](http://requirejs.org/) module for use with requirejs, see [helloworld](../examples/helloworld.html) and [helloworld-require](../examples/helloworld-require.html) for full examples. 
@@ -41,6 +42,7 @@ The timingsrc library is available from GitHub.
 
 
 <a name="timingobject"></a>
+
 ## Timing Objects
 
 The timing objects is the basic concept of this programming model. You may think of it as an advanced stop-watch.
@@ -53,6 +55,7 @@ supports behavior like time-shifting, different velocities (including backwards)
 - [TimingObject Example (multi-device)](online_timingobject.html)
 
 <a name="timingconverter"></a>
+
 ## Timing Converters
 
 Timing converters are a special kind of timing objects that depend on an other timing object.
@@ -65,6 +68,7 @@ timing converters may be used to shift or scale the timeline.
 - [TimingConverter Example (multi-device)](online_timingconverter.html)
 
 <a name="timingprovider"></a>
+
 ## Timing Providers
 
 Timing objects may become multi-device by connecting with an online timing provider. *Shared Motion* by Motion Corporation implements the [Timing Provider API](api_timingprovider.html) and can therefore be used directly with the timing object.
@@ -73,6 +77,7 @@ Timing objects may become multi-device by connecting with an online timing provi
 - [Shared Motion Timing Provider](shared_motion.html)
 
 <a name="sequencing"></a>
+
 ## Sequencing Tools
 
 Given a timing object, a common challenge is to correctly align timed data. This challenge is known under many names;
@@ -100,6 +105,7 @@ The **Sequencer** is a more sophisticated tool designed to work on larger sets o
 
 
 <a name="mediasync"></a>
+
 ## Media Synchronization Tools
 
 Ideally, we would like HTML5 Media Elements to implement [timed playback mode](http://webtiming.github.io/timingobject/#media-elements-and-the-timing-object) and accept the timing object as timingsrc. However, until this is a reality we need to address media synchronization in JavaScript. The MediaSync library is made for this. It is based on a comprehensive study of the behavior of media elements in a variety of browsers. The MediaSync library is not optimised for specific combinations of browser, media type and architecture, but aims to provide best effort synchronization in very different settings.

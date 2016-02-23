@@ -13,6 +13,7 @@ demojs : exp_timingobject
 The timingsrc library is a JavaScript implementation of the timing object programming model, introduced in the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/). Standardization of the timing object is advocated by the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/).Here are some key points:
 
 <a name="nutshell"></a>
+
 ## Timing Object
 
 #### In a nutshell
@@ -41,7 +42,9 @@ More about the the timing object in [Timing Object Draft Spec](http://webtiming.
 </p>
 
 <a name="motivation"></a>
+
 ## Motivation
+
 #### A common API for all things timed
 
 The timing object defines a common API for all things timed. Currently timing sensitive applications, animation frameworks, media frameworks, timed components and widgets all implement their own timing and control mechanisms internally. As a consequence, making them do something together is hard. What we propose instead is a simple model where timing sensitive applications can interface and take direction from an external timing source, a timing object. This way, timing, synchronization and control for heterogeneous components is solved simply sharing the same timing object. A common API for timing also implies a common programming model where higher level concepts, tools and practises can be shared between timing sensitive applications.
@@ -51,12 +54,14 @@ The timing object defines a common API for all things timed. Currently timing se
 Crucially, the timing object also supports integration with online timing services. This extends the idea of sharing a timing object between timing sensitive components in a web page, to timing sensitive components scattered across different devices, globally if needed. We call this multi-device timing. An important implication of this model is that timing sensitive components can be reused in single-device or multi-device applications, without modification. Multi-device support has become a feature of the timing object, not the component. As a result, web developers can focus on exploiting timing in the interest of creating great user experiences, while timing providers can focus on the challenges of multi-device timing.
 
 <a name="programming"></a>
+
 ## Programming with Timing Objects
 
 Timing objects are resources used by a Web application, and the programmer may define as many as required. What purposes they serve in the application is up to the programmer. If the application needs a shared, multi-device clock, simply starting a timing object (and never stopping it) might be sufficient. If the clock value should represent milliseconds, set the velocity to 1000 (advances the timing object with 1000 milliseconds per second). If the timing object represents media offset, specify the playback position, the velocity, and perhaps a media duration (range). For videos where offset is measured in seconds or frames, set the velocity accordingly. Or, for musical applications it may be practical to let the timing object represent beats per second. Note also that the timing object may represent time-changes with any kind of floating-point variable. For example, if you have data that is organized according to, say height above sea level, you may want to animate how this data changes as you move vertically. In this case the timing object could represent meters or feet above sea level, and positive and negative velocities would allow you to move gradually both upwards and downwards.
 
 
 <a name="terminology"></a>
+
 ## Terminology
 
 > Timed media is created from two distinct entities; timing objects and timed content.

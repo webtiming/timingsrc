@@ -12,6 +12,7 @@ This describes the API of [setPointCallback](#setpointcallback) and [setInterval
 
 
 <a name="setpointcallback"></a>
+
 ## setPointCallback
 
 Invoke a callback whenever <code>(timingObject.query().position === point)</code>. Implementation based on 
@@ -35,6 +36,7 @@ handle.cancel();
 
 
 <a name="setintervalcallback"></a>
+
 ## setIntervalCallback
 
 Invoke a callback whenever <code>(timingObject.query().position === x) && ((x - offset) % length === 0)</code>.

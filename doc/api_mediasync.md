@@ -31,6 +31,7 @@ var sync = new timingsrc.MediaSync(htmlElement, timingObject, options);
 returns: {Object} mediaSync object
 
 ---
+
 #### .setSkew()
 Update the skew
 
@@ -42,6 +43,7 @@ param: {double} skew : new skew
 The same effect can be achieved by using a [SkewConverter](api_timingconverter.html).
 
 ---
+
 #### .getSkew()
 Get the current skew
 
@@ -51,6 +53,7 @@ sync.getSkew();
 returns: {double} The current skew
 
 ---
+
 #### .setOption()
 Set or update options
 
@@ -62,6 +65,7 @@ param: {string} key : The option to set
 param: {Object} value : The value
 
 ---
+
 #### .getMethod()
 Returns the currently used method for sychronization
 
@@ -71,6 +75,7 @@ var method = sync.getMethod();
 returns: {String} "skip" or "playbackrate"
 
 ---
+
 #### .timingsrc
 Get-set accessor for the timing object to synchronize after
 
@@ -79,6 +84,7 @@ sync.timingsrc(timingObject);
 ```
 
 ---
+
 #### .on()
 Add an event handler to given events.  Valid events are:
    skip - called when the media element is made to skip
@@ -92,6 +98,7 @@ sync.on("skip", function(e) { ... });
 ```
 
 ---
+
 #### .off()
 Remove an event handler
 
@@ -101,6 +108,7 @@ sync.on("skip", function(e) { ... });
 
 
 ---
+
 #### Example
 
 ```javascript
