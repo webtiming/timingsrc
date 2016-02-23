@@ -25,7 +25,7 @@ define(['./sequencer', './windowsequencer', './timingcallbacks'],
     // Common constructor for Sequencer and WindowConstructor
     var Sequencer = function (timingObjectA, timingObjectB, _axis) {
       if (timingObjectB === undefined) {
-        return new seq.Sequencer(timingObjectA, _axis);
+        return new seq.DefaultSequencer(timingObjectA, _axis);
       } else {
         return new WindowSequencer(timingObjectA, timingObjectB, _axis); 
       }

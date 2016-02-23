@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Window Sequencing (multi-device)
+title: Example window sequencing mode(multi-device)
 demojs : exp_windowsequencer
 appidmcorp: 8456579076771837888
 ---

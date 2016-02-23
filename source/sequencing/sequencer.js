@@ -1207,7 +1207,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	return {
 		inherit : inherit,
 		Interval : Interval,
-		Sequencer : Sequencer,
+		DefaultSequencer : Sequencer,
 		Axis : axis.Axis,
 		SequencerError : SequencerError,
 	};

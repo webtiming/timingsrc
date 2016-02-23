@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Example Interval Sequencer (page-local)
+title: Example window sequencing mode (page-local)
 demojs : exp_windowsequencer
 ---
 

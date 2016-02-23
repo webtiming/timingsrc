@@ -65,8 +65,8 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		this._axis = _axis || new axis.Axis();
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;
-		this._seqA = new seq.Sequencer(this._toA, this._axis);
-		this._seqB = new seq.Sequencer(this._toB, this._axis);
+		this._seqA = new seq.DefaultSequencer(this._toA, this._axis);
+		this._seqB = new seq.DefaultSequencer(this._toB, this._axis);
 		this._readyA = false;
 		this._readyB = false;
 

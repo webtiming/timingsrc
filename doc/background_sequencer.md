@@ -93,7 +93,7 @@ datamodel["unique key"] = {text: "Hello!", type: "subtitle"};
 <a name="sequencingmodes"></a>
 ## Sequencing modes
 
-The **Sequencer** supports two modes of operation; default and window sequencing. These two modes differ in how they define *active* state for cues. This difference is illustrated by the figure below, with default sequencing on the left and windowsequencing on the right. The vertical lines illustrate the moving positions of timing objects. The Sequencer uses one timing object in default sequencing mode, and two in window sequencing mode.
+The **Sequencer** supports two modes of operation; default and window sequencing. These two modes differ in how they define *active* state for cues. This difference is illustrated by the figure below, with default sequencing mode on the left and window sequencing mode on the right. The vertical lines illustrate the moving positions of timing objects. The Sequencer uses one timing object in default sequencing mode, and two in window sequencing mode.
 
 ![alt text](img/sequencing_bc.jpg "Default sequencing mode and window sequencing mode")
 
