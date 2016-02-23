@@ -42,6 +42,7 @@ The [TimingObject](http://webtiming.github.io/timingobject) is a simple concept 
 
 
 <a name="introduction"></a>
+
 ## Introduction
 
 > Sequencers work on timed cues and emit *enter* and *exit* events at the correct time when data becomes *active* or *inactive*, according to some timing source. 
@@ -61,6 +62,7 @@ The Sequencer API is similar to [TrackElements](http://www.html5rocks.com/en/tut
 
 
 <a name="timeddata"></a>
+
 ## Timed Data 
 
 By linear data we simply mean data that is somehow organised according to an axis, e.g., a point on the axis, or an interval. For instance, a subtitle may be structured as follows, where properties *start* and *end* indicate when the object should be active, in reference to the time-axis.
@@ -91,6 +93,7 @@ datamodel["unique key"] = {text: "Hello!", type: "subtitle"};
 ```
 
 <a name="sequencingmodes"></a>
+
 ## Sequencing modes
 
 The **Sequencer** supports two modes of operation; default and window sequencing. These two modes differ in how they define *active* state for cues. This difference is illustrated by the figure below, with default sequencing mode on the left and window sequencing mode on the right. The vertical lines illustrate the moving positions of timing objects. The Sequencer uses one timing object in default sequencing mode, and two in window sequencing mode.
@@ -109,6 +112,7 @@ Both modes maintain the invariable that active cues are always consistent with t
 
 
 <a name="musicbox"></a>
+
 ## Music box analogy
 
 The music box below is another effective analogy for sequencer functionality. As the illustration shows, the music box takes two kinds of input, linear data on the cylinder and motion from the crank. When motion is applied the music box outputs sounds at the correct moments in time, possibly to produce a melody.
@@ -125,6 +129,7 @@ The music box analogy also indicates that sequencing is a common challenge acros
 
 
 <a name="designgoals"></a>
+
 ## Design goals
 
 General purpose sequencing tools for Web applications are valuable. Sequencing tools allow various kinds of timed data and UI components to be integrated easily and used for timed presentation, without requiring application programmers to re-invent required timing logic. Furthermore, by integrating a general purpose sequencing mechanism with the [timing object](http://webtiming.github.io/timingobject), media products using this mechanims would readily be open for synchronization and external control, both in single-device and multi-device scenarios.
@@ -151,6 +156,7 @@ Sequencers in the timingsrc library honour all these design goals.
 
 
 <a name="relatedwork"></a>
+
 ## Related work
 
 All media frameworks includes some form of timeline, playback controls and sequencing logic.
@@ -170,6 +176,7 @@ Synchronized Multimedia Integration Language [SMIL](http://www.w3.org/TR/SMIL) i
 
 
 <a name="importance"></a>
+
 ## Importance
 
 #### Any kind of timed data, any purpose
@@ -200,6 +207,7 @@ Approach 2) is somewhat similar to the classical model for state representation 
 
 
 <a name="futurework"></a>
+
 ## Future work
 
 Sequencers in the timingsrc library are completed, yet there may still be avenues for further work.
@@ -214,6 +222,7 @@ The value of this timing model and concepts like timing objects and sequencers i
 
 
 <a name="credits"></a>
+
 ## Credits
 
 Ingar M. Arntzen 
@@ -231,6 +240,7 @@ The Sequencer is joint work with Njål T. Borch
 - [twitter.com/njaalborch](https://twitter.com/njaalborch)
 
 <a name="licence"></a>
+
 ## License
 
 Copyright 2015 Norut Northern Research Institute.
