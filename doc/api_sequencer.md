@@ -6,13 +6,13 @@ title: Sequencer API
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html) 
 - [Sequencer Usage](usage_sequencer.html)
-- [Sequencer Example (page-local)](exp_sequencer.html)
-- [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
+- [Default Sequencer Example (page-local)](exp_sequencer.html)
+- [Default Sequencer Example (multi-device)](online_sequencer.html)
+- [Window sequencing Example (page-local)](exp_windowsequencer.html)
+- [Window sequencing Example (multi-device)](online_windowsequencer.html)
 
 
-This describes the API of **Sequencer** and **IntervalSequencer**.
+This describes the API of **Sequencer**.
 
 ## Introduction
 
@@ -37,7 +37,7 @@ This documentation includes the following sections:
 - [SequencerCue](#cue)
 - [SequencerEArg](#earg)
 - [Sequencer](#sequencer)
-- [IntervalSequencer](#intervalsequencer)
+
 
 <a name="interval"></a>
 ## Interval
@@ -157,6 +157,21 @@ Returns a Sequencer object. There is no need to start the Sequencer. Execution i
 var s = new timingsrc.Sequencer(timingObject);
 ```
 - param: {object} [timingObject] The [TimingObject](http://webtiming.github.io/timingobject) that drives the execution of the Sequencer. 
+
+
+<a name="windowsequencer"></a>
+
+The Sequencer additionally supports window sequencing mode.
+To do window sequencing with the Sequencer, simply specify two timing objects in the constructor.
+Note that in window sequencing mode the Sequencer provides [SequencerCues](#cue) with events instead of [EArg](#earg).  
+
+```javascript
+var s = new timingsrc.Sequencer(timingObjectA, timingObjectB);
+```
+- param: {object} [timingObjectA] Timing object A represents one endpoint of the *active interval* of the IntervaSequencer. 
+- param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 
+
+
 
 ### Sequencer: Operations
 
@@ -362,17 +377,3 @@ If multiple Intervals are bound to the same endpoint, multiple events will be em
 
 
 
-<a name="intervalsequencer"></a>
-## Interval Sequencer
-
-The Interval Sequencer construction requires two timing objects.
-It implements the same API as the Sequencer, with the single exeption that [SequencerCues](#cue) are provided with events instead of [EArg](#earg).  
-
-### IntervalSequencer: Constructor
-Returns an IntervalSequencer object. There is no need to start the IntervalSequencer. Execution is driven by the given timing objects, and the IntervalSequencer is operational when the constructed finalizes.
-
-```javascript
-var s = new timingsrc.IntervalSequencer(timingObjectA, timingObjectB);
-```
-- param: {object} [timingObjectA] Timing object A represents one endpoint of the *active interval* of the IntervaSequencer. 
-- param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 

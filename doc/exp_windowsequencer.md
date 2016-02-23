@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Example Interval Sequencer (page-local)
-demojs : exp_intervalsequencer
+demojs : exp_windowsequencer
 ---
 
 <style type="text/css">
@@ -13,8 +13,8 @@ demojs : exp_intervalsequencer
 - [Sequencer API](api_sequencer.html) 
 - [Sequencer Usage](usage_sequencer.html)
 
-The Interval Sequencer provides enter and exit events based on a moving interval. Interval endpoints are implemented by two timing objects.
-The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. The Interval Sequencer may be helpful for timed prefetching, visualization of a sliding window of timed data, etc.
+The Sequencer may also provide enter and exit events based on a moving window. Window endpoints are implemented by two timing objects.
+The two endpoints may therefore be controlled independently, though in this demo they are not. Instead, SkewConverter is used to skew a root timing object (by -5 and +4) to create two new (but dependent) timingobjects. Window sequencing may be helpful for timed prefetching, visualization of a sliding window of timed data, etc.
   
 
 #### Demo
@@ -44,7 +44,7 @@ var toA = new TIMINGSRC.SkewConverter(to, -5.0);
 var toB = new TIMINGSRC.SkewConverter(to, 4.0);
       
 // Sequencer
-var s = new TIMINGSRC.IntervalSequencer(toA, toB);    
+var s = new TIMINGSRC.Sequencer(toA, toB);    
 
 // Load Data
 var r = s.request();

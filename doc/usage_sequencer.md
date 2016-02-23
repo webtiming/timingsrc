@@ -8,11 +8,11 @@ title: Sequencer Usage
 - [Sequencer Usage](usage_sequencer.html) 
 - [Sequencer Example (page-local)](exp_sequencer.html)
 - [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
+- [WindowSequencer Example (page-local)](exp_windowsequencer.html)
+- [WindowSequencer Example (multi-device)](online_windowsequencer.html)
 
 
-This describes usage of **Sequencer** and **IntervalSequencer**.
+This describes usage of **Sequencer**.
 
 ## Introduction
 

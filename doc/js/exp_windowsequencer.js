@@ -7,7 +7,7 @@ var run = function (timingProvider) {
 
 	// Sequencer
 	var Interval = TIMINGSRC.Interval; // shortcut
-	var s = new TIMINGSRC.IntervalSequencer(toA, toB);    
+	var s = new TIMINGSRC.Sequencer(toA, toB);    
 
 	// Timed Data
 	var data = {

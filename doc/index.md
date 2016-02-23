@@ -86,17 +86,17 @@ distinction concerning the specific type of data, and instead aim to provide gen
 - [TimingCallback Example (page-local)](exp_timingcallback.html)
 - [TimingCallback Example (multi-device)](online_timingcallback.html)
 
-**Sequencer** and **IntervalSequencer** are more sophisticated tools designed to work on larger sets of intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
+The **Sequencer** is a more sophisticated tool designed to work on larger sets of points and intervals. Both emit _enter_ and _exit_ events as intervals becomes _active_ or _inactive_, but differ in how they define this condition. 
 
 [check out impressive old style sequencing video here!](https://www.facebook.com/Excite.Espana/videos/10154330747448032/)
 
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
-- [Sequencer Example (page-local)](exp_sequencer.html)
-- [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
+- [Default Sequencer Example (page-local)](exp_sequencer.html)
+- [Default Sequencer Example (multi-device)](online_sequencer.html)
+- [Window sequencing Example (page-local)](exp_windowsequencer.html)
+- [Window sequencing Example (multi-device)](online_windowsequencer.html)
 
 
 <a name="mediasync"></a>

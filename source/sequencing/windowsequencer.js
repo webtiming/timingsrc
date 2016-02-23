@@ -20,7 +20,7 @@
 
 
 /* 
-	INTERVAL SEQUENCER
+	WINDOW SEQUENCER
 
 	- a collection of Intervals are defined on an axis
 	- a searchInterval is defined by two endpoints.
@@ -61,8 +61,8 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 	var Interval = seq.Interval;
 
-	var IntervalSequencer = function (timingObjectA, timingObjectB) {
-		this._axis = new axis.Axis();
+	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
+		this._axis = _axis || new axis.Axis();
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;
 		this._seqA = new seq.Sequencer(this._toA, this._axis);
@@ -75,7 +75,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 		// Define Events API
 		// event type "events" defined by default
-		eventutils.eventify(this, IntervalSequencer.prototype);
+		eventutils.eventify(this, WindowSequencer.prototype);
 		this.eventifyDefineEvent("enter", {init:true}) // define enter event (supporting init-event)
 		this.eventifyDefineEvent("exit") 
 		this.eventifyDefineEvent("change"); 
@@ -98,25 +98,25 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 		The interval sequencer is ready when both timing objects are ready
 	*/
-	IntervalSequencer.prototype._setReadyA = function() {
+	WindowSequencer.prototype._setReadyA = function() {
 		if (!this._readyA) {
 			this._readyA = true;
 			if (this._readyB) this._onReady();
 		}
 	};
 
-	IntervalSequencer.prototype._setReadyB = function() {
+	WindowSequencer.prototype._setReadyB = function() {
 		if (!this._readyB) {
 			this._readyB = true;
 			if (this._readyA) this._onReady();
 		}
 	};
 
-	IntervalSequencer.prototype._isReady = function() {
+	WindowSequencer.prototype._isReady = function() {
 		return (this._readyA && this._readyB);
 	};
 
-	IntervalSequencer.prototype._onReady = function () {
+	WindowSequencer.prototype._onReady = function () {
 		this._axis.on("change", this._wrappedOnAxisChange, this);
 	};
 
@@ -133,7 +133,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		Some of these intervals may remain active of inactive with respect
 		to the point-sequencer, implying that there will be no events from the sequencer
 
-		- Non-jumps (i.e. speed changes) can not cause changes to the intervalsequencer
+		- Non-jumps (i.e. speed changes) can not cause changes to the WindowSequencer
 		without also causing changes to the sequencers
 		
 		Sequencer events
@@ -168,32 +168,32 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		- not implemented
 	*/
 
-	IntervalSequencer.prototype._onTimingChangeA = function () {
+	WindowSequencer.prototype._onTimingChangeA = function () {
 		this._setReadyA();
 		this._reevaluate();
 	}; 
 
-	IntervalSequencer.prototype._onTimingChangeB = function () {
+	WindowSequencer.prototype._onTimingChangeB = function () {
 		this._setReadyB();
 		this._reevaluate();
 	};
 
-	IntervalSequencer.prototype._onAxisChange = function (opList) {
+	WindowSequencer.prototype._onAxisChange = function (opList) {
 		this._reevaluate(opList);
 	};
 
-	IntervalSequencer.prototype._onSequencerChangeA = function () {
+	WindowSequencer.prototype._onSequencerChangeA = function () {
 		this._reevaluate();
 	}; 
 
-	IntervalSequencer.prototype._onSequencerChangeB = function () {
+	WindowSequencer.prototype._onSequencerChangeB = function () {
 		this._reevaluate();
 	};
 
 	/*
 	  	overrides how immediate events are constructed
 	*/
-	IntervalSequencer.prototype.eventifyMakeInitEvents = function (type) {
+	WindowSequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "enter") {
 			return this._reevaluate();
 		}
@@ -203,7 +203,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	/*
 		figure out the current active interval
 	*/
-	IntervalSequencer.prototype._getActiveInterval = function () {
+	WindowSequencer.prototype._getActiveInterval = function () {
 		var vectorA = this._toA.query();
 		var vectorB = this._toB.query();
 		var start = Math.min(vectorA.position, vectorB.position);
@@ -211,7 +211,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		return new Interval(start, end, true, true);
 	};
 
-	IntervalSequencer.prototype._getOpFromAxisOpList = function (axisOpList, key) {
+	WindowSequencer.prototype._getOpFromAxisOpList = function (axisOpList, key) {
 		var op = {};
 		if (axisOpList) {
 			for (var i=0; i<axisOpList.length; i++) {
@@ -229,9 +229,9 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		RE-EVALUATE
 
 		Figure out what kind of events need to be triggered (if any)
-		in order to bring the IntervalSequencer to the correct state.
+		in order to bring the WindowSequencer to the correct state.
 	*/
-	IntervalSequencer.prototype._reevaluate = function (axisOpList) {
+	WindowSequencer.prototype._reevaluate = function (axisOpList) {
 		if (!this._isReady()) {
 			return [];
 		}
@@ -329,45 +329,45 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		one of the sequencers, since the two sequencers forward these operations to a shared axis.
 	*/
 
-	IntervalSequencer.prototype.request = function () {
+	WindowSequencer.prototype.request = function () {
 		return this._seqA.request();
 	};
 
-	IntervalSequencer.prototype.addCue = function (key, interval, data) {
+	WindowSequencer.prototype.addCue = function (key, interval, data) {
 		return this._seqA.addCue(key, interval, data);
 	};
 
-	IntervalSequencer.prototype.removeCue = function (key, removedData) {
+	WindowSequencer.prototype.removeCue = function (key, removedData) {
 		return this._seqA.removeCue(key, removedData);
 	};
 
 	// true if cues exists with given key
-	IntervalSequencer.prototype.hasCue = function (key) {
+	WindowSequencer.prototype.hasCue = function (key) {
 		return this._seqA.hasCue(key);
 	};
 
 	// Get all keys
-	IntervalSequencer.prototype.keys = function () {
+	WindowSequencer.prototype.keys = function () {
 		return this._seqA.keys();
 	};
 	
 	// get specific cue {key: key, interval:interva} given key
-	IntervalSequencer.prototype.getCue = function (key) {
+	WindowSequencer.prototype.getCue = function (key) {
  		return this._seqA.getCue(key);
 	};
 
 	// get all cues
-	IntervalSequencer.prototype.getCues = function () {
+	WindowSequencer.prototype.getCues = function () {
 		return this._seqA.getCues();
 	};
 
 	// return true if cue of given key is currently active
-	IntervalSequencer.prototype.isActive = function (key) {
+	WindowSequencer.prototype.isActive = function (key) {
 		return (this._activeKeys.indexOf(key) > -1);
 	};
 
 	// Get keys of active cues
-	IntervalSequencer.prototype.getActiveKeys = function () {
+	WindowSequencer.prototype.getActiveKeys = function () {
 		// copy keys
 		var res = [];
 		this._activeKeys.forEach(function (key) {
@@ -376,7 +376,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		return res;
 	};
 
-	IntervalSequencer.prototype.getActiveCues = function () {
+	WindowSequencer.prototype.getActiveCues = function () {
 		var res = [];
 		this._activeKeys.forEach(function (key) {
 			res.push(this.getCue(key));
@@ -386,22 +386,22 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	};
 
 	// return all (key, inteval, data) tuples, where interval covers point
-	IntervalSequencer.prototype.getCuesByPoint = function (point) {
+	WindowSequencer.prototype.getCuesByPoint = function (point) {
 		return this._seqA.getCuesByPoint(point);
 	};
 
 	// return all cues with at least one endpoint within searchInterval
-	IntervalSequencer.prototype.getCuesByInterval = function (searchInterval) {
+	WindowSequencer.prototype.getCuesByInterval = function (searchInterval) {
 		return this._seqA.getCuesByInterval(searchInterval);
 	};
 
 	// return all cues covered by searchInterval
-	IntervalSequencer.prototype.getCuesCoveredByInterval = function (searchInterval) {
+	WindowSequencer.prototype.getCuesCoveredByInterval = function (searchInterval) {
 		return this._seqA.getCuesCoveredByInterval(searchInterval);
 	};
 
 	// shutdown
-	IntervalSequencer.prototype.close = function () {
+	WindowSequencer.prototype.close = function () {
 		this._axis.off("change", this._wrappedOnAxisChange);
 		this._toA.off("change", this._wrappedOnTimingChangeA);
 		this._toB.off("change", this._wrappedOnTimingChangeB);
@@ -414,8 +414,8 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 	// inheritance
 	// To be overridden by subclass specializations
-	IntervalSequencer.prototype.loadData = function () {};
-	IntervalSequencer.prototype.getData = function (key) {};
+	WindowSequencer.prototype.loadData = function () {};
+	WindowSequencer.prototype.getData = function (key) {};
 
-	return IntervalSequencer;
+	return WindowSequencer;
 });

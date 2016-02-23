@@ -8,13 +8,14 @@ title: Sequencer Background
 - [Sequencer Usage](usage_sequencer.html)
 - [Sequencer Example (page-local)](exp_sequencer.html)
 - [Sequencer Example (multi-device)](online_sequencer.html)
-- [IntervalSequencer Example (page-local)](exp_intervalsequencer.html)
-- [IntervalSequencer Example (multi-device)](online_intervalsequencer.html)
+- [WindowSequencer Example (page-local)](exp_windowsequencer.html)
+- [WindowSequencer Example (multi-device)](online_windowsequencer.html)
+
 
 
 ## Abstract
 
-> *Sequencer* and *IntervalSequencer* are generic tools for *timed execution* of *timed data*.
+> *Sequencer* is a generic tools for *timed execution* of *timed data*.
 
 *Sequencing* broadly refers to the process of translating a timed script into timed execution. Sequencing is not a new concept. Frameworks for timed media or timed presentation are always built around some form of sequencing logic. However, implementations are typically internal, custom to specific media formats, and tightly integrated with predefined UI components. Furthermore, media clocks and media controls (e.g. play/pause) are also tightly integrated, making it hard to synchronize frameworks with other timed media.
 
@@ -30,7 +31,7 @@ The [TimingObject](http://webtiming.github.io/timingobject) is a simple concept 
 
 - [introduction](#introduction)
 - [timeddata](#timeddata)
-- [sequencer types](#sequencertypes)
+- [sequencing modes](#sequencingmodes)
 - [music box analogy](#musicbox)
 - [design goals](#designgoals)
 - [related work](#relatedwork) 
@@ -50,13 +51,13 @@ The core idea is that programmers express temporal validity of objects by associ
 > Sequencers manage a collection of *(key,interval)* associations, where *intervals* define the temporal validity of *keys*. 
 > A (key,interval) association is also known as a *cue*.
 
-Sequencers in the timinsrc library use the timing object as timing source. The main function of sequencers is to emit *enter* and *exit* events at the correct time, as cues become *active* or *inactive*. Sequencers also maintain a list of *active cues*, always consistent with history of event callbacks and the state of the timing object.
+The Sequencer uses the timing object as timing source. The main function of the Sequencer is to emit *enter* and *exit* events at the correct time, as cues become *active* or *inactive*. The Sequencer also maintains a list of *active cues*, always consistent with history of event callbacks and the state of the timing object.
 
-**Sequencer** and **IntervalSequencer** differ in how they define *active* and *inactive* state for cues. 
+The Sequencer supports two modes of operation; [default sequencing mode](#sequencingmodes) and [window sequencing mode](#sequencingmodes). These two modes differ in how they define *active* and *inactive* state for cues. 
 
-Sequencers are similar to [TrackElements](http://www.html5rocks.com/en/tutorials/track/basics/).
+The Sequencer API is similar to [TrackElements](http://www.html5rocks.com/en/tutorials/track/basics/).
 
-> Sequencers in timingsrc library are data agnostic and can therefore be used with any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
+> The Sequencer is *data-independent* and can therefore be used with any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
 
 
 <a name="timeddata"></a>
@@ -89,22 +90,22 @@ var cue = {
 datamodel["unique key"] = {text: "Hello!", type: "subtitle"};
 ```
 
-<a name="sequencertypes"></a>
-## Sequencer and IntervalSequencer
+<a name="sequencingmodes"></a>
+## Sequencing modes
 
-**Sequencer** and **IntervalSequencer** differ in how they define *active* state for cues. This difference is illustrated by the figure below, with the Sequencer on the left and the IntervalSequencer on the right. The vertical lines illustrate the moving positions of timing objects. The Sequencer uses one timing object, whereas the IntervalSequencer uses two.
+The **Sequencer** supports two modes of operation; default and window sequencing. These two modes differ in how they define *active* state for cues. This difference is illustrated by the figure below, with default sequencing on the left and windowsequencing on the right. The vertical lines illustrate the moving positions of timing objects. The Sequencer uses one timing object in default sequencing mode, and two in window sequencing mode.
 
-![alt text](img/sequencing_bc.jpg "Sequencer and IntervalSequencer")
+![alt text](img/sequencing_bc.jpg "Default sequencing mode and window sequencing mode")
 
-> The Sequencer defines a cue to be *active* whenever the cue interval covers the moving position of the timing object.
+> In default sequencing mode, the Sequencer defines a cue to be *active* whenever the cue interval covers the moving position of the timing object.
 
-In the illustration cues from the green and purple track are currently active. A cue from the brown track has just been exited, and in a short while a blue cue will be entered and then quickly exited. The Sequencer is good for timed presentation, where enter and exit events correspond directly to UI modifications.
+In the illustration cues from the green and purple track are currently active. A cue from the brown track has just been exited, and in a short while a blue cue will be entered and then quickly exited. Default sequencing mode is good for timed presentation, where enter and exit events correspond directly to UI modifications.
 
-> The IntervalSequencer defines a cue to be *active* whenever the cue interval is fully or partially covered by the moving interval defined by its two timing objects.
+> In window sequencing mode, the Sequencer defines a cue to be *active* whenever the cue interval is fully or partially covered by the moving interval defined by its two timing objects.
 
-In the illustration 4 brown cues, 2 yellow, 1 purple, 2 green and 3 red cues are active. The IntervalSequencer is good for visualizing sliding windows of data, or to implement timed prefetching of data needed for timed presentation. Note the two timing objects can be controlled independently, so the active interval might be controlled to grow and shrink dynamically.
+In the illustration 4 brown cues, 2 yellow, 1 purple, 2 green and 3 red cues are active. Window sequencing mode is good for visualizing sliding windows of data, or to implement timed prefetching of data needed for timed presentation. Note the two timing objects can be controlled independently, so the active interval might be controlled to grow and shrink dynamically.
 
-Both the Sequencer and the IntervalSequencer maintain the invariable that active cues are always consistent with the state of the timing objects. So, when timing objects skip to a new position on the timeline, cue events will be exited and entered accordingly.
+Both modes maintain the invariable that active cues are always consistent with the state of the timing object(s). So, when timing objects skip to a new position on the timeline, cue events will be exited and entered accordingly.
 
 
 <a name="musicbox"></a>

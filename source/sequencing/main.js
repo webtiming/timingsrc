@@ -18,14 +18,23 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./sequencer', './intervalsequencer', './timingcallbacks'], 
-	function (seq, IntervalSequencer, timingcallbacks) {		
+define(['./sequencer', './windowsequencer', './timingcallbacks'], 
+	function (seq, WindowSequencer, timingcallbacks) {		
 		'use strict';
+
+    // Common constructor for Sequencer and WindowConstructor
+    var Sequencer = function (timingObjectA, timingObjectB, _axis) {
+      if (timingObjectB === undefined) {
+        return new seq.Sequencer(timingObjectA, _axis);
+      } else {
+        return new WindowSequencer(timingObjectA, timingObjectB, _axis); 
+      }
+    };
+
 		return {
-			Sequencer : seq.Sequencer,
+			Sequencer : Sequencer,
 			Interval : seq.Interval,
 			inherit : seq.inherit,
-      IntervalSequencer : IntervalSequencer,
       setPointCallback : timingcallbacks.setPointCallback,
       setIntervalCallback : timingcallbacks.setIntervalCallback
 		};
