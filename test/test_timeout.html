@@ -17,7 +17,7 @@
         delays.push(delay);
       }
       // convert results to milliseconds
-      var convert = function (value) {return (value*1000).toFixed(3);};
+      var convert = function (value) {return value.toFixed(3);};
       var stats = function () {
         var avg = convert(delays.reduce(function(a,b) {return a+b;})/delays.length);
         var min = convert(delays.reduce(function(a,b) {return Math.min(a,b);}));
@@ -36,7 +36,52 @@
       };
     };
 
+
     var test_timeout = function (callback) {
+      var start;
+      var log = logger();
+      var i = MIN;
+
+      var target = function (i) {
+        return start + numbers[i]*1000;
+      };
+
+      var set_timeout = function () {
+        var delay;
+        var now = performance.now();
+        while (i<MAX) {
+          i += 1;
+          delay = target(i) - performance.now() ;
+          if (delay > 0.0) {
+            setTimeout(handle_timeout, delay);
+            //console.log(delay);
+            return true;
+          } else {
+            continue;
+          }
+        }
+        return false;
+      };
+
+      var handle_timeout = function () {
+        //console.log("timeout", i, numbers[i]);
+        var late = performance.now() - target(i);
+        log.append(late);
+        var ok = set_timeout();
+        if (!ok) {
+          // done
+          if (callback) callback(log);
+        }
+      }
+
+      // start
+      start = performance.now();
+      set_timeout();
+    } 
+
+
+
+    var test_timeout2 = function (callback) {
       var log = logger();
       var i = MIN;
       var now;
@@ -91,7 +136,7 @@
           var e = eList[0];
           //console.log("sequencer", parseInt(e.key), e.point);
           //console.log("sequencer", e.delay, now - e.point);
-          log.append(now - e.point);
+          log.append((now - e.point)*1000);
         }
       });
       // start
