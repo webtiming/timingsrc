@@ -767,7 +767,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			var self = this;
 			this._timeout = this._clock.setTimeout(function () {
 				self._main();
-			}, secDelay, {anchor: secAnchor, early: 0.0005});
+			}, secDelay, {anchor: secAnchor, early: 0.005});
 	    }
 	};
 
