@@ -116,10 +116,10 @@ define(['./timingbase'], function (timingbase) {
 		// trigger state transition if range violation is detected
 		if (vector.position > this._range[1]) {
 			vector.position = this._range[0];
-			this._main(vector)
+			this._process(vector)
 		} else if (vector.position < this._range[0]) {
 			vector.position = this._range[1];
-			this._main(vector);
+			this._process(vector);
 		} else {
 			// no range violation
 			return vector;
