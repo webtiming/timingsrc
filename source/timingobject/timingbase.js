@@ -254,7 +254,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	 		var self = this;
 	 		this._timeout = this.clock.setTimeout(function () {
 				self._process(self._onTimeout(vector));
-	      	}, secDelay, {anchor: now, early: 0.0005}); 
+	      	}, secDelay, {anchor: now, early: 0.005}); 
 		}
 	};
 

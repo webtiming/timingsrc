@@ -47,7 +47,7 @@ define (['util/motionutils'], function (motionutils) {
     var self = this;
     this._timeout = this._timingsrc.clock.setTimeout(function () {
       self._onTimeout();
-    }, res.delay, {anchor: res.anchor, early: 0.0005});    
+    }, res.delay, {anchor: res.anchor, early: 0.005});    
   };
 
   // update event from timing object

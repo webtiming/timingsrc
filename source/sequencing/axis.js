@@ -139,6 +139,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 		var e, elist = [], oldInterval, key, interval;
 		args.forEach(function(arg){
 			key = arg.key;
+			if (typeof key !== 'string') throw new AxisError("key is " + typeof key + " - must be string");
 			interval = arg.interval;
 			// INTERVAL is undefined
 			if (interval === undefined) {
