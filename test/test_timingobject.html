@@ -10,24 +10,18 @@
   </script>
   <script type="text/javascript" src="../lib/require.js"></script>
   <script type="text/javascript">
-      var m, w;
+      var m, w, w2;
       require(['timingsrc'], function (timingsrc) {
       
-        var run = function () {
-
-          // timing object
-          var to = new timingsrc.TimingObject({range:[8,17]});
-          //var to = new timingsrc.TimingObject();
-
+        var setup_converter1 = function (to) {
           // Converter objects
-          w = new timingsrc.SkewConverter(to, 2);
+          //w = new timingsrc.SkewConverter(to, 2);
           //w = new timingsrc.DelayConverter(to, 1.0);          
           //w = new timingsrc.TimeShiftConverter(to, -1.0);
           //w = new timingsrc.ScaleConverter(to, 2);
-          //w = new timingsrc.LoopConverter(to, [2, 8]);
           //w = new timingsrc.RangeConverter(to, [10,15]);
           //w = new timingsrc.DerivativeConverter(to);
-
+          w = new timingsrc.LoopConverter(to, [2, 8]);
 
           var converterhandler = function () {
             if (converterhandler.init === false) {
@@ -38,16 +32,61 @@
           };
           converterhandler.init = false;
 
+          document.getElementById('converterplay').onclick = function () {w.update({velocity:1.0});};
+          document.getElementById('converterpause').onclick = function () {w.update({velocity:0.0});};
+          document.getElementById('converterreset').onclick = function () {w.update({position: 0.0, velocity:0.0});};
+          document.getElementById('converterback').onclick = function () {w.update({velocity:-1.0});};
+          w.on("change", converterhandler);
+
+          var convertervalue = document.getElementById('convertervalue');
+          w.on("timeupdate", function () {
+            convertervalue.innerHTML = w.query().position.toFixed(2);
+          });
+          return w;
+        };
+
+        var setup_converter2 = function (to) {
+          w2 = new timingsrc.LoopConverter(to, [2, 8]);
+
+          var converterhandler2 = function () {
+              if (converterhandler2.init === false) {
+              console.log("converter2 range", w2.range);
+              converterhandler2.init = true;
+            }
+            console.log("converter2 onchange", w2.vector);
+          };
+          converterhandler2.init = false;
+
+          document.getElementById('converterplay2').onclick = function () {w2.update({velocity:1.0});};
+          document.getElementById('converterpause2').onclick = function () {w2.update({velocity:0.0});};
+          document.getElementById('converterreset2').onclick = function () {w2.update({position: 0.0, velocity:0.0});};
+          document.getElementById('converterback2').onclick = function () {w2.update({velocity:-1.0});};
+          w2.on("change", converterhandler2);
+
+          var convertervalue2 = document.getElementById('convertervalue2');
+          w2.on("timeupdate", function () {
+            convertervalue2.innerHTML = w2.query().position.toFixed(2);
+          });
+
+          return w2;
+        };     
+         
+
+
+        var setup_timingobject = function () {
+          // timing object
+          //var to = new timingsrc.TimingObject({range:[8,17]});
+          var to = new timingsrc.TimingObject();
+
           var sourcehandler = function () {
             if (sourcehandler.init === false) {
-              console.log("source range", to.range);
+              //console.log("source range", to.range);
               sourcehandler.init = true;
             }
-            console.log("source onchange", to.vector);
+            //console.log("source onchange", to.vector);
           };
           sourcehandler.init = false;
 
-          if (w) w.on("change", converterhandler);
           to.on("change", sourcehandler);
 
           // Hook up buttons UI
@@ -55,28 +94,22 @@
           document.getElementById('srcpause').onclick = function () {to.update({velocity:0.0});};
           document.getElementById('srcreset').onclick = function () {to.update({position: 0.0, velocity:0.0});};
           document.getElementById('srcback').onclick = function () {to.update({velocity:-1.0});};
-        
-          if (w) {    
-            document.getElementById('converterplay').onclick = function () {w.update({velocity:1.0});};
-            document.getElementById('converterpause').onclick = function () {w.update({velocity:0.0});};
-            document.getElementById('converterreset').onclick = function () {w.update({position: 0.0, velocity:0.0});};
-            document.getElementById('converterback').onclick = function () {w.update({velocity:-1.0});};
-          }
 
           // Hook up text UI
           var srcvalue = document.getElementById('srcvalue');
-          var convertervalue = document.getElementById('convertervalue');
           to.on("timeupdate", function () {
             srcvalue.innerHTML = to.query().position.toFixed(2); 
           });
-          if (w) {
-            w.on("timeupdate", function () {
-              convertervalue.innerHTML = w.query().position.toFixed(2);
-              srcvalue.innerHTML = to.query().position.toFixed(2); 
-            });
-          }
-          
-          
+          return to;
+        };
+
+        var run = function () {
+          var to = setup_timingobject();
+          setup_converter1(to);
+          setTimeout(function() {
+            setup_converter2(to);  
+          }, 4000);
+        
         };
         if (document.readyState === "complete") run();
         else window.onload = run;
@@ -93,12 +126,19 @@
 <button id="srcreset">Reset</button>
 <button id="srcback">Back</button>
 
-<h3>Converter</h3>
+<h3>Converter 1</h3>
 <div id="convertervalue"></div>
 <button id="converterplay">Play</button>
 <button id="converterpause">Pause</button>
 <button id="converterreset">Reset</button>
 <button id="converterback">Back</button>
+
+<h3>Converter 2</h3>
+<div id="convertervalue2"></div>
+<button id="converterplay2">Play</button>
+<button id="converterpause2">Pause</button>
+<button id="converterreset2">Reset</button>
+<button id="converterback2">Back</button>
 
 </body>
 </html>
