@@ -10,7 +10,7 @@ title: Timing Converter Background
 
 Timing Converters are useful when you need an alternative representation for a Timing Object. For instance, 
 if different media components refer to different timelines, *skewed* representations of a common timing object could make up for this.
-*Scaling* the timeline might also be useful in some circumstances. In video playback the position of a timing object typically represents media offset in seconds. 
+*Scaling* the timing object might also be useful in some circumstances. In video playback the position of a timing object typically represents media offset in seconds. 
 Alternatively, frame numbers could be reported as position, with standard playback velocity being 24 or 25 (fps), depending on the media format.
 Or, when working with music it might be sensible to use beat number as position, and beats per second (bps) as velocity. 
 Again, different representations might be required to integrate different media components, or simply to suit the preferences of different programmers.
