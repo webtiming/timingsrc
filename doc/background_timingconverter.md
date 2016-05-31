@@ -48,7 +48,9 @@ The effect of the skew converter is illustrated with red coloring. A positive sk
 
 <img src="img/scaleconvert.jpg" alt="Drawing" style="width: 400px;"/>
 
-Scaling the timeline by a factor 2 means that all values on old scale (green) are multiplied by 2 to get value on new scale (red). 
+Scaling the by a factor 2 means that all values (position, velocity and acceleration) are multiplied by 2. 
+
+For example, a factor 1000 scales values in seconds to values in milliseconds. Velocity 1s/s becomes velocity 1000ms/s. 
 
 #### Delay Converter
 
