@@ -63,6 +63,12 @@ define(function () {
 		}
 	};
 
+	Object.defineProperty(Timeout.prototype, 'target', {
+		get : function () { 
+			return this._target;
+		}
+	});
+
 	// Internal function
 	Timeout.prototype._ontimeout = function () {
 	    if (this._tid !== null) {
@@ -106,7 +112,6 @@ define(function () {
 			this._tid = null;
 			var self = this;
 			window.removeEventListener("message", this, true);
-			this._clock.off("change", this._onClockChange);
 	    }
 	};
 	
