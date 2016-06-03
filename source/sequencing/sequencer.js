@@ -266,9 +266,11 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    }
 	    return Math.max(0.0, this.timeInterval.high - ts);
 	};
-
-
 	
+	Schedule.prototype.getNextTaskPoint = function () {
+		return (this.queue.length > 0) ? this.queue[0].task.point : null;
+	};
+
 	/*
 		BUILDER
 
@@ -371,7 +373,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this._clock = timingObject.clock;
 		this._axis = _axis || new axis.Axis();
 		this._schedule = null;
-		this._timeout = null; // timeout	
+		this._timeout = null; // timeout
+		this._currentTimeoutPoint = null; // point associated with current timeout
 		this._activeKeys = []; // active intervals
 
 		// set up eventing stuff
@@ -587,15 +590,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var i, e, key, interval, data;	
 
 		// filter out NOOPs
-
 		var opList = origOpList.filter(function (op) {
 			return (op.type !== axis.OpType.NOOP);
 		});
-
-		// TODO - avoid spawning new timeouts if not needed !
-
-
-		// axis is updated - update scheduler
+		
 	    var now = this._clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 	    var nowPos = nowVector.position;
@@ -604,6 +602,9 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var enterItems = []; // {key:key, interval:interval}
 	    var exitItems = []; // {key:key, interval:interval}
 	    var isActive, shouldBeActive;
+	    
+
+		// update scheduler if axis was modified
 	    opList.forEach(function (op) {
 	    	interval = op.interval;
 	    	key = op.key;
@@ -639,7 +640,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 
 		/* 
-			changes events
+			change events
 			generate change events for currently active spans, which did change, 
 			but remained active - thus no enter/exit events will be emitted).
 		
@@ -654,7 +655,13 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 				return {key: op.key, interval: op.interval, data: op.data};
 			}, this);
 
-
+		
+		// special case - no changes to axis - no need to update the SCHEDULE
+		if (opList.length === 0) {
+			this._processIntervalEvents(now, [], [], changeItems);
+			return;
+		}
+			
 
 		// INVALIDATE events in the SCHEDULE
 		/*
@@ -732,7 +739,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		setTimeout(function () {
 			// notify interval events and change events
 			self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-			// kick off main loop
+			// kick off main loop (should only be required if moving?)
 			self._main(now);
 		}, 0);
 	
@@ -745,11 +752,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	*/
 	Sequencer.prototype._main = function (now) {
 		var eList;
-	    // cancel_timeout
-	    if (this._timeout !== null) {
-			this._timeout.cancel();
-			this._timeout = null;
-	    }
 	    now = now || this._clock.now();
 	    // process tasks (empty due tasks from schedule)
         eList = this._processScheduleEvents(now, this._schedule.pop(now));
@@ -764,17 +766,53 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
             eList = this._processScheduleEvents(now, this._schedule.pop(now));
 	    	this.eventifyTriggerEvents(eList);
 	    }
-        // set timeout if moving
+        // adjust timeout if moving
         if (_isMoving) {
-        	var secAnchor = this._clock.now();	
-			var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
-			var self = this;
-			this._timeout = this._clock.setTimeout(function () {
-				self._main();
-			}, secDelay, {anchor: secAnchor, early: 0.005});
+			var newTimeoutRequired = false;
+			if (this._timeout === null) newTimeoutRequired = true;
+			else {
+				// timeout exist - modify?
+				// avoid modifying timeout if new timeout is equal to existing timeout
+				// i.e. if task point is the same as last time
+				var nextTimeoutPoint = this._schedule.getNextTaskPoint();
+				if (nextTimeoutPoint === null) {
+					// timeout is set for schedule window - no tasks in schedule 
+					// do not modify timeout			
+				} else {
+					// nextTimeoutPoint defined - tasks in the schedule
+					if (nextTimeoutPoint === this._currentTimeoutPoint) {
+						// do not modify timeout
+					} else {
+						// modify timeout
+						newTimeoutRequired = true
+					}
+				}
+			}
+					
+			if (newTimeoutRequired) {
+				// clear timeout
+				this._clearTimeout();
+				// update timeout 
+	        	var secAnchor = this._clock.now();	
+				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
+				this._currentTimeoutPoint = nextTimeoutPoint;
+				var self = this;
+				this._timeout = this._clock.setTimeout(function () {
+					self._clearTimeout();
+					self._main();
+				}, secDelay, {anchor: secAnchor, early: 0.005});
+			}
 	    }
 	};
 
+
+	Sequencer.prototype._clearTimeout = function () {
+    	this._currentTimeoutPoint = null;
+    	if (this._timeout !== null) {
+			this._timeout.cancel();
+			this._timeout = null;
+    	}
+	};
 
 	/* 
 	   LOAD
