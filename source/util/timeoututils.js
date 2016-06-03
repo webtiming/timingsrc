@@ -38,9 +38,6 @@ define(function () {
 	var Timeout = function (clock, callback, delay, options) {	
 		// clock
 		this._clock = clock; // seconds
-		// wrap on clock change and store ref on instance
-		this._wrappedOnClockChange = function () {this._onClockChange();};
-		this._clock.on("change", this._wrappedOnClockChange, this);
 		var now = this._clock.now(); // seconds
 		// timeout
 		this._tid = null;
@@ -53,8 +50,6 @@ define(function () {
 		this._options.early = Math.abs(this._options.early) || 0; // seconds
 		this._target = this._options.anchor + delay; // seconds
 
-	
-
 		// Initialise
 		var self = this;
 		window.addEventListener("message", this, true); // this.handleEvent
@@ -66,10 +61,6 @@ define(function () {
 			// wake up just before
 			this._tid = setTimeout(function () {self._ontimeout();}, (time_left - self._options.early)*1000);
 		}
-	};
-
-	Timeout.prototype._onClockChange = function () {
-		// re-evaluate timeouts?
 	};
 
 	// Internal function

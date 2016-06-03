@@ -89,7 +89,7 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		this._vector  = {position: now, velocity: 1.0, timestamp: now};	
 		// event support
 		eventutils.eventify(this, MasterClock.prototype);
-		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
+		this.eventifyDefineEvent("change"); // define change event (no init-event)
 		// adjust
 		this.adjust(options);
 	};
@@ -131,20 +131,6 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 	*/
 	MasterClock.prototype.query = function (now) {
 		return calculateVector(this._vector, now);
-	};
-
-	/*
-	  	overrides how immediate events are constructed
-	  	specific to eventutils
-		change event fires immediately if timing object is well 
-		defined, i.e. query() not null
-		no event args are passed (undefined) 
-	*/
-	MasterClock.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "change") {
-			return [{type:type, e:undefined}];
-		}
-		return [];
 	};
 
 	/*
