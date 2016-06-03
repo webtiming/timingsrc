@@ -629,9 +629,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		    } else {
 		    	data = op.data || this.getData(key)
 		    }
-
 		    if (isActive && !shouldBeActive) {
-		    	
 				exitItems.push({key:key, interval:interval, data: data});
 			} else if (!isActive && shouldBeActive) {
 				enterItems.push({key:key, interval:interval, data: data});
@@ -647,15 +645,15 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			these are items that are active, but not in enterItems list
 			including NOOP operation (change in non-temporal sense)
 		*/
+		var exitKeys = exitItems.map(function (item) {return item.key;});
 		var changeItems = origOpList.
 			filter (function (op) {
-				return (this.isActive(op.key) && enterItems.indexOf(op.key) === -1);
+				return (this.isActive(op.key) && exitKeys.indexOf(op.key) === -1);
 			}, this).
 			map (function (op) {
 				return {key: op.key, interval: op.interval, data: op.data};
 			}, this);
 
-		
 		// special case - no changes to axis - no need to update the SCHEDULE
 		if (opList.length === 0) {
 			this._processIntervalEvents(now, [], [], changeItems);
