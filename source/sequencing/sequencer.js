@@ -587,9 +587,13 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var i, e, key, interval, data;	
 
 		// filter out NOOPs
+
 		var opList = origOpList.filter(function (op) {
 			return (op.type !== axis.OpType.NOOP);
-		});	
+		});
+
+		// TODO - avoid spawning new timeouts if not needed !
+
 
 		// axis is updated - update scheduler
 	    var now = this._clock.now();
