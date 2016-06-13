@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../source', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+      var to, w;
+
+      require(['timingsrc'], function (timingsrc) {
+
+        // Timing Object
+        to = new timingsrc.TimingObject();
+        w = new timingsrc.SlidingWindow(to);
+
+        var run = function () {
+
+        };
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Sliding Window</h1>
+
+  </body>
+</html>
