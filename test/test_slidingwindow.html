@@ -17,9 +17,29 @@
 
         // Timing Object
         to = new timingsrc.TimingObject();
-        w = new timingsrc.SlidingWindow(to);
+        w = new timingsrc.SlidingWindow(to, 10);
+      
 
         var run = function () {
+
+
+          // Hook up buttons UI
+          document.getElementById('play').onclick = function () {to.update({velocity:1.0});};
+          document.getElementById('pause').onclick = function () {to.update({velocity:0.0});};
+          document.getElementById('reset').onclick = function () {to.update({position: 0.0, velocity:0.0});};
+          document.getElementById('back').onclick = function () {to.update({velocity:-1.0});};
+
+          // Hook up text UI
+          var valueElem = document.getElementById('value');
+          to.on("timeupdate", function () {
+            valueElem.innerHTML = to.query().position.toFixed(2); 
+          });
+
+          var windowElem = document.getElementById('window');
+          w.on("change", function (){
+            console.log("change", w.window);
+            windowElem.innerHTML = JSON.stringify(w.window, null, 2);
+          });
 
         };
 
@@ -31,5 +51,13 @@
   <body>
     <h1>Test Sliding Window</h1>
 
+      <div id="value"></div>
+      <div id="window"></div>
+      <p>
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="back">Back</button>
+      </p>
   </body>
 </html>
