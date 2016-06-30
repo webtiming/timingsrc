@@ -393,6 +393,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this.loadData();
 	};
 
+	// making Interval constructor available on all sequencer instances
+	Object.defineProperty(Sequencer.prototype, "Interval", {
+		get : function () {return Interval;}
+	});
 
 	/*
 	  	overrides how immediate events are constructed 
@@ -677,7 +681,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		if (!_isMoving) {
 			// break control flow so that events are emitted after addCue has completed
 			setTimeout(function () {
-				this._processIntervalEvents(now, enterItems, exitItems, changeItems);
+				self._processIntervalEvents(now, enterItems, exitItems, changeItems);
 				// not moving should imply that SCHEDULE be empty
 				// no need to call main - will be called by scheduled timeout
 			}, 0);
@@ -773,7 +777,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		}
 	
 		// break control so that events are emitted after addCue has completed
-		var self = this;
 		setTimeout(function () {
 			// notify interval events and change events
 			self._processIntervalEvents(now, exitItems, enterItems, changeItems);

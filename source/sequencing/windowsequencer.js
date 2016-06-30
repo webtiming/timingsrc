@@ -93,6 +93,13 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		this._seqB.on("events", this._wrappedOnSequencerChangeB, this);
 	};
 
+
+
+	// making Interval constructor available on all windowsequencer instances
+	Object.defineProperty(WindowSequencer.prototype, "Interval", {
+		get : function () {return Interval;}
+	});
+
 	/*
 		READY STATE
 
@@ -410,7 +417,6 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		this._seqA.close();
 		this._seqB.close();
 	};
-
 
 	// inheritance
 	// To be overridden by subclass specializations
