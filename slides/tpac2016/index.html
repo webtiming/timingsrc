@@ -55,16 +55,6 @@
     .slide.shout h2 {
     font-size: 108px;
     }
-
-    dd {
-      font-size: smaller;
-      line-height: 1em;
-    }
-
-    dt {
-      font-weight: bold;
-    }
-
   </style>
 </head>
 <body class="list">
@@ -143,14 +133,14 @@
         <li> interactive <b>control</b> for temporal aspects</li>
       </ul>
 
-      <h3><b>Scopes</b></h3>
+      <h3><b>Timing Scopes</b></h3>
       <ul>
-        <li><b>intra-page</b> timing and control : <b>within</b> browser context </li> 
+        <li><b>page-internal</b> timing and control : <b>within</b> browser context </li> 
         <li><b>cross-page</b> timing and control : <b>across</b> browser contexts </li>     
       </ul>
 
       <p>
-        Note : Scope of multi-device timing includes <b>both</b> scopes!
+        Note : <b>Multi-device timing</b> includes <b>both</b> scopes!
       </p>
     </div>
   </section>
@@ -166,7 +156,7 @@
         </tr>
         <tr>
           <td>across media sources</td>
-          <td>multi-angle video or ad-insertion</td>
+          <td>multi-angle video, ad-insertion</td>
         </tr>
         <tr>
           <td>across media types</td>
@@ -182,7 +172,7 @@
         </tr>
         <tr>
           <td>across platforms</td>
-          <td>Web-page, native app, setup-box</td>
+          <td>Web, native app, broadcast</td>
         </tr>
         <tr>
           <td>across people and groups</td>
@@ -192,16 +182,65 @@
           <td>across Internet</td>
           <td>global media experiences</td>
         </tr>
-        <tr>
-          <td>across time-delays</td>
-          <td>Web and broadcast</td>
-        </tr>
         </table>
      
     </div>
   </section>
 
+  <section class="slide">
+    <div>
+      <h2>Realities : page-internal timing</h2>
+      <ul>
+        <li>lots of timed stuff on the Web platform</li>
+        <li>limited to single browser context</li>
+        <li>heterogeneity in control API’s</li>
+          <ul>
+            <li>dependencies between components</li>
+          </ul>
+        <li>coarse and non-deterministic timing models</li>
+        <li>unaccounted delays and unclear specs</li>
+      </ul>
+    </div>
+  </section>
 
+  <section class="slide">
+    <div>
+      <h2>Realities : cross-page timing</h2>
+      <ul>
+        <li>no support : programmers left on their own</li>
+        <li>synchronized system clocks not a sound assumption</li>
+        <li>timing - hard</li>
+        <li>distributed timing - even harder</li>
+        <li>media control separate issue</li>
+      </ul>
+    </div>
+  </section>
+
+   <section class="slide">
+    <div>
+      <h2>Goals</h2>
+      <ol>
+        <li>Making multi-device timing dead simple for Web programmers!</li>
+        <li>Temporal interoperability among timed components</li>
+        <li>Make it possible for Web and native to interoperate</li>
+      </ol>
+
+      <h3><b>Good news!</b></h3>
+      <ul>
+        <li>a concrete proposal</li>
+        <li>some new concepts, but no radical changes</li>
+        <li>feasible now!</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <section class="slide">
+    <div>
+      <h2>Demo: Easy-peasy</h2>
+      <p style="font-size:2em;"><a href="https://youtu.be/D6cBn65KXTk">https://youtu.be/D6cBn65KXTk</a></p>
+    </div>
+  </section>
 
 
 
