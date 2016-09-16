@@ -119,29 +119,42 @@
     </div>
   </section>
 
-
-
   <section class="slide">
     <div>
       <h2>Status</h2>
       <ul>
-          <li>Draft standards proposal : <a href="http://webtiming.github.io/timingobject/" target="_blank">Timing Object</a></li>
-          <li>JS implementation : <a href="http://webtiming.github.io/timingsrc/" target="_blank">Timingsrc</a></li>
-          <li>Online Timing Provider : <a href="http://motioncorporation.com/" target="_blank">Motion Corporation</a></li>  
-          <li>Visibility
-            <ul class="smalltext">
-              <li><a href="https://www.w3.org/community/webtiming/" target="_blank">CG Webpage</a></li>
-              <li><a href="http://mediascapeproject.eu/" target="_blank">MediaScape EU Project</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/2016/04/25/timing-object-at-nabshow-2016/" target="_blank">NabShow 2016</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/2016/09/02/multi-device-timing-at-ibc-2016/" target="_blank">IBC 2016</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/publications/" target="_blank">Publications</a></li>
-            </ul>
-          </li>
-        </ul>
+        <li>by TPAC 2015
+          <ul class="smalltext">
+            <li>Draft standards proposal : <a href="http://webtiming.github.io/timingobject/" target="_blank">Timing Object</a></li>
+            <li>Online Timing Provider : <a href="http://motioncorporation.com/" target="_blank">Motion Corporation</a></li>
+            <li>Multi-device Timing CG : <a href="https://www.w3.org/community/webtiming/" target="_blank">Webpage</a></li>
+          </ul>
+        </li>
+        <li>by TPAC 2016
+          <ul class="smalltext">
+            <li>JS implementation : <a href="http://webtiming.github.io/timingsrc/" target="_blank">Timingsrc</a></li>
+            <li><a href="https://www.w3.org/community/webtiming/2016/04/25/timing-object-at-nabshow-2016/" target="_blank">NabShow 2016</a></li>
+            <li><a href="http://mediascapeproject.eu/" target="_blank">MediaScape EU Project</a> completes with <b>excellent</b> rating</li>
+            <li><a href="https://www.w3.org/community/webtiming/2016/09/02/multi-device-timing-at-ibc-2016/" target="_blank">IBC 2016</a></li>
+            <li>More <a href="https://www.w3.org/community/webtiming/publications/" target="_blank">Publications</a></li>
+          </ul>
+        </li>
+      </ul>
     </div>
   </section>
   
-   <section class="slide">
+<section class="slide">
+    <div>
+      <h2>Status Media Capabilities</h2>
+      <ul>
+        <li>With unified media pipeline Chrome is excellenct for sync</li>
+        <li>Safari with "bug" in variable playback rate making it rather useless</li>
+        <li>Efforts in WebRTC leads to improvements in timing info in getUserMedia</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
     <div>
       <h2>What is Multi-device Timing?</h2>
 
@@ -166,7 +179,7 @@
   </section>
 
 
-   <section class="slide">
+  <section class="slide">
     <div>
       <h2>Timing Challenges</h2>
       <table>
@@ -265,7 +278,7 @@
 
   <section class="slide">
     <div>
-      <h2>Timing Object</h2>
+      <h2>Timing Objects</h2>
       <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/motion.png" alt="timing object">
       <ul class="smalltext">
         <li><span style="color:red;">red circle</span> <b>moves</b> along timeaxis --- (position, velocity)</li>
@@ -278,7 +291,7 @@
 
   <section class="slide">
     <div>
-      <h2>Page-internal Timing Object</h2>
+      <h2>Page-internal Timing Objects</h2>
       <img style="height:40%;display:block;margin-left:auto;margin-right:auto;" src="pictures/singledevicesync.png" alt="page-internal timing">
       <ul class="smalltext">
         <li>multiple media components <b>observing</b> and <b>taking direction</b> from timing object</li>
@@ -289,113 +302,186 @@
     </div>
   </section>
 
+  <section class="slide">
+    <div>
+      <h2>Online Timing Objects</h2>
+      <img style="height:50%;display:block;margin-left:auto;margin-right:auto;" src="pictures/sequencersync2.png" alt="online timing">
+      <ul>
+        <li>page-internal timing objects are <b>proxies</b> for online timing object</li>
+        <li>kept in sync by <b>online timing provider</b></li>
+        <li>Web developers shielded from complexity of distributed sync</li>
+      </ul>
+      <!--
+      talking point
+      <blockquote>Media components connected to a single <b>online</b> timing object...</blockquote>
+      -->
+    </div>
+  </section>
 
 
-  <section class="slide cover" id="Picture"><div>
-      <h2>Welcome to Lisbon!</h2>
-      <img src="pictures/praca" alt="Picture of Lisbon: Praca do Commercia">
-      <p class="credit">Photo: <a href="http://www.flickr.com/photos/koalie/">Coralie Mercier</a></p>
-      <style>
-	#Picture h2 {
-	color:#FFF;
-	}
-      </style>
-  </div></section>
-  <section class="slide"><div>
-        <h2>Plain Text on Your Slides</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur <a href="#4">adipisicing</a> elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, <em>quis nostrud</em> exercitation ullamco laboris <strong>nisi ut aliquip</strong> ex ea commodo consequat. Duis aute irure <i>dolor</i> in reprehenderit in voluptate velit esse cillum <b>dolore</b> eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in <code>&lt;culpa&gt;</code> qui officia deserunt mollit anim id est laborum.</p>
-    </div></section>
-    <section class="slide"><div>
-        <h2>All Kind of Lists</h2>
-        <ol>
-          <li>Simple lists are marked with bullets</li>
-            <li>Ordered lists begin with a number</li>
-            <li>You can even nest lists one inside another
+  <section class="slide">
+    <div>
+      <h2>Key points</h2>
+  
+      <img style="height:60%;display:block;float:right;" src="pictures/sequencersync2.png" alt="online timing">
+      
+      <ul >
+        <li>temporal interoperability
+          <ul class="smalltext">
+            <li>page-internal and cross-page</li>
+          </ul>
+        </li>
+        <li>user space - JS 
+          <ul class="smalltext">
+            <li>values availability over precision</li>
+            <li>programming model for timing</li>
+          </ul>
+        </li>
+        <li>online service
+          <ul class="smalltext">
+            <li>precision [0-5] ms</li>
+            <li>quick sync [&lt1] s </li>
+            <li>scope - global (IP and Web)</li>
+            <li>availability, reliability, scalability</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Applications</h2>
+      <img style="height:80%;display:block;margin-left:auto;margin-right:auto;" src="pictures/poster_page2.png" alt="applications">
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Social viewing</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/moviesync.png" alt="socialsync">
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Multi-screen</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multiscreensync.png" alt="multiscreen">
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Multi-device</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/devicesync.png" alt="multidevice">
+    </div>
+  </section>
+  
+  <section class="slide">
+    <div>
+      <h2>Remote control</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/remotecontrolsync.png" alt="remotecontrol">
+    </div>
+  </section>
+  
+  <section class="slide">
+    <div>
+      <h2>Music</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/audiosync.png" alt="music">
+    </div>
+  </section>
+  
+  <section class="slide">
+    <div>
+      <h2>Split content and interaction</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multidevicesync.png" alt="home">
+    </div>
+  </section>
+  
+  <section class="slide">
+    <div>
+      <h2>Multi-device capture</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/capturesync.png" alt="capture">
+    </div>
+  </section>
+  
+  <section class="slide">
+    <div>
+      <h2> Platform integration</h2>
+      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/platformsync.png" alt="integration">
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Standardization</h2>
+      <ul>
+        <li>must have
+          <ul class="smalltext">
+            <li>improvements for JS-based HTML5 media sync --- playbackrate, seekTo and testing</li>
+          </ul>
+        </li>
+        <li>nice to have
+         <ul class="smalltext">
+            <li>timing object</li>
+            <li>internal HTML5 media sync</li>
+            <li>text tracks depending on timing object instead of HTML5 Media Elements</li>
+            <li>improvements setTimeout and setInterval
               <ul>
-                  <li>Or mix their types</li>
-                    <li>But do not go too far</li>
-                    <li>Otherwise audience will be bored</li>
-                </ul>
+                <li>precision, reliability, internal clock of timing object
+              </ul>
             </li>
-            <li>Look, seven rows exactly!</li>
-        </ol>
-    </div></section>
-    <section class="slide"><div>
-        <h2>Serious Citations</h2>
-        <figure>
-          <blockquote>
-              <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.</p>
-            </blockquote>
-            <figcaption>Marcus Tullius Cicero</figcaption>
-        </figure>
-    </div></section>
-    <section class="slide"><div>
-        <h2>Code Samples</h2>
-        <pre>
-          <code>&lt;!DOCTYPE html&gt;</code>
-            <code>&lt;html lang="en"&gt;</code>
-            <code><mark>&lt;head&gt;</mark> <mark class="comment">&lt;!--Comment--&gt;</mark></code>
-            <code>    &lt;title&gt;Shower&lt;/title&gt;</code>
-            <code>    &lt;meta charset="<mark class="important">UTF-8</mark>"&gt;</code>
-            <code>    &lt;link rel="stylesheet" href="screen.css"&gt;</code>
-            <code><mark>&lt;/head&gt;</mark></code>
-        </pre>
-    </div></section>
-    <section class="slide"><div>
-        <h2>Even Tables</h2>
-        <table>
-          <tr>
-          <th scope="col">Locavore</th>
-            <th>Umami</th>
-            <th>Helvetica</th>
-            <th>Vegan</th>
-        </tr>
-        <tr>
-          <th scope="row">Fingerstache</th>
-            <td>Kale</td>
-            <td>Chips</td>
-            <td>Keytar</td>
-        </tr>
-        <tr>
-          <th scope="row">Sriracha</th>
-            <td>Gluten-free</td>
-            <td>Ennui</td>
-            <td>Keffiyeh</td>
-        </tr>
-        <tr>
-          <th scope="row">Thundercats</th>
-            <td>Jean</td>
-            <td>Shorts</td>
-            <td>Biodiesel</td>
-        </tr>
-        <tr>
-          <th scope="row">Terry</th>
-            <td>Richardson</td>
-            <td>Swag</td>
-            <td>Blog</td>
-        </tr>
-        </table>
-        <p>It’s good to have information organized.</p>
-    </div></section>
-    <section class="slide shout"><div>
-        <h2>You can even shout this way</h2>
-    </div></section>
-    <section class="slide"><div>
-        <h2>Inner Navigation</h2>
-        <ol>
-          <li>Lets you reveal list items one by one</li>
-            <li class="next">To keep some key points</li>
-            <li class="next">In secret from audience</li>
-            <li class="next">But it will work only once</li>
-            <li class="next">Nobody wants to see the same joke twice</li>
-        </ol>
-    </div></section>
-    <section class="slide shout" id="SeeMore"><div>
-        <h2><a href="https://github.com/shower/shower">See more on GitHub</a></h2>
-    </div></section>
-    
+          </ul>
+        </li>
+        <li>ok in JS?
+         <ul class="smalltext">
+            <li>analogies to setTimeout/setInterval, based on timing object</li>
+            <li>sequencer (improved track element)</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Some related activities</h2>
+      <ul>
+        <li>Second Screen WG</li>
+        <li>DVB TM-CSS (HbbTV2.0)</li>
+        <li>MPEG Media Orchestration</li>
+        <li>Ad-insertion</li>
+        <li>Accessiblity</li>
+        <li>Web NTP</li>
+      </ul>
+    </div>
+  </section>
+
+ <section class="slide">
+    <div>
+      <h2>What's next?</h2>
+      <ul>
+        <li>Standardization strategy?</li>
+        <li>Attracting support?</li>
+        <li>Group activities?</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Summary</h2>
+      <ul>
+        <li>With HTML5, the Web platform has taken important steps, catching-up with native apps, both desktop and mobile.</li>
+        <li>Now, with multi-device timing the Web would get ahead.</li>
+        <li>Multi-device timing also represents an excellent way of boosting cross platform integration, with Web and native components playing seamlessly together by virtue of shared timing and control.</li>
+      </ul>
+    </div>
+  </section>
+
+
   <section class="slide cover" id="Cover2">
-    <h2 style="left:24px;">Thank you for listening</h2><div>
+    <h2 style="left:24px;">Thanks for listening!</h2><div>
       <img src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
   </div></section>
 
