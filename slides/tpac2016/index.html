@@ -11,7 +11,7 @@
     #Cover h2, #Cover2 h2 {
     top: 24px;
     color: #fff;
-    font-size: 52px; /* Edit this to change the cover text size */
+    font-size: 40px; /* Edit this to change the cover text size */
     margin: 0;
     position: absolute;
     }
@@ -55,6 +55,9 @@
     .slide.shout h2 {
     font-size: 108px;
     }
+    .smalltext {
+      font-size:15px;
+    }
   </style>
 </head>
 <body class="list">
@@ -73,50 +76,65 @@
 
   <section class="slide">
     <div>
-      <h2>Multi-device Timing CG</h2>
-      <img src="pictures/webandtiming.png" alt="Web + Timing" style="height:20%;display:block;margin-left:auto;margin-right:auto">
-        <p>
-          Goal: define a <b>common, multi-device, timing mechanism</b> and a practical programming model for <b>time-sensitive, multi-device</b> Web applications
-        </p>
+      <h2>Agenda</h2>
       <ul>
-        <li>Created in February 2015 following discussions in Web and TV IG</li>
-        <li>Chair: Ingar M. Arntzen, <a href="www.norut.no">Norut</a> and <a href="motioncorporation.com">Motion Corporation</a></li>
-        <li><a href="https://www.w3.org/community/webtiming/">https://www.w3.org/community/webtiming/</a></li>
+        <li>
+          Introduction
+
+          <ul class="smalltext">
+          <li>Status</li>
+          <li>What is multi-device timing?</li>
+          <li>Reality</li>
+          <li>Goals</li>
+          <li>Proposal - Timing Object</li>
+          <li>Applications</li>  
+          <li>Standardization</li>
+          </ul>
+        </li>
+         
+        <li>
+          Discussion
+          <ul class="smalltext">
+            <li>Standardization strategy</li>
+            <li>Attracting support</li>
+            <li>Group activities</li>  
+          </ul>
+        </li>
       </ul>
     </div>
   </section>
 
   <section class="slide">
     <div>
-      <h2>Outline</h2>
-      <ul>
-        <li>Status</li>
-        <li>What is multi-device timing?</li>
-        <li>Reality</li>
-        <li>Goals</li>
-        <li>Proposal - Timing Object</li>
-        <li>Applications</li>
-        <li>Standardization</li>
-        <li>Next steps</li>
+      <h2>Multi-device Timing CG</h2>
+      <img src="pictures/webandtiming.png" alt="Web + Timing" style="height:20%;display:block;margin-left:auto;margin-right:auto">
+        <p>
+          Goal: define a <b>common, multi-device, timing mechanism</b> and a practical programming model for <b>time-sensitive, multi-device</b> Web applications
+        </p>
+      <ul class="smalltext">
+        <li>Created in February 2015 following discussions in Web and TV IG</li>
+        <li>Chair: Ingar M. Arntzen, <a href="www.norut.no" target="_blank">Norut</a> and <a href="motioncorporation.com" target="_blank">Motion Corporation</a></li>
+        <li><a href="https://www.w3.org/community/webtiming/" target="_blank">https://www.w3.org/community/webtiming/</a></li>
       </ul>
     </div>
   </section>
+
 
 
   <section class="slide">
     <div>
       <h2>Status</h2>
       <ul>
-          <li>Draft standards proposal : <a href="http://webtiming.github.io/timingobject/">Timing Object</a></li>
-          <li>JS implementation : <a href="http://webtiming.github.io/timingsrc/">Timingsrc</a></li>
-          <li>Online Timing Provider : <a href="http://motioncorporation.com/">Motion Corporation</a></li>  
+          <li>Draft standards proposal : <a href="http://webtiming.github.io/timingobject/" target="_blank">Timing Object</a></li>
+          <li>JS implementation : <a href="http://webtiming.github.io/timingsrc/" target="_blank">Timingsrc</a></li>
+          <li>Online Timing Provider : <a href="http://motioncorporation.com/" target="_blank">Motion Corporation</a></li>  
           <li>Visibility
-            <ul>
-              <li><a href="https://www.w3.org/community/webtiming/">CG Webpage</a></li>
-              <li><a href="http://mediascapeproject.eu/">MediaScape EU Project</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/2016/04/25/timing-object-at-nabshow-2016/">NabShow 2016</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/2016/09/02/multi-device-timing-at-ibc-2016/">IBC 2016</a></li>
-              <li><a href="https://www.w3.org/community/webtiming/publications/">Publications</a></li>
+            <ul class="smalltext">
+              <li><a href="https://www.w3.org/community/webtiming/" target="_blank">CG Webpage</a></li>
+              <li><a href="http://mediascapeproject.eu/" target="_blank">MediaScape EU Project</a></li>
+              <li><a href="https://www.w3.org/community/webtiming/2016/04/25/timing-object-at-nabshow-2016/" target="_blank">NabShow 2016</a></li>
+              <li><a href="https://www.w3.org/community/webtiming/2016/09/02/multi-device-timing-at-ibc-2016/" target="_blank">IBC 2016</a></li>
+              <li><a href="https://www.w3.org/community/webtiming/publications/" target="_blank">Publications</a></li>
             </ul>
           </li>
         </ul>
@@ -126,21 +144,23 @@
    <section class="slide">
     <div>
       <h2>What is Multi-device Timing?</h2>
-      
-      <h3><b>Timing</b></h3>
-      <ul>
+
+      <ul>      
+      <li><b>Timing</b>
+      <ul class="smalltext">
         <li> ensure time-sensitive stuff happens at the <b>correct time</b> </li>
         <li> interactive <b>control</b> for temporal aspects</li>
       </ul>
-
-      <h3><b>Timing Scopes</b></h3>
-      <ul>
-        <li><b>page-internal</b> timing and control : <b>within</b> browser context </li> 
-        <li><b>cross-page</b> timing and control : <b>across</b> browser contexts </li>     
+      </li>
+      <li><b>Timing Scopes</b>
+      <ul class="smalltext">
+        <li><b>page-internal</b> (intra) timing and control : <b>within</b> browser context </li> 
+        <li><b>cross-page</b> (inter) timing and control : <b>across</b> browser contexts </li>     
       </ul>
-
+      </li>
+      </ul>
       <p>
-        Note : <b>Multi-device timing</b> includes <b>both</b> scopes!
+        <b>Multi-device timing CG</b> concerned with <b>both</b>!
       </p>
     </div>
   </section>
@@ -168,11 +188,11 @@
         </tr>
         <tr>
           <td>across tabs, windows, devices</td>
-          <td>split content and interaction</td>
+          <td>split content, interaction</td>
         </tr>
         <tr>
           <td>across platforms</td>
-          <td>Web, native app, broadcast</td>
+          <td>Web, native, broadcast</td>
         </tr>
         <tr>
           <td>across people and groups</td>
@@ -238,10 +258,36 @@
   <section class="slide">
     <div>
       <h2>Demo: Easy-peasy</h2>
-      <p style="font-size:2em;"><a href="https://youtu.be/D6cBn65KXTk">https://youtu.be/D6cBn65KXTk</a></p>
+      <p style="font-size:2em;"><a href="https://youtu.be/D6cBn65KXTk" target="_blank">https://youtu.be/D6cBn65KXTk</a></p>
     </div>
   </section>
 
+
+  <section class="slide">
+    <div>
+      <h2>Timing Object</h2>
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/motion.png" alt="timing object">
+      <ul class="smalltext">
+        <li><span style="color:red;">red circle</span> <b>moves</b> along timeaxis --- (position, velocity)</li>
+        <li>play, pause, jump, fast-forward --- modify (position, velocity)</li>
+        <li>common representation of media control --- independent from media and purpose</li>
+      </ul>
+      <blockquote>Multi-media frameworks always built around similar concepts. No such object in JS context...</blockquote>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div>
+      <h2>Page-internal Timing Object</h2>
+      <img style="height:40%;display:block;margin-left:auto;margin-right:auto;" src="pictures/singledevicesync.png" alt="page-internal timing">
+      <ul class="smalltext">
+        <li>multiple media components <b>observing</b> and <b>taking direction</b> from timing object</li>
+        <li>each component <b>aligns itself</b> with the timing object</li>
+        <li>media control by <b>updating</b> the timing object, modifications apply to <b>all</b> components equally</li>
+      </ul>
+      <blockquote>Pass a timing object to all media components, and be done with it...</blockquote>
+    </div>
+  </section>
 
 
 
