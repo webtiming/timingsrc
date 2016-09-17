@@ -74,37 +74,40 @@
       <img src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
   </div></section>
 
-  <section class="slide">
+  <section class="slide" id="outline">
     <div>
-      <h2>Agenda</h2>
-      <ul>
+      <h2>Outline</h2>
+      <ul class="smalltext">
         <li>
-          Introduction
-
-          <ul class="smalltext">
-          <li>Status</li>
-          <li>What is multi-device timing?</li>
-          <li>Reality</li>
-          <li>Goals</li>
-          <li>Proposal - Timing Object</li>
-          <li>Applications</li>  
-          <li>Standardization</li>
+          <a href="#part1">Part 1 : Introduction</a>
+          <ul>
+            <li>Status</li>
+            <li>What is multi-device timing?</li>
+            <li>Reality</li>
+            <li>Goals</li>
           </ul>
         </li>
-         
-        <li>
-          Discussion
-          <ul class="smalltext">
-            <li>Standardization strategy</li>
-            <li>Attracting support</li>
-            <li>Group activities</li>  
+        <li><a href="#part2">Part 2 : Proposal - Timing Object</a></li>
+        <li><a href="#part3">Part 3 : Applications</a></li>  
+        <li><a href="#part4">Part 4 : Sync HTML5 Media</a></li>         
+        <li><a href="#part5">Part 5 : Standardization</a>
+          <ul>
+            <li>Priorities</li>
+            <li>Related initiatives</li>
           </ul>
         </li>
       </ul>
     </div>
   </section>
 
-  <section class="slide">
+    <section class="slide" id="part1">
+    <div>
+     <h2>Part 1: Introduction</h2>
+           <img style="width: 100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+    </div>
+  </section>
+
+  <section class="slide" id="mtcg">
     <div>
       <h2>Multi-device Timing CG</h2>
       <img src="pictures/webandtiming.png" alt="Web + Timing" style="height:20%;display:block;margin-left:auto;margin-right:auto">
@@ -119,9 +122,9 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="status-cg">
     <div>
-      <h2>Status</h2>
+      <h2>Status CG</h2>
       <ul>
         <li>by TPAC 2015
           <ul class="smalltext">
@@ -143,19 +146,19 @@
     </div>
   </section>
   
-<section class="slide">
+<section class="slide" id="status-media">
     <div>
       <h2>Status Media Capabilities</h2>
       <ul>
         <li>With unified media pipeline Chrome has become excellenct for sync</li>
-        <li>Safari with "bug" in variable playback rate making it (temporarily?) rather useless</li>
+        <li>Safari with "bug" in variable playback rate making it rather useless</li>
         <li>Efforts in WebRTC leads to improvements in timing info in getUserMedia</li>
       </ul>
-      <p>Some fresh media sync measurements later in the presentation...</p>
+      <p>Some fresh media sync measurements in <a href="#part4">part 4</a></p>
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="definition">
     <div>
       <h2>What is Multi-device Timing?</h2>
 
@@ -180,7 +183,7 @@
   </section>
 
 
-  <section class="slide">
+  <section class="slide" id="challenges">
     <div>
       <h2>Timing Challenges</h2>
       <table>
@@ -221,7 +224,7 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="realities-page-internal">
     <div>
       <h2>Realities : page-internal timing</h2>
       <ul>
@@ -237,7 +240,7 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="realities-cross-page">
     <div>
       <h2>Realities : cross-page timing</h2>
       <ul>
@@ -250,7 +253,7 @@
     </div>
   </section>
 
-   <section class="slide">
+   <section class="slide" id="goals">
     <div>
       <h2>Goals</h2>
       <ol>
@@ -268,16 +271,22 @@
     </div>
   </section>
 
-
-  <section class="slide">
+  <section class="slide" id="easy-peasy">
     <div>
       <h2>Demo: Easy-peasy</h2>
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/D6cBn65KXTk" frameborder="0" allowfullscreen></iframe>
       <p style="font-size:2em;"><a href="https://youtu.be/D6cBn65KXTk" target="_blank">https://youtu.be/D6cBn65KXTk</a></p>
     </div>
   </section>
 
+  <section class="slide" id="part2">
+    <div>
+     <h2>Part 2: Proposal</h2>
+           <img style="width: 100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+    </div>
+  </section>
 
-  <section class="slide">
+  <section class="slide" id="timing-object">
     <div>
       <h2>Timing Objects</h2>
       <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/motion.png" alt="timing object">
@@ -290,7 +299,7 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="timing-object-page">
     <div>
       <h2>Page-internal Timing Objects</h2>
       <img style="height:40%;display:block;margin-left:auto;margin-right:auto;" src="pictures/singledevicesync.png" alt="page-internal timing">
@@ -303,7 +312,7 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="timing-object-online">
     <div>
       <h2>Online Timing Objects</h2>
       <img style="height:50%;display:block;margin-left:auto;margin-right:auto;" src="pictures/sequencersync2.png" alt="online timing">
@@ -320,9 +329,9 @@
   </section>
 
 
-  <section class="slide">
+  <section class="slide" id="approach">
     <div>
-      <h2>Key points</h2>
+      <h2>Approach summary</h2>
   
       <img style="height:60%;display:block;float:right;" src="pictures/sequencersync2.png" alt="online timing">
       
@@ -350,70 +359,156 @@
     </div>
   </section>
 
-  <section class="slide">
+
+   <section class="slide" id="part3">
     <div>
-      <h2>Applications</h2>
+     <h2>Part 3: Applications</h2>
+           <img style="width: 100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+    </div>
+  </section>
+
+  <section class="slide" id="applications-table">
+    <div>
       <img style="height:80%;display:block;margin-left:auto;margin-right:auto;" src="pictures/poster_page2.png" alt="applications">
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="social-viewing">
     <div>
       <h2>Social viewing</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/moviesync.png" alt="socialsync">
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="multi-screen">
     <div>
       <h2>Multi-screen</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multiscreensync.png" alt="multiscreen">
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="multi-device">
     <div>
       <h2>Multi-device</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/devicesync.png" alt="multidevice">
     </div>
   </section>
   
-  <section class="slide">
+  <section class="slide" id="remote-control">
     <div>
       <h2>Remote control</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/remotecontrolsync.png" alt="remotecontrol">
     </div>
   </section>
   
-  <section class="slide">
+  <section class="slide" id="music">
     <div>
       <h2>Music</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/audiosync.png" alt="music">
     </div>
   </section>
   
-  <section class="slide">
+  <section class="slide" id="split">
     <div>
       <h2>Split content and interaction</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multidevicesync.png" alt="home">
     </div>
   </section>
   
-  <section class="slide">
+  <section class="slide" id="capture">
     <div>
       <h2>Multi-device capture</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/capturesync.png" alt="capture">
     </div>
   </section>
   
-  <section class="slide">
+  <section class="slide" id="integration">
     <div>
       <h2> Platform integration</h2>
       <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/platformsync.png" alt="integration">
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="part4">
+    <div>
+     <h2>Part 4: HTML5 Media Sync</h2>
+           <img style="width: 100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+    </div>
+  </section>
+
+  <section class="slide" id="android-video">
+    <div>
+      <h2>Android Video</h2>
+      <img style="width:80%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/android_video.png" alt="integration">
+      <p>Nexus 6p</p>
+    </div>
+  </section>
+
+  <section class="slide" id="android-audio">
+    <div>
+      <h2>Android Audio</h2>
+      <img style="width:80%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/android_audio.png" alt="integration">
+     <p>Nexus 6p</p>
+    </div>
+  </section>
+
+   <section class="slide" id="chrome-video">
+    <div>
+      <h2>Desktop Chrome Video</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/chrome_video.png" alt="integration">
+      <p>Normal Chrome (not beta or dev). Chrome often works better on Webm</p>
+    </div>
+  </section>
+
+  <section class="slide" id="chrome-audio">
+    <div>
+      <h2>Desktop Chrome Audio</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/chrome_audio.png" alt="integration">
+      <p>Normal Chrome (not beta or dev). Chrome often works better on Webm</p>
+    </div>
+      
+  </section>
+
+   <section class="slide" id="firefox-video">
+    <div>
+      <h2>Desktop Firefox Video</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ff_video.png" alt="integration">
+     <p>Firefox often works better on Webm</p>
+    </div>
+  </section>
+
+  <section class="slide" id="firefox-audio">
+    <div>
+      <h2>Desktop Firefox Audio</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ff_audio.png" alt="integration">
+      <p>Firefox often works better on Webm</p>
+    </div>
+  </section>
+
+   <section class="slide" id="ipad-video">
+    <div>
+      <h2>iPad Video</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ipad_video.png" alt="integration">
+      <p>Safari iOS 10 on brand new iPad Air 2</p>
+    </div>
+  </section>
+
+  <section class="slide" id="ipad-audio">
+    <div>
+      <h2>iPad Audio</h2>
+      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ipad_audio.png" alt="integration">
+      <p>Safari iOS 10 on brand new iPad Air 2</p>
+    </div>
+  </section>
+
+  <section class="slide" id="part5">
+    <div>
+     <h2>Part 5: Standardization</h2>
+           <img style="width: 100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+    </div>
+  </section>
+
+  <section class="slide" id="standardization">
     <div>
       <h2>Standardization</h2>
       <ul>
@@ -444,76 +539,9 @@
     </div>
   </section>
 
-
-  <section class="slide">
+  <section class="slide" id="initiatives">
     <div>
-      <h2>Android Video</h2>
-      <img style="width:80%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/android_video.png" alt="integration">
-      <p>Nexus 6p</p>
-    </div>
-  </section>
-
-  <section class="slide">
-    <div>
-      <h2>Android Audio</h2>
-      <img style="width:80%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/android_audio.png" alt="integration">
-     <p>Nexus 6p</p>
-    </div>
-  </section>
-
-   <section class="slide">
-    <div>
-      <h2>Desktop Chrome Video</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/chrome_video.png" alt="integration">
-      <p>Normal Chrome (not beta or dev). Chrome often works better on Webm</p>
-    </div>
-  </section>
-
-  <section class="slide">
-    <div>
-      <h2>Desktop Chrome Audio</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/chrome_audio.png" alt="integration">
-      <p>Normal Chrome (not beta or dev). Chrome often works better on Webm</p>
-    </div>
-      
-  </section>
-
-   <section class="slide">
-    <div>
-      <h2>Desktop Firefox Video</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ff_video.png" alt="integration">
-     <p>Firefox often works better on Webm</p>
-    </div>
-  </section>
-
-  <section class="slide">
-    <div>
-      <h2>Desktop Firefox Audio</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ff_audio.png" alt="integration">
-      <p>Firefox often works better on Webm</p>
-    </div>
-  </section>
-
-   <section class="slide">
-    <div>
-      <h2>iPad Video</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ipad_video.png" alt="integration">
-      <p>Safari iOS 10 on brand new iPad Air 2</p>
-    </div>
-
-  </section>
-
-  <section class="slide">
-    <div>
-      <h2>iPad Audio</h2>
-      <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/ipad_audio.png" alt="integration">
-      <p>Safari iOS 10 on brand new iPad Air 2</p>
-    </div>
-  </section>
-
-  <section class="slide">
-    <div>
-      <h2>Some related activities</h2>
+      <h2>Some related initiatives</h2>
       <ul>
         <li>Second Screen WG</li>
         <li>DVB TM-CSS (HbbTV2.0)</li>
@@ -524,7 +552,7 @@
     </div>
   </section>
 
- <section class="slide">
+ <section class="slide" id="nextsteps">
     <div>
       <h2>What's next?</h2>
       <ul>
@@ -535,7 +563,7 @@
     </div>
   </section>
 
-  <section class="slide">
+  <section class="slide" id="summary">
     <div>
       <h2>Summary</h2>
       <ul>
