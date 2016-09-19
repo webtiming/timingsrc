@@ -5,8 +5,75 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=792, user-scalable=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <link rel="stylesheet" href="https://www.w3.org/2014/shower/shower/themes/ribbon/styles/screen.css">
-  <link rel="stylesheet" href="https://www.w3.org/2014/shower/shower/themes/w3c/styles/styles_w3c.css">
+  <link rel="stylesheet" href="screen.css">
+  <link rel="stylesheet" href="styles_w3c.css">
+  
+  <!-- Timingsrc-->
+  <script type="text/javascript" src="timingsrc-min.js"></script>
+  <!-- Slides -->
+  <script type="text/javascript" src="slides.js"></script>
+  <!-- Shower -->
+  <script type="text/javascript" src="shower.min.js"></script>
+
+
+  <script type="text/javascript">
+
+    var to;
+    var Interval = TIMINGSRC.Interval;
+
+    new Promise (function (resolve) {
+      if (document.readyState === "complete") resolve();
+      else window.onload = resolve;
+    })
+    .then(function () {
+      return new Promise (function (resolve) {
+        shower.modules.require(["shower.global"], function (_shower) {
+          _shower.ready(function (sh) {
+            resolve(sh);
+          });
+        });
+      });
+    })
+    .then (function (shower) {
+    
+      to = new TIMINGSRC.TimingObject({range:[-1,50]});
+      var s = new TIMINGSRC.Sequencer(to);
+   
+      // register with sequencer
+      var slides_count = shower.player._shower.getSlidesCount();
+      var int = 0;
+    
+      s.addCue("list", new Interval(-Infinity, 0));
+      for (var i=0; i<slides_count-1; i++) {        
+        s.addCue(i.toString(), new Interval(i,i+1));
+      }
+      // last slides valid into infinity
+      s.addCue(i.toString(), new Interval(i, Infinity));
+    
+      s.on("enter", function (e){
+        if (e.key === "list") {
+          if (shower.container.isSlideMode()) {
+            shower.container.exitSlideMode();
+          }
+          
+        } else {
+          
+          if (!shower.container.isSlideMode()) {
+            shower.container.enterSlideMode();
+          }
+          var index = parseInt(e.key);
+          shower.player.go(index);
+        }
+ 
+
+      });
+
+      
+    });
+
+  </script>
+
+
   <style>
     #Cover h2, #Cover2 h2 {
     top: 24px;
@@ -60,7 +127,7 @@
     }
   </style>
 </head>
-<body class="list">
+<body class="shower list">
   <header class="caption">
     <h1>TPAC 2016: Multi-device Timing CG</h1>
     <p>Ingar Arntzen, Norut and Motion Corporation</p>
@@ -71,7 +138,7 @@
    
       <h2 style="right:24px;">Ingar Arntzen</h2>
       
-      <img src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+      <img style="width:100%" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
   </div></section>
 
   <section class="slide" id="outline">
@@ -274,7 +341,9 @@
   <section class="slide" id="easy-peasy">
     <div>
       <h2>Demo: Easy-peasy</h2>
+      <!--
       <iframe width="560" height="315" src="https://www.youtube.com/embed/D6cBn65KXTk" frameborder="0" allowfullscreen></iframe>
+      -->
       <p style="font-size:2em;"><a href="https://youtu.be/D6cBn65KXTk" target="_blank">https://youtu.be/D6cBn65KXTk</a></p>
     </div>
   </section>
@@ -302,7 +371,7 @@
   <section class="slide" id="timing-object-page">
     <div>
       <h2>Page-internal Timing Objects</h2>
-      <img style="height:40%;display:block;margin-left:auto;margin-right:auto;" src="pictures/singledevicesync.png" alt="page-internal timing">
+      <img style="width:50%;display:block;margin-left:auto;margin-right:auto;" src="pictures/singledevicesync.png" alt="page-internal timing">
       <ul class="smalltext">
         <li>multiple media components <b>observing</b> and <b>taking direction</b> from timing object</li>
         <li>each component <b>aligns itself</b> with the timing object</li>
@@ -315,7 +384,7 @@
   <section class="slide" id="timing-object-online">
     <div>
       <h2>Online Timing Objects</h2>
-      <img style="height:50%;display:block;float:right" src="pictures/sequencersync2.png" alt="online timing">
+      <img style="width:40%;display:block;float:right" src="pictures/sequencersync2.png" alt="online timing">
       <ul>
         <li>page-internal timing objects are <b>proxies</b> for online timing object</li>
         <li>kept in sync by <b>online timing provider</b></li>
@@ -331,7 +400,7 @@
     <div>
       <h2>Approach summary</h2>
   
-      <img style="height:60%;display:block;float:right;" src="pictures/sequencersync2.png" alt="online timing">
+      <img style="width:50%;display:block;float:right;" src="pictures/sequencersync2.png" alt="online timing">
       
       <ul >
         <li>temporal interoperability
@@ -367,63 +436,63 @@
 
   <section class="slide" id="applications-table">
     <div>
-      <img style="height:80%;display:block;margin-left:auto;margin-right:auto;" src="pictures/poster_page2.png" alt="applications">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/poster_page2.png" alt="applications">
     </div>
   </section>
 
   <section class="slide" id="social-viewing">
     <div>
       <h2>Social viewing</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/moviesync.png" alt="socialsync">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/moviesync.png" alt="socialsync">
     </div>
   </section>
 
   <section class="slide" id="multi-screen">
     <div>
       <h2>Multi-screen</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multiscreensync.png" alt="multiscreen">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multiscreensync.png" alt="multiscreen">
     </div>
   </section>
 
   <section class="slide" id="multi-device">
     <div>
       <h2>Multi-device</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/devicesync.png" alt="multidevice">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/devicesync.png" alt="multidevice">
     </div>
   </section>
   
   <section class="slide" id="remote-control">
     <div>
       <h2>Remote control</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/remotecontrolsync.png" alt="remotecontrol">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/remotecontrolsync.png" alt="remotecontrol">
     </div>
   </section>
   
   <section class="slide" id="music">
     <div>
       <h2>Music</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/audiosync.png" alt="music">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/audiosync.png" alt="music">
     </div>
   </section>
   
   <section class="slide" id="split">
     <div>
       <h2>Split content and interaction</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multidevicesync.png" alt="home">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/multidevicesync.png" alt="home">
     </div>
   </section>
   
   <section class="slide" id="capture">
     <div>
       <h2>Multi-device capture</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/capturesync.png" alt="capture">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/capturesync.png" alt="capture">
     </div>
   </section>
   
   <section class="slide" id="integration">
     <div>
       <h2> Platform integration</h2>
-      <img style="height:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/platformsync.png" alt="integration">
+      <img style="width:60%;display:block;margin-left:auto;margin-right:auto;" src="pictures/platformsync.png" alt="integration">
     </div>
   </section>
 
@@ -463,8 +532,7 @@
       <h2>Laptop Chrome Audio</h2>
       <img style="width:90%;display:block;margin-left:auto;margin-right:auto;"  src="pictures/chrome_audio.png" alt="chrome-audio">
       <p>Normal Chrome (not beta or dev). Chrome often works better on Webm</p>
-    </div>
-      
+    </div>  
   </section>
 
    <section class="slide" id="firefox-video">
@@ -591,7 +659,7 @@
 
   <section class="slide cover" id="Cover2">
     <h2 style="left:24px;">Thanks for listening!</h2><div>
-      <img src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
+      <img  style="width:100%;" src="pictures/TPAC_Slides_2016-01.png" alt="TPAC 2016 logo">
   </div></section>
 
   <!--
@@ -599,10 +667,8 @@
       just remove “progress” element.
     -->
   <div class="progress"><div></div></div>
-  <script src="https://www.w3.org/2014/shower/shower/shower.min.js"></script>
-  <!-- Shower Presentation Engine available here: http://shwr.me -->
-  <script type="text/javascript">
 
-  </script>
+
+
 </body>
 </html>

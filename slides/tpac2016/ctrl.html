@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!-- Timingsrc-->
+<script type="text/javascript" src="timingsrc-min.js"></script>
+
+<!-- Controls -->
+<script type="text/javascript" src="to-controls.js"></script>
+
+<!-- Slides -->
+<script type="text/javascript" src="slides.js"></script>
+
+<!-- Styling -->
+<style type="text/css">
+.active {color:red; font-weight: bold}
+.tovalue {font-weight:bold;margin-left:10px;display:inline-block;}
+.tocontrol {font-weight:bold;margin:10px;}
+</style>
+
+
+
+<script type="text/javascript">
+
+  var to;
+  var Interval = TIMINGSRC.Interval;
+
+  new Promise (function (resolve) {
+    if (document.readyState === "complete") resolve();
+    else window.onload = resolve;
+  }).then(function () {
+
+  	// timing object
+    to = new TIMINGSRC.TimingObject({range:[0,50]});
+    
+    // controsl
+    TM.toControl("control", to);
+    TM.toValue("value", to);
+
+    // register with sequencer
+    var s = new TIMINGSRC.Sequencer(to);
+    Object.keys(slides).forEach(function (key) {
+    	var slide = slides[key];
+    	s.addCue(key.toString(), new Interval(slide.start, slide.end));
+    });
+
+    // build list html
+    var html = "";
+    Object.keys(slides).forEach(function (key) {
+    	var slide = slides[key];
+    	html += '<div id="' + key + '">' + slide.id + '</div>';
+    });
+	var rootElem = document.getElementById("list");
+	rootElem.innerHTML = html;
+
+	// highlight active slide
+    s.on("enter", function (e) {
+      var el =  document.getElementById(parseInt(e.key));
+      el.classList.add("active");
+    });
+    s.on("exit", function (e) {
+      var el = document.getElementById(parseInt(e.key));
+      el.classList.remove("active");
+    });
+
+    // mouse clicks
+    rootElem.onclick = function (e) {
+    	e.preventDefault();
+    	if (e.target) {
+    		var slide = slides[e.target.id]
+    		to.update({position:slide.start});
+    	}
+    };
+
+  });
+
+</script>
+<body>
+<h2>Slides</h2>
+<div id="control"></div> 
+<div id="value"></div>
+<div id="list"></div>
+</body>
+</html>

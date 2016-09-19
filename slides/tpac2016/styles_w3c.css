@@ -1,0 +1,56 @@
+a {
+    color: #005a9c;
+}
+
+.caption a {
+    text-shadow: 0 -1px 1px #005a9c;
+}
+
+.badge a {
+    background: #005a9c;
+}
+
+
+.slide {
+    color: #333;
+}
+
+
+.slide:after {
+    background: url(../images/ribbon_w3c.svg) no-repeat;
+    height: 100px;
+    padding: 50px 0 0;
+    width: 60px;
+}
+
+.slide h2 {
+    color: #333;
+}
+
+.slide p.note {
+    color: #666;
+}
+
+.slide pre mark.important {
+    background: #005a9c;
+}
+
+.slide pre mark.comment {
+    color: #666;
+}
+
+
+.list .slide:target:before {
+    -webkit-box-shadow: 0 0 0 10px #005a9c,0 20px 50px rgba(42,43,45,.6);
+    box-shadow: 0 0 0 10px #005a9c,0 20px 50px rgba(42,43,45,.6);
+}
+
+.list .slide:target:after {
+    color: #fff;
+}
+
+
+.full .progress div {
+    border-bottom-color: #005a9c;
+}
+
