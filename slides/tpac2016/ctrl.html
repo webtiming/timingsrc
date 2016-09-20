@@ -2,10 +2,19 @@
 <html>
 <head>
 
+<!-- JQuery -->
+<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="jquery-ui.min.js"></script>
+<link href="jquery-ui.css" rel="stylesheet" type="text/css"/>
+
+<!-- MCorp -->
+<script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
+
 <!-- Timingsrc-->
 <script type="text/javascript" src="timingsrc-min.js"></script>
 
 <!-- Controls -->
+<script type="text/javascript" src="to-slider.js"></script>
 <script type="text/javascript" src="to-controls.js"></script>
 
 <!-- Slides -->
@@ -16,29 +25,41 @@
 .active {color:red; font-weight: bold}
 .tovalue {font-weight:bold;margin-left:10px;display:inline-block;}
 .tocontrol {font-weight:bold;margin:10px;}
+.slidercontainer-long {width:500px; height:30px; margin:20px;}
 </style>
 
 
 
 <script type="text/javascript">
 
-  var to;
   var Interval = TIMINGSRC.Interval;
 
-  new Promise (function (resolve) {
+  var toShared;    
+  var app;
+  var toPromise = new Promise (function (resolve) {
+    app = MCorp.app("3857338102395412007", {anon:true});
+    app.run = function () {
+      toShared = new TIMINGSRC.TimingObject({provider:app.motions["shared"]});
+      resolve();
+    }
+    app.init();
+  });
+
+  var readyPromise =  new Promise (function (resolve) {
     if (document.readyState === "complete") resolve();
     else window.onload = resolve;
-  }).then(function () {
+  });
 
-  	// timing object
-    to = new TIMINGSRC.TimingObject({range:[0,50]});
-    
+  Promise.all([toPromise, readyPromise])
+  .then(function (values) {
+
     // controsl
-    TM.toControl("control", to);
-    TM.toValue("value", to);
+    TM.toControl("control", toShared);
+    TM.toValue("value", toShared);
+    TM.toSlider($("#slider"), toShared, {'range': [-1,Object.keys(slides).length]});
 
     // register with sequencer
-    var s = new TIMINGSRC.Sequencer(to);
+    var s = new TIMINGSRC.Sequencer(toShared);
     Object.keys(slides).forEach(function (key) {
     	var slide = slides[key];
     	s.addCue(key.toString(), new Interval(slide.start, slide.end));
@@ -68,7 +89,7 @@
     	e.preventDefault();
     	if (e.target) {
     		var slide = slides[e.target.id]
-    		to.update({position:slide.start});
+    		toShared.update({position:slide.start});
     	}
     };
 
@@ -79,6 +100,9 @@
 <h2>Slides</h2>
 <div id="control"></div> 
 <div id="value"></div>
+<div class="slidercontainer-long">
+  <div id="slider"></div>
+</div>
 <div id="list"></div>
 </body>
 </html>

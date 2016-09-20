@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="screen.css">
   <link rel="stylesheet" href="styles_w3c.css">
   
+  <!-- MCorp -->
+  <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
   <!-- Timingsrc-->
   <script type="text/javascript" src="timingsrc-min.js"></script>
   <!-- Slides -->
@@ -17,58 +19,66 @@
 
 
   <script type="text/javascript">
-
-    var to;
+ 
     var Interval = TIMINGSRC.Interval;
 
-    new Promise (function (resolve) {
+    var toShared;
+    var toPrivate = new TIMINGSRC.TimingObject();
+    
+    var app;
+    var toPromise = new Promise (function (resolve) {
+      app = MCorp.app("3857338102395412007", {anon:true});
+      app.run = function () {
+        toShared = new TIMINGSRC.TimingObject({provider:app.motions["shared"]});
+        resolve();
+      }
+      app.init();
+  
+    });
+
+    var readyPromise =  new Promise (function (resolve) {
       if (document.readyState === "complete") resolve();
       else window.onload = resolve;
-    })
-    .then(function () {
-      return new Promise (function (resolve) {
-        shower.modules.require(["shower.global"], function (_shower) {
-          _shower.ready(function (sh) {
-            resolve(sh);
-          });
+    });
+
+    var showerInstance;
+    var showerPromise = new Promise (function (resolve) {
+      shower.modules.require(["shower.global"], function (_shower) {
+        _shower.ready(function (sh) {
+          showerInstance = sh;
+          resolve();
         });
       });
-    })
-    .then (function (shower) {
-    
-      to = new TIMINGSRC.TimingObject({range:[-1,50]});
-      var s = new TIMINGSRC.Sequencer(to);
-   
-      // register with sequencer
-      var slides_count = shower.player._shower.getSlidesCount();
-      var int = 0;
-    
+    });  
+
+    Promise.all([toPromise, readyPromise, showerPromise])
+    .then(function (values) {
+
+      // sequencer
+      var s = new TIMINGSRC.Sequencer(toShared);   
+      // register cues
+      var slides_count = showerInstance.player._shower.getSlidesCount();
       s.addCue("list", new Interval(-Infinity, 0));
       for (var i=0; i<slides_count-1; i++) {        
         s.addCue(i.toString(), new Interval(i,i+1));
       }
-      // last slides valid into infinity
       s.addCue(i.toString(), new Interval(i, Infinity));
     
       s.on("enter", function (e){
         if (e.key === "list") {
-          if (shower.container.isSlideMode()) {
-            shower.container.exitSlideMode();
+          if (showerInstance.container.isSlideMode()) {
+            showerInstance.container.exitSlideMode();
           }
           
         } else {
           
-          if (!shower.container.isSlideMode()) {
-            shower.container.enterSlideMode();
+          if (!showerInstance.container.isSlideMode()) {
+            showerInstance.container.enterSlideMode();
           }
           var index = parseInt(e.key);
-          shower.player.go(index);
+          showerInstance.player.go(index);
         }
- 
-
-      });
-
-      
+      });      
     });
 
   </script>
