@@ -140,10 +140,12 @@ var slides = [
     rootElem.onclick = function (e) {
     	e.preventDefault();
     	if (e.target) {
-        console.log(e.target.id);
         var cue = s.getCue(e.target.id);
-        console.log(cue);
-    		toShared.update({position:cue.interval.low});
+        if (cue.key === "all") {
+          toShared.update({position:-1});
+        } else {
+          toShared.update({position:cue.interval.low});
+        }	
     	}
     };
 

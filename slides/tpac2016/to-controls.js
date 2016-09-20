@@ -75,6 +75,85 @@ var TM = function(_TMC_) {
     to.on("timeupdate", refresh);
   };
 
+ var toStepControl = function (elemId, to) {
+    var rootElem = document.getElementById(elemId);
+
+    var html = '<div class="tocontrol">';
+    html += '<button id="reset">Reset</button>';
+    html += '<button id="next">Next</button>';
+    html += '<button id="prev">Prev</button>';
+    html += '</div>';
+    rootElem.innerHTML = html;
+
+    // Hook up buttons UI
+    rootElem.onclick = function (e) {  
+      var vector = to.query();
+      var p = vector.position;
+      var v = vector.velocity;
+      var a = vector.acceleration;
+      switch (e.target.id) {
+        case "reset":
+          p = 0;
+          v = 0;
+          a = 0;
+          break;
+        case  "next":
+          p = p + 1;
+          break;
+        case "prev":
+          v = v -1 ;
+          break;
+      }
+      to.update({position:p, velocity:v, acceleration:a});
+    };
+  };
+
+
+  var toMediaControl = function (elemId, to) {
+    var rootElem = document.getElementById(elemId);
+
+    var html = '<div class="tocontrol">';
+    html += '<button id="reset">Reset</button>';
+    html += '<button id="play">Play</button>';
+    html += '<button id="pause">Pause</button>';
+    html += '<button id="reverse">Reverse</button>';
+    html += '<button id="fastreverse">FastReverse</button>';
+    html += '<button id="fastforward">FastForward</button>';
+    html += '</div>';
+    rootElem.innerHTML = html;
+
+    // Hook up buttons UI
+    rootElem.onclick = function (e) {  
+      var vector = to.query();
+      var p = vector.position;
+      var v = vector.velocity;
+      var a = vector.acceleration;
+      switch (e.target.id) {
+        case "reset":
+          p = 0;
+          v = 0;
+          a = 0;
+          break;
+        case  "play":
+          v = 1;
+          break;
+        case "pause":
+          v = 0;
+          break;
+        case "reverse":
+          v = -1.0;
+          break;
+        case  "fastforward":
+          v = 2;
+          break;
+        case "fastreverse":
+          v = -2;
+          break;
+      }
+      to.update({position:p, velocity:v, acceleration:a});
+    };
+  };
+
   var toControl = function (elemId, to) {
     var rootElem = document.getElementById(elemId);
 
@@ -131,6 +210,8 @@ var TM = function(_TMC_) {
   };
 
   _TMC_.toControl = toControl;
+  _TMC_.toMediaControl = toMediaControl;
+  _TMC_.toStepControl = toStepControl;
   _TMC_.toValue = toValue;
   _TMC_.toInput = toInput;
   return _TMC_;

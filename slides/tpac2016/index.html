@@ -8,14 +8,23 @@
   <link rel="stylesheet" href="screen.css">
   <link rel="stylesheet" href="styles_w3c.css">
   
+
+  <!-- JQuery -->
+  <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="jquery-ui.min.js"></script>
+  <link href="jquery-ui.css" rel="stylesheet" type="text/css"/>
   <!-- MCorp -->
   <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
   <!-- Timingsrc-->
   <script type="text/javascript" src="timingsrc-min.js"></script>
-  <!-- Slides -->
-  <script type="text/javascript" src="slides.js"></script>
   <!-- Shower -->
   <script type="text/javascript" src="shower.min.js"></script>
+
+  <!-- Controls -->
+  <script type="text/javascript" src="to-slider.js"></script>
+  <script type="text/javascript" src="to-controls.js"></script>
+
+
 
 
   <script type="text/javascript">
@@ -23,7 +32,7 @@
     var Interval = TIMINGSRC.Interval;
 
     var toShared;
-    var toPrivate = new TIMINGSRC.TimingObject();
+    var toPrivate = new TIMINGSRC.TimingObject({range:[0,10]});
     
     var app;
     var toPromise = new Promise (function (resolve) {
@@ -69,16 +78,22 @@
           if (showerInstance.container.isSlideMode()) {
             showerInstance.container.exitSlideMode();
           }
-          
         } else {
-          
           if (!showerInstance.container.isSlideMode()) {
             showerInstance.container.enterSlideMode();
           }
           var index = parseInt(e.key);
           showerInstance.player.go(index);
         }
-      });      
+      }); 
+      
+      // Private timing object
+      /*
+      TM.toMediaControl("private-control", toPrivate);
+      TM.toValue("private-value", toPrivate);
+      TM.toSlider($("#private-slider"), toPrivate);
+      */
+
     });
 
   </script>
@@ -135,7 +150,13 @@
     .smalltext {
       font-size:15px;
     }
+
+
+   
   </style>
+
+
+
 </head>
 <body class="shower list">
   <header class="caption">
@@ -385,6 +406,23 @@
       <blockquote>Multi-media frameworks always built around similar concepts. No such object in JS context...</blockquote>
     </div>
   </section>
+
+  <!--
+  <section class="slide" id="timing-object-demo">
+
+    <div>
+      <h2>Timing Object Demo</h2>
+      <div id="private-controls">
+        <div id="private-control"></div> 
+        <div id="private-value"></div>
+        <div class="slidercontainer-long">
+          <div id="private-slider"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  -->
+
 
   <section class="slide" id="timing-object-page">
     <div>
