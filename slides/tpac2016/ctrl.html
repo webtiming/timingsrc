@@ -17,20 +17,65 @@
 <script type="text/javascript" src="to-slider.js"></script>
 <script type="text/javascript" src="to-controls.js"></script>
 
-<!-- Slides -->
-<script type="text/javascript" src="slides.js"></script>
-
 <!-- Styling -->
 <style type="text/css">
 .active {color:red; font-weight: bold}
 .tovalue {font-weight:bold;margin-left:10px;display:inline-block;}
 .tocontrol {font-weight:bold;margin:10px;}
-.slidercontainer-long {width:500px; height:30px; margin:20px;}
+.slidercontainer-long {width:350px; height:30px; margin:10px;}
 </style>
 
 
 
 <script type="text/javascript">
+
+var slides = [
+  "all",
+  "Cover",
+  "outline",
+  "part1",
+  "mtcg", 
+  "status-cg", 
+  "status-media", 
+  "definition",
+  "challenges",
+  "realities-page-internal",
+  "realities-cross-page",
+  "goals", 
+  "easy-peasy", 
+  "part2", 
+  "timing-object", 
+  "timing-object-page", 
+  "timing-object-online",
+  "approach",
+  "applications-table",
+  "social-viewing",
+  "multi-screen",
+  "multi-device",
+  "remote-control",
+  "music",
+  "split",
+  "capture",
+  "integration",
+  "part4",
+  "android-video",
+  "android-audio",
+  "chrome-video",
+  "chrome-audio",
+  "firefox-video",
+  "firefox-audio",
+  "ipad-video",
+  "ipad-audio",
+  "ipad-video-skip",
+  "ipad-audio-skip",
+  "part5",
+  "standardization",
+  "initiatives",
+  "nextsteps",
+  "summary",
+  "Conver2"
+];
+
 
   var Interval = TIMINGSRC.Interval;
 
@@ -60,27 +105,34 @@
 
     // register with sequencer
     var s = new TIMINGSRC.Sequencer(toShared);
-    Object.keys(slides).forEach(function (key) {
-    	var slide = slides[key];
-    	s.addCue(key.toString(), new Interval(slide.start, slide.end));
-    });
+    for(var i=0;i<slides.length; i++) {
+      var name = slides[i];
+      if (i === 0) {
+        // first slide
+        s.addCue(name, new Interval(-Infinity, 0));
+      } else if (i === slides.length -1) {
+        // last slide
+        s.addCue(name, new Interval(i-1, Infinity));
+      } else {
+        s.addCue(name, new Interval(i-1, i));
+      }
+    }
 
     // build list html
     var html = "";
-    Object.keys(slides).forEach(function (key) {
-    	var slide = slides[key];
-    	html += '<div id="' + key + '">' + slide.id + '</div>';
+    slides.forEach(function (name) {
+    	html += '<div id="' + name + '">' + name + '</div>';
     });
 	var rootElem = document.getElementById("list");
 	rootElem.innerHTML = html;
 
 	// highlight active slide
     s.on("enter", function (e) {
-      var el =  document.getElementById(parseInt(e.key));
+      var el =  document.getElementById(e.key);
       el.classList.add("active");
     });
     s.on("exit", function (e) {
-      var el = document.getElementById(parseInt(e.key));
+      var el = document.getElementById(e.key);
       el.classList.remove("active");
     });
 
@@ -88,8 +140,10 @@
     rootElem.onclick = function (e) {
     	e.preventDefault();
     	if (e.target) {
-    		var slide = slides[e.target.id]
-    		toShared.update({position:slide.start});
+        console.log(e.target.id);
+        var cue = s.getCue(e.target.id);
+        console.log(cue);
+    		toShared.update({position:cue.interval.low});
     	}
     };
 
