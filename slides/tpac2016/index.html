@@ -8,23 +8,12 @@
   <link rel="stylesheet" href="screen.css">
   <link rel="stylesheet" href="styles_w3c.css">
   
-
-  <!-- JQuery -->
-  <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
-  <script type="text/javascript" src="jquery-ui.min.js"></script>
-  <link href="jquery-ui.css" rel="stylesheet" type="text/css"/>
   <!-- MCorp -->
   <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
   <!-- Timingsrc-->
   <script type="text/javascript" src="timingsrc-min.js"></script>
   <!-- Shower -->
   <script type="text/javascript" src="shower.min.js"></script>
-
-  <!-- Controls -->
-  <script type="text/javascript" src="to-slider.js"></script>
-  <script type="text/javascript" src="to-controls.js"></script>
-
-
 
 
   <script type="text/javascript">
@@ -86,14 +75,6 @@
           showerInstance.player.go(index);
         }
       }); 
-      
-      // Private timing object
-      /*
-      TM.toMediaControl("private-control", toPrivate);
-      TM.toValue("private-value", toPrivate);
-      TM.toSlider($("#private-slider"), toPrivate);
-      */
-
     });
 
   </script>
@@ -407,21 +388,14 @@
     </div>
   </section>
 
-  <!--
+  
   <section class="slide" id="timing-object-demo">
-
     <div>
-      <h2>Timing Object Demo</h2>
-      <div id="private-controls">
-        <div id="private-control"></div> 
-        <div id="private-value"></div>
-        <div class="slidercontainer-long">
-          <div id="private-slider"></div>
-        </div>
-      </div>
+      <h2>Demo Timing Object</h2>
+      <iframe style="width:80%" src="to-demo.html"></iframe>
     </div>
   </section>
-  -->
+  
 
 
   <section class="slide" id="timing-object-page">
@@ -451,6 +425,13 @@
     </div>
   </section>
 
+
+  <section class="slide" id="timing-object-online-demo">
+    <div>
+      <h2>Demo Online Timing Object</h2>
+      <iframe style="width:80%" src="to-demo.html?online=true"></iframe>
+    </div>
+  </section>
 
   <section class="slide" id="approach">
     <div>
