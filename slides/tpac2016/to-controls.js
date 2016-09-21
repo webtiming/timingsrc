@@ -79,9 +79,9 @@ var TM = function(_TMC_) {
     var rootElem = document.getElementById(elemId);
 
     var html = '<div class="tocontrol">';
-    html += '<button id="reset">Reset</button>';
-    html += '<button id="next">Next</button>';
-    html += '<button id="prev">Prev</button>';
+    html += '<button class="tocontrol-button" id="reset">Reset</button>';
+    html += '<button class="tocontrol-button" id="prev">Prev</button>';
+    html += '<button class="tocontrol-button" id="next">Next</button>';
     html += '</div>';
     rootElem.innerHTML = html;
 

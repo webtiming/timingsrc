@@ -21,8 +21,19 @@
 <style type="text/css">
 .active {color:red; font-weight: bold}
 .tovalue {font-weight:bold;margin-left:10px;display:inline-block;}
-.tocontrol {font-weight:bold;margin:10px;}
+
 .slidercontainer-long {width:350px; height:30px; margin:10px;}
+.tocontrol-button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin:5px;
+}
 </style>
 
 
@@ -101,9 +112,9 @@ var slides = [
   .then(function (values) {
 
     // controsl
-    TM.toControl("control", toShared);
+    TM.toStepControl("control", toShared);
     TM.toValue("value", toShared);
-    TM.toSlider($("#slider"), toShared, {'range': [-1,Object.keys(slides).length]});
+    //TM.toSlider($("#slider"), toShared, {'range': [-1,Object.keys(slides).length]});
 
     // register with sequencer
     var s = new TIMINGSRC.Sequencer(toShared);
@@ -155,7 +166,7 @@ var slides = [
 
 </script>
 <body>
-<h2>Slides</h2>
+<h2>Slides Control</h2>
 <div id="control"></div> 
 <div id="value"></div>
 <div class="slidercontainer-long">
