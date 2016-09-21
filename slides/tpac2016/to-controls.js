@@ -101,7 +101,7 @@ var TM = function(_TMC_) {
           p = p + 1;
           break;
         case "prev":
-          v = v -1 ;
+          p = p -1 ;
           break;
       }
       to.update({position:p, velocity:v, acceleration:a});
