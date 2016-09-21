@@ -44,6 +44,8 @@ var slides = [
   "all",
   "Cover",
   "outline",
+  "presentation-url",
+  "demo-url",
   "part1",
   "mtcg", 
   "status-cg", 
@@ -112,7 +114,8 @@ var slides = [
   .then(function (values) {
 
     // controsl
-    TM.toStepControl("control", toShared);
+    TM.toControl("control", toShared);
+    TM.toStepControl("step-control", toShared);
     TM.toValue("value", toShared);
     //TM.toSlider($("#slider"), toShared, {'range': [-1,Object.keys(slides).length]});
 
@@ -167,7 +170,12 @@ var slides = [
 </script>
 <body>
 <h2>Slides Control</h2>
-<div id="control"></div> 
+<p>
+<div id="control"></div>
+</p>
+<p> 
+<div id="step-control"></div> 
+</p>
 <div id="value"></div>
 <div class="slidercontainer-long">
   <div id="slider"></div>

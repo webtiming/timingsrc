@@ -113,12 +113,12 @@ var TM = function(_TMC_) {
     var rootElem = document.getElementById(elemId);
 
     var html = '<div class="tocontrol">';
-    html += '<button id="reset">Reset</button>';
-    html += '<button id="play">Play</button>';
-    html += '<button id="pause">Pause</button>';
-    html += '<button id="reverse">Reverse</button>';
-    html += '<button id="fastreverse">FastReverse</button>';
-    html += '<button id="fastforward">FastForward</button>';
+    html += '<button class="tocontrol-button" id="reset">Reset</button>';
+    html += '<button class="tocontrol-button" id="play">Play</button>';
+    html += '<button class="tocontrol-button" id="pause">Pause</button>';
+    html += '<button class="tocontrol-button" id="reverse">Reverse</button>';
+    html += '<button class="tocontrol-button" id="fastreverse">FastReverse</button>';
+    html += '<button class="tocontrol-button" id="fastforward">FastForward</button>';
     html += '</div>';
     rootElem.innerHTML = html;
 
@@ -158,15 +158,15 @@ var TM = function(_TMC_) {
     var rootElem = document.getElementById(elemId);
 
     var html = '<div class="tocontrol">';
-    html += '<button id="p_down">P--</button>';
-    html += '<button id="p_zero">P=0</button>';
-    html += '<button id="p_up">P++</button>';
-    html += '<button id="v_down">V--</button>';
-    html += '<button id="v_zero">V=0</button>';
-    html += '<button id="v_up">V++</button>';
-    html += '<button id="a_down">A--</button>';
-    html += '<button id="a_zero">A=0</button>';
-    html += '<button id="a_up">A++</button>';
+    html += '<button class="tocontrol-button" id="p_down">P--</button>';
+    html += '<button class="tocontrol-button" id="p_zero">P=0</button>';
+    html += '<button class="tocontrol-button" id="p_up">P++</button>';
+    html += '<button class="tocontrol-button" id="v_down">V--</button>';
+    html += '<button class="tocontrol-button" id="v_zero">V=0</button>';
+    html += '<button class="tocontrol-button" id="v_up">V++</button>';
+    html += '<button class="tocontrol-button" id="a_down">A--</button>';
+    html += '<button class="tocontrol-button" id="a_zero">A=0</button>';
+    html += '<button class="tocontrol-button" id="a_up">A++</button>';
     html += '</div>';
     rootElem.innerHTML = html;
 
