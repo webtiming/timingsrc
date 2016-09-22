@@ -18,21 +18,39 @@
 
   <script type="text/javascript">
  
+    function getParameterByName(name, url) {
+      if (!url) url = window.location.href;
+      name = name.replace(/[\[\]]/g, "\\$&");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+          results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+    };
+    var offline = typeof getParameterByName("offline") === "string";
+   
     var Interval = TIMINGSRC.Interval;
 
     var toShared;
     var toPrivate = new TIMINGSRC.TimingObject({range:[0,10]});
     
     var app;
-    var toPromise = new Promise (function (resolve) {
-      app = MCorp.app("3857338102395412007", {anon:true});
-      app.run = function () {
-        toShared = new TIMINGSRC.TimingObject({provider:app.motions["shared"]});
+    var toPromise;
+    if (offline) {
+      toPromise = new Promise (function (resolve) {
+        toShared = new TIMINGSRC.TimingObject();
         resolve();
-      }
-      app.init();
-  
-    });
+      });
+    } else {
+      toPromise = new Promise (function (resolve) {
+        app = MCorp.app("3857338102395412007", {anon:true});
+        app.run = function () {
+          toShared = new TIMINGSRC.TimingObject({provider:app.motions["shared"]});
+          resolve();
+        }
+        app.init();
+      });
+    }
 
     var readyPromise =  new Promise (function (resolve) {
       if (document.readyState === "complete") resolve();
@@ -52,6 +70,9 @@
     Promise.all([toPromise, readyPromise, showerPromise])
     .then(function (values) {
 
+      var iframeElem = document.getElementById("timing-object-online-demo-iframe");
+      iframeElem.src = (offline) ? "to-demo.html" : "to-demo.html?online=true";
+    
       // sequencer
       var s = new TIMINGSRC.Sequencer(toShared);   
       // register cues
@@ -466,7 +487,6 @@
         <li>Web developers shielded from complexity of distributed sync</li>
       </ul>
       <blockquote>Distributed media components connected to a single <b>online</b> timing object...</blockquote>
-    
     </div>
   </section>
 
@@ -474,7 +494,8 @@
   <section class="slide" id="timing-object-online-demo">
     <div>
       <h2>Demo Online Timing Object</h2>
-      <iframe style="width:80%" src="to-demo.html?online=true"></iframe>
+      <!-- src="to-demo.html?online=true"-->
+      <iframe id="timing-object-online-demo-iframe" style="width:80%" ></iframe>
     </div>
   </section>
 
