@@ -8,8 +8,97 @@
   <link rel="stylesheet" href="screen.css">
   <link rel="stylesheet" href="styles_w3c.css">
   
+  <!-- MCorp -->
+  <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
+  <!-- Timingsrc-->
+  <script type="text/javascript" src="timingsrc-min.js"></script>
   <!-- Shower -->
   <script type="text/javascript" src="shower.min.js"></script>
+
+
+  <script type="text/javascript">
+ 
+    function getParameterByName(name, url) {
+      if (!url) url = window.location.href;
+      name = name.replace(/[\[\]]/g, "\\$&");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+          results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+    };
+    var offline = typeof getParameterByName("offline") === "string";
+   
+    var Interval = TIMINGSRC.Interval;
+
+    var toShared;
+    var toPrivate = new TIMINGSRC.TimingObject({range:[0,10]});
+    
+    var app;
+    var toPromise;
+    if (offline) {
+      toPromise = new Promise (function (resolve) {
+        toShared = new TIMINGSRC.TimingObject();
+        resolve();
+      });
+    } else {
+      toPromise = new Promise (function (resolve) {
+        app = MCorp.app("3857338102395412007", {anon:true});
+        app.run = function () {
+          toShared = new TIMINGSRC.TimingObject({provider:app.motions["shared"]});
+          resolve();
+        }
+        app.init();
+      });
+    }
+
+    var readyPromise =  new Promise (function (resolve) {
+      if (document.readyState === "complete") resolve();
+      else window.onload = resolve;
+    });
+
+    var showerInstance;
+    var showerPromise = new Promise (function (resolve) {
+      shower.modules.require(["shower.global"], function (_shower) {
+        _shower.ready(function (sh) {
+          showerInstance = sh;
+          resolve();
+        });
+      });
+    });  
+
+    Promise.all([toPromise, readyPromise, showerPromise])
+    .then(function (values) {
+
+      var iframeElem = document.getElementById("timing-object-online-demo-iframe");
+      iframeElem.src = (offline) ? "to-demo.html" : "to-demo.html?online=true";
+    
+      // sequencer
+      var s = new TIMINGSRC.Sequencer(toShared);   
+      // register cues
+      var slides_count = showerInstance.player._shower.getSlidesCount();
+      s.addCue("list", new Interval(-Infinity, 0));
+      for (var i=0; i<slides_count-1; i++) {        
+        s.addCue(i.toString(), new Interval(i,i+1));
+      }
+      s.addCue(i.toString(), new Interval(i, Infinity));
+    
+      s.on("enter", function (e){
+        if (e.key === "list") {
+          if (showerInstance.container.isSlideMode()) {
+            showerInstance.container.exitSlideMode();
+          }
+        } else {
+          if (!showerInstance.container.isSlideMode()) {
+            showerInstance.container.enterSlideMode();
+          }
+          var index = parseInt(e.key);
+          showerInstance.player.go(index);
+        }
+      }); 
+    });
+
+  </script>
 
 
   <style>
@@ -63,6 +152,9 @@
     .smalltext {
       font-size:15px;
     }
+
+
+   
   </style>
 
 
@@ -135,8 +227,7 @@
   <section class="slide" id="demo-url">
     <div>
       <h2>Demo URL</h2>
-      <p>Live Demo URL removed after presentation.</p>
-      <p>Demo featured echoless synchronization of HTML video and audio across Web browsers of audience laptops.</p>
+      <p style="font-size:2em;"><a href="http://mcorp.no/pres/vegas16/main.html" target="_blank">http://mcorp.no/pres/vegas16/main.html</a></p>
     </div>
   </section>
 
@@ -403,7 +494,8 @@
   <section class="slide" id="timing-object-online-demo">
     <div>
       <h2>Demo Online Timing Object</h2>
-      <iframe id="timing-object-online-demo-iframe" src="to-demo.html?online=true" style="width:80%" ></iframe>
+      <!-- src="to-demo.html?online=true"-->
+      <iframe id="timing-object-online-demo-iframe" style="width:80%" ></iframe>
     </div>
   </section>
 
