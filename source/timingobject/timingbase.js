@@ -95,9 +95,10 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 			(if this was a prototype function - it would be shared by multiple objects thus
 			prohibiting them from subscribing to the same timingsrc)
 		*/
+		var self = this;
 		this._internalOnChange = function () {
-			var vector = this.timingsrc.vector;
-			this._preProcess(vector);
+			var vector = self.timingsrc.vector;
+			self._preProcess(vector);
 		};
 	};
 
