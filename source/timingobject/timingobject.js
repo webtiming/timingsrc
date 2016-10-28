@@ -51,10 +51,11 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 		this._vector = null;
 
 		// timing provider
+		var self = this;
 		this._provider = options.provider || new LocalTimingProvider(options);
-		this._onSkewChangeWrapper = function () {this._onSkewChange();};
-		this._onVectorChangeWrapper = function () {this._onVectorChange();};
-		this._onReadystateChangeWrapper = function () {this._onReadystateChange();};
+		this._onSkewChangeWrapper = function () {self._onSkewChange();};
+		this._onVectorChangeWrapper = function () {self._onVectorChange();};
+		this._onReadystateChangeWrapper = function () {self._onReadystateChange();};
 		this._provider.on("readystatechange", this._onReadystateChangeWrapper, this);
 
 		// initialise

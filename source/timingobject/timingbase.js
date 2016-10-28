@@ -90,16 +90,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 
-		/*
-			store a wrapper function on the instance used as a callback handler from timingsrc
-			(if this was a prototype function - it would be shared by multiple objects thus
-			prohibiting them from subscribing to the same timingsrc)
-		*/
-		var self = this;
-		this._internalOnChange = function () {
-			var vector = self.timingsrc.vector;
-			self._preProcess(vector);
-		};
+
 	};
 
 
@@ -349,6 +340,17 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		this._timingsrc = null;	
 		// set timing source
 		this.timingsrc = timingObject;
+
+		/*
+			store a wrapper function on the instance used as a callback handler from timingsrc
+			(if this was a prototype function - it would be shared by multiple objects thus
+			prohibiting them from subscribing to the same timingsrc)
+		*/
+		var self = this;
+		this._internalOnChange = function () {
+			var vector = self.timingsrc.vector;
+			self._preProcess(vector);
+		};
 	};
 	inherit(ConverterBase, TimingBase);
 
