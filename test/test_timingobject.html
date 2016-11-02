@@ -10,18 +10,18 @@
   </script>
   <script type="text/javascript" src="../lib/require.js"></script>
   <script type="text/javascript">
-      var m, w, w2;
+      var to, w, w2;
       require(['timingsrc'], function (timingsrc) {
       
         var setup_converter1 = function (to) {
           // Converter objects
-          //w = new timingsrc.SkewConverter(to, 2);
+          var w = new timingsrc.SkewConverter(to, 2);
           //w = new timingsrc.DelayConverter(to, 1.0);          
           //w = new timingsrc.TimeShiftConverter(to, -1.0);
           //w = new timingsrc.ScaleConverter(to, 2);
           //w = new timingsrc.RangeConverter(to, [10,15]);
           //w = new timingsrc.DerivativeConverter(to);
-          w = new timingsrc.LoopConverter(to, [2, 8]);
+          //w = new timingsrc.LoopConverter(to, [2, 8]);
 
           var converterhandler = function () {
             if (converterhandler.init === false) {
@@ -36,8 +36,8 @@
           document.getElementById('converterpause').onclick = function () {w.update({velocity:0.0});};
           document.getElementById('converterreset').onclick = function () {w.update({position: 0.0, velocity:0.0});};
           document.getElementById('converterback').onclick = function () {w.update({velocity:-1.0});};
-          w.on("change", converterhandler);
 
+          w.on("change", converterhandler);
           var convertervalue = document.getElementById('convertervalue');
           w.on("timeupdate", function () {
             convertervalue.innerHTML = w.query().position.toFixed(2);
@@ -46,7 +46,7 @@
         };
 
         var setup_converter2 = function (to) {
-          w2 = new timingsrc.LoopConverter(to, [2, 8]);
+          var w2 = new timingsrc.LoopConverter(to, [2, 8]);
 
           var converterhandler2 = function () {
               if (converterhandler2.init === false) {
@@ -104,12 +104,12 @@
         };
 
         var run = function () {
-          var to = setup_timingobject();
-          setup_converter1(to);
+          to = setup_timingobject();
+          w = setup_converter1(to);
           setTimeout(function() {
-            setup_converter2(to);  
+            w2 = setup_converter2(to);  
           }, 4000);
-        
+
         };
         if (document.readyState === "complete") run();
         else window.onload = run;

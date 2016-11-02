@@ -338,8 +338,6 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		TimingBase.call(this, options);
 		// timing source
 		this._timingsrc = null;	
-		// set timing source
-		this.timingsrc = timingObject;
 
 		/*
 			store a wrapper function on the instance used as a callback handler from timingsrc
@@ -351,6 +349,9 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 			var vector = self.timingsrc.vector;
 			self._preProcess(vector);
 		};
+
+		// set timing source
+		this.timingsrc = timingObject;
 	};
 	inherit(ConverterBase, TimingBase);
 

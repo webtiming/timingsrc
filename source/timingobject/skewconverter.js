@@ -60,5 +60,20 @@ define(['./timingbase'], function (timingbase) {
 		return this.timingsrc.update(vector);
 	};
 
+
+	Object.defineProperty(SkewConverter.prototype, 'skew', {
+		get : function () {
+			return this._skew;
+		}
+	});
+
+	SkewConverter.prototype.setSkew = function (skew) {
+		this._skew = skew;
+		// pick up vector from timingsrc
+		var src_vector = this.timingsrc.vector;
+		// use this vector to emulate new event from timingsrc
+		this._preProcess(src_vector);
+	};
+
 	return SkewConverter;
 });
