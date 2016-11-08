@@ -85,12 +85,13 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		// timeout support
 		this._timeout = null; // timeout for range violation etc.
 		this._tid = null; // timeoutid for timeupdate
+		// readiness
+		this._ready = false;
 		// event support
 		eventutils.eventify(this, TimingBase.prototype);
+		this.eventifyDefineEvent("ready", {init:true}) // define ready event
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
-
-
 	};
 
 
@@ -123,6 +124,31 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 			};
 		}
 	});
+
+
+	Object.defineProperty(TimingBase.prototype, 'ready', {
+		get : function () {
+			return this._ready;
+		}
+	});
+
+	Object.defineProperty(TimingBase.prototype, 'readyPromise', {
+		get : function () {
+			var self = this;
+			return new Promise (function (resolve, reject) {
+				if (self._ready) {
+					resolve();
+				} else {
+					var onReady = function () {
+						self.off("ready", onReady);
+						resolve()
+					};
+					self.on("ready", onReady);
+				}
+			});
+		}
+	});
+
 
 	// Shorthand accessors
 	Object.defineProperty(TimingBase.prototype, 'pos', {
@@ -158,6 +184,8 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		if (type === "change") {
 			return (res !== null) ? [{type: type, e: undefined}] : []; 
 		} else if (type === "timeupdate") {
+			return (res !== null) ? [{type:type, e: undefined}] : []; 
+		} else if (type === "ready") {
 			return (res !== null) ? [{type:type, e: undefined}] : []; 
 		}
 		return [];
@@ -289,9 +317,14 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	*/
 	TimingBase.prototype._process = function (vector) {
 		if (vector !== null) {
+			var old_vector = this._vector;
 			// update internal vector
 			this._vector = vector;
 			// trigger events
+			if (old_vector === null) {
+				this._ready = true;
+				this.eventifyTriggerEvent("ready");
+			}
 			this._postProcess(this.vector);
 		}
 		// renew timeout
