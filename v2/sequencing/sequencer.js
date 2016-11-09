@@ -389,8 +389,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 		// initialise
 		this._to.on("change", this._wrappedOnTimingChange, this);
-		// Allow subclass to load data into the sequencer
-		this.loadData();
 	};
 
 	// making Interval constructor available on all sequencer instances
@@ -407,10 +405,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		}
 		return [];
 	};
-
-	// To be overridden by subclass specializations
-	Sequencer.prototype.loadData = function () {};
-	Sequencer.prototype.getData = function (key) {};
 
 	/* 
 	
@@ -534,10 +528,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		*/
 	   
 	    var exitItems = exitKeys.map(function (key) {
-	    	return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
+	    	return this._axis.getItem(key);
 	    }, this);
 	    var enterItems = enterKeys.map(function (key) {
-	    	return {key:key, interval: this._axis.getIntervalByKey(key), data: this.getData(key)};
+	    	return this._axis.getItem(key);
 	    }, this);
 	    // Trigger interval events
 	    this._processIntervalEvents(now, exitItems, enterItems, []);
@@ -592,13 +586,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
-		var i, e, key, interval, data;	
 
-		// filter out NOOPs
-		var opList = origOpList.filter(function (op) {
-			return (op.type !== axis.OpType.NOOP);
-		});
-		
+	
 	    var now = this._clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 	    var nowPos = nowVector.position;
@@ -608,9 +597,17 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var exitItems = []; // {key:key, interval:interval}
 	    var isActive, shouldBeActive;
 
+		// filter out NOOP and REPEATs
+		var opList = origOpList.filter(function (op) {
+			return (op.type !== axis.OpType.NOOP && op.type !== axis.OpType.REPEAT);
+		});
+
+		var i, e, key, interval, data;	
+
 	    opList.forEach(function (op) {
 	    	interval = op.interval;
 	    	key = op.key;
+	    	data = op.data;
 		    /*
 		      	Re-evaluate active intervals. Immediate action is required only if 
 			    a interval was active, but no longer is -- or the opposite.
@@ -625,13 +622,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		    	if (interval.coversPoint(nowPos)) {
 					shouldBeActive = true;
 		    	}
-		    }
-		    // set data element
-		    if (op.type === axis.OpType.REMOVE) {
-		    	data = op.data 
-		    } else {
-		    	data = op.data || this.getData(key)
-		    }
+		    }		
 		    if (isActive && !shouldBeActive) {
 				exitItems.push({key:key, interval:interval, data: data});
 			} else if (!isActive && shouldBeActive) {
@@ -645,8 +636,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			generate change events for currently active spans, which did change, 
 			but remained active - thus no enter/exit events will be emitted).
 		
-			these are items that are active, but not in enterItems list
-			including NOOP operation (change in non-temporal sense)
+			these are items that are active, but not in enterItems list,
+			including REPEAT operations (change in non-temporal sense)
 		*/
 		var exitKeys = exitItems.map(function (item) {return item.key;});
 		var changeItems = origOpList.
@@ -694,15 +685,15 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			purpose - detect common condition that cue operation is irrelevant for SCHEDULE
 			no need to touch SCHEDULE.
 			- cue endpoint included in scheduler, but needs to be excluded due to cue operation
-			- cue endpoitn not in scheduler, but needs to be included due to cue operation
+			- cue endpoint not in scheduler, but needs to be included due to cue operation
 		*/
-		// TODO
+		// TODO (optimization)
 
 		/* 
 			special case 
 			- no cue operation relevant to (remainder of) current scheduler window - no need to touch SCHEDULE
 		*/
-		// TODO
+		// TODO (optimization)
 
 
 		// INVALIDATE events in the SCHEDULE
@@ -734,6 +725,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			opList.forEach(function (op) {
 				interval = op.interval;
 	    		key = op.key;
+	    		data = op.data;
 
 	    		// Nothing to reload for remove events
 		    	if (op.type === axis.OpType.REMOVE) {
@@ -755,7 +747,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 				      Check relevance, i.t. that points are within the
 				      position range of the schedule.
 				    */
-					var item = {key: key, interval: interval}; 
+					var item = {key: key, interval: interval, data: data}; 
 				    var rangeInterval = this._schedule.getPosInterval();
 				    if (rangeInterval !== null) {
 				    	if (rangeInterval.coversPoint(interval.low)) {
@@ -905,13 +897,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    }
 
 	    /*
-			Add data to points
-	    */
-	    points.forEach(function (pointInfo){
-	    	pointInfo.data = this.getData(pointInfo.key);
-	    }, this);
-
-	    /*
 	      Note : 1) and 2) could be replaced by simply fetching
 	      all points of the axis. However, in order to avoid
 	      calculating time intercepts for a lot of irrelevant points, we
@@ -1051,16 +1036,15 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	Sequencer.prototype._processInitialEvents = function () {
 		// called by makeInitEvents - return event list based on activeKeys
-		var interval, data, eArg;
+		var item, eArg;
 		var now = this._clock.now();
 		var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now();
 		return this._activeKeys.map(function (key) {
-			interval = this._axis.getIntervalByKey(key);
-			data = this.getData(key);
-			eArg = this._makeEArgs(key, interval, data, directionInt, VerbType.ENTER, nowVector.position, ts, now);
-			return {type: VerbType.ENTER, e: eArg}; 
+			item = this._axis.getItem(key);
+			eArg = this._makeEArgs(key, item.interval, item.data, directionInt, VerbType.ENTER, nowVector.position, ts, now);
+			return {type: VerbType.ENTER, e: eArg};
 		}, this);
 	};
 
@@ -1202,7 +1186,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	// get specific cue {key: key, interval:interva} given key
 	Sequencer.prototype.getCue = function (key) {
 		if (this._axis.hasKey(key)) {
-			return new SequencerCue (key, this._axis.getIntervalByKey(key), this.getData(key));
+			return new SequencerCue (this._axis.getItem(key));
 		}  
 	};
 
@@ -1277,19 +1261,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    }
 	};
 
-
-	// Inherit function used for specialized sequencers.
-	var inherit = function (Child, Parent) {
-		var F = function () {}; // empty object to break prototype chain - hinder child prototype changes to affect parent
-		F.prototype = Parent.prototype;
-		Child.prototype = new F(); // child gets parents prototypes via F
-		Child.uber = Parent.prototype; // reference in parent to superclass
-		Child.prototype.constructor = Child; // resetting constructor pointer 
-	};
-
 	// Module Definition
 	return {
-		inherit : inherit,
 		Interval : Interval,
 		DefaultSequencer : Sequencer,
 		Axis : axis.Axis,

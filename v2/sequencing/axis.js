@@ -128,7 +128,8 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 		var res = {key: key, interval: interval, data: data};
 		if (this._map.hasOwnProperty(key)) {
 			// UPDATE
-			old_interval = this._map[key];
+			res.old_interval = this._map[key];
+			res.old_data = this._cache[key];
 			// clear old values
 			this._remove(key);
 			/*
@@ -137,7 +138,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 			REPEAT means that interval was not changed but repeated. 
 			This is typically the case if data was modified without affecting the timing aspects
 			*/
-			if (interval.equals(old_interval)) {
+			if (interval.equals(res.old_interval)) {
 				res.type = OpType.REPEAT;
 			} else {
 				res.type = OpType.UPDATE;
@@ -191,8 +192,8 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 	};
 
 	// shorthand for update single (key, interval) pair
-	Axis.prototype.update = function (key, interval) {
-		return this.updateAll([{key:key, interval:interval}]);
+	Axis.prototype.update = function (key, interval, data) {
+		return this.updateAll([{key:key, interval:interval, data:data}]);
 	};
 
 	/*
@@ -253,7 +254,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 		Object.keys(this._map).forEach(function(key){
 			interval = this._map[key];
 			if (x === undefined || interval.coversPoint(x)) {
-				res.push({key:key, interval: interval});
+				res.push({key:key, interval: interval, data: this._cache[key]});
 			}
 		}, this);
 		return res;
@@ -274,6 +275,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 				res.push({
 					key: item.value,
 					interval: interval,
+					data: this._cache[item.value],
 					point: point,
 					pointType: this.getPointType(point, interval)
 				});
@@ -285,16 +287,27 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 	Axis.prototype.items = function () {return this.lookupByPoint();};
 	Axis.prototype.keys = function () {return Object.keys(this._map);};
 
+	Axis.prototype.getItem = function (key) {
+		if (this._map.hasOwnProperty(key)) {
+			return {
+				key: key, 
+				interval: this._map[key],
+				data: this._cache[key]
+			};
+		} 
+		return null;
+	};
+
+	Axis.prototype.getInterval = function (key) {
+		return (this._map.hasOwnProperty(key)) ? this._map[key] : null;
+	};
+
 	Axis.prototype.getPointType = function (point, interval) {
 		if (interval.isSingular() && point === interval.low) return PointType.SINGULAR;
 	    if (point === interval.low) return PointType.LOW;
 	    if (point === interval.high) return PointType.HIGH;
 	    if (interval.low < point && point < interval.high) return PointType.INSIDE;
 	    else return PointType.OUTSIDE;
-	};
-
-	Axis.prototype.getIntervalByKey = function (key) {
-		return this._map[key];
 	};
 
 	Axis.prototype.hasKey = function (key) {
