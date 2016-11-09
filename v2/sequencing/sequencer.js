@@ -55,17 +55,17 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
     var VerbType = Object.freeze({
 		ENTER: "enter",
 		EXIT: "exit",
-		CHANGE: "change",
+		NONE: "none",
 		toInteger: function (s) {
 		    if (s === VerbType.ENTER) return 1;
 		    if (s === VerbType.EXIT) return -1;
-		    if (s === VerbType.CHANGE) return 0;
+		    if (s === VerbType.NONE) return 0;
 		    throw new SequencerError("illegal string value verb type " + s);
 		},
 		fromInteger : function (i) {
 			if (i === -1) return VerbType.EXIT;
 			else if (i === 1) return VerbType.ENTER;
-			else if (i === 0) return VerbType.CHANGE;
+			else if (i === 0) return VerbType.NONE;
 			throw new SequencerError("illegal integer value for direction type " + i);
 		}
     });
@@ -88,6 +88,16 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			throw new SequencerError("illegal integer value for direction type" + i + " " + typeof(i));
 		}
     });
+
+    var OpType = Object.freeze({
+    	INIT: "init",
+    	CREATE: "create",
+    	UPDATE: "update",
+    	DELETE: "delete",
+    	NONE: "none"
+    });
+
+
 
 
 	/*
@@ -321,17 +331,25 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	/*
 		Sequencer EArgs
 	*/
-	var SequencerEArgs = function (sequencer, key, interval, data, point, pointType, ts, dueTs, directionType, verbType) {
+
+					
+			
+	var SequencerEArgs = function (sequencer, key, interval, data, directionInt, point, ts, dueTs, op, verb) {
+		var directionType = DirectionType.fromInteger(directionInt);
+		var pointType = sequencer._axis.getPointType(point, interval);
 		this.src = sequencer;
 		this.key = key;
 		this.interval = interval;
+		this.data = data;
 		this.point = point;
 		this.pointType = pointType;
 		this.dueTs = dueTs;
 		this.delay = ts - dueTs;
 		this.directionType = directionType;
-		this.type = verbType;
-		this.data = data;
+		console.log(verb);
+		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
+		this.op = op;
+		this.verb = verb;
 	};
 
 	SequencerEArgs.prototype.toString = function () {
@@ -339,6 +357,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
         s += " " + this.key;
         s += " " + this.interval.toString();
         s += " " + this.type;
+        s += " " + this.op;
+        s += " " + this.verb;
         s += " " + this.directionType;
         s += " " + this.pointType;
         s += " delay:" + this.delay.toFixed(4);
@@ -975,40 +995,29 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	};
 
 
-	/*
-		Helper function to make event messages
-	*/
-	Sequencer.prototype._makeEArgs = function(key, interval, data, directionInt, verbType, point, ts, dueTs) {
-		var directionType = DirectionType.fromInteger(directionInt);
-		var pointType = this._axis.getPointType(point, interval);
-		if (verbType === undefined) {
-			var pointInt = axis.PointType.toInteger(pointType);
-			var verbInt = pointInt * directionInt * -1;
-			verbType = VerbType.fromInteger(verbInt);
-		}
-		return new SequencerEArgs(this, key, interval, data, point, pointType, ts, dueTs, directionType, verbType);
-	};
-
-
 	// Process point events originating from the schedule
 	Sequencer.prototype._processScheduleEvents = function (now, eventList) {
-	   	var msg, msgList = [];	   		
+	   	var eArg, eArgList = [];	   		
 	   	var nowVector = motionutils.calculateVector(this._to.vector, now);
    		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now(); 
+		var ts = this._clock.now();
 	    eventList.forEach(function (e) {
 			if (e.task.interval.isSingular()) {
-				// make two event messages for singular
-				msg = this._makeEArgs(e.task.key, e.task.interval, e.task.data, directionInt, VerbType.ENTER,e.task.point, ts, e.ts);
-				msgList.push(msg);
-				msg = this._makeEArgs(e.task.key, e.task.interval, e.task.data, directionInt, VerbType.EXIT,e.task.point, ts, e.ts);
-				msgList.push(msg);
-			} else {				
-		    	msg = this._makeEArgs(e.task.key, e.task.interval, e.task.data, directionInt, undefined, e.task.point, ts, e.ts);
-		    	msgList.push(msg);	
+				// make two events for singular
+
+				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.ENTER));
+				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.EXIT));
+			} else {
+				// figure out if it is enter or exit 
+				var directionType = DirectionType.fromInteger(directionInt);
+				var pointType = this._axis.getPointType(e.task.point, e.task.interval);
+				var pointInt = axis.PointType.toInteger(pointType);
+				var verbInt = pointInt * directionInt * -1;
+				var verbType = VerbType.fromInteger(verbInt);
+		    	eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt,  e.task.point, ts, e.ts, OpType.NONE, verbType));
 			}			
 	    }, this);
-	    return this._makeEvents(now, msgList);
+	    return this._makeEvents(now, eArgList);
 	};
 
 	// Process interval events orignating from axis change, timing object change or active keys
@@ -1019,18 +1028,20 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now(); 
-	    var msgList = [];
+	    var eArgList = [];
     	// trigger events
     	exitItems.forEach(function (item){
-			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.EXIT, nowVector.position, ts, now));
+    		// TODO - optype delete or none?
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.NONE, VerbType.EXIT));
 		}, this); 
 		enterItems.forEach(function (item){
-			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.ENTER, nowVector.position, ts, now));
+			// TODO - optype init,create,update?
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.NONE, VerbType.ENTER));
 		}, this);
 		changeItems.forEach(function (item) {
-			msgList.push(this._makeEArgs(item.key, item.interval, item.data, directionInt, VerbType.CHANGE, nowVector.position, ts, now));
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
 		}, this);
-		this.eventifyTriggerEvents(this._makeEvents(now, msgList));
+		this.eventifyTriggerEvents(this._makeEvents(now, eArgList));
 	};
 
 
@@ -1043,8 +1054,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var ts = this._clock.now();
 		return this._activeKeys.map(function (key) {
 			item = this._axis.getItem(key);
-			eArg = this._makeEArgs(key, item.interval, item.data, directionInt, VerbType.ENTER, nowVector.position, ts, now);
-			return {type: VerbType.ENTER, e: eArg};
+			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);
+			return {type: eArg.type, e: eArg};
 		}, this);
 	};
 
@@ -1054,34 +1065,34 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		to active keys are driven by actual notifications
 	*/
 
-	Sequencer.prototype._makeEvents = function (now, msgList) {
-		if (msgList.length === 0) {
+	Sequencer.prototype._makeEvents = function (now, eArgList) {
+		if (eArgList.length === 0) {
 			return [];
 		}
 		// manage active keys
 		var index, eventList = [];
-		msgList.forEach(function (msg) {
+		eArgList.forEach(function (eArg) {
 			// exit interval - remove keys 
-		    if (msg.type === VerbType.EXIT) {
-				index = this._activeKeys.indexOf(msg.key);
+		    if (eArg.verb === VerbType.EXIT) {
+				index = this._activeKeys.indexOf(eArg.key);
 				if (index > -1) {
 			    	this._activeKeys.splice(index, 1);		
 				}
 		    }
 		    // enter interval - add key
-		    if (msg.type === VerbType.ENTER) {
-				index = this._activeKeys.indexOf(msg.key);
+		    if (eArg.verb === VerbType.ENTER) {
+				index = this._activeKeys.indexOf(eArg.key);
 				if (index === -1) {
-				    this._activeKeys.push(msg.key);
+				    this._activeKeys.push(eArg.key);
 				} 
 		    }
-		    eventList.push(msg);
+		    eventList.push(eArg);
 		}, this);
 		// make sure events are correctly ordered
 		eventList = this._reorderEventList(eventList);
 		// finalise events
-		return eventList.map(function (item) {
-			return {type: item.type, e:item};
+		return eventList.map(function (eArg) {
+			return {type: eArg.type, e: eArg};
 		});	    	    
 	};
 
@@ -1096,14 +1107,14 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		y. exit intervals ] (interval includes exit-point)
 		d. enter intervals < (interval does not include enter-point)
 	*/
-	Sequencer.prototype._reorderEventList = function (msgList) {
-		if (msgList.length < 2) return msgList;
+	Sequencer.prototype._reorderEventList = function (eArgList) {
+		if (eArgList.length < 2) return eArgList;
 		// stack events per point
 		var point, dueTs, newList = [];
 		var s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
-		msgList.forEach(function(msg) {
+		eArgList.forEach(function(eArg) {
 			// new point - pop from stack
-			if (msg.point !== point || msg.dueTs !== dueTs) {
+			if (eArg.point !== point || eArg.dueTs !== dueTs) {
 				newList = newList
 					.concat(s["a"])
 					.concat(s["x"])
@@ -1112,17 +1123,17 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 					.concat(s["y"])
 					.concat(s["d"]);
 				s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
-				point = msg.point;
-				dueTs = msg.dueTs;
+				point = eArg.point;
+				dueTs = eArg.dueTs;
 			}
 			// push on stack
-			if (msg.pointType === axis.PointType.SINGULAR) {
-				if (msg.type === VerbType.ENTER) {
+			if (eArg.pointType === axis.PointType.SINGULAR) {
+				if (eArg.type === VerbType.ENTER) {
 					// enter singular
-					s["b"].push(msg);
+					s["b"].push(eArg);
 				} else {
 					// exit singular
-					s["c"].push(msg);
+					s["c"].push(eArg);
 				}
 			} else {
 				/* 
@@ -1131,19 +1142,19 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 					through endpoint (low or high) and this endpoint is CLOSED ] as opposed to OPEN >
 				*/
 				var closed = false;
-				if ((msg.pointType === axis.PointType.LOW) && msg.interval.lowInclude) {
+				if ((eArg.pointType === axis.PointType.LOW) && eArg.interval.lowInclude) {
 					closed = true;
-				} else if ((msg.pointType === axis.PointType.HIGH) && msg.interval.highInclude) {
+				} else if ((eArg.pointType === axis.PointType.HIGH) && eArg.interval.highInclude) {
 					closed = true;
 				}
-				if (msg.type === VerbType.ENTER) {
+				if (eArg.type === VerbType.ENTER) {
 					// enter interval
-					if (closed) s["x"].push(msg);
-					else s["d"].push(msg);
+					if (closed) s["x"].push(eArg);
+					else s["d"].push(eArg);
 				} else {
 					// exit interval
-					if (closed) s["y"].push(msg);
-					else s["a"].push(msg);
+					if (closed) s["y"].push(eArg);
+					else s["a"].push(eArg);
 				}
 			}
 		}, this);
