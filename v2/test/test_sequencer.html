@@ -25,11 +25,11 @@
             var Interval = timingsrc.Interval;
 
             s.request()
-              .addCue("zero", new Interval(0.0, 1.0))
-              .addCue("one", new Interval(1.0, 2.0))
-              .addCue("two", new Interval(2.0, 3.0))
-              .addCue("three", new Interval(3.0, 4.0))
-              .addCue("four", new Interval(4.0, 5.0))
+              .addCue("zero", new Interval(0.0, 1.0), "zero.data")
+              .addCue("one", new Interval(1.0, 2.0), "one.data")
+              .addCue("two", new Interval(2.0, 3.0), "two.data")
+              .addCue("three", new Interval(3.0, 4.0), "three.data")
+              .addCue("four", new Interval(4.0, 5.0), "four.data")
               .submit();
 
             //s.on("enter", function (e) {console.log(e.toString())});
@@ -56,12 +56,12 @@
 
             createCue = function () {
                 console.log("create six");
-                s.addCue("six", new Interval(5.0, 8.0));
+                s.addCue("six", new Interval(5.0, 8.0), "six.data");
             };
 
             updateCue = function () {
                 console.log("update six");
-                s.addCue("six", new Interval(7.0, 7.0));
+                s.addCue("six", new Interval(7.0, 7.0), "six.data");
             };
 
             removeCue = function () {
@@ -71,7 +71,7 @@
 
             repeatCue = function () {
               console.log("repeat three");
-              s.addCue("three", new Interval(3.0, 4.0));
+              s.addCue("three", new Interval(3.0, 4.0), "three.newdata");
             };
 
         };
