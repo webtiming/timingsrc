@@ -620,7 +620,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			return (op.type !== axis.OpType.NOOP && op.type !== axis.OpType.REPEAT);
 		});
 
-		var i, e, key, interval, data;	
+		var i, e, key, interval, data, opType;	
 
 	    opList.forEach(function (op) {
 	    	interval = op.interval;
@@ -640,11 +640,18 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		    	if (interval.coversPoint(nowPos)) {
 					shouldBeActive = true;
 		    	}
-		    }		
+		    }
+
+		    // save information about what operation triggered the event
+		    if (op.type === axis.OpType.CREATE) opType = OpType.CREATE;
+		    else if (op.type === axis.OpType.UPDATE) opType = OpType.UPDATE;
+		    else if (op.type === axis.OpType.REPEAT) opType = OpType.UPDATE;
+		    else if (op.type === axis.OpType.REMOVE) opType = OpType.DELETE;
+
 		    if (isActive && !shouldBeActive) {
-				exitItems.push({key:key, interval:interval, data: data});
+				exitItems.push({key:key, interval:interval, data: data, opType:opType});
 			} else if (!isActive && shouldBeActive) {
-				enterItems.push({key:key, interval:interval, data: data});
+				enterItems.push({key:key, interval:interval, data: data, opType:opType});
 		    }
 	    }, this);
 
@@ -690,7 +697,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		if (!_isMoving) {
 			// break control flow so that events are emitted after addCue has completed
 			setTimeout(function () {
-				self._processIntervalEvents(now, enterItems, exitItems, changeItems);
+				self._processIntervalEvents(now, exitItems, enterItems, changeItems);
 				// not moving should imply that SCHEDULE be empty
 				// no need to call main - will be called by scheduled timeout
 			}, 0);
@@ -1027,14 +1034,15 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now(); 
 	    var eArgList = [];
+    	var opType;
     	// trigger events
     	exitItems.forEach(function (item){
-    		// TODO - optype delete or none?
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.NONE, VerbType.EXIT));
+    		opType = item.opType || OpType.NONE;
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.EXIT));
 		}, this); 
 		enterItems.forEach(function (item){
-			// TODO - optype init,create,update?
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.NONE, VerbType.ENTER));
+			opType = item.opType || OpType.NONE;
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.ENTER));
 		}, this);
 		changeItems.forEach(function (item) {
 			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
