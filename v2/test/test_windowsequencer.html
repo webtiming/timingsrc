@@ -57,22 +57,29 @@
           var Interval = timingsrc.Interval;
 
           // load data into sequencer
-          setTimeout(function () {
+          //setTimeout(function () {
             var r = s.request();
             Object.keys(data).forEach(function (key) {
               r.addCue(key, new Interval(data[key].start, data[key].end));
             });
             r.submit();
-          }, 200);
+          //}, 200);
  
           // register event handlers
           /*
-          s.on("enter", function (e) {console.log("enter", e)});
-          s.on("exit", function (e) {console.log("exit", e)});          
+          s.on("change", function (e) {console.log("change", e)});
+          s.on("remove", function (e) {console.log("remove", e)});          
           */
           s.on("events", function (eList) {
             eList.forEach(function (e) {
-                console.log("events", e);
+              var s = "";
+              s += " " + e.key;
+              s += " " + e.interval.toString();
+              s += " " + e.type;
+              s += " " + e.op;
+              s += " " + e.verb;
+              if (e.data) s += " " + JSON.stringify(e.data);
+              console.log(s);
             });
           });
 
@@ -87,8 +94,10 @@
           document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
 
           var value = document.getElementById("value");
+          var value2 = document.getElementById("value2");
           to.on("timeupdate", function () {
-            value.innerHTML = to.query().position.toFixed(2);
+            value.innerHTML = toA.query().position.toFixed(2);
+            value2.innerHTML = toB.query().position.toFixed(2);
           });
 
           createCue = function () {
@@ -121,6 +130,7 @@
     <h1>Test window based sequencing</h1>
     <p>
       <div id="value"></div>
+      <div id="value2"></div>
     </p>
     <p>
       <button id="jumprun">JumpRun</button>

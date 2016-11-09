@@ -369,10 +369,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	/*
 		SequencerCue
 	*/
-	var SequencerCue = function (key, interval, data) {
-		this.key = key;
-		this.interval = interval;
-		this.data = data;
+	var SequencerCue = function (item) {
+		this.key = item.key;
+		this.interval = item.interval;
+		this.data = item.data;
 	};
 
 	SequencerCue.prototype.toString = function () {
@@ -1252,11 +1252,11 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this._axis.lookupByInterval(searchInterval).forEach(function (pointInfo) {
 			_dict[pointInfo.key] = pointInfo.interval;
 		});
-		return Object.keys(_dict).
-			map(function(key){
+		return Object.keys(_dict)
+			.map(function(key){
 				return this.getCue(key);
-			}, this).
-			filter(function (cue) {
+			}, this)
+			.filter(function (cue) {
 				return (searchInterval.overlapsInterval(cue.interval));
 			}, this);
 	};
@@ -1284,6 +1284,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		DefaultSequencer : Sequencer,
 		Axis : axis.Axis,
 		SequencerError : SequencerError,
+		OpType: OpType
 	};
 
 });

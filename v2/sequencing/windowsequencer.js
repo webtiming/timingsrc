@@ -60,6 +60,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 
 	var Interval = seq.Interval;
+	var OpType = seq.OpType;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
 		this._axis = _axis || new axis.Axis();
@@ -76,9 +77,9 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		// Define Events API
 		// event type "events" defined by default
 		eventutils.eventify(this, WindowSequencer.prototype);
-		this.eventifyDefineEvent("enter", {init:true}) // define enter event (supporting init-event)
-		this.eventifyDefineEvent("exit") 
-		this.eventifyDefineEvent("change"); 
+		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
+		this.eventifyDefineEvent("remove");
+
 
 		// Wrapping prototype event handlers and store references on instance
 		this._wrappedOnAxisChange = function (e) {this._onAxisChange(e);};
@@ -201,8 +202,22 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	  	overrides how immediate events are constructed
 	*/
 	WindowSequencer.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "enter") {
-			return this._reevaluate();
+		if (type === "change") {
+			// make event items from active keys
+		    return this._activeKeys.map(function (key) {
+		    	var item = this._axis.getItem(key);
+		    	return {
+		    		type: "change", 
+		    		e: {
+		    			key : key, 
+		    			interval : item.interval,
+		    			data : item.data,
+		    			type : "change",
+		    			op : "init",
+		    			verb : "enter"
+		    		}
+		    	};
+		    }, this);
 		}
 		return [];
 	};
@@ -232,6 +247,27 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		return op;
 	};
 
+	WindowSequencer.prototype._getOpTypeFromOp = function (op) {
+		var opType;
+	    if (op.type === axis.OpType.CREATE) opType = OpType.CREATE;
+	    else if (op.type === axis.OpType.UPDATE) opType = OpType.UPDATE;
+	    else if (op.type === axis.OpType.REPEAT) opType = OpType.UPDATE;
+	    else if (op.type === axis.OpType.REMOVE) opType = OpType.DELETE;
+	    return opType;
+	};
+
+	WindowSequencer.prototype._getItem = function (axisOpList, key) {
+		var item;
+    	if (axisOpList) {
+    		item = this._getOpFromAxisOpList(axisOpList, key);
+    		item.opType = this._getOpTypeFromOp(item);
+    	} else {
+    		item = this._axis.getItem(key);
+    		item.opType = "none";
+    	}
+    	return item;
+	};
+
 	/*
 		RE-EVALUATE
 
@@ -246,10 +282,10 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		var activeInterval = this._getActiveInterval();
 
 		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
-		var oldKeys = this._activeKeys;		
+		var oldKeys = this._activeKeys;	
 		var newKeys = this._seqA.getCuesByInterval(activeInterval).map(function (item) {
 			return item.key;
-		});	
+		});
 	    var exitKeys = unique(oldKeys, newKeys);
 	    var enterKeys = unique(newKeys, oldKeys);
 
@@ -265,68 +301,58 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		    		changeKeys.push(op.key);
 		    	}
 		    });
-		}
-	    
+		}    
+
 		// update active keys
 	    this._activeKeys = newKeys;
 
 	    // make event items from enter/exit keys
-	    var eList = [];
-	    var exitItems = exitKeys.forEach(function (key) {
-	    	var op = this._getOpFromAxisOpList(axisOpList, key);
-	    	var interval, data;
-	    	if (op.type === axis.OpType.REMOVE) {
-	    		interval = op.interval;
-	    		data = op.data;
-	    	} else {
-	    		interval = this._axis.getIntervalByKey(key);
-	    		data = this.getData(key);
-	    	}
+	    var item, eList = [];
+	    exitKeys.forEach(function (key) {
+	    	item = this._getItem(axisOpList, key);
 	    	eList.push({
-	    		type: "exit", 
+	    		type: "remove", 
 	    		e: {
 	    			key : key, 
-	    			interval : interval,
-	    			type : "exit",
-	    			data : data
+	    			interval : item.interval,
+	    			type : "remove",
+	    			data : item.data,
+	    			op : item.opType,
+	    			verb : "exit"
 	    		}
 	    	});
 	    }, this);
-	    var enterItems = enterKeys.forEach(function (key) {
-	    	eList.push({
-	    		type: "enter", 
-	    		e: {
-	    			key:key, 
-	    			interval: this._axis.getIntervalByKey(key),
-	    			type: "enter",
-	    			data: this.getData(key)
-	    		}
-	    	});
-	    }, this);
-	    var changeItems = changeKeys.forEach(function (key) {
+	    enterKeys.forEach(function (key) {
+	    	item = this._getItem(axisOpList, key);
 	    	eList.push({
 	    		type: "change", 
 	    		e: {
 	    			key:key, 
-	    			interval: this._axis.getIntervalByKey(key),
+	    			interval: item.interval,
 	    			type: "change",
-	    			data: this.getData(key)
+	    			data: item.data,
+	    			op : item.opType,
+	    			verb : "enter"
+	    		}
+	    	});
+	    }, this);
+	    changeKeys.forEach(function (key) {
+	    	item = this._getItem(axisOpList, key);
+	    	eList.push({
+	    		type: "change", 
+	    		e: {
+	    			key:key, 
+	    			interval: item.interval,
+	    			type: "change",
+	    			data: item.data,
+	    			op : item.opType,
+	    			verb : "none"
 	    		}
 	    	});
 	    }, this);
 	    this.eventifyTriggerEvents(eList);
  
-	    // make event items from active keys
-	    return this._activeKeys.map(function (key) {
-	    	return {
-	    		type: "enter", 
-	    		e: {
-	    			key:key, 
-	    			interval: this._axis.getIntervalByKey(key),
-	    			type : "enter"
-	    		}
-	    	};
-	    }, this);
+	  
 	};
 
 	/*
@@ -344,8 +370,8 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		return this._seqA.addCue(key, interval, data);
 	};
 
-	WindowSequencer.prototype.removeCue = function (key, removedData) {
-		return this._seqA.removeCue(key, removedData);
+	WindowSequencer.prototype.removeCue = function (key) {
+		return this._seqA.removeCue(key);
 	};
 
 	// true if cues exists with given key
@@ -417,11 +443,6 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		this._seqA.close();
 		this._seqB.close();
 	};
-
-	// inheritance
-	// To be overridden by subclass specializations
-	WindowSequencer.prototype.loadData = function () {};
-	WindowSequencer.prototype.getData = function (key) {};
 
 	return WindowSequencer;
 });
