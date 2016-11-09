@@ -346,7 +346,6 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this.dueTs = dueTs;
 		this.delay = ts - dueTs;
 		this.directionType = directionType;
-		console.log(verb);
 		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
 		this.op = op;
 		this.verb = verb;
@@ -399,9 +398,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 		// set up eventing stuff
 		eventutils.eventify(this, Sequencer.prototype);
-		this.eventifyDefineEvent("enter", {init:true}); // define enter event (supporting init-event)
-		this.eventifyDefineEvent("exit"); 
-		this.eventifyDefineEvent("change");
+		this.eventifyDefineEvent("change", {init:true}); // define enter event (supporting init-event)
+		this.eventifyDefineEvent("remove");
 
 		// wrap prototype handlers and store ref on instance
 		this._wrappedOnTimingChange = function () {this._onTimingChange();};
@@ -420,7 +418,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	  	overrides how immediate events are constructed 
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "enter") {
+		if (type === "change") {
 			return this._processInitialEvents();
 		}
 		return [];
