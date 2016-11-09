@@ -6,7 +6,8 @@
 define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'], 
 	function (timingobject, sequencing, mediasync) {
 	return {
-		
+		version : "v1",
+
 		// Utils
 		inherit : timingobject.inherit,
 

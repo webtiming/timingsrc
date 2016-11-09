@@ -1,5 +1,5 @@
 {
-    baseUrl: '../source',
+    baseUrl: '../v1',
     name: '../build/almond',
     include: ['timingsrc'],
     //insertRequire: ['timingsrc'],
