@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+      var to, s, createCue, updateCue, removeCue, repeatCue;
+
+      require(['timingsrc'], function (timingsrc) {
+
+        // Timing Object
+        to = new timingsrc.TimingObject({range:[0,52]});
+        var toA = new timingsrc.SkewConverter(to, -5.0);
+        var toB = new timingsrc.SkewConverter(to, 4.0);
+        
+        // Sequencer
+        s = new timingsrc.Sequencer(toA, toB);
+
+        var run = function () {
+
+          var data = {
+            a: {data: 'A', start: 0, end: 1 },
+            b: {data: 'B', start: 2, end: 3 },
+            c: {data: 'C', start: 4, end: 5 },
+            d: {data: 'D', start: 6, end: 7 },
+            e: {data: 'E', start: 8, end: 9 },
+            f: {data: 'F', start: 10, end: 11 },
+            g: {data: 'G', start: 12, end: 13 },
+            h: {data: 'H', start: 14, end: 15 },
+            i: {data: 'I', start: 16, end: 17 },
+            j: {data: 'J', start: 18, end: 19 },
+            k: {data: 'K', start: 20, end: 21 },
+            l: {data: 'L', start: 22, end: 23 },
+            m: {data: 'M', start: 24, end: 25 },
+            n: {data: 'N', start: 26, end: 27 },
+            o: {data: 'O', start: 28, end: 29 },
+            p: {data: 'P', start: 30, end: 31 },
+            q: {data: 'Q', start: 32, end: 33 },
+            r: {data: 'R', start: 34, end: 35 },
+            s: {data: 'S', start: 36, end: 37 },
+            t: {data: 'T', start: 38, end: 39 },
+            u: {data: 'U', start: 40, end: 41 },
+            v: {data: 'V', start: 42, end: 43 },
+            w: {data: 'W', start: 44, end: 45 },
+            x: {data: 'X', start: 46, end: 47 },
+            y: {data: 'Y', start: 48, end: 49 },
+            z: {data: 'Z', start: 50, end: 51 } 
+          };
+ 
+          var Interval = timingsrc.Interval;
+
+          // load data into sequencer
+          setTimeout(function () {
+            var r = s.request();
+            Object.keys(data).forEach(function (key) {
+              r.addCue(key, new Interval(data[key].start, data[key].end));
+            });
+            r.submit();
+          }, 200);
+ 
+          // register event handlers
+          /*
+          s.on("enter", function (e) {console.log("enter", e)});
+          s.on("exit", function (e) {console.log("exit", e)});          
+          */
+          s.on("events", function (eList) {
+            eList.forEach(function (e) {
+                console.log("events", e);
+            });
+          });
+
+
+          var jumpRunBtn = document.getElementById("jumprun");
+          jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
+          var pauseBtn = document.getElementById("pause");
+          pauseBtn.onclick = function () {to.update({velocity: 0.0});};
+          var resetBtn = document.getElementById("reset");
+          resetBtn.onclick = function () {to.update({position:0.0, velocity: 0.0});};
+          document.getElementById("play").onclick = function () {to.update({velocity:1.0});};
+          document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
+
+          var value = document.getElementById("value");
+          to.on("timeupdate", function () {
+            value.innerHTML = to.query().position.toFixed(2);
+          });
+
+          createCue = function () {
+              console.log("create six");
+              s.addCue("six", new Interval(5.0, 8.0));
+          };
+
+          updateCue = function () {
+              console.log("update six");
+              s.addCue("six", new Interval(7.0, 7.0));
+          };
+
+          removeCue = function () {
+              console.log("remove six");
+              s.removeCue("six");
+          };
+
+          repeatCue = function () {
+            console.log("repeat three");
+            s.addCue("three", new Interval(3.0, 4.0));
+          };
+
+        };
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test window based sequencing</h1>
+    <p>
+      <div id="value"></div>
+    </p>
+    <p>
+      <button id="jumprun">JumpRun</button>
+      <button id="play">Play</button>
+      <button id="pause">Pause</button>
+      <button id="reset">Reset</button>
+      <button id="backwards">Backwards</button>
+    </p>
+    <p>
+      <button onclick="javascript:createCue()">Create Cue</button>
+      <button onclick="javascript:updateCue()">Modify Cue</button>
+      <button onclick="javascript:removeCue()">Remove Cue</button>
+      <button onclick="javascript:repeatCue()">Repeat Cue</button>
+    </p>
+  </body>
+</html>

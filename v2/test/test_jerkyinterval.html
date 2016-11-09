@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+      var to, to2, j;
+
+      require(['timingsrc'], function (timingsrc) {
+
+        // Timing Objects
+        to = new timingsrc.TimingObject();
+        to2 = new timingsrc.SkewConverter(to, 10);
+
+        // Jerky Interval
+        j = new timingsrc.JerkyInterval(to, to2);
+      
+        var run = function () {
+
+          // Hook up buttons UI
+          document.getElementById('play').onclick = function () {to.update({velocity:1.0});};
+          document.getElementById('pause').onclick = function () {to.update({velocity:0.0});};
+          document.getElementById('reset').onclick = function () {to.update({position: 0.0, velocity:0.0});};
+          document.getElementById('back').onclick = function () {to.update({velocity:-1.0});};
+
+          // Hook up text UI
+          var valueElem = document.getElementById('value');
+          to.on("timeupdate", function () {
+            valueElem.innerHTML = to.query().position.toFixed(2); 
+          });
+
+          var valueElem2 = document.getElementById('value2');
+          to2.on("timeupdate", function () {
+            valueElem2.innerHTML = to2.query().position.toFixed(2); 
+          });
+          
+          var windowElem = document.getElementById('window');
+          j.on("change", function (){
+            console.log("change", j.range);
+            windowElem.innerHTML = "[" + j.low.toFixed(2) + "," + j.high.toFixed(2) + "]";
+          });
+
+        };
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Jerky Interval</h1>
+
+      <div id="value"></div>
+      <div id="value2"></div>
+      <div id="window"></div>
+      <p>
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="back">Back</button>
+      </p>
+  </body>
+</html>
