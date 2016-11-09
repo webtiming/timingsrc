@@ -681,7 +681,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		if (!_isMoving) {
 			// break control flow so that events are emitted after addCue has completed
 			setTimeout(function () {
-				self._processIntervalEvents(now, enterItems, exitItems, changeItems);
+				self._processIntervalEvents(now, exitItems, enterItems, changeItems);
 				// not moving should imply that SCHEDULE be empty
 				// no need to call main - will be called by scheduled timeout
 			}, 0);
