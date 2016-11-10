@@ -304,7 +304,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 	};
 
 	Axis.prototype.getPointType = function (point, interval) {
-		if (interval.isSingular() && point === interval.low) return PointType.SINGULAR;
+		if (interval.singular && point === interval.low) return PointType.SINGULAR;
 	    if (point === interval.low) return PointType.LOW;
 	    if (point === interval.high) return PointType.HIGH;
 	    if (interval.low < point && point < interval.high) return PointType.INSIDE;

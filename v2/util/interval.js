@@ -60,13 +60,10 @@ define(function () {
 		this.high = high;
 		this.lowInclude = lowInclude;
 		this.highInclude = highInclude;
+		this.length = this.high - this.low;
+		this.singular = (this.low === this.high);
+		this.finite = (isFinite(this.low) && isFinite(this.high));
 	};
-
-	Object.defineProperty(Interval.prototype, "length", {
-		get: function () {
-			return this.high - this.low;
-		}
-	});
 
 
 	Interval.prototype.toString = function () {
@@ -74,16 +71,11 @@ define(function () {
 		var highBracket = (this.highInclude) ? "]" : ">";
 		var low = (this.low === -Infinity) ? "<--" : this.low.toFixed(2);
 		var high = (this.high === Infinity) ? "-->" : this.high.toFixed(2);
-		if (this.isSingular())
+		if (this.singular)
 			return lowBracket + low + highBracket;
 		return lowBracket + low + ',' + high + highBracket;
 	};
-	Interval.prototype.isFinite = function () { 
-		return (isFinite(this.low) && isFinite(this.high));
-	};
-	Interval.prototype.isSingular = function () {
-		return (this.low === this.high);
-	};
+
 	Interval.prototype.coversPoint = function (x) {
 		if (this.low < x && x < this.high) return true;
 		if (this.lowInclude && x === this.low) return true;
@@ -95,11 +87,11 @@ define(function () {
 	Interval.prototype.overlapsInterval = function (other) {
 		if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");	
 		// singularities
-		if (this.isSingular() && other.isSingular()) 
+		if (this.singular && other.singular) 
 			return (this.low === other.low);
-		if (this.isSingular())
+		if (this.singular)
 			return other.coversPoint(this.low);
-		if (other.isSingular())
+		if (other.singular)
 			return this.coversPoint(other.low); 
 		// not overlap right
 		if (this.high < other.low) return false;

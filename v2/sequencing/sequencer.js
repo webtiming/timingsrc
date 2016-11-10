@@ -1005,7 +1005,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
    		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now();
 	    eventList.forEach(function (e) {
-			if (e.task.interval.isSingular()) {
+			if (e.task.interval.singular) {
 				// make two events for singular
 
 				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.ENTER));
