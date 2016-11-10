@@ -1,5 +1,5 @@
-define(['util/eventutils', 'util/motionutils'], 
-		function (eventutils, motionutils) {
+define(['util/eventify', 'util/motionutils'], 
+		function (eventify, motionutils) {
 
 
 	/*
@@ -43,7 +43,7 @@ define(['util/eventutils', 'util/motionutils'],
 		this._ready = false;
 
 		// event support
-		eventutils.eventify(this, JerkyInterval.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("ready", {init:true}) // define ready event
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 
@@ -61,6 +61,8 @@ define(['util/eventutils', 'util/motionutils'],
 			to.on("change", this._onChange, this);
 		}, this);
 	};
+	eventify.eventifyPrototype(JerkyInterval.prototype);
+
 
 	JerkyInterval.prototype._initialise = function () {
 		this._ready = true;
@@ -69,9 +71,9 @@ define(['util/eventutils', 'util/motionutils'],
 
 	JerkyInterval.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
-			return [{type: type, e: undefined}]; 
+			return [undefined]; 
 		} else if (type === "ready") {
-			return (this._ready) ? [{type:type, e: undefined}] : []; 
+			return (this._ready) ? [undefined] : []; 
 		} 
 		return [];
 	};

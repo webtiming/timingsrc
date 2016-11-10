@@ -51,7 +51,7 @@
 	implying that master clock is equal to local clock.
 */
 
-define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
+define(['./eventify', './timeoututils'], function (eventify, timeoututils) {
 
 	'use strict';
 
@@ -88,11 +88,13 @@ define(['./eventutils', './timeoututils'], function (eventutils, timeoututils) {
 		options = options || {};
 		this._vector  = {position: now, velocity: 1.0, timestamp: now};	
 		// event support
-		eventutils.eventify(this, MasterClock.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change"); // define change event (no init-event)
 		// adjust
 		this.adjust(options);
 	};
+	eventify.eventifyPrototype(MasterClock.prototype);
+
 
 	/*
 		ADJUST

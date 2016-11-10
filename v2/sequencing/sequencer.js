@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'], 
-	function (motionutils, eventutils, Interval, axis)  {
+define(['util/motionutils', 'util/eventify', 'util/interval', './axis'], 
+	function (motionutils, eventify, Interval, axis)  {
 
 	'use strict';
 
@@ -393,7 +393,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this._activeKeys = []; // active intervals
 
 		// set up eventing stuff
-		eventutils.eventify(this, Sequencer.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:true}); // define enter event (supporting init-event)
 		this.eventifyDefineEvent("remove");
 
@@ -404,6 +404,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		// initialise
 		this._to.on("change", this._wrappedOnTimingChange, this);
 	};
+	eventify.eventifyPrototype(Sequencer.prototype);
 
 	// making Interval constructor available on all sequencer instances
 	Object.defineProperty(Sequencer.prototype, "Interval", {
@@ -1058,7 +1059,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		return this._activeKeys.map(function (key) {
 			item = this._axis.getItem(key);
 			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);
-			return {type: eArg.type, e: eArg};
+			return eArg;
 		}, this);
 	};
 
@@ -1280,8 +1281,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		Interval : Interval,
 		DefaultSequencer : Sequencer,
 		Axis : axis.Axis,
-		SequencerError : SequencerError,
-		OpType: OpType
+		SequencerError : SequencerError
 	};
 
 });

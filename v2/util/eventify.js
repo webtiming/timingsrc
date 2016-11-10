@@ -1,3 +1,4 @@
+
 /*
 	Copyright 2015 Norut Northern Research Institute
 	Author : Ingar Mæhlum Arntzen
@@ -17,8 +18,6 @@
   You should have received a copy of the GNU Lesser General Public License
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 
 
 define(function () {
@@ -58,6 +57,15 @@ define(function () {
 			concatAll();
 	};
 
+	// standard inheritance function
+	var inherit = function (Child, Parent) {
+		var F = function () {}; // empty object to break prototype chain - hinder child prototype changes to affect parent
+		F.prototype = Parent.prototype;
+		Child.prototype = new F(); // child gets parents prototypes via F
+		Child.uber = Parent.prototype; // reference in parent to superclass
+		Child.prototype.constructor = Child; // resetting constructor pointer 
+	};
+
 
 	/*
 		HANDLER MAP
@@ -69,7 +77,7 @@ define(function () {
 		this._id = 0;
 		this._map = {}; // ID -> {handler:, ctx:, pending:, count: }
 	};
-	
+
 	HandlerMap.prototype._newID = function () {
 		this._id += 1;
 		return this._id;
@@ -122,7 +130,7 @@ define(function () {
 
 
 	/*
-	
+
 		EVENTIFY
 
 		Eventify brings eventing capabilities to any object.
@@ -139,8 +147,7 @@ define(function () {
 
 	*/
 
-	var eventify = function (object, _prototype) {
-
+	var eventifyInstance = function (object) {
 		/*
 			Default event name "events" will fire a list of events
 		*/
@@ -150,9 +157,11 @@ define(function () {
 		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:true};
 
+		return object;
+	};
 
 
-
+	var eventifyPrototype = function (_prototype) {
 		/*
 			DEFINE EVENT TYPE
 			type is event type (string)
@@ -180,20 +189,27 @@ define(function () {
 			.eventifyMakeInitEvents(type)
 
 		*/
-		_prototype._eventifyMakeInitEvents = function (type) {
+
+		_prototype._eventifyMakeEItemList = function (type) {
 			var makeInitEvents = this.eventifyMakeInitEvents || function (type) {return [];};
-			var typeList;
+			return makeInitEvents.call(this, type)
+				.map(function(e){
+					return {type:type, e:e};
+				});
+		};
+
+		_prototype._eventifyMakeInitEvents = function (type) {
 			if (type !== "events") {
-				typeList = [type];
+				return this._eventifyMakeEItemList(type);
 			} else {
 				// type === 'events'
-				typeList = Object.keys(this._callbacks).filter(function (key) {
+				var typeList = Object.keys(this._callbacks).filter(function (key) {
 					return (key !== "events" && this._callbacks[key]._options.init === true);
 				}, this);
-			}
-			return typeList.concatMap(function (type) {
-				return makeInitEvents.call(this, type);
-			}, this);		
+				return typeList.concatMap(function(_type){
+					return this._eventifyMakeEItemList(_type);
+				}, this);
+			}	
 		};
 
 		/*
@@ -214,9 +230,9 @@ define(function () {
 		_prototype._eventifyEventFormatter = function (type, e) {
 			var eventFormatter = this.eventifyEventFormatter || function (type, e) {return e;};
 			if (type === "events") {
-				// e is really eList - run eventformatter on every item in list
-				e = e.map(function(item){
-					return eventFormatter.call(this, item.type, item.e);
+				// e is really eList - eventformatter on every e in list
+				e = e.map(function(eItem){
+					return {type: eItem.type, e: eventFormatter(eItem.type, eItem.e)};
 				});
 			}			
 			return eventFormatter(type,e);
@@ -254,110 +270,110 @@ define(function () {
 			this._eventifyTriggerProtectedEvents(eItemList);
 			this._eventifyTriggerRegularEvents(eItemList);
 			return this;
-        };
+	    };
 
-        /*
-         	TRIGGER EVENT
-         	Shorthand for triggering a single event
-        */
-        _prototype.eventifyTriggerEvent = function (type, e) {
-        	return this.eventifyTriggerEvents([{type:type, e:e}]);
-        };
+	    /*
+	     	TRIGGER EVENT
+	     	Shorthand for triggering a single event
+	    */
+	    _prototype.eventifyTriggerEvent = function (type, e) {
+	    	return this.eventifyTriggerEvents([{type:type, e:e}]);
+	    };
 
-    	/*
+		/*
 			Internal method for triggering events
 			- distinguish "events" from other event names
-    	*/
-      	_prototype._eventifyTriggerProtectedEvents = function (eItemList, handlerID) {
-      		// trigger event list on protected event type "events"      		
-      		this._eventifyTriggerEvent("events", {type:"events", e:eItemList}, handlerID);
-      	};
+		*/
+	  	_prototype._eventifyTriggerProtectedEvents = function (eItemList, handlerID) {
+	  		// trigger event list on protected event type "events"      		
+	  		this._eventifyTriggerEvent("events", eItemList, handlerID);
+	  	};
 
-      	_prototype._eventifyTriggerRegularEvents = function (eItemList, handlerID) {
-      		// trigger events on individual event types
-      		eItemList.forEach(function (eItem) {
-      			this._eventifyTriggerEvent(eItem.type, eItem, handlerID);
+	  	_prototype._eventifyTriggerRegularEvents = function (eItemList, handlerID) {
+	  		// trigger events on individual event types
+	  		eItemList.forEach(function (eItem) {
+	  			this._eventifyTriggerEvent(eItem.type, eItem.e, handlerID);
 	      	}, this);
-      	};
+	  	};
 
-    	/*
+		/*
 			Internal method for triggering a single event.
 			- if handler specificed - trigger only on given handler (for internal use only)
 			- awareness of init-events	
-        */
-        _prototype._eventifyTriggerEvent = function (type, eItem, handlerID) {
+	    */
+	    _prototype._eventifyTriggerEvent = function (type, e, handlerID) {
 			var argList, e, eInfo = {};
 			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type); 
 			var handlerMap = this._callbacks[type];
 			var init = handlerMap._options.init;
-    		handlerMap.getItems().forEach(function (handlerItem) {
-    			if (handlerID === undefined) {
-           			// all handlers to be invoked, except those with initial pending
-            		if (handlerItem.pending) { 
-              			return false;
-            		}
-          		} else {
-            		// only given handler to be called - ensuring that it is not removed
-            		if (handlerItem.ID === handlerID) {
-            			eInfo.init = true;
-            			handlerItem.pending = false;
-            		} else {
-              			return false;
-            		}
-          		}
-          		// eInfo
-          		if (init) {
-          			eInfo.init = (handlerItem.ID === handlerID) ? true : false;
-          		}
-          		eInfo.count = handlerItem.count;
-          		eInfo.src = this;
-          		// formatters
-          		e = this._eventifyEventFormatter(eItem.type, eItem.e);
-          		argList = this._eventifyCallbackFormatter(type, e, eInfo);
-          		try {
-            		handlerItem.handler.apply(handlerItem.ctx, argList);
-            		handlerItem.count += 1;
-          			return true;
+			handlerMap.getItems().forEach(function (handlerItem) {
+				if (handlerID === undefined) {
+	       			// all handlers to be invoked, except those with initial pending
+	        		if (handlerItem.pending) { 
+	          			return false;
+	        		}
+	      		} else {
+	        		// only given handler to be called - ensuring that it is not removed
+	        		if (handlerItem.ID === handlerID) {
+	        			eInfo.init = true;
+	        			handlerItem.pending = false;
+	        		} else {
+	          			return false;
+	        		}
+	      		}
+	      		// eInfo
+	      		if (init) {
+	      			eInfo.init = (handlerItem.ID === handlerID) ? true : false;
+	      		}
+	      		eInfo.count = handlerItem.count;
+	      		eInfo.src = this;
+	      		// formatters
+	      		e = this._eventifyEventFormatter(type, e);
+	      		argList = this._eventifyCallbackFormatter(type, e, eInfo);
+	      		try {
+	        		handlerItem.handler.apply(handlerItem.ctx, argList);
+	        		handlerItem.count += 1;
+	      			return true;
 	          	} catch (err) {
-    	        	console.log("Error in " + type + ": " + handlerItem.handler + " " + handlerItem.ctx + ": ", err);
-          		}
-    		}, this);
-    		return false;
-    	};
+		        	console.log("Error in " + type + ": " + handlerItem.handler + " " + handlerItem.ctx + ": ", err);
+	      		}
+			}, this);
+			return false;
+		};
 
-    	/*
+		/*
 			ON
 
 			register callback on event type. Available directly on object
 			optionally supply context object (this) used on callback invokation.
-    	*/
+		*/
 		_prototype.on = function (type, handler, ctx) {
 			if (!handler || typeof handler !== "function") throw new Error("Illegal handler");
 		    if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type);
 			var handlerMap = this._callbacks[type];
-  			// register handler
-  			ctx = ctx || this;
-  			var handlerID = handlerMap.register(handler, ctx);
-    	    // do initial callback - if supported by source
-    	    if (handlerMap._options.init) {
-    	    	// flag handler
-    	    	var handlerItem = handlerMap.getItem(handlerID);
-    	    	handlerItem.pending = true;
-    	    	var self = this;
+				// register handler
+				ctx = ctx || this;
+				var handlerID = handlerMap.register(handler, ctx);
+		    // do initial callback - if supported by source
+		    if (handlerMap._options.init) {
+		    	// flag handler
+		    	var handlerItem = handlerMap.getItem(handlerID);
+		    	handlerItem.pending = true;
+		    	var self = this;
 	    	    setTimeout(function () {
 	    	    	var eItemList = self._eventifyMakeInitEvents(type);
-    	    		if (eItemList.length > 0) {
-    	    			if (type === "events") {
-    	    				self._eventifyTriggerProtectedEvents(eItemList, handlerID);
-    	    			} else {
-    	    				self._eventifyTriggerRegularEvents(eItemList, handlerID);
-    	    			}
-    	    		} else {
-    	    			// initial callback is noop
-    	    			handlerItem.pending = false;
-    	    		}
+		    		if (eItemList.length > 0) {
+		    			if (type === "events") {
+		    				self._eventifyTriggerProtectedEvents(eItemList, handlerID);
+		    			} else {
+		    				self._eventifyTriggerRegularEvents(eItemList, handlerID);
+		    			}
+		    		} else {
+		    			// initial callback is noop
+		    			handlerItem.pending = false;
+		    		}
 	    	    }, 0);
-    	    }
+		    }
 	      	return this;
 		};
 
@@ -372,17 +388,126 @@ define(function () {
 				var handlerMap = this._callbacks[type];
 				handlerMap.unregister(handler);
 				
-      		}
-      		return this;
+	  		}
+	  		return this;
 		};
 
-		// Eventify returns eventified object
-		return object;
+
 	};
+
+	/*
+		BASE EVENT OBJECT
+
+		Convenience base class allowing eventified classes to be derived using (prototypal) inheritance.
+		This is alternative approach, hiding the use of eventifyInstance and eventifyPrototype.
+		
+	*/
+	var BaseEventObject = function () {
+		eventifyInstance(this);
+	};
+	eventifyPrototype(BaseEventObject.prototype);
+
+	// make standard inheritance function available as static method on constructor.
+	BaseEventObject.inherit = inherit;
+
+
+
+
+	/* 
+		EVENT BOOLEAN
+
+		Single boolean variable, its value accessible through get and toggle methods. 
+		Defines an event 'change' whenever the value of the variable is changed. 
+
+		initialised to false if initValue is not specified
+		
+		Note : implementation uses falsiness of input parameter to constructor and set() operation,
+		so eventBoolean(-1) will actually set it to true because
+		(-1) ? true : false -> true !  
+	*/
+
+	var EventBoolean = function (initValue) {
+		BaseEventObject.call(this);
+		this._value = (initValue) ? true : false;
+		// define change event (supporting init-event)
+		this.eventifyDefineEvent("change", {init:true}); 
+	};
+	BaseEventObject.inherit(EventBoolean, BaseEventObject);
+
+	// ovverride to specify initialevents
+	EventBoolean.prototype.eventifyMakeInitEvents = function (type) {
+		if (type === "change") {
+			return [this._value];
+		}
+		return [];
+	};
+
+	EventBoolean.prototype.get = function () { return this._value;};
+
+	EventBoolean.prototype.set = function (newValue) {
+		newValue = (newValue) ? true : false;
+		if (newValue !== this._value) {
+			this._value = newValue;
+			this.eventifyTriggerEvent("change", newValue);
+			return true;
+		}
+		return false;
+	};
+
+	EventBoolean.prototype.toogle = function () {
+		var newValue = !this._value;
+		this._value = newValue;
+		this.eventifyTriggerEvent("change", newValue);
+		return true;
+	};
+
+
+
+
+	/* 
+		EVENT VARIABLE
+
+		Single variable, its value accessible through get and set methods. 
+		Defines an event 'change' whenever the value of the variable is changed. 
+	*/
+
+	var EventVariable = function (initValue) {
+		BaseEventObject.call(this);
+		this._value = initValue;
+		// define change event (supporting init-event)
+		this.eventifyDefineEvent("change", {init:true}); 
+	};
+	BaseEventObject.inherit(EventVariable, BaseEventObject);
+
+	// ovverride to specify initialevents
+	EventVariable.prototype.eventifyMakeInitEvents = function (type) {
+		if (type === "change") {
+			return [this._value];
+		}
+		return [];
+	};
+
+	EventVariable.prototype.get = function () { return this._value;};
+
+	EventVariable.prototype.set = function (newValue) {
+		if (newValue !== this._value) {
+			this._value = newValue;
+			this.eventifyTriggerEvent("change", newValue);
+			return true;
+		}
+		return false;
+	};
+
+
 
 	// module api
 	return {
-		eventify:eventify
+		eventifyPrototype : eventifyPrototype,
+		eventifyInstance : eventifyInstance,
+		BaseEventObject : BaseEventObject,
+		EventVariable : EventVariable,
+		EventBoolean : EventBoolean
 	};
-});
 
+
+});
