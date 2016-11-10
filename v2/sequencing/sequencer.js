@@ -89,15 +89,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		}
     });
 
-    var OpType = Object.freeze({
-    	INIT: "init",
-    	CREATE: "create",
-    	UPDATE: "update",
-    	DELETE: "delete",
-    	NONE: "none"
-    });
-
-
+    // OPTYPES - defined in axis
+    var OpType = axis.OpType;
 
 
 	/*
@@ -348,7 +341,8 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		this.directionType = directionType;
 		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
 		this.op = op;
-		this.verb = verb;
+		this.enter = (verb === VerbType.ENTER);
+		this.exit = (verb === VerbType.EXIT);
 	};
 
 	SequencerEArgs.prototype.toString = function () {
@@ -356,8 +350,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
         s += " " + this.key;
         s += " " + this.interval.toString();
         s += " " + this.type;
-        s += " " + this.op;
-        s += " " + this.verb;
+        var verb = "none";
+        if (this.enter) verb = "enter";
+        else if (this.exit) verb = "exit";
+        s += " (" + this.op + "," + verb + ")";
         s += " " + this.directionType;
         s += " " + this.pointType;
         s += " delay:" + this.delay.toFixed(4);
@@ -462,6 +458,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	};
 
 	Sequencer.prototype._onTimingChange = function (event) {
+
 		// Set the time for this processing step
 	    var now = this._clock.now(); 
 	    var initVector = this._to.vector;
@@ -605,6 +602,10 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
 
+		// filter out NOOPS (i.e. remove operations that removed nothing)
+		origOpList = origOpList.filter(function (op) {
+			return (op.type !== OpType.NONE);
+		});
 	
 	    var now = this._clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
@@ -615,9 +616,9 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    var exitItems = []; // {key:key, interval:interval}
 	    var isActive, shouldBeActive;
 
-		// filter out NOOP and REPEATs
+		// filter out REPEATs to get only operations where interval changed
 		var opList = origOpList.filter(function (op) {
-			return (op.type !== axis.OpType.NOOP && op.type !== axis.OpType.REPEAT);
+			return (op.type !== OpType.REPEAT);
 		});
 
 		var i, e, key, interval, data, opType;	
@@ -636,33 +637,28 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		    */
 		    isActive = this.isActive(key);
 		    shouldBeActive = false;
-		    if (op.type === axis.OpType.CREATE || op.type === axis.OpType.UPDATE) {
+		    if (op.type === OpType.ADD || op.type === OpType.UPDATE) {
 		    	if (interval.coversPoint(nowPos)) {
 					shouldBeActive = true;
 		    	}
 		    }
 
-		    // save information about what operation triggered the event
-		    if (op.type === axis.OpType.CREATE) opType = OpType.CREATE;
-		    else if (op.type === axis.OpType.UPDATE) opType = OpType.UPDATE;
-		    else if (op.type === axis.OpType.REPEAT) opType = OpType.UPDATE;
-		    else if (op.type === axis.OpType.REMOVE) opType = OpType.DELETE;
-
+		    // forward opType information about what operation triggered the event
 		    if (isActive && !shouldBeActive) {
-				exitItems.push({key:key, interval:interval, data: data, opType:opType});
+				exitItems.push({key:key, interval:interval, data: data, opType:op.type});
 			} else if (!isActive && shouldBeActive) {
-				enterItems.push({key:key, interval:interval, data: data, opType:opType});
+				enterItems.push({key:key, interval:interval, data: data, opType:op.type});
 		    }
 	    }, this);
 
 
 		/* 
 			change events
-			generate change events for currently active spans, which did change, 
+			generate change events for currently active cues, which did change, 
 			but remained active - thus no enter/exit events will be emitted).
 		
-			these are items that are active, but not in enterItems list,
-			including REPEAT operations (change in non-temporal sense)
+			these are items that are active, but not in exitItems list.
+			(origOpList includes REPEAT operations (change in non-temporal sense)
 		*/
 		var exitKeys = exitItems.map(function (item) {return item.key;});
 		var changeItems = origOpList.
@@ -672,6 +668,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			map (function (op) {
 				return {key: op.key, interval: op.interval, data: op.data};
 			}, this);
+
 
 		/* 
 			special case 
@@ -753,7 +750,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 	    		data = op.data;
 
 	    		// Nothing to reload for remove events
-		    	if (op.type === axis.OpType.REMOVE) {
+		    	if (op.type === OpType.REMOVE) {
 					return;
 		    	}
 
@@ -1079,14 +1076,14 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 		var index, eventList = [];
 		eArgList.forEach(function (eArg) {
 			// exit interval - remove keys 
-		    if (eArg.verb === VerbType.EXIT) {
+		    if (eArg.exit) {
 				index = this._activeKeys.indexOf(eArg.key);
 				if (index > -1) {
 			    	this._activeKeys.splice(index, 1);		
 				}
 		    }
 		    // enter interval - add key
-		    if (eArg.verb === VerbType.ENTER) {
+		    if (eArg.enter) {
 				index = this._activeKeys.indexOf(eArg.key);
 				if (index === -1) {
 				    this._activeKeys.push(eArg.key);
