@@ -56,12 +56,17 @@ define(function () {
 		if (highInclude === undefined) highInclude = false;
 		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
 		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
-		this.__defineGetter__("length", function () {return high - low;});
-		this.__defineGetter__("low", function () {return low;});
-		this.__defineGetter__("high", function () {return high;});
-		this.__defineGetter__("lowInclude", function () {return lowInclude;});
-		this.__defineGetter__("highInclude", function () {return highInclude;});
+		this.low = low;
+		this.high = high;
+		this.lowInclude = lowInclude;
+		this.highInclude = highInclude;
 	};
+
+	Object.defineProperty(Interval.prototype, "length", {
+		get: function () {
+			return this.high - this.low;
+		}
+	});
 
 
 	Interval.prototype.toString = function () {
