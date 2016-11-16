@@ -177,7 +177,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 			    this.queue.sort(this.sortFunc); // maintain ordering
 			    return true;
 			} else {
-				console.log("Schedule : task pushed a bit too late, ts < now ", (ts-now));
+				//console.log("Schedule : task pushed a bit too late, ts < now ", (ts-now));
 			}
 	    }
 	    return false;
@@ -251,7 +251,7 @@ define(['util/motionutils', 'util/eventutils', 'util/interval', './axis'],
 
 	Schedule.prototype.advance = function(now) {
 	    if (now < this.timeInterval.low) {
-			console.log("Schedule : Advancing backwards " + (now - this.timeInterval.low));
+			//console.log("Schedule : Advancing backwards " + (now - this.timeInterval.low));
 	    } 
 	    this.queue = []; // drop tasks (time interval cut off)
 	    this.timeInterval = new Interval(now, now + this.options.lookahead, false, true);
