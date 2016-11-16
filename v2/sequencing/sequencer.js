@@ -1198,19 +1198,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		return this._axis.keys();
 	};
 	
-	Sequencer.prototype.get = function (key) {
-		return this.getCues(key);
-	};
 
 	// get specific cue {key: key, interval:interva} given key
 	Sequencer.prototype.getCue = function (key) {
 		if (this._axis.hasKey(key)) {
 			return new SequencerCue (this._axis.getItem(key));
 		}  
-	};
-
-	Sequencer.prototype.items = function () {
-		return this.getCues();
 	};
 
 	// get all cues
@@ -1243,6 +1236,22 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		return res;
 	};
 
+	// Implementing same API as WINDOW
+	Sequencer.prototype.get = function (key) {
+		if (this.isActive(key)) {
+			return this.getCues(key).map(function (cue) {
+				return cue.data;
+			});
+		} else {
+			return undefined;
+		}
+	};
+
+	Sequencer.prototype.items = function () {
+		return this.getActiveCues().map(function (cue) {
+			return cue.data;
+		});
+	};
 
 	// return all (key, inteval, data) tuples, where interval covers point
 	Sequencer.prototype.getCuesByPoint = function (point) {
