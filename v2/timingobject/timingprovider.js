@@ -119,10 +119,7 @@ define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 			timestamp : now
 		};
 		// break control flow
-		var self = this;
-		setTimeout(function () {
-			self._setVector(newVector);
-		});
+		this._setVector(newVector);
 		return newVector;
 	};
 	
