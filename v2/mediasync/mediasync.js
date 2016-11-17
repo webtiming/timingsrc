@@ -154,7 +154,12 @@ define (function () {
 
     function onpaused() {
       if (_motion.vel == 1) {
-        elem.play();
+        try {
+          elem.play();          
+        } catch (err) {
+          _doCallbacks("error", {event:"error", op:"play"});
+          console.log("Error in 'play':", err);
+        }
       }      
     }
     function onplay() {
@@ -165,7 +170,8 @@ define (function () {
     }
     function onerror() {
       console.log(err); // TODO: REPORT ERRORS
-      stop();      
+      stop();     
+      _doCallbacks("error", {event: "error", msg: err});
     }
 
     var pause = function(val) {
@@ -645,8 +651,10 @@ define (function () {
       mode_change: [],
       target_change: [],
       muted: [],
-      sync: []
+      sync: [],
+      error: []
     };
+
     var _doCallbacks = function(what, e) {
       if (!_callbacks.hasOwnProperty(what)) {
         throw "Unsupported event: " + what;
