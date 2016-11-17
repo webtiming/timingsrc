@@ -33,10 +33,11 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 
 	// Operation Types
 	var OpType = Object.freeze({
-		NOOP : "noop",
-		CREATE: "create",
+		INIT: "init", // used only by sequencer
+		NONE : "none",
+		ADD: "add",
 		UPDATE: "update",
-		REPEAT: "repeat",
+		REPEAT: "repeat", // update - interval not changed
 		REMOVE: "remove"
 	});
 
@@ -119,7 +120,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 			// return old
 			return { type: OpType.REMOVE, key: key, interval: interval, data: data};		
 		} else {
-			return {type: OpType.NOOP, key: key, interval: undefined, data: undefined};
+			return {type: OpType.NONE, key: key, interval: undefined, data: undefined};
 		}
 	};
 
@@ -144,7 +145,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 				res.type = OpType.UPDATE;
 			}
 		} else {
-			res.type = OpType.CREATE;
+			res.type = OpType.ADD;
 		}
 		// map
 		this._map[key] = interval;
@@ -168,7 +169,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 	/*
 		UPDATEALL
 		- process a batch of operations
-		- creates, replaces or removes args [{key:key, interval:interval},] 
+		- adds, updates or removes args [{key:key, interval:interval},] 
 	*/
 	Axis.prototype.updateAll = function (args) {
 		var e, elist = [], key, interval, data;
@@ -303,7 +304,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 	};
 
 	Axis.prototype.getPointType = function (point, interval) {
-		if (interval.isSingular() && point === interval.low) return PointType.SINGULAR;
+		if (interval.singular && point === interval.low) return PointType.SINGULAR;
 	    if (point === interval.low) return PointType.LOW;
 	    if (point === interval.high) return PointType.HIGH;
 	    if (interval.low < point && point < interval.high) return PointType.INSIDE;

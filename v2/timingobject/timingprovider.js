@@ -19,7 +19,7 @@
 */
 
 
-define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutils) {
+define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 
 	// Polyfill for performance.now as Safari on ios doesn't have it...
 	(function(){
@@ -67,7 +67,7 @@ define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutil
 		this._skew = 0;
 		this._readyState = TimingProviderState.OPEN;
 		// events
-		eventutils.eventify(this, LocalTimingProvider.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("vectorchange", {init:false}); // define vector change event (not supporting init-event)
 		this.eventifyDefineEvent("skewchange", {init:false}); // define skew change event (not supporting init-event) 
 		this.eventifyDefineEvent("readystatechange", {init:false}) // define readystatechange event (not supporting init-event)
@@ -77,6 +77,7 @@ define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutil
 			this.update(options.vector);
 		}
 	};
+	eventify.eventifyPrototype(LocalTimingProvider.prototype);
 
 	LocalTimingProvider.prototype._setSkew = function (skew) {
 		this._skew = skew;

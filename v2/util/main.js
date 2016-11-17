@@ -1,7 +1,7 @@
-define (['./eventutils', './timeoututils', './motionutils'],
-	function (eventutils, timeoututils, motionutils) {
+define (['./eventify', './timeoututils', './motionutils'],
+	function (eventify, timeoututils, motionutils) {
 		return {
-			eventutils : eventutils,
+			eventify : eventify,
 			timeoututils : timeoututils,
 			motionutils : motionutils
 		};

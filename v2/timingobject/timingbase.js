@@ -24,7 +24,7 @@
 	It makes use of motionutils for timing calculations. 
 */
 
-define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutils) {
+define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 
 	'use strict';
 
@@ -88,12 +88,12 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		// readiness
 		this._ready = false;
 		// event support
-		eventutils.eventify(this, TimingBase.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("ready", {init:true}) // define ready event
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 	};
-
+	eventify.eventifyPrototype(TimingBase.prototype);
 
 	// Accessors 
 
@@ -182,11 +182,11 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
 		var res = this.query();
 		if (type === "change") {
-			return (res !== null) ? [{type: type, e: undefined}] : []; 
+			return (res !== null) ? [undefined] : []; 
 		} else if (type === "timeupdate") {
-			return (res !== null) ? [{type:type, e: undefined}] : []; 
+			return (res !== null) ? [undefined] : []; 
 		} else if (type === "ready") {
-			return (res !== null) ? [{type:type, e: undefined}] : []; 
+			return (res !== null) ? [undefined] : []; 
 		}
 		return [];
 	};

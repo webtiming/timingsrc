@@ -32,8 +32,8 @@
 */
 
 
-define(['util/eventutils', 'util/motionutils', './axis', './sequencer'], 
-	function (eventutils, motionutils, axis, seq) {
+define(['util/eventify', 'util/motionutils', './axis', './sequencer'], 
+	function (eventify, motionutils, axis, seq) {
 	
 	'use strict';
 
@@ -60,7 +60,6 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 
 	var Interval = seq.Interval;
-	var OpType = seq.OpType;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
 		this._axis = _axis || new axis.Axis();
@@ -76,7 +75,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 
 		// Define Events API
 		// event type "events" defined by default
-		eventutils.eventify(this, WindowSequencer.prototype);
+		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 		this.eventifyDefineEvent("remove");
 
@@ -93,7 +92,7 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		this._seqA.on("events", this._wrappedOnSequencerChangeA, this);
 		this._seqB.on("events", this._wrappedOnSequencerChangeB, this);
 	};
-
+	eventify.eventifyPrototype(WindowSequencer.prototype);
 
 
 	// making Interval constructor available on all windowsequencer instances
@@ -207,16 +206,14 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		    return this._activeKeys.map(function (key) {
 		    	var item = this._axis.getItem(key);
 		    	return {
-		    		type: "change", 
-		    		e: {
-		    			key : key, 
-		    			interval : item.interval,
-		    			data : item.data,
-		    			type : "change",
-		    			op : "init",
-		    			verb : "enter"
-		    		}
-		    	};
+	    			key : key, 
+	    			interval : item.interval,
+	    			data : item.data,
+	    			type : "change",
+	    			op : "init",
+	    			enter : true,
+	    			exit : false
+	    		};
 		    }, this);
 		}
 		return [];
@@ -247,23 +244,14 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 		return op;
 	};
 
-	WindowSequencer.prototype._getOpTypeFromOp = function (op) {
-		var opType;
-	    if (op.type === axis.OpType.CREATE) opType = OpType.CREATE;
-	    else if (op.type === axis.OpType.UPDATE) opType = OpType.UPDATE;
-	    else if (op.type === axis.OpType.REPEAT) opType = OpType.UPDATE;
-	    else if (op.type === axis.OpType.REMOVE) opType = OpType.DELETE;
-	    return opType;
-	};
 
 	WindowSequencer.prototype._getItem = function (axisOpList, key) {
 		var item;
     	if (axisOpList) {
     		item = this._getOpFromAxisOpList(axisOpList, key);
-    		item.opType = this._getOpTypeFromOp(item);
     	} else {
     		item = this._axis.getItem(key);
-    		item.opType = "none";
+    		item.type = "none";
     	}
     	return item;
 	};
@@ -317,13 +305,15 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	    			interval : item.interval,
 	    			type : "remove",
 	    			data : item.data,
-	    			op : item.opType,
-	    			verb : "exit"
+	    			op : item.type,
+	    			enter: false,
+	    			exit : true
 	    		}
 	    	});
 	    }, this);
 	    enterKeys.forEach(function (key) {
 	    	item = this._getItem(axisOpList, key);
+	    	console.log(item);
 	    	eList.push({
 	    		type: "change", 
 	    		e: {
@@ -331,8 +321,9 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	    			interval: item.interval,
 	    			type: "change",
 	    			data: item.data,
-	    			op : item.opType,
-	    			verb : "enter"
+	    			op : item.type,
+	    			enter : true,
+	    			exit : false
 	    		}
 	    	});
 	    }, this);
@@ -345,8 +336,9 @@ define(['util/eventutils', 'util/motionutils', './axis', './sequencer'],
 	    			interval: item.interval,
 	    			type: "change",
 	    			data: item.data,
-	    			op : item.opType,
-	    			verb : "none"
+	    			op : item.type,
+	    			enter : false,
+	    			exit : false
 	    		}
 	    	});
 	    }, this);
