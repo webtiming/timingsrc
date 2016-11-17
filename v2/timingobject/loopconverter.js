@@ -111,7 +111,7 @@ define(['./timingbase'], function (timingbase) {
 
 	// overrides
 	LoopConverter.prototype.query = function () {
-		if (this.vector === null) return null;
+		if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
 		var vector = motionutils.calculateVector(this.vector, this.clock.now());
 		// trigger state transition if range violation is detected
 		if (vector.position > this._range[1]) {

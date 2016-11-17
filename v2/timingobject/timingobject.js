@@ -96,7 +96,7 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 
 	// overrides
 	TimingObject.prototype.query = function () {
-		if (this.vector === null) return null;
+		if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this.vector, this.clock.now());
 		var state = motionutils.getCorrectRangeState(vector, this._range);

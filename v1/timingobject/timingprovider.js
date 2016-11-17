@@ -117,7 +117,11 @@ define(['util/motionutils', 'util/eventutils'], function (motionutils, eventutil
 			acceleration : acc,
 			timestamp : now
 		};
-		this._setVector(newVector);
+		// break control flow
+		var self = this;
+		setTimeout(function () {
+			self._setVector(newVector);
+		});
 		return newVector;
 	};
 	

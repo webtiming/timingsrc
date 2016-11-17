@@ -180,13 +180,12 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		no event args are passed (undefined) 
 	*/
 	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
-		var res = this.query();
 		if (type === "change") {
-			return (res !== null) ? [{type: type, e: undefined}] : []; 
+			return (this._ready) ? [{type: type, e: undefined}] : []; 
 		} else if (type === "timeupdate") {
-			return (res !== null) ? [{type:type, e: undefined}] : []; 
+			return (this._ready) ? [{type:type, e: undefined}] : []; 
 		} else if (type === "ready") {
-			return (res !== null) ? [{type:type, e: undefined}] : []; 
+			return (this._ready) ? [{type:type, e: undefined}] : []; 
 		}
 		return [];
 	};
@@ -196,7 +195,7 @@ define(['util/eventutils', 'util/motionutils'], function (eventutils, motionutil
 		Must be overrided by subclasses with specified range.
 	*/
 	TimingBase.prototype.query = function () {
-		if (this.vector === null) return null;
+		if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
 		return motionutils.calculateVector(this.vector, this.clock.now());
 	};
 

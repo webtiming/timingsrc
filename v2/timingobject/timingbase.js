@@ -180,13 +180,12 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 		no event args are passed (undefined) 
 	*/
 	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
-		var res = this.query();
 		if (type === "change") {
-			return (res !== null) ? [undefined] : []; 
+			return (this._ready) ? [undefined] : []; 
 		} else if (type === "timeupdate") {
-			return (res !== null) ? [undefined] : []; 
+			return (this._ready) ? [undefined] : []; 
 		} else if (type === "ready") {
-			return (res !== null) ? [undefined] : []; 
+			return (this._ready) ? [undefined] : []; 
 		}
 		return [];
 	};
