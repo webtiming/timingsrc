@@ -20,7 +20,7 @@
         to2 = new timingsrc.SkewConverter(to, 10);
 
         // Jerky Interval
-        j = new timingsrc.JerkyInterval(to, to2);
+        j = new timingsrc.MovingInterval(to, to2);
       
         var run = function () {
 
@@ -41,10 +41,11 @@
             valueElem2.innerHTML = to2.query().position.toFixed(2); 
           });
           
-          var windowElem = document.getElementById('window');
+          var intervalElem = document.getElementById('interval');
           j.on("change", function (){
-            console.log("change", j.range);
-            windowElem.innerHTML = "[" + j.low.toFixed(2) + "," + j.high.toFixed(2) + "]";
+            var value = j.get();
+            console.log("change", value);
+            intervalElem.innerHTML = "[" + value.low.toFixed(2) + "," + value.high.toFixed(2) + "]";
           });
 
         };
@@ -55,11 +56,11 @@
     </script>    
   </head>
   <body>
-    <h1>Test Jerky Interval</h1>
+    <h1>Test Moving Interval</h1>
 
       <div id="value"></div>
       <div id="value2"></div>
-      <div id="window"></div>
+      <div id="interval"></div>
       <p>
         <button id="play">Play</button>
         <button id="pause">Pause</button>

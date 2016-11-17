@@ -31,7 +31,7 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 		Sequencer : sequencing.Sequencer,
 		setPointCallback : sequencing.setPointCallback,
 		setIntervalCallback : sequencing.setIntervalCallback,
-		JerkyInterval : sequencing.JerkyInterval,
+		MovingInterval : sequencing.MovingInterval,
 
 		// MediaSync
 		MediaSync: mediasync.MediaSync,
