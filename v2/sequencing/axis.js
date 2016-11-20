@@ -19,8 +19,8 @@
 */
 
 
-define (['util/interval', './sortedarraybinary', './multimap'], 
-	function (Interval, SortedArrayBinary, MultiMap) {
+define (['util/interval', './sortedarraybinary', './multimap', 'util/eventify'], 
+	function (Interval, SortedArrayBinary, MultiMap, eventify) {
 
 	'use strict';
 
@@ -90,9 +90,14 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 
 		// Caching data for each key
 		this._cache = {}; // key -> data
-		// Callbacks - change event - list of axis operations
-		this._callbacks = {'change': []};
+
+		// Events
+		eventify.eventifyInstance(this);
+		this.eventifyDefineEvent("change", {init:false});
+		// event buffer
+		this._eBuffer = [];
 	};
+	eventify.eventifyPrototype(Axis.prototype);
 
 
 	// internal helper function to clean up map, index, reverse and cache during (key,interval) removal
@@ -172,7 +177,7 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 		- adds, updates or removes args [{key:key, interval:interval},] 
 	*/
 	Axis.prototype.updateAll = function (args) {
-		var e, elist = [], key, interval, data;
+		var e, eList = [], key, interval, data;
 		args.forEach(function(arg){
 			key = arg.key;
 			interval = arg.interval;
@@ -184,61 +189,33 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 				if (interval instanceof Interval === false) throw new AxisError("parameter must be instanceof Interval");
 				e = this._insert(key, interval, data);
 			}
-			elist.push(e);
+			eList.push(e);
 		}, this);
 		// trigger events
-		this._doCallbacks("change", elist);
+		this._triggerEvents(eList);
 		// return elist
-		return elist;	
+		return eList;	
+	};
+
+	Axis.prototype._triggerEvents = function (eList) {
+		// append to eBuffer
+		this._eBuffer.push.apply(this._eBuffer, eList);
+		if (this._eBuffer.length === eList.length) {
+			// eBuffer just became non-empty - initiate triggering of events
+			var self = this;
+			Promise.resolve().then(function () {
+				// trigger events from eBuffer
+				self.eventifyTriggerEvent("change", self._eBuffer);
+				// empty eBuffer
+				self._eBuffer = [];				
+			});
+		}
 	};
 
 	// shorthand for update single (key, interval) pair
 	Axis.prototype.update = function (key, interval, data) {
 		return this.updateAll([{key:key, interval:interval, data:data}]);
 	};
-
-	/*
-		AXIS EVENTS
-	*/
-
-	// register callback
-	Axis.prototype.on = function (what, handler, ctx) {
-    	if (!handler || typeof handler !== "function") 
-    		throw new AxisError("Illegal handler");
-    	if (!this._callbacks.hasOwnProperty(what)) 
-    		throw new AxisError("Unsupported event " + what);
-    	var index = this._callbacks[what].indexOf(handler);
-        if (index === -1) {
-        	// register handler
-        	handler["_ctx_"] = ctx || this;
-        	this._callbacks[what].push(handler);
-        }
-        return this;
-    };
-
-	// unregister callback
-    Axis.prototype.off = function (what, handler) {
-    	if (this._callbacks[what] !== undefined) {
-    		var index = this._callbacks[what].indexOf(handler);
-        	if (index > -1) {
-        		this._callbacks[what].splice(index, 1);
-	  		}
-    	}
-    	return this;
-    };
-
-    // perform callback
-    Axis.prototype._doCallbacks = function(what, e) {
-	 	var err;
-		// invoke callback handlers
-		this._callbacks[what].forEach(function(h) {
-			try {
-	          h.call(h["_ctx_"], e);
-	        } catch (err) {
-	          console.log("Error in " + what + ": " + h + ": " + err);
-	        }	    
-		}, this);
-    };
 
 
     /*

@@ -23,14 +23,12 @@
         var run = function () {
 
             var Interval = timingsrc.Interval;
-
-            s.request()
-              .addCue("zero", new Interval(0.0, 1.0), "zero.data")
-              .addCue("one", new Interval(1.0, 2.0), "one.data")
-              .addCue("two", new Interval(2.0, 3.0), "two.data")
-              .addCue("three", new Interval(3.0, 4.0), "three.data")
-              .addCue("four", new Interval(4.0, 5.0), "four.data")
-              .submit();
+        
+            s.addCue("zero", new Interval(0.0, 1.0), "zero.data");
+            s.addCue("one", new Interval(1.0, 2.0), "one.data");
+            s.addCue("two", new Interval(2.0, 3.0), "two.data");
+            s.addCue("three", new Interval(3.0, 4.0), "three.data");
+            s.addCue("four", new Interval(4.0, 5.0), "four.data");
 
             //s.on("enter", function (e) {console.log(e.toString())});
             //s.on("exit", function (e) {console.log(e.toString())});
