@@ -29,28 +29,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
 	};
 
-	/*
-      unique
-      return list of elements that are unique to array 1
-     */
-    var unique = function (array1, array2) {
-		var res = [];
-		for (var i=0; i<array1.length;i++) {
-		    var found = false;
-		    for (var j=0; j<array2.length;j++) {
-				if (array1[i] === array2[j]) {
-				    found = true;
-				    break;
-				} 
-	    	}
-	   		if (!found) {
-				res.push(array1[i]);
-	    	}	 
-		}
-		return res;
-    };
-
-
     // VERBS
     var VerbType = Object.freeze({
 		ENTER: "enter",
@@ -390,7 +368,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this._schedule = null;
 		this._timeout = null; // timeout
 		this._currentTimeoutPoint = null; // point associated with current timeout
-		this._activeKeys = []; // active intervals
+		this._activeKeys = {}; // (key -> undefined)
 
 		// set up eventing stuff
 		eventify.eventifyInstance(this);
@@ -483,14 +461,18 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	      re-evaluate intervals whenever vector changes.
 	    */
 	    var nowVector = motionutils.calculateVector(initVector, now);
-	    var oldKeys = this._activeKeys;
-	    var newKeys = this._axis.lookupByPoint(nowVector.position).map(function (item) {
-	    	return item.key;
+
+	    // TODO - newKeys should be map
+	    var newKeys = this._axis.lookupKeysByPoint(nowVector.position);
+
+	    // exitKeys are in activeKeys - but not in newKeys
+	    var exitKeys = Object.keys(this._activeKeys).filter(function(key) {
+	    	return !newKeys.hasOwnProperty(key);
 	    });
-	    var exitKeys = unique(oldKeys, newKeys);
-	    var enterKeys = unique(newKeys, oldKeys);
-
-
+	    // enterKeys are in newKeys - but not in activeKeys
+	    var enterKeys = Object.keys(newKeys).filter(function(key) {
+	    	return !this._activeKeys.hasOwnProperty(key); 
+	    }, this);
 
 	    /*
 			Corner Case: Exiting Singularities
@@ -1056,7 +1038,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
 		var ts = this._clock.now();
-		return this._activeKeys.map(function (key) {
+		return Object.keys(this._activeKeys).map(function (key) {
 			item = this._axis.getItem(key);
 			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);
 			return eArg;
@@ -1080,17 +1062,15 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		eArgList.forEach(function (eArg) {
 			// exit interval - remove keys 
 		    if (eArg.exit) {
-				index = this._activeKeys.indexOf(eArg.key);
-				if (index > -1) {
-			    	this._activeKeys.splice(index, 1);		
+				if (this._activeKeys.hasOwnProperty(eArg.key)) {
+					delete this._activeKeys[eArg.key];
 				}
 		    }
 		    // enter interval - add key
 		    if (eArg.enter) {
-				index = this._activeKeys.indexOf(eArg.key);
-				if (index === -1) {
-				    this._activeKeys.push(eArg.key);
-				} 
+		    	if (!this._activeKeys.hasOwnProperty(eArg.key)) {
+		    		this._activeKeys[eArg.key] = undefined;
+		    	}
 		    }
 		    eventList.push(eArg);
 		}, this);
@@ -1219,25 +1199,18 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	// return true if cue of given key is currently active
 	Sequencer.prototype.isActive = function (key) {
-	    return (this._activeKeys.indexOf(key) > -1);
+	    return (this._activeKeys.hasOwnProperty(key));
 	};
 
 	// Get keys of active cues
 	Sequencer.prototype.getActiveKeys = function () {
-		// copy keys
-		var res = [];
-		this._activeKeys.forEach(function (key) {
-			res.push(key);
-		}, this);
-		return res;
+		return Object.keys(this._activeKeys);
 	};
 
 	Sequencer.prototype.getActiveCues = function () {
-		var res = [];
-		this._activeKeys.forEach(function (key) {
-			res.push(this.getCue(key));
+		return Object.keys(this._activeKeys).map(function (key) {
+			return this.getCue(key);
 		}, this);
-		return res;
 	};
 
 	// Implementing same API as WINDOW

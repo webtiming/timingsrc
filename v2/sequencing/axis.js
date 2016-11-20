@@ -245,8 +245,35 @@ define (['util/interval', './sortedarraybinary', './multimap'],
 		AXIS SEARCH
     */
 
+
 	/*
-		Find (key,interval) pairs for intervals that cover x.
+		Find keys for intervals that cover x.
+		Simply scan all intervals in collection - no index provided.
+		x undefined means all keys in collection
+
+		returns map {key -> undefined}
+	*/
+
+	Axis.prototype.lookupKeysByPoint = function (x) {
+		var interval, res = {};
+		if (x === undefined) {
+			Object.keys(this._map).forEach(function (key) {
+				res[key] = undefined;
+			});
+		} else {
+			Object.keys(this._map).forEach(function(key){
+				interval = this._map[key];
+				if (interval.coversPoint(x)) {
+					res[key] = undefined;
+				}
+			}, this);		
+		}
+		return res;
+	};
+
+
+	/*
+		Find cues (key,interval, data) for intervals that cover x.
 		Simply scan all intervals in collection - no index provided.
 		x undefined means all (key, interval)
 	*/
