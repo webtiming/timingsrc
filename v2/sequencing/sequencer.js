@@ -467,7 +467,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    */
 	    var nowVector = motionutils.calculateVector(initVector, now);
 
-	    // TODO - newKeys should be map
 	    var newKeys = this._axis.lookupKeysByPoint(nowVector.position);
 
 	    // exitKeys are in activeKeys - but not in newKeys
@@ -1225,6 +1224,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		}
 	};
 
+	// Implementing same API as WINDOW
 	Sequencer.prototype.items = function () {
 		return this.getActiveCues().map(function (cue) {
 			return cue.data;

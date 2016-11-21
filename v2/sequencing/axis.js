@@ -233,6 +233,23 @@ define (['util/interval', './sortedarraybinary', './multimap', 'util/eventify'],
 		return res;
 	};
 
+	/*
+		Find keys for all intervals that partially cover interval.
+		returns map {key -> undefined}
+	*/
+
+
+	Axis.prototype.lookupKeysByInterval = function (interval) {
+		// [{key: key, point: point, interval:interval},]
+		var res = {};
+		this._index.lookup(interval).forEach(function (point) {
+			this._reverse.getItemsByKey(point).forEach(function (item) {
+				res[item.value] = undefined;
+			});
+		}, this);
+		return res;
+	};
+
 
 	/*
 		Find cues (key,interval, data) for intervals that cover x.
@@ -254,8 +271,6 @@ define (['util/interval', './sortedarraybinary', './multimap', 'util/eventify'],
 		Find all interval endpoints within given interval 
 	*/
 	Axis.prototype.lookupByInterval = function (interval) {
-		// [point,]
-		var points = this._index.lookup(interval);
 		// [{key: key, point: point, interval:interval},]
 		var res = [], items, point;
 		this._index.lookup(interval).forEach(function (point) {

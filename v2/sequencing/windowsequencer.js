@@ -37,28 +37,6 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	
 	'use strict';
 
-	/*
-      unique
-      return list of elements that are unique to array 1
-     */
-    var unique = function (array1, array2) {
-		var res = [];
-		for (var i=0; i<array1.length;i++) {
-		    var found = false;
-		    for (var j=0; j<array2.length;j++) {
-				if (array1[i] === array2[j]) {
-				    found = true;
-				    break;
-				} 
-	    	}
-	   		if (!found) {
-				res.push(array1[i]);
-	    	}	 
-		}
-		return res;
-    };
-
-
 	var Interval = seq.Interval;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
@@ -71,7 +49,7 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		this._readyB = false;
 
 		// active keys
-		this._activeKeys = [];
+		this._activeKeys = {}; // key -> undefined
 
 		// Define Events API
 		// event type "events" defined by default
@@ -81,7 +59,12 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 
 
 		// Wrapping prototype event handlers and store references on instance
-		this._wrappedOnAxisChange = function (e) {this._onAxisChange(e);};
+		this._wrappedOnAxisChange = function (eItemList) {
+			var eArgList = eItemList.map(function (eItem) {
+				return eItem.e;
+			});
+			this._onAxisChange(eArgList);
+		};
 		this._wrappedOnTimingChangeA = function () {this._onTimingChangeA();};
 		this._wrappedOnTimingChangeB = function () {this._onTimingChangeB();};
 		this._wrappedOnSequencerChangeA = function (e) {this._onSequencerChangeA(e);};
@@ -124,7 +107,7 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	};
 
 	WindowSequencer.prototype._onReady = function () {
-		this._axis.on("change", this._wrappedOnAxisChange, this);
+		this._axis.on("events", this._wrappedOnAxisChange, this);
 	};
 
 	/*
@@ -185,8 +168,8 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		this._reevaluate();
 	};
 
-	WindowSequencer.prototype._onAxisChange = function (opList) {
-		this._reevaluate(opList);
+	WindowSequencer.prototype._onAxisChange = function (argList) {
+		this._reevaluate(argList);
 	};
 
 	WindowSequencer.prototype._onSequencerChangeA = function () {
@@ -203,7 +186,7 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	WindowSequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
 			// make event items from active keys
-		    return this._activeKeys.map(function (key) {
+		    return Object.keys(this._activeKeys).map(function (key) {
 		    	var item = this._axis.getItem(key);
 		    	return {
 	    			key : key, 
@@ -269,13 +252,18 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 
 		var activeInterval = this._getActiveInterval();
 
-		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
-		var oldKeys = this._activeKeys;	
-		var newKeys = this._seqA.getCuesByInterval(activeInterval).map(function (item) {
-			return item.key;
-		});
-	    var exitKeys = unique(oldKeys, newKeys);
-	    var enterKeys = unique(newKeys, oldKeys);
+		// find keys of all cues, where cue interval is partially or fully covered by searchInterval			
+
+		var newKeys = this._axis.lookupKeysByInterval(activeInterval);
+	    // exitKeys are in activeKeys - but not in newKeys
+	    var exitKeys = Object.keys(this._activeKeys).filter(function(key) {
+	    	return !newKeys.hasOwnProperty(key);
+	    });
+	   
+	    // enterKeys are in newKeys - but not in activeKeys
+	    var enterKeys = Object.keys(newKeys).filter(function(key) {
+	    	return !this._activeKeys.hasOwnProperty(key); 
+	    }, this);
 
 	    /* 
 	    	changeKeys
@@ -285,10 +273,10 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	    var changeKeys = [];
 	    if (axisOpList) {
 		    axisOpList.forEach(function (op) {
-		    	if (oldKeys.indexOf(op.key) > -1 && newKeys.indexOf(op.key) > -1) {
+		    	if (this._activeKeys.hasOwnProperty(op.key) && newKeys.hasOwnProperty(op.key)) {
 		    		changeKeys.push(op.key);
 		    	}
-		    });
+		    }, this);
 		}    
 
 		// update active keys
@@ -313,7 +301,6 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	    }, this);
 	    enterKeys.forEach(function (key) {
 	    	item = this._getItem(axisOpList, key);
-	    	console.log(item);
 	    	eList.push({
 	    		type: "change", 
 	    		e: {
@@ -388,26 +375,36 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 
 	// return true if cue of given key is currently active
 	WindowSequencer.prototype.isActive = function (key) {
-		return (this._activeKeys.indexOf(key) > -1);
+		return (this._activeKeys.hasOwnProperty(key));
 	};
 
 	// Get keys of active cues
 	WindowSequencer.prototype.getActiveKeys = function () {
-		// copy keys
-		var res = [];
-		this._activeKeys.forEach(function (key) {
-			res.push(key);
-		}, this);
-		return res;
+		return Object.keys(this._activeKeys);
 	};
 
 	WindowSequencer.prototype.getActiveCues = function () {
-		var res = [];
-		this._activeKeys.forEach(function (key) {
-			res.push(this.getCue(key));
+		return Object.keys(this._activeKeys).map(function (key) {
+			return this.getCue(key);
 		}, this);
-		return res;
+	};
 
+	// Implementing same API as WINDOW
+	WindowSequencer.prototype.get = function (key) {
+		if (this.isActive(key)) {
+			return this.getCues(key).map(function (cue) {
+				return cue.data;
+			});
+		} else {
+			return undefined;
+		}
+	};
+
+	// Implementing same API as WINDOW
+	WindowSequencer.prototype.items = function () {
+		return this.getActiveCues().map(function (cue) {
+			return cue.data;
+		});
 	};
 
 	// return all (key, inteval, data) tuples, where interval covers point
