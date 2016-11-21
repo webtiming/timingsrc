@@ -153,6 +153,7 @@ define(function () {
 		*/
 		object._ID = id(4);
 		object._callbacks = {}; // type -> HandlerMap
+		object._eBuffer = []; // buffering events before dispatch
 		// special event "events"
 		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:true};
@@ -266,9 +267,23 @@ define(function () {
 				if (eItem.type === undefined) throw new Error("Illegal event type; undefined");
 				if (eItem.type === "events") throw new Error("Illegal event type; triggering of events on protocted event type 'events'" );
 			}, this);
-			if (eItemList.length === 0) return;
-			this._eventifyTriggerProtectedEvents(eItemList);
-			this._eventifyTriggerRegularEvents(eItemList);
+			if (eItemList.length === 0) return this;
+			/* 
+				Buffer list of eItems so that iterative calls to eventifyTriggerEvents 
+				will be emitted in one batch
+			*/
+			this._eBuffer.push.apply(this._eBuffer, eItemList);
+			if (this._eBuffer.length === eItemList.length) {
+				// eBuffer just became non-empty - initiate triggering of events
+				var self = this;
+				Promise.resolve().then(function () {
+					// trigger events from eBuffer
+					self._eventifyTriggerProtectedEvents(self._eBuffer);
+					self._eventifyTriggerRegularEvents(self._eBuffer);
+					// empty eBuffer
+					self._eBuffer = [];				
+				});
+			}
 			return this;
 	    };
 
