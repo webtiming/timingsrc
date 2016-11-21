@@ -154,6 +154,7 @@ define(function () {
 		object._ID = id(4);
 		object._callbacks = {}; // type -> HandlerMap
 		object._eBuffer = []; // buffering events before dispatch
+		object._bufferEmptyPromise = Promise.resolve();
 		// special event "events"
 		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:true};
@@ -257,6 +258,8 @@ define(function () {
 		/* 
 			TRIGGER EVENTS
 
+			This is the hub - all events go through here
+			Control flow is broken using Promise.resolve().then(...);
 			Parameter is a list of objects where 'type' specifies the event type and 'e' specifies the event object.
 			'e' may be undefined
 			- [{type: "type", e: e}]
@@ -276,7 +279,7 @@ define(function () {
 			if (this._eBuffer.length === eItemList.length) {
 				// eBuffer just became non-empty - initiate triggering of events
 				var self = this;
-				Promise.resolve().then(function () {
+				this._bufferEmptyPromise = Promise.resolve().then(function () {
 					// trigger events from eBuffer
 					self._eventifyTriggerProtectedEvents(self._eBuffer);
 					self._eventifyTriggerRegularEvents(self._eBuffer);
@@ -375,7 +378,8 @@ define(function () {
 		    	var handlerItem = handlerMap.getItem(handlerID);
 		    	handlerItem.pending = true;
 		    	var self = this;
-	    	    setTimeout(function () {
+	    	    this._bufferEmptyPromise.then(function () {
+	    	    	if (self._eBuffer.length > 0) console.log("BUFFERED EVENTS");
 	    	    	var eItemList = self._eventifyMakeInitEvents(type);
 		    		if (eItemList.length > 0) {
 		    			if (type === "events") {
@@ -387,7 +391,7 @@ define(function () {
 		    			// initial callback is noop
 		    			handlerItem.pending = false;
 		    		}
-	    	    }, 0);
+	    	    });
 		    }
 	      	return this;
 		};

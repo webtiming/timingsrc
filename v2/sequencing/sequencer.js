@@ -377,7 +377,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 		// wrap prototype handlers and store ref on instance
 		this._wrappedOnTimingChange = function () {this._onTimingChange();};
-		this._wrappedOnAxisChange = function (e) {this._onAxisChange(e);};
+		this._wrappedOnAxisChange = function (eItemList) {
+			var eArgList = eItemList.map(function (eItem) {
+				return eItem.e;
+			});
+			this._onAxisChange(eArgList);
+		};
 
 		// initialise
 		this._to.on("change", this._wrappedOnTimingChange, this);
@@ -446,7 +451,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
-			this._axis.on("change", this._wrappedOnAxisChange, this);
+			this._axis.on("events", this._wrappedOnAxisChange, this);
 	    } else {
 	    	// Deliberately set time (a little) back for delayed updates
 	    	now = initVector.timestamp;
@@ -532,6 +537,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    	return this._axis.getItem(key);
 	    }, this);
 	    // Trigger interval events
+
 	    this._processIntervalEvents(now, exitItems, enterItems, []);
 
 
@@ -581,10 +587,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this._axis.updateAll(argList);
 	};
 
-
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
-
 		// filter out NOOPS (i.e. remove operations that removed nothing)
 		origOpList = origOpList.filter(function (op) {
 			return (op.type !== OpType.NONE);

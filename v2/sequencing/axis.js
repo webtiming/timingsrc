@@ -189,28 +189,13 @@ define (['util/interval', './sortedarraybinary', './multimap', 'util/eventify'],
 				if (interval instanceof Interval === false) throw new AxisError("parameter must be instanceof Interval");
 				e = this._insert(key, interval, data);
 			}
+			this.eventifyTriggerEvent("change", e);
 			eList.push(e);
 		}, this);
-		// trigger events
-		this._triggerEvents(eList);
 		// return elist
 		return eList;	
 	};
-
-	Axis.prototype._triggerEvents = function (eList) {
-		// append to eBuffer
-		this._eBuffer.push.apply(this._eBuffer, eList);
-		if (this._eBuffer.length === eList.length) {
-			// eBuffer just became non-empty - initiate triggering of events
-			var self = this;
-			Promise.resolve().then(function () {
-				// trigger events from eBuffer
-				self.eventifyTriggerEvent("change", self._eBuffer);
-				// empty eBuffer
-				self._eBuffer = [];				
-			});
-		}
-	};
+	
 
 	// shorthand for update single (key, interval) pair
 	Axis.prototype.update = function (key, interval, data) {
