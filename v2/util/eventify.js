@@ -153,8 +153,8 @@ define(function () {
 		*/
 		object._ID = id(4);
 		object._callbacks = {}; // type -> HandlerMap
+		object._immediateCallbacks = [];
 		object._eBuffer = []; // buffering events before dispatch
-		object._bufferEmptyPromise = Promise.resolve();
 		// special event "events"
 		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:true};
@@ -279,12 +279,14 @@ define(function () {
 			if (this._eBuffer.length === eItemList.length) {
 				// eBuffer just became non-empty - initiate triggering of events
 				var self = this;
-				this._bufferEmptyPromise = Promise.resolve().then(function () {
+				Promise.resolve().then(function () {
 					// trigger events from eBuffer
 					self._eventifyTriggerProtectedEvents(self._eBuffer);
 					self._eventifyTriggerRegularEvents(self._eBuffer);
 					// empty eBuffer
-					self._eBuffer = [];				
+					self._eBuffer = [];
+					// flush immediate callbacks
+					self._eventifyFlushImmediateCallbacks();			
 				});
 			}
 			return this;
@@ -378,8 +380,7 @@ define(function () {
 		    	var handlerItem = handlerMap.getItem(handlerID);
 		    	handlerItem.pending = true;
 		    	var self = this;
-	    	    this._bufferEmptyPromise.then(function () {
-	    	    	if (self._eBuffer.length > 0) console.log("BUFFERED EVENTS");
+	    	   	var immediateCallback = function () {
 	    	    	var eItemList = self._eventifyMakeInitEvents(type);
 		    		if (eItemList.length > 0) {
 		    			if (type === "events") {
@@ -391,10 +392,27 @@ define(function () {
 		    			// initial callback is noop
 		    			handlerItem.pending = false;
 		    		}
-	    	    });
+	    	    };
+ 				this._immediateCallbacks.push(immediateCallback);
+ 				Promise.resolve().then(function () {
+ 					self._eventifyFlushImmediateCallbacks();
+ 				});
 		    }
 	      	return this;
 		};
+
+		_prototype._eventifyFlushImmediateCallbacks = function () {
+			if (this._eBuffer.length === 0) {
+				var callbacks = this._immediateCallbacks;
+				this._immediateCallbacks = [];
+				callbacks.forEach(function (callback) {
+					callback();
+				});
+			} 
+			// if buffer is non-empty, immediate callbacks will be flushed after
+			// buffer is emptied
+		};
+
 
 		/*
 			OFF
