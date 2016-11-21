@@ -341,10 +341,6 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		one of the sequencers, since the two sequencers forward these operations to a shared axis.
 	*/
 
-	WindowSequencer.prototype.request = function () {
-		return this._seqA.request();
-	};
-
 	WindowSequencer.prototype.addCue = function (key, interval, data) {
 		return this._seqA.addCue(key, interval, data);
 	};

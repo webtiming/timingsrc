@@ -252,42 +252,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		return (this.queue.length > 0) ? this.queue[0].task.point : null;
 	};
 
-	/*
-		BUILDER
-
-		Build arguments for updateAll function of Sequencer
-	*/
-
-	var Builder = function (sequencer) {
-		this._argOrder = [];
-		this._argMap = {};
-		this._sequencer = sequencer;
-	};
-
-	Builder.prototype.addCue = function (key, interval, data) {
-		this._argOrder.push(key);
-		this._argMap[key] = {key:key, interval:interval, data: data};
-		return this;
-	};
-	
-	Builder.prototype.removeCue = function (key, removedData) {
-		return this.addCue(key, undefined, removedData);
-	};
-
-	Builder.prototype.submit = function () {
-		var argList = [];
-		this._argOrder.forEach(function (key) {
-			argList.push(this._argMap[key]);
-		}, this);
-		// reset
-		this._argMap = {};
-		this._argOrder = [];
-		if (argList.length > 0) {
-			return this._sequencer.updateAll(argList);
-		}
-		return [];
-	};
-
 
 	/*
 		Sequencer Error
@@ -1158,10 +1122,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	};
 
 	
-    // get request builder object
-	Sequencer.prototype.request = function () {
-		return new Builder(this);
-	};
 
 	// TODO : force SequencerCue object on input?
 	Sequencer.prototype.addCue = function (key, interval, data) {
