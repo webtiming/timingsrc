@@ -664,11 +664,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		if (opList.length === 0) {
 			if (changeItems.length > 0) {
 				// break control flow so that events are emitted after addCue has completed
-				setTimeout(function () {
+				Promise.resolve().then(function () {
 					// enterItems and exitItems are empty
 					self._processIntervalEvents(now, [], [], changeItems);
 					// no need to call main - will be called by scheduled timeout
-				}, 0);
+				});
 			}			
 			return;
 		}
@@ -680,11 +680,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		var _isMoving = isMoving(nowVector);
 		if (!_isMoving) {
 			// break control flow so that events are emitted after addCue has completed
-			setTimeout(function () {
+			Promise.resolve().then(function () {
 				self._processIntervalEvents(now, exitItems, enterItems, changeItems);
 				// not moving should imply that SCHEDULE be empty
 				// no need to call main - will be called by scheduled timeout
-			}, 0);
+			});
 			return;
 		}
 
@@ -778,13 +778,13 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		}
 	
 		// break control so that events are emitted after addCue has completed
-		setTimeout(function () {
+		Promise.resolve().then(function () {
 			// notify interval events and change events
 			self._processIntervalEvents(now, exitItems, enterItems, changeItems);
 			// kick off main loop (should only be required if moving?)
 			// TODO - should only be necessary if the SCHEDULE is touched - to cause a new timeout to be set.
 			self._main(now);
-		}, 0);
+		});
 	
 	};
 
@@ -1006,7 +1006,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		    	eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt,  e.task.point, ts, e.ts, OpType.NONE, verbType));
 			}			
 	    }, this);
-	    return this._makeEvents(now, eArgList);
+	    return this._makeEvents(now, eArgList,directionInt);
 	};
 
 	// Process interval events orignating from axis change, timing object change or active keys
@@ -1031,7 +1031,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		changeItems.forEach(function (item) {
 			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
 		}, this);
-		this.eventifyTriggerEvents(this._makeEvents(now, eArgList));
+		this.eventifyTriggerEvents(this._makeEvents(now, eArgList, directionInt));
 	};
 
 
@@ -1057,7 +1057,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		to active keys are driven by actual notifications
 	*/
 
-	Sequencer.prototype._makeEvents = function (now, eArgList) {
+	Sequencer.prototype._makeEvents = function (now, eArgList, directionInt) {
 		if (eArgList.length === 0) {
 			return [];
 		}
@@ -1079,7 +1079,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		    eventList.push(eArg);
 		}, this);
 		// make sure events are correctly ordered
-		eventList = this._reorderEventList(eventList);
+		eventList = this._reorderEventList(eventList, directionInt);
 		// finalise events
 		return eventList.map(function (eArg) {
 			return {type: eArg.type, e: eArg};
@@ -1097,7 +1097,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		y. exit intervals ] (interval includes exit-point)
 		d. enter intervals < (interval does not include enter-point)
 	*/
-	Sequencer.prototype._reorderEventList = function (eArgList) {
+	Sequencer.prototype._reorderEventList = function (eArgList, directionInt) {
 		if (eArgList.length < 2) return eArgList;
 		// stack events per point
 		var point, dueTs, newList = [];
@@ -1107,13 +1107,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		}).forEach(function(eArg) {
 			// new point - pop from stack
 			if (eArg.point !== point || eArg.dueTs !== dueTs) {
-				newList = newList
-					.concat(s["a"])
-					.concat(s["x"])
-					.concat(s["b"])
-					.concat(s["c"])
-					.concat(s["y"])
-					.concat(s["d"]);
+				// pop last from stack
+				if (directionInt >= 0) {
+					newList = newList.concat(s["a"], s["x"], s["b"], s["c"], s["y"], s["d"]);
+				} else {
+					newList = newList.concat(s["d"], s["y"], s["c"], s["b"], s["x"], s["a"]);
+				}
 				s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
 				point = eArg.point;
 				dueTs = eArg.dueTs;
@@ -1152,13 +1151,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		}, this);
 
 		// pop last from stack
-		return newList
-				.concat(s["a"])
-				.concat(s["x"])
-				.concat(s["b"])
-				.concat(s["c"])
-				.concat(s["y"])
-				.concat(s["d"]);
+		if (directionInt >= 0) {
+			return newList.concat(s["a"], s["x"], s["b"], s["c"], s["y"], s["d"]);
+		} else {
+			return newList.concat(s["d"], s["y"], s["c"], s["b"], s["x"], s["a"]);
+		}
 	};
 
 	
