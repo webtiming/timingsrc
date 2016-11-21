@@ -58,9 +58,9 @@ define(['./timingbase'], function (timingbase) {
 		this._speculative = true;
 		// process update immediately
 		var self = this;
-		setTimeout(function () {
+		Promise.resolve().then(function () {
 			self._preProcess(newVector);
-		}, 0);
+		});
 		return newVector;
 	};
 

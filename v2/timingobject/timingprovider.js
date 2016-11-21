@@ -120,7 +120,7 @@ define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 		};
 		// break control flow
 		var self = this;
-		setTimeout(function () {
+		Promise.resolve().then(function () {
 			self._setVector(newVector);
 		});
 		return newVector;
