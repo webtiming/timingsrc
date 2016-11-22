@@ -463,11 +463,11 @@ define(function () {
 		(-1) ? true : false -> true !  
 	*/
 
-	var EventBoolean = function (initValue) {
+	var EventBoolean = function (initValue, options) {
 		BaseEventObject.call(this);
 		this._value = (initValue) ? true : false;
 		// define change event (supporting init-event)
-		this.eventifyDefineEvent("change", {init:true}); 
+		this.eventifyDefineEvent("change", options); 
 	};
 	BaseEventObject.inherit(EventBoolean, BaseEventObject);
 
@@ -499,8 +499,6 @@ define(function () {
 	};
 
 
-
-
 	/* 
 		EVENT VARIABLE
 
@@ -508,11 +506,11 @@ define(function () {
 		Defines an event 'change' whenever the value of the variable is changed. 
 	*/
 
-	var EventVariable = function (initValue) {
+	var EventVariable = function (initValue, options) {
 		BaseEventObject.call(this);
 		this._value = initValue;
 		// define change event (supporting init-event)
-		this.eventifyDefineEvent("change", {init:true}); 
+		this.eventifyDefineEvent("change", options); 
 	};
 	BaseEventObject.inherit(EventVariable, BaseEventObject);
 
@@ -535,8 +533,6 @@ define(function () {
 		return false;
 	};
 
-
-
 	// module api
 	return {
 		eventifyPrototype : eventifyPrototype,
@@ -545,6 +541,4 @@ define(function () {
 		EventVariable : EventVariable,
 		EventBoolean : EventBoolean
 	};
-
-
 });
