@@ -69,8 +69,8 @@ define(function () {
 	Interval.prototype.toString = function () {
 		var lowBracket = (this.lowInclude) ? "[" : "<";
 		var highBracket = (this.highInclude) ? "]" : ">";
-		var low = (this.low === -Infinity) ? "<--" : this.low.toFixed(2);
-		var high = (this.high === Infinity) ? "-->" : this.high.toFixed(2);
+		var low = (this.low === -Infinity) ? "<--" : this.low; //.toFixed(2);
+		var high = (this.high === Infinity) ? "-->" : this.high; //.toFixed(2);
 		if (this.singular)
 			return lowBracket + low + highBracket;
 		return lowBracket + low + ',' + high + highBracket;

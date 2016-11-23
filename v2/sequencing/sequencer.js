@@ -173,6 +173,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	/* Invalidate task with given key */
 	Schedule.prototype.invalidate = function (key) {
+		console.log("sched invalidate");
 	    var i, index, entry, remove = [];
 	    // Find
 	    for (i=0; i<this.queue.length; i++) {
@@ -222,11 +223,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	Schedule.prototype.advance = function(now) {
 	    if (now < this.timeInterval.low) {
-			//console.log("Schedule : Advancing backwards " + (now - this.timeInterval.low));
+			console.log("Schedule : Advancing backwards " + (now - this.timeInterval.low));
 	    } 
 	    this.queue = []; // drop tasks (time interval cut off)
 	    this.timeInterval = new Interval(now, now + this.options.lookahead, false, true);
 	    this.posInterval = null; // reset
+	    console.log("sched advance", this.timeInterval.toString());
 	};
 	
 	/* 
@@ -420,7 +422,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    	// Deliberately set time (a little) back for delayed updates
 	    	now = initVector.timestamp;
 	    	// Empty schedule
-	    	this._schedule.advance(now); 
+	    	this._schedule.advance(now);
 	    }
 
 	    /*
@@ -501,8 +503,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    }, this);
 	    // Trigger interval events
 
-	    this._processIntervalEvents(now, exitItems, enterItems, []);
-
+	    var eList = this._processIntervalEvents(now, exitItems, enterItems, []);
+	    this.eventifyTriggerEvents(eList);
 
 	    /*
 	      	Rollback falsely reported events
@@ -629,7 +631,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				// break control flow so that events are emitted after addCue has completed
 				Promise.resolve().then(function () {
 					// enterItems and exitItems are empty
-					self._processIntervalEvents(now, [], [], changeItems);
+					var eList = self._processIntervalEvents(now, [], [], changeItems);
+					self.eventifyTriggerEvents(eList);
 					// no need to call main - will be called by scheduled timeout
 				});
 			}			
@@ -644,7 +647,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		if (!_isMoving) {
 			// break control flow so that events are emitted after addCue has completed
 			Promise.resolve().then(function () {
-				self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+				var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+				self.eventifyTriggerEvents(eList);
 				// not moving should imply that SCHEDULE be empty
 				// no need to call main - will be called by scheduled timeout
 			});
@@ -743,7 +747,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		// break control so that events are emitted after addCue has completed
 		Promise.resolve().then(function () {
 			// notify interval events and change events
-			self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+			self.eventifyTriggerEvents(eList);
 			// kick off main loop (should only be required if moving?)
 			// TODO - should only be necessary if the SCHEDULE is touched - to cause a new timeout to be set.
 			self._main(now);
@@ -756,11 +761,17 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
         Sequencer core loop, loops via the timeout mechanism as long
         as the timing object is moving.
 	*/
-	Sequencer.prototype._main = function (now) {
+	Sequencer.prototype._main = function (now, isTimeout) {
+		console.log("main start", (isTimeout === true));
+		/*
+		this._schedule.queue.forEach(function (item) {
+			console.log(item.ts, item.task.key);
+		});
+		*/
 		var eList;
 	    now = now || this._clock.now();
 	    // process tasks (empty due tasks from schedule)
-        eList = this._processScheduleEvents(now, this._schedule.pop(now));
+        eList = this._processScheduleEvents(now, this._schedule.pop(now));   
         this.eventifyTriggerEvents(eList);
         // advance schedule window
         var _isMoving = isMoving(this._to.vector);
@@ -768,6 +779,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			now = this._schedule.getTimeInterval().high;
             this._schedule.advance(now);
             this._load(now);
+            /*
+            this._schedule.queue.forEach(function (item) {
+				console.log(item.ts, item.task.key);
+			});
+			*/
             // process tasks again
             eList = this._processScheduleEvents(now, this._schedule.pop(now));
 	    	this.eventifyTriggerEvents(eList);
@@ -803,9 +819,10 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 				this._currentTimeoutPoint = nextTimeoutPoint;
 				var self = this;
+				console.log("main done - set timeout", this._schedule.queue.length);
 				this._timeout = this._clock.setTimeout(function () {
 					self._clearTimeout();
-					self._main();
+					self._main(undefined, true);
 				}, secDelay, {anchor: secAnchor, early: 0.005});
 			}
 	    }
@@ -862,6 +879,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			var pStart = Math.max(posRange[0], range[0]);
 			var pEnd = Math.min(posRange[1], range[1]);
 			var posInterval = new Interval(pStart, pEnd, true, true);
+			console.log("load", timeInterval.toString(), posInterval.toString());
 			this._schedule.setPosInterval(posInterval);
 
 			// 2) find all points in this interval
@@ -878,6 +896,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    // create ordered list of all events for time interval t_delta 
 	    var eventList = motionutils.calculateSolutionsInInterval(vectorStart, tDelta, points);
 	    
+	    console.log(points.length, eventList.length);
+
 	    /* 
 	       SUBTLE 1 : adjust for range restrictions within
 	       time-interval tasks with larger delta will not be
@@ -906,6 +926,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			   interval. 
 			*/
 			if (d === 0) {
+				console.log("drop - exactly at start of time covering");
 			    push = false; 
 			}
 			/* 
@@ -913,6 +934,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			   violation should occur
 			*/
 			if (d > rDelta) {
+				console.log("drop - events after range violations");
 				push = false;  
 			}
 			/*
@@ -921,6 +943,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			  Exiting/entering a interval should not happen at range point - drop
 			*/
 			if (d === rDelta) {
+				console.log("drop - events exactly at range point")
 			    push = false;
 			}
 			
@@ -936,11 +959,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			if (task.pointType === axis.PointType.LOW || task.pointType === axis.PointType.HIGH) {
 			    var v = motionutils.calculateVector(initVector, tStart + d);
 			    if (v.velocity === 0){
+			    	console.log("drop - touch endpoint during acceleration");
 					push = false;
 			    }
 			}
 			// push
-			if (push) {		    
+			if (push) {	   
 			    this._schedule.push(now, tStart + d, task);
 			} 
 	    }, this); 
@@ -956,7 +980,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    eventList.forEach(function (e) {
 			if (e.task.interval.singular) {
 				// make two events for singular
-
 				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.ENTER));
 				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.EXIT));
 			} else {
@@ -969,13 +992,13 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		    	eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt,  e.task.point, ts, e.ts, OpType.NONE, verbType));
 			}			
 	    }, this);
-	    return this._makeEvents(now, eArgList,directionInt);
+	    return this._makeEvents(now, eArgList, directionInt);
 	};
 
 	// Process interval events orignating from axis change, timing object change or active keys
 	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
 	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
-			return;
+			return [];
 	    }
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
@@ -994,7 +1017,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		changeItems.forEach(function (item) {
 			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
 		}, this);
-		this.eventifyTriggerEvents(this._makeEvents(now, eArgList, directionInt));
+		return this._makeEvents(now, eArgList, directionInt);
 	};
 
 

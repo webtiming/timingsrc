@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <script type="text/javascript" src="http://fanoli01.itek.norut.no:8015/js/windows.js"></script>
+    <script type="text/javascript" src="http://fanoli01.itek.norut.no:8015/js/app.js"></script>
+
+ <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script type="text/javascript">
+
+
+      require(['timingsrc'], function (TIMINGSRC) {
+      
+        var URL = "ws://fanoli01.itek.norut.no:8015/test";
+        var A = "start", B = "end";
+        var BOUNDS = {low:-Infinity, high:Infinity};
+
+        var to = new TIMINGSRC.TimingObject();
+        var s = new TIMINGSRC.Sequencer(to);
+
+        var ds = new WINDOWS.DataSet(URL).setPivot(A, B);
+        var w = new WINDOWS.Window(ds,BOUNDS).addSequencer(s);
+
+        document.ready.then(function () {
+          document.getElementById("url").innerHTML = URL;
+          
+          // attach UI
+          var viewer = new APP.Viewer("view", w);
+          var viewer2 = new APP.Viewer("seqview", s);
+          var control = new APP.TimingControl("controls", to);
+
+          // timing object values
+          var valuesElem = document.getElementById('value');
+          to.on("timeupdate", function () {
+            valuesElem.innerHTML = "[" + to.pos.toFixed(2) + "]";
+          });
+
+          s.on("change", function (e) {
+            //console.log("change", e.key);
+            if (e.enter) {
+              var elemId = viewer.getElemId(e.key);
+              var el =  document.getElementById(elemId);
+              el.classList.add("active");
+            }
+          });
+          s.on("remove", function (e) {
+            //console.log("remove", e.key);
+            if (e.exit) {
+              var elemId = viewer.getElemId(e.key);
+              var el =  document.getElementById(elemId);
+              el.classList.remove("active");
+            }
+          });
+        });
+      });
+
+    </script>
+    <style type="text/css">
+    .active {color:red;font-weight: bold}
+    </style> 
+
+  </head>
+  <body>
+    <h1>Sequencer</h1>    
+    <div id="url"></div>  
+
+    <h2>Controls</h2>
+    <div id="controls"></div>
+    <p>
+      <div id="value"></div>
+    </p>
+     
+    <h2>Window Items</h2>
+    <p>
+      <pre id="view"></pre>
+    </p>
+
+    <h2>Sequenced Items</h2>
+    <p>
+      <pre id="seqview"></pre>
+    </p>
+
+  </body>
+</html>
