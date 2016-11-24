@@ -22,6 +22,58 @@
 define(function () {
 
 	'use strict';
+
+
+
+	// Closure
+	(function() {
+	  /**
+	   * Decimal adjustment of a number.
+	   *
+	   * @param {String}  type  The type of adjustment.
+	   * @param {Number}  value The number.
+	   * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+	   * @returns {Number} The adjusted value.
+	   */
+	  function decimalAdjust(type, value, exp) {
+	    // If the exp is undefined or zero...
+	    if (typeof exp === 'undefined' || +exp === 0) {
+	      return Math[type](value);
+	    }
+	    value = +value;
+	    exp = +exp;
+	    // If the value is not a number or the exp is not an integer...
+	    if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+	      return NaN;
+	    }
+	    // Shift
+	    value = value.toString().split('e');
+	    value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+	    // Shift back
+	    value = value.toString().split('e');
+	    return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+	  }
+
+	  // Decimal round
+	  if (!Math.round10) {
+	    Math.round10 = function(value, exp) {
+	      return decimalAdjust('round', value, exp);
+	    };
+	  }
+	  // Decimal floor
+	  if (!Math.floor10) {
+	    Math.floor10 = function(value, exp) {
+	      return decimalAdjust('floor', value, exp);
+	    };
+	  }
+	  // Decimal ceil
+	  if (!Math.ceil10) {
+	    Math.ceil10 = function(value, exp) {
+	      return decimalAdjust('ceil', value, exp);
+	    };
+	  }
+	})();
+
 	
     // Calculate a snapshot of the motion vector,
     // given initials conditions vector: [p0,v0,a0,t0] and t (absolute - not relative to t0) 
@@ -271,24 +323,12 @@ define(function () {
     };
 
 
-    /*
-		round to significant figures
-    */
-
-	var roundToSignificantFigures = function (num, n) {
-	    if(num === 0) {
-	        return 0;
-	    }
-	    var d = Math.ceil(Math.log10(num < 0 ? -num : num));
-	    var power = n - d;
-
-	    var magnitude = Math.pow(10, power);
-	    var shifted = Math.round(num*magnitude);
-	    return shifted/magnitude;
-	};
 
 
     var calculateSolutionsInInterval = function(vector, deltaSec, plist) {
+    	// protect from tiny errors introduced by calculations
+    	// round to 10'th decimal
+		deltaSec = Math.round10(deltaSec, -10);
 		var solutions = [];
 		var p0 = vector.position;
 		var v0 = vector.velocity;
@@ -298,23 +338,13 @@ define(function () {
 		    var intersects = calculateRealSolutions(p0,v0,a0, o.point);
 		    for (var j=0; j<intersects.length; j++) {
 				var t = intersects[j];
-				/* 
-					corner case : t may be deltaSec + small error 5.000000000000002
-					protect from tiny errors introduced by from limitations in number precision
-					
-				*/
-				
+				// protect from tiny errors introduced by calculations
+    			// round to 10'th decimal
+    			t = Math.round10(t, -10);
 				if (0.0 <= t && t <= deltaSec) {
 				    solutions.push([t,o]);
-				} else {
-					t = roundToSignificantFigures(t, 10);
-					deltaSec = roundToSignificantFigures(deltaSec, 10);
-					if (0.0 <= t && t <= deltaSec) {
-				    	solutions.push([t,o]);
-						//console.log("ERROR FIXED");
-					} else {
-						console.log("dropping event : 0<t<deltaSec is not true", t, deltaSec);	
-					}
+				} else {	
+					console.log("dropping event : 0<t<deltaSec is not true", t, deltaSec);	
 				}
 		    }
 		}
@@ -395,8 +425,7 @@ define(function () {
 		calculateSolutionsInInterval2 : calculateSolutionsInInterval2,
 		getCorrectRangeState : getCorrectRangeState,
 		checkRange : checkRange,
-		RangeState : RangeState,
-		roundToSignificantFigures : roundToSignificantFigures
+		RangeState : RangeState
 	};
 });
 

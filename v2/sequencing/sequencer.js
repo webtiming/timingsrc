@@ -25,19 +25,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	// UTILITY
 
-	var roundToSignificantFigures = function (num, n) {
-	    if(num === 0) {
-	        return 0;
-	    }
-	    var d = Math.ceil(Math.log10(num < 0 ? -num : num));
-	    var power = n - d;
-
-	    var magnitude = Math.pow(10, power);
-	    var shifted = Math.round(num*magnitude);
-	    return shifted/magnitude;
-	};
-
-
 	var isMoving = function (vector) {
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
 	};
@@ -137,10 +124,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this.options = options || {};	
 		this.options.lookahead = this.options.lookahead || 5.0;
 		// time-interval
-		/*		
-		var start = roundToSignificantFigures(now, 10);
-		var end = roundToSignificantFigures(start + this.options.lookahead, 10);
-		*/
 		var start = now;
 		var end = now + this.options.lookahead;
 
@@ -246,10 +229,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    }
 	    var start = now;
 		var end = now + this.options.lookahead;
-	    /*
-	    var start = roundToSignificantFigures(now, 10);
-		var end = roundToSignificantFigures(start + this.options.lookahead, 10);
-	    */
 	    this.queue = []; // drop tasks (time interval cut off)
 	    this.timeInterval = new Interval(start, end, false, true);
 	    this.posInterval = null; // reset
@@ -890,7 +869,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    var timeInterval = this._schedule.getTimeInterval();
 	    var tStart = timeInterval.low;
 	    var tEnd = timeInterval.high;
-	    var tDelta = tEnd - tStart;
+	    var tDelta = timeInterval.length;
 	    // range
 		var range = this._to.range;
 	    var vectorStart = motionutils.calculateVector(initVector, tStart);
@@ -901,8 +880,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    if (!points) {
 			// 1) find the interval covered by the movement of timing object during the time delta
 			var posRange = motionutils.calculateInterval(vectorStart, tDelta);
-			var pStart = roundToSignificantFigures(Math.max(posRange[0], range[0]), 10);
-			var pEnd = roundToSignificantFigures(Math.min(posRange[1], range[1]), 10);
+			var pStart = Math.round10(Math.max(posRange[0], range[0]), -10);
+			var pEnd = Math.round10(Math.min(posRange[1], range[1]), -10);
 			var posInterval = new Interval(pStart, pEnd, false, true);
 
 			this._schedule.setPosInterval(posInterval);
@@ -927,7 +906,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    console.log("ORIG EVENTLIST");
 	    eventList.forEach(function (item) {
 	    		var p0 = vectorStart.timestamp + item[0];
-				var p1 = roundToSignificantFigures(p0, 10);
+				var p1 = Math.round10(p0, -10);
 				console.log("inside", p1, item[1]);
 	    });
 	    */
