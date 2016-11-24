@@ -44,7 +44,7 @@
           });
 
           s.on("change", function (e) {
-            //console.log("change", e.key);
+            console.log("change", e.key);
             if (e.enter) {
               var elemId = viewer.getElemId(e.key);
               var el =  document.getElementById(elemId);
@@ -52,7 +52,7 @@
             }
           });
           s.on("remove", function (e) {
-            //console.log("remove", e.key);
+            console.log("remove", e.key);
             if (e.exit) {
               var elemId = viewer.getElemId(e.key);
               var el =  document.getElementById(elemId);

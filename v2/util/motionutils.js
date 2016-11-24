@@ -250,7 +250,7 @@ define(function () {
 
     */
     var sortFunc = function (a,b){return a[0]-b[0];};
-    var calculateSolutionsInInterval = function(vector, deltaSec, plist) {
+    var calculateSolutionsInInterval2 = function(vector, deltaSec, plist) {
 		var solutions = [];
 		var p0 = vector.position;
 		var v0 = vector.velocity;
@@ -269,7 +269,61 @@ define(function () {
 		solutions.sort(sortFunc);
 		return solutions;
     };
-    
+
+
+    /*
+		round to significant figures
+    */
+
+	var roundToSignificantFigures = function (num, n) {
+	    if(num === 0) {
+	        return 0;
+	    }
+	    var d = Math.ceil(Math.log10(num < 0 ? -num : num));
+	    var power = n - d;
+
+	    var magnitude = Math.pow(10, power);
+	    var shifted = Math.round(num*magnitude);
+	    return shifted/magnitude;
+	};
+
+
+    var calculateSolutionsInInterval = function(vector, deltaSec, plist) {
+		var solutions = [];
+		var p0 = vector.position;
+		var v0 = vector.velocity;
+		var a0 = vector.acceleration;
+		for (var i=0; i<plist.length; i++) {
+		    var o = plist[i];
+		    var intersects = calculateRealSolutions(p0,v0,a0, o.point);
+		    for (var j=0; j<intersects.length; j++) {
+				var t = intersects[j];
+				/* 
+					corner case : t may be deltaSec + small error 5.000000000000002
+					protect from tiny errors introduced by from limitations in number precision
+					
+				*/
+				
+				if (0.0 <= t && t <= deltaSec) {
+				    solutions.push([t,o]);
+				} else {
+					t = roundToSignificantFigures(t, 10);
+					deltaSec = roundToSignificantFigures(deltaSec, 10);
+					if (0.0 <= t && t <= deltaSec) {
+				    	solutions.push([t,o]);
+						//console.log("ERROR FIXED");
+					} else {
+						console.log("dropping event : 0<t<deltaSec is not true", t, deltaSec);	
+					}
+				}
+		    }
+		}
+		// sort solutions
+		solutions.sort(sortFunc);
+		return solutions;
+    };
+
+
     /*
       Within a definite time interval, a motion will "cover" a
       definite interval on the dimension. Calculate the min, max
@@ -289,7 +343,9 @@ define(function () {
       The calculation takes into consideration that acceleration
       might turn the direction of motion during the time interval.
     */
-    
+
+
+
     var calculateInterval = function (vector, deltaSec) {
 		var p0 = vector.position;
 		var v0 = vector.velocity;
@@ -326,7 +382,7 @@ define(function () {
 		// no turning point or turning point was not reached
 		return [Math.min(p0,p1), Math.max(p0,p1)];
     };
-
+    
 
 	// return module object
 	return {
@@ -336,9 +392,11 @@ define(function () {
 		calculateDelta : calculateDelta,
 		calculateInterval : calculateInterval,
 		calculateSolutionsInInterval : calculateSolutionsInInterval,
+		calculateSolutionsInInterval2 : calculateSolutionsInInterval2,
 		getCorrectRangeState : getCorrectRangeState,
 		checkRange : checkRange,
-		RangeState : RangeState
+		RangeState : RangeState,
+		roundToSignificantFigures : roundToSignificantFigures
 	};
 });
 

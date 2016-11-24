@@ -25,6 +25,19 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	// UTILITY
 
+	var roundToSignificantFigures = function (num, n) {
+	    if(num === 0) {
+	        return 0;
+	    }
+	    var d = Math.ceil(Math.log10(num < 0 ? -num : num));
+	    var power = n - d;
+
+	    var magnitude = Math.pow(10, power);
+	    var shifted = Math.round(num*magnitude);
+	    return shifted/magnitude;
+	};
+
+
 	var isMoving = function (vector) {
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
 	};
@@ -124,7 +137,14 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this.options = options || {};	
 		this.options.lookahead = this.options.lookahead || 5.0;
 		// time-interval
-		this.timeInterval = new Interval(now, now + this.options.lookahead, true, true);
+		/*		
+		var start = roundToSignificantFigures(now, 10);
+		var end = roundToSignificantFigures(start + this.options.lookahead, 10);
+		*/
+		var start = now;
+		var end = now + this.options.lookahead;
+
+		this.timeInterval = new Interval(start, end, true, true);
 		// position-interval
 		this.posInterval = null;
 	};
@@ -148,7 +168,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			    this.queue.sort(this.sortFunc); // maintain ordering
 			    return true;
 			} else {
-				//console.log("Schedule : task pushed a bit too late, ts < now ", (ts-now));
+				console.log("Schedule : task pushed a bit too late, ts < now ", (ts-now));
 			}
 	    }
 	    return false;
@@ -173,7 +193,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	/* Invalidate task with given key */
 	Schedule.prototype.invalidate = function (key) {
-		console.log("sched invalidate");
 	    var i, index, entry, remove = [];
 	    // Find
 	    for (i=0; i<this.queue.length; i++) {
@@ -224,11 +243,16 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	Schedule.prototype.advance = function(now) {
 	    if (now < this.timeInterval.low) {
 			console.log("Schedule : Advancing backwards " + (now - this.timeInterval.low));
-	    } 
+	    }
+	    var start = now;
+		var end = now + this.options.lookahead;
+	    /*
+	    var start = roundToSignificantFigures(now, 10);
+		var end = roundToSignificantFigures(start + this.options.lookahead, 10);
+	    */
 	    this.queue = []; // drop tasks (time interval cut off)
-	    this.timeInterval = new Interval(now, now + this.options.lookahead, false, true);
+	    this.timeInterval = new Interval(start, end, false, true);
 	    this.posInterval = null; // reset
-	    console.log("sched advance", this.timeInterval.toString());
 	};
 	
 	/* 
@@ -762,7 +786,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
         as the timing object is moving.
 	*/
 	Sequencer.prototype._main = function (now, isTimeout) {
-		console.log("main start", (isTimeout === true));
+		//console.log("main start", (isTimeout === true));
 		/*
 		this._schedule.queue.forEach(function (item) {
 			console.log(item.ts, item.task.key);
@@ -819,7 +843,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 				this._currentTimeoutPoint = nextTimeoutPoint;
 				var self = this;
-				console.log("main done - set timeout", this._schedule.queue.length);
+				//console.log("main done - set timeout", this._schedule.queue.length);
 				this._timeout = this._clock.setTimeout(function () {
 					self._clearTimeout();
 					self._main(undefined, true);
@@ -871,19 +895,23 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		var range = this._to.range;
 	    var vectorStart = motionutils.calculateVector(initVector, tStart);
 	    var points = givenPoints;
-
+	    var points2;
+	    var eventList2;
 	    // Calculate points if not provided
 	    if (!points) {
 			// 1) find the interval covered by the movement of timing object during the time delta
 			var posRange = motionutils.calculateInterval(vectorStart, tDelta);
-			var pStart = Math.max(posRange[0], range[0]);
-			var pEnd = Math.min(posRange[1], range[1]);
-			var posInterval = new Interval(pStart, pEnd, true, true);
-			console.log("load", timeInterval.toString(), posInterval.toString());
+			var pStart = roundToSignificantFigures(Math.max(posRange[0], range[0]), 10);
+			var pEnd = roundToSignificantFigures(Math.min(posRange[1], range[1]), 10);
+			var posInterval = new Interval(pStart, pEnd, false, true);
+
 			this._schedule.setPosInterval(posInterval);
 
 			// 2) find all points in this interval
 			points = this._axis.lookupByInterval(posInterval);
+
+			//console.log("load", timeInterval.toString(), posInterval.toString());
+
 	    }
 
 	    /*
@@ -895,8 +923,20 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    
 	    // create ordered list of all events for time interval t_delta 
 	    var eventList = motionutils.calculateSolutionsInInterval(vectorStart, tDelta, points);
-	    
-	    console.log(points.length, eventList.length);
+	    /*
+	    console.log("ORIG EVENTLIST");
+	    eventList.forEach(function (item) {
+	    		var p0 = vectorStart.timestamp + item[0];
+				var p1 = roundToSignificantFigures(p0, 10);
+				console.log("inside", p1, item[1]);
+	    });
+	    */
+
+	    // report bug?
+	    if (points.length !== eventList.length) {
+	    	console.log("warning : mismatch points and events", points.length, eventList.length);
+	    }
+
 
 	    /* 
 	       SUBTLE 1 : adjust for range restrictions within
@@ -923,7 +963,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			
 			/* 
 			   drop events exactly at the start of the time covering
-			   interval. 
+			   interval.
+			   likely obsolete since we are fetching points <low, high] 
 			*/
 			if (d === 0) {
 				console.log("drop - exactly at start of time covering");
