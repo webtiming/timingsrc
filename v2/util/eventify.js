@@ -573,9 +573,6 @@ define(function () {
 
 
 	var ResolvePromise = function () {
-
-
-
 		var ev = new eventify.EventVariable(0);
 		var _promise = new Promise (function (resolve, reject) {
 			var callback = function () {
@@ -608,14 +605,13 @@ define(function () {
 	};
 
 
-		
-
 	// module api
 	return {
 		eventifyPrototype : eventifyPrototype,
 		eventifyInstance : eventifyInstance,
 		BaseEventObject : BaseEventObject,
 		EventVariable : EventVariable,
-		EventBoolean : EventBoolean
+		EventBoolean : EventBoolean,
+		ResolvePromise : ResolvePromise
 	};
 });
