@@ -67,6 +67,9 @@ define(['./timingbase'], function (timingbase) {
 	*/
 
 	var RangeConverter = function (timingObject, range) {
+		if (!(this instanceof RangeConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		ConverterBase.call(this, timingObject, {timeout:true});
 		this._state = state();
 		// todo - check range

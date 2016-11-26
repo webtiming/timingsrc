@@ -35,6 +35,9 @@ define(['./timingbase'], function (timingbase) {
 	var inherit = timingbase.inherit;
 
 	var ScaleConverter = function (timingObject, factor) {
+		if (!(this instanceof ScaleConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		this._factor = factor;
 		ConverterBase.call(this, timingObject);
 	};

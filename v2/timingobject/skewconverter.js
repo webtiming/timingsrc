@@ -34,6 +34,9 @@ define(['./timingbase'], function (timingbase) {
 	var inherit = timingbase.inherit;
 
 	var SkewConverter = function (timingObject, skew) {
+		if (!(this instanceof SkewConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		this._skew = skew;
 		ConverterBase.call(this, timingObject);
 	};

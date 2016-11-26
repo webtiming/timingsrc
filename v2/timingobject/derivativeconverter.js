@@ -37,6 +37,9 @@ define(['./timingbase'], function (timingbase) {
 	var inherit = timingbase.inherit;
 
 	var DerivativeConverter = function (timingObject, factor) {
+		if (!(this instanceof DerivativeConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		ConverterBase.call(this, timingObject);
 	};
 	inherit(DerivativeConverter, ConverterBase);

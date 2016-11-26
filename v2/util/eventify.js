@@ -462,6 +462,9 @@ define(function () {
 	*/
 
 	var EventBoolean = function (initValue, options) {
+		if (!(this instanceof EventBoolean)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		BaseEventObject.call(this);
 		this._value = (initValue) ? true : false;
 		// define change event (supporting init-event)
@@ -516,6 +519,9 @@ define(function () {
 	*/
 
 	var EventVariable = function (initValue, options) {
+		if (!(this instanceof EventVariable)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		BaseEventObject.call(this);
 		this._value = initValue;
 		// define change event (supporting init-event)
@@ -551,6 +557,56 @@ define(function () {
 		}
 		return false;
 	};
+
+
+
+	/*
+		Resolve PROMISE 
+
+		- one that resolves or rejects when you say so.
+		- implementation using event
+
+
+		Resolve or reject programmatically from externally.
+		- utility - since it is easy to make with an event variable
+	*/
+
+
+	var ResolvePromise = function () {
+
+
+
+		var ev = new eventify.EventVariable(0);
+		var _promise = new Promise (function (resolve, reject) {
+			var callback = function () {
+				// init-event from eventBoolean will likely give false
+				if (ev.value === 1) {
+					resolve();
+					ev.off("change", callback);
+				} else if (ev.value === -1) {
+					reject();
+					ev.off("change", callback);
+				}
+			};
+			ev.on("change", callback);	
+		});
+		// add handle for completing the promise
+		_promise.resolve = function () {
+			if (ev.value === 0) {
+				ev.value = 1;
+			}
+		};
+		_promise.reject = function () {
+			if (ev.value === 0) {
+				ev.value = -1;
+			}
+		};
+		_promise.isResolved = function () {return ev.value === 1;};
+		_promise.isRejected = function () {return ev.value === -1;};
+		_promise.isPending = function () {return ev.value === 0;};
+		return _promise;
+	};
+
 
 		
 

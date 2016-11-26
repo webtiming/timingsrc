@@ -48,6 +48,10 @@ define(['./timingbase', './rangeconverter'], function (timingbase, RangeConverte
 
 
 	var TimeShiftConverter = function (timingObject, timeOffset) {
+		if (!(this instanceof TimeShiftConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
+
 		ConverterBase.call(this, timingObject);
 		this._timeOffset = timeOffset;
 	};

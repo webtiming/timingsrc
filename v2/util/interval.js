@@ -39,6 +39,9 @@ define(function () {
 
 
 	var Interval = function (low, high, lowInclude, highInclude) {
+		if (!(this instanceof Interval)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		var lowIsNumber = isNumber(low);
 		var highIsNumber = isNumber(high);
 		// new Interval(3.0) defines singular - low === high

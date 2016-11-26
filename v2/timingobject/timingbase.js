@@ -71,6 +71,10 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 
 
 	var TimingBase = function (options) {
+		if (!(this instanceof TimingBase)) {
+			throw new Error("Contructor function called without new operation");
+		}
+
 		this._version = 3;
 		// options
 		this._options = options || {};
@@ -367,6 +371,10 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 
 
 	var ConverterBase = function (timingObject, options) {
+		if (!(this instanceof ConverterBase)) {
+			throw new Error("Contructor function called without new operation");
+		}
+
 		TimingBase.call(this, options);
 		// timing source
 		this._timingsrc = null;	

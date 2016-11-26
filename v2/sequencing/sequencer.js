@@ -331,6 +331,9 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	*/
 	var Sequencer = function (timingObject, _axis) {
+		if (!(this instanceof Sequencer)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		this._to = timingObject;
 		this._clock = timingObject.clock;
 		this._axis = _axis || new axis.Axis();

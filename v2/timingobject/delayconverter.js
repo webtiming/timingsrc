@@ -41,6 +41,9 @@ define(['./timingbase'], function (timingbase) {
 	var inherit = timingbase.inherit;
 
 	var DelayConverter = function (timingObject, delay) {
+		if (!(this instanceof DelayConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		if (delay < 0) {throw new Error ("negative delay not supported");}
 		if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
 		ConverterBase.call(this, timingObject);

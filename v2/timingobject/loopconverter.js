@@ -86,6 +86,9 @@ define(['./timingbase'], function (timingbase) {
 	*/
 
 	var LoopConverter = function (timingObject, range) {
+		if (!(this instanceof LoopConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		ConverterBase.call(this, timingObject, {timeout:true});
 		this._range = range;
 		this._coords = new SegmentCoords(range[0], range[1]-range[0]);

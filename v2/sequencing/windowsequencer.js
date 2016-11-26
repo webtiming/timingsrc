@@ -40,6 +40,9 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	var Interval = seq.Interval;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
+		if (!(this instanceof WindowSequencer)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		this._axis = _axis || new axis.Axis();
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;

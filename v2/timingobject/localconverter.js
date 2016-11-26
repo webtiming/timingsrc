@@ -47,6 +47,9 @@ define(['./timingbase'], function (timingbase) {
 	var inherit = timingbase.inherit;
 
 	var LocalConverter = function (timingObject) {
+		if (!(this instanceof LocalConverter)) {
+			throw new Error("Contructor function called without new operation");
+		}
 		ConverterBase.call(this, timingObject);
 		this._speculative = false;
 	};

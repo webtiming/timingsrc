@@ -44,6 +44,11 @@ define(['./timingbase', './timingprovider', 'util/masterclock'], function (timin
 	var TimingProviderState = timingprovider.TimingProviderState;
 
 	var TimingObject = function (options) {
+		
+		if (!(this instanceof TimingObject)) {
+			throw new Error("Contructor function called without new operation");
+		}
+
 		options = options || {};
 		TimingBase.call(this, {timeout:true});
 		this._clock = null;

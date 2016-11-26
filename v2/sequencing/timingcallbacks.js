@@ -92,6 +92,9 @@ define (['util/motionutils'], function (motionutils) {
   */
 
   var SetPointCallback = function (timingObject, handler, point, options) {
+    if (!(this instanceof SetPointCallback)) {
+      throw new Error("Contructor function called without new operation");
+    }
     TimingCallbackBase.call(this, timingObject, handler);
     this._options = options || {}; 
     this._options.repeat = (this._options.repeat !== undefined) ? this._options.repeat : false;
@@ -137,6 +140,9 @@ define (['util/motionutils'], function (motionutils) {
   */
 
   var SetIntervalCallback = function (timingObject, handler, length, options) {
+    if (!(this instanceof SetIntervalCallback)) {
+      throw new Error("Contructor function called without new operation");
+    }
     TimingCallbackBase.call(this, timingObject, handler);
     this._options = options || {}; 
     this._options.offset = (this._options.offset !== undefined) ? this._options.offset : 0;
