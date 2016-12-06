@@ -411,11 +411,13 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 			if (this._timingsrc) {
 				this._timingsrc.off("change", this._internalOnChange, this);
 			}
-			// reset internal state
+			// reset internal state 
+			/*
 			this._range = null;
 			this._vector = null;
 			this._clearTimeout();
 			clearTimeout(this._tid);
+			*/
 			this._timingsrc = timingObject;
 			this._timingsrc.on("change", this._internalOnChange, this);
 		}
