@@ -66,6 +66,8 @@ define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 		};
 		this._skew = 0;
 		this._readyState = TimingProviderState.OPEN;
+		
+
 		// events
 		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("vectorchange", {init:false}); // define vector change event (not supporting init-event)
@@ -82,13 +84,11 @@ define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 	LocalTimingProvider.prototype._setSkew = function (skew) {
 		this._skew = skew;
 		this.eventifyTriggerEvent("skewchange");
-		//this._doCallbacks("skewchange");
 	};
 
 	LocalTimingProvider.prototype._setVector = function (vector) {
 		this._vector = vector;
 		this.eventifyTriggerEvent("vectorchange");
-		//this._doCallbacks("vectorchange");
 	};
 
 	LocalTimingProvider.prototype.update = function (vector) {
@@ -120,6 +120,7 @@ define(['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
 		};
 		// break control flow
 		var self = this;
+
 		Promise.resolve().then(function () {
 			self._setVector(newVector);
 		});

@@ -377,7 +377,8 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 
 		TimingBase.call(this, options);
 		// timing source
-		this._timingsrc = null;	
+		this._timingsrc;	
+		this._pendingTimingsrc;
 
 		/*
 			store a wrapper function on the instance used as a callback handler from timingsrc
@@ -408,18 +409,21 @@ define(['util/eventify', 'util/motionutils'], function (eventify, motionutils) {
 	Object.defineProperty(ConverterBase.prototype, 'timingsrc', {
 		get : function () {return this._timingsrc;},
 		set : function (timingObject) {
-			if (this._timingsrc) {
-				this._timingsrc.off("change", this._internalOnChange, this);
-			}
-			// reset internal state 
-			/*
-			this._range = null;
-			this._vector = null;
-			this._clearTimeout();
-			clearTimeout(this._tid);
-			*/
-			this._timingsrc = timingObject;
-			this._timingsrc.on("change", this._internalOnChange, this);
+			var self = this;
+			timingObject.readyPromise.then(function () {
+				// decouple from old timingsrc
+				if (self._timingsrc) {
+					self._timingsrc.off("change", self._internalOnChange, self);
+				}
+				/*
+				this._range = null;
+				this._vector = null;
+				this._clearTimeout();
+				clearTimeout(this._tid);
+				*/
+				self._timingsrc = timingObject;
+				self._timingsrc.on("change", self._internalOnChange, self);
+			});
 		}
 	});
 

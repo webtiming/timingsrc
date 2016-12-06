@@ -16,6 +16,9 @@
         var setup_converter1 = function (to) {
           // Converter objects
           var w = new timingsrc.SkewConverter(to, 2);
+
+          w.timingsrc = to;
+
           //w = new timingsrc.DelayConverter(to, 1.0);          
           //w = new timingsrc.TimeShiftConverter(to, -1.0);
           //w = new timingsrc.ScaleConverter(to, 2);
@@ -74,6 +77,7 @@
 
 
         var setup_timingobject = function () {
+
           // timing object
           //var to = new timingsrc.TimingObject({range:[8,17]});
           var to = new timingsrc.TimingObject();
