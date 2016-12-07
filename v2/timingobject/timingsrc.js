@@ -18,11 +18,7 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-	TimingBase defines base classes for TimingObject and ConverterBase used to implement timing converters.
-	It makes use of eventutils for event stuff, including immediate events.
-	It makes use of motionutils for timing calculations. 
-*/
+
 
 define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (eventify, motionutils, MasterClock) {
 
@@ -53,7 +49,387 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 
 
 
+	
+
+
+
+
+
+
+
+
+
+
+
+
+	
 	/*
+		TIMING BASE
+
+		abstract base class for objects that may be used as timingsrc
+
+		essential internal state
+		- range, vector
+	
+		external methods
+		query, update
+
+		events
+		on/off "change", "timeupdate"
+		
+		internal methods for range timeouts
+		
+		defines internal processing steps
+		- preProcess(vector) <- from external timingobject
+			- vector = onChange(vector)
+			- process(vector) <- from timeout or preProcess
+		- process (vector) 
+			- set internal vector
+			- postProcess(vector)
+			- renew range timeout
+		- postprocess (vector)
+			- emit change event and timeupdate event
+			- turn periodic timeupdate on or off
+	
+		individual steps in this structure may be specialized
+		by subclasses (i.e. timing converters)
+	*/
+
+
+	var TimingBase = function (timingsrc, options) {
+		
+		this._version = 4;
+		this._options = options || {};
+	
+		// cached vector
+		this._vector = {
+			position : undefined,
+			velocity : undefined,
+			acceleration : undefined,
+			timestamp : undefined
+		};
+		
+		// cached range
+		this._range = null;
+		
+		// timeout support
+		this._timeout = null; // timeoutid for range violation etc.
+		this._tid = null; // timeoutid for timeupdate
+		// range timeouts off by default
+		if (!this._options.hasOwnProperty("timeout")) {
+			this._options.timeout = false;
+		}
+
+		// readiness
+		this._ready = new eventify.EventBoolean(false, {init:true});
+		// exported events
+		eventify.eventifyInstance(this);
+		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
+
+
+
+		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
+
+
+
+	};
+	eventify.eventifyPrototype(TimingBase.prototype);
+
+
+
+	/*
+
+		EVENTS
+
+	*/
+
+	/*
+	  	overrides how immediate events are constructed
+	  	specific to eventutils
+	  	- overrides to add support for timeupdate events
+	*/
+	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
+		if (type === "change") {
+			return (this._ready.value === true) ? [undefined] : []; 
+		} else if (type === "timeupdate") {
+			return (this._ready.value === true) ? [undefined] : []; 
+		} 
+		return [];
+	};
+
+
+
+
+	/*
+
+		READY
+	
+	*/
+
+	// ready or not
+	TimingBase.prototype.isReady = function () {
+		return this._ready.value;
+	}
+
+	// ready promise
+	Object.defineProperty(TimingBase.prototype, 'ready', {
+		get : function () {
+			var self = this;
+			return new Promise (function (resolve, reject) {
+				if (self._ready.value === true) {
+					resolve();
+				} else {
+					var onReady = function () {
+						if (self._ready.value === true) {
+							self._ready.off("change", onReady);
+							resolve();
+						}
+					};
+					self._ready.on("change", onReady);
+				}
+			});
+		}
+	});
+
+
+
+	/*
+
+		API
+
+	*/
+
+	// version
+	Object.defineProperty(TimingBase.prototype, 'version', {
+		get : function () { return this._version; }
+	});
+
+	// range
+	Object.defineProperty(TimingBase.prototype, 'range', {
+		get : function () { return [this._range[0], this._range[1]]; }
+	});
+
+	// internal vector
+	Object.defineProperty(TimingBase.prototype, 'vector', {
+		get : function () {	
+			// copy cached vector
+			return {
+				position : this._vector.position,
+				velocity : this._vector.velocity,
+				acceleration : this._vector.acceleration,
+				timestamp : this._vector.timestamp
+			};
+		}
+	});
+
+	// internal clock
+	Object.defineProperty(TimingBase.prototype, 'clock', {
+		get : function () {	return this._timingsrc.clock; }	
+	});
+
+	// query
+	TimingBase.prototype.query = function () {
+		if (this._ready.value === false)  {
+			return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
+		}
+		// reevaluate state to handle range violation
+		var vector = motionutils.calculateVector(this._vector, this._timingsrc.clock.now());
+		var state = motionutils.getCorrectRangeState(vector, this._range);
+		if (state !== motionutils.RangeState.INSIDE) {
+			this._preProcess(vector);
+		} 
+		// re-evaluate query after state transition
+		return motionutils.calculateVector(this._vector, this._timingsrc.clock.now());
+	};
+
+
+	// shorthand accessors
+	Object.defineProperty(TimingBase.prototype, 'pos', {
+		get : function () {
+			return this.query().position;
+		}
+	});
+
+	Object.defineProperty(TimingBase.prototype, 'vel', {
+		get : function () {
+			return this.query().velocity;
+		}
+	});
+
+	Object.defineProperty(TimingBase.prototype, 'acc', {
+		get : function () {
+			return this.query().acceleration;
+		}
+	});
+
+
+
+	/*
+
+		INTERNAL METHODS
+
+	*/
+
+
+	/*
+		To be overridden
+		get range is useful for setting the range internally,
+		when the range depends on the range of an external (upstream)
+		timing object. Get range is invoked when first change
+		event is received from external object, thereby guaranteeing 
+		that range of external timing object is well defined.
+		(see _preProcess)
+		return correct range [start, end]
+
+		Invoked every time the external object is switched,
+		thus it may change.
+	*/
+	TimingBase.prototype._getRange = function () {
+		return this._timingsrc.range;
+	};
+
+
+	/*
+		do not override
+		Handle incoming vector, from "change" from external object
+		or from an internal timeout.
+		
+		_onChange is invoked allowing subclasses to specify transformation
+		on the incoming vector before processing.
+	*/
+	TimingBase.prototype._preProcess = function (vector) {
+		if (this._range === null) {
+			this._range = this._getRange();
+		}
+		var vector = this._onChange(vector);
+		this._process(vector);
+	};
+
+	/*
+		specify transformation
+		on the incoming vector before processing.
+		useful for Converters that do mathematical transformations,
+		or as a way to enforse range restrictions.
+		invoming vectors from external change events or internal
+		timeout events
+
+		returning null stops further processing, exept renewtimeout 
+	*/
+	TimingBase.prototype._onChange = function (vector) {
+		return motionutils.checkRange(vector, this._range);
+	};
+
+	/*
+		core processing step after change event or timeout
+		assignes the internal vector
+	*/
+	TimingBase.prototype._process = function (vector) {
+		if (vector !== null) {
+			var old_vector = this._vector;
+			// update internal vector
+			this._vector = vector;
+			// trigger events
+			if (old_vector === null) {
+				this._ready.value = true;
+			}
+			this._postProcess(this._vector);
+		}
+		// renew timeout
+		this._renewTimeout();
+	};
+
+	/*
+		process a new vector applied in order to trigger events
+		overriding this is only necessary if external change events 
+		need to be suppressed,
+	*/
+	TimingBase.prototype._postProcess = function (vector) {
+		// trigger change events
+		this.eventifyTriggerEvent("change");
+		// trigger timeupdate events
+		this.eventifyTriggerEvent("timeupdate");
+		var moving = vector.velocity !== 0.0 || vector.acceleration !== 0.0;
+		if (moving && this._tid === null) {
+			var self = this;
+			this._tid = setInterval(function () {
+				self.eventifyTriggerEvent("timeupdate");
+			}, 200);
+		} else if (!moving && this._tid !== null) {
+			clearTimeout(this._tid);
+			this._tid = null;
+		}
+	};
+
+
+	/*
+
+		TIMEOUTS
+	
+	*/
+
+	/*
+		do not override
+		renew timeout is called during evenry processing step
+		in order to recalculate timeouts.
+		the calculation may be specialized in
+		_calculateTimeoutVector
+	*/
+	TimingBase.prototype._renewTimeout = function () {
+		if (this._options.timeout === true) {
+			this._clearTimeout();
+			var vector = this._calculateTimeoutVector();
+			if (vector === null) {return;}	 		
+			var now = this.clock.now();
+	 		var secDelay = vector.timestamp - now;
+	 		var self = this;
+	 		this._timeout = this._timingsrc.clock.setTimeout(function () {
+				self._process(self._onTimeout(vector));
+	      	}, secDelay, {anchor: now, early: 0.005}); 
+		}
+	};
+
+	/*
+		to be overridden
+		must be implemented by subclass if range timeouts are required
+		calculate a vector that will be delivered to _process().
+		the timestamp in the vector determines when it is delivered.
+	*/
+	TimingBase.prototype._calculateTimeoutVector = function () {
+		var freshVector = this.query();
+		var res = motionutils.calculateDelta(freshVector, this._range);
+		var deltaSec = res[0];
+		if (deltaSec === null) return null;
+		if (deltaSec === Infinity) return null;
+		var position = res[1];
+		var vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
+		vector.position = position; // avoid rounding errors
+		return vector;
+	};
+
+	/*
+		do not override
+		internal utility function for clearing vector timeout
+	*/
+	TimingBase.prototype._clearTimeout = function () {
+		if (this._timeout !== null) {
+			this._timeout.cancel();
+			this._timeout = null;
+		}
+	};
+
+	/*
+		to be overridden
+		subclass may implement transformation on timeout vector
+		before it is given to process.
+		returning null stops further processing, exept renewtimeout 
+	*/
+	TimingBase.prototype._onTimeout = function (vector) {		
+		return motionutils.checkRange(vector, this._range);
+	};
+
+
+
+/*
 		INTERNAL PROVIDER
 	
 		Timing provider internal to the browser context
@@ -62,20 +438,12 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	*/
 
 	var InternalProvider = function (options) {
+		TimingBase.call(this);
 		options = options || {};
 		// initialise internal state
 		this._clock = new MasterClock({skew:0});
 		// todo - check option.range
-		
-		this._range = options.range || [-Infinity, Infinity];
-		this._vector = {
-			position : 0.0,
-			velocity : 0.0,
-			acceleration : 0.0,
-			timestamp : this.clock.now() 
-		};
-
-	
+			
 		// events
 		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:false}); // define vector change event (not supporting init-event)
@@ -85,7 +453,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			this.update(options.vector);
 		}
 	};
-	eventify.eventifyPrototype(InternalProvider.prototype);
+	inherit(InternalProvider, TimingBase);
 
 
 	InternalProvider.prototype.update = function (vector) {
@@ -116,23 +484,13 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			timestamp : now
 		};
 		// break control flow
-		this._vector = newVector;
-		this.eventifyTriggerEvent("vector");
+		this._preProcess(newVector)
 		return newVector;
 	};
 	
 
-	Object.defineProperty(InternalTimingProvider.prototype, 'range', {
-		get : function () { return this._range; };
-	});
 
-	Object.defineProperty(InternalTimingProvider.prototype, 'skew', {
-		get : function () { return this._skew;}
-	});
 
-	Object.defineProperty(InternalTimingProvider.prototype, 'vector', {
-		get : function () { return this._vector; }
-	});
 
 
 	/*
@@ -151,20 +509,17 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	*/
 
 	var ExternalProvider = function (provider) {
+		TimingBase.call(this);
+
 		this._provider = provider;
 		this._clock;
+
 
 		// register event handlers
 		var self = this;
 		this._provider.on("vectorchange", function () {self._onVectorChange();});
 		this._provider.on("skewchange", function () {self._onSkewChange();});
 
-		// define event
-		eventify.eventifyInstance(this);
-		this.eventifyDefineEvent("change", {init:true});
-
-		// readiness
-		this._ready = new eventify.EventBoolean(false, {init:true});
 
 		// check if provider is ready immediately
 		if (this._provider.skew != undefined) {
@@ -174,18 +529,8 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			});
 		}
 	};
-	eventify.eventifyPrototype(ExternalProvider.prototype);
+	inherit(ExternalProvider, TimingBase);
 
-	ExternalProvider.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "change") {
-			return (this._ready.value === true) ? [undefined] : []; 
-		} 
-		return [];
-	};
-
-	ExternalProvider.prototype.isReady = function () {
-		return this._ready.value;
-	};
 
 	ExternalProvider.prototype._onSkewChange = function () {
 		if (!this._clock) {
@@ -196,6 +541,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		if (this._provider.vector != undefined) {
 			// just became ready
 			this._ready.value = true;
+			this.preProcess(this._provider.vector);
 			this.eventifyTriggerEvent("change");
 		}		
 	};
@@ -210,376 +556,23 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		}
 	};
 
-	Object.defineProperty(ExternalProvider.prototype, 'range', {
-		get : function () {return (this.isReady()) ? this._provider.range : undefined;}
-	});
-	Object.defineProperty(ExternalProvider.prototype, 'vector', {
-		get : function () {return (this.isReady()) ? this._provider.vector : undefined;}
-	});
-
-	Object.defineProperty(ExternalProvider.prototype, 'ready', {
-		get : function () {
-			var self = this;
-			return new Promise (function (resolve, reject) {
-				if (self._ready.value === true) {
-					resolve();
-				} else {
-					var onReady = function () {
-						if (self._ready.value === true) {
-							self._ready.off("change", onReady);
-							resolve();
-						}
-					};
-					self._ready.on("change", onReady);
-				}
-			});
-		}
-	});
-
-
-	// TIMING BASE
-	/*
-		Base class for TimingObject and ConverterBase
-
-		essential internal state
-		- range, vector
-	
-		external methods
-		query, update
-
-		event stuff from eventutils
-		on/off "change", "timeupdate"
-		
-		internal methods for range timeouts
-		
-		defines internal processing steps
-		- preProcess(vector) <- from external timingobject
-			- vector = onChange(vector)
-			- process(vector) <- from timeout or preProcess
-		- process (vector) 
-			- set internal vector
-			- postProcess(vector)
-			- renew range timeout
-		- postprocess (vector)
-			- emit change event and timeupdate event
-			- turn periodic timeupdate on or off
-	
-		individual steps in this structure may be specialized
-		by subclasses
-	*/
-
-
-	var TimingBase = function (timingsrc, options) {
-		if (!(this instanceof TimingBase)) {
-			throw new Error("Contructor function called without new operation");
-		}
-
-		this._version = 4;
-		// options
-		this._options = options || {};
-		// range timeouts off by default
-		if (!this._options.hasOwnProperty("timeout")) {
-			this._options.timeout = false;
-		}
-		// clock
-
-		// cached vector
-		this._vector = {
-				position : undefined,
-				velocity : undefined,
-				acceleration : undefined,
-				timestamp : this._vector.timestamp
-			};
-
-		};
-		// cached range
-		this._range = [-Infinity, Infinity];
-		// timeout support
-		this._timeout = null; // timeoutid for range violation etc.
-		this._tid = null; // timeoutid for timeupdate
-		// readiness
-		this._ready = false;
-		// event support
-		eventify.eventifyInstance(this);
-		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
-		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
-	};
-	eventify.eventifyPrototype(TimingBase.prototype);
-
-	// Accessors 
-
-	Object.defineProperty(TimingBase.prototype, 'version', {
-		get : function () { return this._version;}
-	});
-
-	Object.defineProperty(TimingBase.prototype, 'range', {
-		get : function () {return this._range;}
-	});
-
-	// Accessor internal vector
-	Object.defineProperty(TimingBase.prototype, 'vector', {
-		get : function () {	
-			if (this._vector === null) return null;
-			// copy cached vector
-			return {
-				position : this._vector.position,
-				velocity : this._vector.velocity,
-				acceleration : this._vector.acceleration,
-				timestamp : this._vector.timestamp
-			};
-		}
-	});
-
-
-	Object.defineProperty(TimingBase.prototype, 'ready', {
-		get : function () {
-			return this._ready;
-		}
-	});
-
-	Object.defineProperty(TimingBase.prototype, 'readyPromise', {
-		get : function () {
-			var self = this;
-			return new Promise (function (resolve, reject) {
-				if (self._ready) {
-					resolve();
-				} else {
-					var onReady = function () {
-						self.off("ready", onReady);
-						resolve()
-					};
-					self.on("ready", onReady);
-				}
-			});
-		}
-	});
-
-
-	// Shorthand accessors
-	Object.defineProperty(TimingBase.prototype, 'pos', {
-		get : function () {
-			return this.query().position;
-		}
-	});
-
-	Object.defineProperty(TimingBase.prototype, 'vel', {
-		get : function () {
-			return this.query().velocity;
-		}
-	});
-
-	Object.defineProperty(TimingBase.prototype, 'acc', {
-		get : function () {
-			return this.query().acceleration;
-		}
-	});
-
-
-
-
-	/*
-	  	overrides how immediate events are constructed
-	  	specific to eventutils
-		change event fires immediately if timing object is well 
-		defined, i.e. query() not null
-		no event args are passed (undefined) 
-	*/
-	TimingBase.prototype.eventifyMakeInitEvents = function (type) {
-		if (type === "change") {
-			return (this._ready) ? [undefined] : []; 
-		} else if (type === "timeupdate") {
-			return (this._ready) ? [undefined] : []; 
-		} else if (type === "ready") {
-			return (this._ready) ? [undefined] : []; 
-		}
-		return [];
-	};
-
-	/*
-		Basic query. Insensitive to range violations.
-		Must be overrided by subclasses with specified range.
-	*/
-	TimingBase.prototype.query = function () {
-		if (this.vector === null) return null;
-		return motionutils.calculateVector(this.vector, this.clock.now());
-	};
-
-	// to be overridden
-	TimingBase.prototype.update = function (vector) {};
-
-	/*
-		To be overridden
-		get range is useful for setting the range internally,
-		when the range depends on the range of an external (upstream)
-		timing object. Get range is invoked when first change
-		event is received from external object, thereby guaranteeing 
-		that range of external timing object is well defined.
-		(see _preProcess)
-		return correct range [start, end]
-
-		Invoked every time the external object is switched,
-		thus is may change.
-	*/
-	TimingBase.prototype._getRange = function () {return null;};
-
-
-
-	// CHANGE EVENTS
-
-
-	/*
-		do not override
-		Handle incoming vector, from "change" from external object
-		or from an internal timeout.
-		
-		_onChange is invoked allowing subclasses to specify transformation
-		on the incoming vector before processing.
-	*/
-	TimingBase.prototype._preProcess = function (vector) {
-		if (this._range === null) {
-			this._range = this._getRange();
-		}
-		var vector = this._onChange(vector);
-		this._process(vector);
-	};
-
-	/*
-		to be ovverridden
-		specify transformation
-		on the incoming vector before processing.
-		useful for Converters that do mathematical transformations,
-		or as a way to enforse range restrictions.
-		invoming vectors from external change events or internal
-		timeout events
-
-		returning null stops further processing, exept renewtimeout 
-	*/
-	TimingBase.prototype._onChange = function (vector) {
-		return vector;
-	};
-	
-	// TIMEOUTS
-	// Use range to implement timeouts on range violation
-
-	/*
-		do not override
-		renew timeout is called during evenry processing step
-		in order to recalculate timeouts.
-		the calculation may be specialized in
-		_calculateTimeoutVector
-	*/
-	TimingBase.prototype._renewTimeout = function () {
-		if (this._options.timeout === true) {
-			this._clearTimeout();
-			var vector = this._calculateTimeoutVector();
-			if (vector === null) {return;}	 		
-			var now = this.clock.now();
-	 		var secDelay = vector.timestamp - now;
-	 		var self = this;
-	 		this._timeout = this.clock.setTimeout(function () {
-				self._process(self._onTimeout(vector));
-	      	}, secDelay, {anchor: now, early: 0.005}); 
-		}
-	};
-
-	/*
-		to be overridden
-		must be implemented by subclass if range timeouts are required
-		calculate a vector that will be delivered to _process().
-		the timestamp in the vector determines when it is delivered.
-	*/
-	TimingBase.prototype._calculateTimeoutVector = function () {
-		return null;
-	};
-
-	/*
-		do not override
-		internal utility function for clearing vector timeout
-	*/
-	TimingBase.prototype._clearTimeout = function () {
-		if (this._timeout !== null) {
-			this._timeout.cancel();
-			this._timeout = null;
-		}
-	};
-
-	/*
-		to be overridden
-		subclass may implement transformation on timeout vector
-		before it is given to process.
-		returning null stops further processing, exept renewtimeout 
-	*/
-	TimingBase.prototype._onTimeout = function (vector) {
-		return vector;
-	};
-
-	// PROCESS
-	/*
-		do not override
-		Core processing step after change event or timeout
-		assignes the internal vector
-	*/
-	TimingBase.prototype._process = function (vector) {
-		if (vector !== null) {
-			var old_vector = this._vector;
-			// update internal vector
-			this._vector = vector;
-			// trigger events
-			if (old_vector === null) {
-				this._ready = true;
-				this.eventifyTriggerEvent("ready");
-			}
-			this._postProcess(this.vector);
-		}
-		// renew timeout
-		this._renewTimeout();
-	};
-
-	/*
-		may be overridden
-		process a new vector applied in order to trigger events
-		overriding this is only necessary if external change events 
-		need to be suppressed,
-	*/
-	TimingBase.prototype._postProcess = function (vector) {
-		// trigger change events
-		this.eventifyTriggerEvent("change");
-		// trigger timeupdate events
-		this.eventifyTriggerEvent("timeupdate");
-		var moving = vector.velocity !== 0.0 || vector.acceleration !== 0.0;
-		if (moving && this._tid === null) {
-			var self = this;
-			this._tid = setInterval(function () {
-				self.eventifyTriggerEvent("timeupdate");
-			}, 200);
-		} else if (!moving && this._tid !== null) {
-			clearTimeout(this._tid);
-			this._tid = null;
-		}
+	// update
+	ExternalProvider.prototype.update = function (vector) {
+		return this._provider.update(vector);
 	};
 
 
-	// CONVERTER BASE
+
+
 
 	/*
-		ConverterBase extends TimingBase to provide a
-		base class for chainable Converters/emulators of timing objects
-		ConverterBase conceptually add the notion of a timing source,
-		a pointer to a timing object up the chain. Change events 
-		may be received from the timing object, and update requests 
-		are forwarded in the opposite direction. 
+
+		TIMING OBJECT
+
 	*/
 
-
-	var ConverterBase = function (timingObject, options) {
-		if (!(this instanceof ConverterBase)) {
-			throw new Error("Contructor function called without new operation");
-		}
-
-		TimingBase.call(this, options);
-		// timing source
-		this._timingsrc;	
-		this._pendingTimingsrc;
+	var TimingObject = function (timingsrc) {
+		TimingBase.call(this);
 
 		/*
 			store a wrapper function on the instance used as a callback handler from timingsrc
@@ -592,64 +585,59 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			self._preProcess(vector);
 		};
 
-		// set timing source
-		this.timingsrc = timingObject;
+		// timingsrc
+		this.timingsrc = timingsrc;
 	};
-	inherit(ConverterBase, TimingBase);
+	inherit(TimingObject, TimingBase);
 
 
-	// Accessor internal clock
-	Object.defineProperty(ConverterBase.prototype, 'clock', {
-		get : function () {	return this.timingsrc.clock; }	
-	});
+
+	// update
+	TimingObject.prototype.update = function (vector) {
+		return this._timingsrc.update(vector);
+	};
+
 
 	/*
-		Accessor for timingsrc.
-		Supports dynamic switching of timing source by assignment.
+
+		TIMINGSRC
+
 	*/
-	Object.defineProperty(ConverterBase.prototype, 'timingsrc', {
+	Object.defineProperty(TimingObject.prototype, 'timingsrc', {
 		get : function () {return this._timingsrc;},
-		set : function (timingObject) {	
-			// decouple from old timingsrc
-			if (this._timingsrc) {
-				this._timingsrc.off("change", this._internalOnChange, this);
+		set : function (timingsrc) {
+			// transformation when new timingsrc is ready
+			var self = this;
+			// check type of new timingsrc
+			if (!timingsrc) {
+				if (this._timingsrc) {
+					var vector = this._timingsrc.vector;
+					timingsrc = new InternalProvider({vector: vector});
+				} else {
+					timingsrc = new InternalProvider();
+				}
+			} else if (!timingsrc instanceof TimingObject) {
+				// external provider - try to wrap it
+				timingsrc = new ExternalProvider(timingsrc); 
 			}
-			this._range = null;
-			this._vector = null;
-			this._clearTimeout();
-			clearTimeout(this._tid);
-			this._timingsrc = timingObject;
-			this._timingsrc.on("change", this._internalOnChange, this);
-		
-			/*
-				timingObject.readyPromise.then(function () {
-				});
-			*/
+			// doing the switch
+			timingsrc.ready.then(function (){
+				// disconnect and clean up timingsrc
+				if (self._timingsrc) {
+					self._timingsrc.off("change", self._internalOnChange);
+					self._clearTimeout();
+					clearTimeout(self._tid);
+				}
+				this._timingsrc = timingsrc;
+				this._timingsrc.on("change", this._internalOnChange);		
+			})		
 		}
 	});
 
-	/*
-		to be overridden
-		default forwards update request to timingsrc unchanged.
-	*/
-	ConverterBase.prototype.update = function (vector) {
-		return this.timingsrc.update(vector);
-	};
-
-	/*
-		to be overridden
-		by default the Converter adopts the range of timingsrc 
-	*/
-	ConverterBase.prototype._getRange = function () {
-		return this.timingsrc.range;
-	};
-
+	
 	// module
 	return {
-		TimingBase : TimingBase,
-		ConverterBase : ConverterBase,
-		inherit: inherit,
-		motionutils : motionutils
+		TimingObject : TimingObject
 	};
 });
 
