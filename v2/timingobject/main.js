@@ -19,23 +19,27 @@
 */
 
 define([
-	'./timingbase', 
+	'./timingobject', 
 	'./skewconverter', 
+	/*
 	'./delayconverter', 
 	'./scaleconverter', 
 	'./loopconverter', 
 	'./rangeconverter', 
 	'./timeshiftconverter', 
 	'./localconverter', 
-	'./derivativeconverter',
-	'./timingobject',
-	'./timingprovider'], 
-	function (timingbase, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter, TimingObject, timingprovider) {		
+	'./derivativeconverter'
+	*/
+	], 
+	function (timingobject, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter) {		
 		'use strict';
 		return {
-			inherit : timingbase.inherit,
-			ConverterBase : timingbase.ConverterBase,
+			TimingObjectBase : timingobject.TimingObjectBase,
+			TimingObject : timingobject.TimingObject,
+			InternalProvider : timingobject.InternalProvider,
+			ExternalProvider : timingobject.ExternalProvider,
 			SkewConverter : SkewConverter,
+			/*
 			DelayConverter : DelayConverter,
 			ScaleConverter : ScaleConverter,
 			LoopConverter : LoopConverter,
@@ -43,8 +47,7 @@ define([
 			TimeShiftConverter : TimeShiftConverter,
 			LocalConverter : LocalConverter,
 			DerivativeConverter : DerivativeConverter,
-			TimingObject : TimingObject,
-			TimingProviderState: timingprovider.TimingProviderState
+			*/
 		};
 	}
 );

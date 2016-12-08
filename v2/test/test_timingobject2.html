@@ -11,13 +11,12 @@
   <script type="text/javascript" src="../../lib/require.js"></script>
   <script type="text/javascript">
       var to, w, w2;
-      require(['./timingobject/timingsrc'], function (timingsrc) {
+      require(['./timingobject/main'], function (timingobject) {
       
         var setup_converter1 = function (to) {
           // Converter objects
-          var w = new timingsrc.SkewConverter(to, 2);
-
-          w.timingsrc = to;
+          var w = new timingobject.SkewConverter(undefined, 2, {range:[0,10]});
+          var w = new timingobject.SkewConverter(to, 2);
 
           //w = new timingsrc.DelayConverter(to, 1.0);          
           //w = new timingsrc.TimeShiftConverter(to, -1.0);
@@ -80,7 +79,9 @@
 
           // timing object
           //var to = new timingsrc.TimingObject({range:[8,17]});
-          var to = new timingsrc.TimingObject({range:[0,10]});
+          var to = new timingobject.TimingObject({range:[0,10]});
+          //var to = new timingobject.TimingObject();
+          //var to = new timingobject.TimingObject({vector: {velocity:1}});
 
           var sourcehandler = function () {
             if (sourcehandler.init === false) {
@@ -113,7 +114,7 @@
         var setup_internalprovider = function () {
 
           // timing object
-          var to = new timingsrc.InternalProvider({range:[0,10]});
+          var to = new timingobject.InternalProvider({range:[0,10]});
     
           var sourcehandler = function () {
             if (sourcehandler.init === false) {
@@ -145,8 +146,8 @@
         var run = function () {
           to = setup_timingobject();
           //to = setup_internalprovider();
-          /*
           w = setup_converter1(to);
+          /*
           setTimeout(function() {
             w2 = setup_converter2(to);  
           }, 4000);

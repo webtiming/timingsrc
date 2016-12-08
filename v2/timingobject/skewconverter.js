@@ -26,21 +26,21 @@
 
 */
 
-define(['./timingbase'], function (timingbase) {
+define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var ConverterBase = timingbase.ConverterBase;
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;
+	var inherit = TimingObjectBase.inherit;
 
-	var SkewConverter = function (timingObject, skew) {
+	var SkewConverter = function (timingsrc, skew, options) {
 		if (!(this instanceof SkewConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
 		this._skew = skew;
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingsrc, options);
 	};
-	inherit(SkewConverter, ConverterBase);
+	inherit(SkewConverter, TimingObjectBase);
 
 	// overrides
 	SkewConverter.prototype._getRange = function () {
@@ -67,16 +67,16 @@ define(['./timingbase'], function (timingbase) {
 	Object.defineProperty(SkewConverter.prototype, 'skew', {
 		get : function () {
 			return this._skew;
+		},
+		set : function (skew) {
+			this._skew = skew;
+			// pick up vector from timingsrc
+			var src_vector = this.timingsrc.vector;
+			// use this vector to emulate new event from timingsrc
+			this._preProcess(src_vector);
 		}
 	});
 
-	SkewConverter.prototype.setSkew = function (skew) {
-		this._skew = skew;
-		// pick up vector from timingsrc
-		var src_vector = this.timingsrc.vector;
-		// use this vector to emulate new event from timingsrc
-		this._preProcess(src_vector);
-	};
 
 	return SkewConverter;
 });
