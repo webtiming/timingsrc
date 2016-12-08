@@ -47,21 +47,6 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	    }
  	})();
 
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
 	
 	/*
 		TIMING BASE
@@ -96,11 +81,11 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	*/
 
 
-	var TimingBase = function (timingsrc, options) {
-		
-		this._version = 4;
+	var TimingBase = function (options) {
+
+
 		this._options = options || {};
-	
+
 		// cached vector
 		this._vector = {
 			position : undefined,
@@ -110,31 +95,30 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		};
 		
 		// cached range
-		this._range = null;
-		
-		// timeout support
-		this._timeout = null; // timeoutid for range violation etc.
-		this._tid = null; // timeoutid for timeupdate
-		// range timeouts off by default
-		if (!this._options.hasOwnProperty("timeout")) {
-			this._options.timeout = false;
-		}
+		this._range = [undefined,undefined];
 
 		// readiness
 		this._ready = new eventify.EventBoolean(false, {init:true});
+		
 		// exported events
 		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
-
-
-
 		this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 
 
+			
+		// timeout support
+		this._timeout = null; // timeoutid for range violation etc.
+		this._tid = null; // timeoutid for timeupdate
+		if (!this._options.hasOwnProperty("timeout")) {
+			// range timeouts on by default
+			this._options.timeout = true;
+		}
+		console.log(this._options.timeout);
+		console.log(this._options.range);
 
 	};
 	eventify.eventifyPrototype(TimingBase.prototype);
-
 
 
 	/*
@@ -158,18 +142,21 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	};
 
 
-
-
 	/*
 
-		READY
-	
+		API
+
 	*/
+
+	// version
+	Object.defineProperty(TimingBase.prototype, 'version', {
+		get : function () { return this._version; }
+	});
 
 	// ready or not
 	TimingBase.prototype.isReady = function () {
 		return this._ready.value;
-	}
+	};
 
 	// ready promise
 	Object.defineProperty(TimingBase.prototype, 'ready', {
@@ -191,28 +178,18 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		}
 	});
 
-
-
-	/*
-
-		API
-
-	*/
-
-	// version
-	Object.defineProperty(TimingBase.prototype, 'version', {
-		get : function () { return this._version; }
-	});
-
 	// range
 	Object.defineProperty(TimingBase.prototype, 'range', {
-		get : function () { return [this._range[0], this._range[1]]; }
+		get : function () { 
+			// copy range
+			return [this._range[0], this._range[1]]; 
+		}
 	});
 
 	// internal vector
 	Object.defineProperty(TimingBase.prototype, 'vector', {
-		get : function () {	
-			// copy cached vector
+		get : function () {
+			// copy vector
 			return {
 				position : this._vector.position,
 				velocity : this._vector.velocity,
@@ -224,7 +201,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 
 	// internal clock
 	Object.defineProperty(TimingBase.prototype, 'clock', {
-		get : function () {	return this._timingsrc.clock; }	
+		get : function () {	throw new Error ("not implemented") }	
 	});
 
 	// query
@@ -233,15 +210,19 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
 		}
 		// reevaluate state to handle range violation
-		var vector = motionutils.calculateVector(this._vector, this._timingsrc.clock.now());
+		var vector = motionutils.calculateVector(this._vector, this.clock.now());
 		var state = motionutils.getCorrectRangeState(vector, this._range);
 		if (state !== motionutils.RangeState.INSIDE) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition
-		return motionutils.calculateVector(this._vector, this._timingsrc.clock.now());
+		return motionutils.calculateVector(this._vector, this.clock.now());
 	};
 
+	// update - to be ovverridden
+	TimingBase.prototype.update = function (vector) {
+		throw new Error ("not implemented");
+	};
 
 	// shorthand accessors
 	Object.defineProperty(TimingBase.prototype, 'pos', {
@@ -261,7 +242,6 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			return this.query().acceleration;
 		}
 	});
-
 
 
 	/*
@@ -285,7 +265,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		thus it may change.
 	*/
 	TimingBase.prototype._getRange = function () {
-		return this._timingsrc.range;
+		throw new Error("not implemented");
 	};
 
 
@@ -298,9 +278,11 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		on the incoming vector before processing.
 	*/
 	TimingBase.prototype._preProcess = function (vector) {
-		if (this._range === null) {
+		/*
+		if (this._range == undefined) {
 			this._range = this._getRange();
 		}
+		*/
 		var vector = this._onChange(vector);
 		this._process(vector);
 	};
@@ -329,9 +311,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			// update internal vector
 			this._vector = vector;
 			// trigger events
-			if (old_vector === null) {
-				this._ready.value = true;
-			}
+			this._ready.value = true;
 			this._postProcess(this._vector);
 		}
 		// renew timeout
@@ -382,7 +362,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			var now = this.clock.now();
 	 		var secDelay = vector.timestamp - now;
 	 		var self = this;
-	 		this._timeout = this._timingsrc.clock.setTimeout(function () {
+	 		this._timeout = this.clock.setTimeout(function () {
 				self._process(self._onTimeout(vector));
 	      	}, secDelay, {anchor: now, early: 0.005}); 
 		}
@@ -423,43 +403,51 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		before it is given to process.
 		returning null stops further processing, exept renewtimeout 
 	*/
-	TimingBase.prototype._onTimeout = function (vector) {		
+	TimingBase.prototype._onTimeout = function (vector) {
+		console.log("got new timeout");	
 		return motionutils.checkRange(vector, this._range);
 	};
 
 
 
-/*
+
+	/*
 		INTERNAL PROVIDER
 	
 		Timing provider internal to the browser context
 
-		Used by timing objects by default if timingsrc is not specified.
+		Used by timing objects as timingsrc if no timingsrc is specified.
 	*/
 
 	var InternalProvider = function (options) {
-		TimingBase.call(this);
-		options = options || {};
+		TimingBase.call(this, options);
+
 		// initialise internal state
 		this._clock = new MasterClock({skew:0});
-		// todo - check option.range
-			
-		// events
-		eventify.eventifyInstance(this);
-		this.eventifyDefineEvent("change", {init:false}); // define vector change event (not supporting init-event)
-
-		// set initial vector if provided
-		if (options.vector) {
-			this.update(options.vector);
+		// range
+		if (this._options.range) {
+			this._range = this._options.range || [-Infinity, Infinity];
 		}
+		// vector
+		var vector = this._options.vector || {
+			position : 0.0,
+			velocity : 0.0,
+			acceleration : 0.0
+		};
+		this.update(vector);
 	};
 	inherit(InternalProvider, TimingBase);
 
+	// internal clock
+	Object.defineProperty(InternalProvider.prototype, 'clock', {
+		get : function () {	return this._clock; }	
+	});
 
+	// update
 	InternalProvider.prototype.update = function (vector) {
 		if (vector == undefined) {throw new Error ("drop update, illegal updatevector");}
 
-		// todo - check that vector is numbers
+		// todo - check that vector properties are numbers
 		var pos = vector.position;
 		var vel = vector.velocity;
 		var acc = vector.acceleration;
@@ -468,7 +456,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			throw new Error ("drop update, noop");
 		}
 
-		var now = vector.timestamp || clock.now();
+		var now = vector.timestamp || this.clock.now();
 		var nowVector = motionutils.calculateVector(this._vector, now);
 		nowVector = motionutils.checkRange(nowVector, this._range);
 		var p = nowVector.position;
@@ -483,15 +471,13 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			acceleration : acc,
 			timestamp : now
 		};
-		// break control flow
-		this._preProcess(newVector)
+		var self = this;
+		Promise.resolve().then(function () {
+			self._preProcess(newVector);
+		});
 		return newVector;
 	};
 	
-
-
-
-
 
 	/*
 		EXTERNAL PROVIDER
@@ -504,8 +490,6 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		- wraps a timing provider external 
 		- handles some complexity that arises due to the very simple API of providers
 		- implements a clock for the provider
-
-
 	*/
 
 	var ExternalProvider = function (provider) {
@@ -514,14 +498,12 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		this._provider = provider;
 		this._clock;
 
-
 		// register event handlers
 		var self = this;
 		this._provider.on("vectorchange", function () {self._onVectorChange();});
 		this._provider.on("skewchange", function () {self._onSkewChange();});
 
-
-		// check if provider is ready immediately
+		// check if provider is ready
 		if (this._provider.skew != undefined) {
 			var self = this;
 			Promise.resolve(function () {
@@ -531,6 +513,10 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	};
 	inherit(ExternalProvider, TimingBase);
 
+	// internal clock
+	Object.defineProperty(ExternalProvider.prototype, 'clock', {
+		get : function () {	return this._clock; }	
+	});
 
 	ExternalProvider.prototype._onSkewChange = function () {
 		if (!this._clock) {
@@ -538,21 +524,16 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		} else {
 			this._clock.adjust({skew: this._provider.skew});
 		}
-		if (this._provider.vector != undefined) {
-			// just became ready
-			this._ready.value = true;
-			this.preProcess(this._provider.vector);
-			this.eventifyTriggerEvent("change");
+		if (!this.isReady() && this._provider.vector != undefined) {
+			// just became ready (onVectorChange has fired earlier)
+			this._preProcess(this._provider.vector);
 		}		
 	};
 
 	ExternalProvider.prototype._onVectorChange = function () {
-		if (this._ready.value === false && this._clock) {
-			// just became ready
-			this._ready.value = true;
-		}
-		if (this._ready.value === true) {
-			this.eventifyTriggerEvent("change");
+		if (this._clock) {
+			// is ready (onSkewChange has fired earlier)
+			this._preProcess(this._provider.vector);
 		}
 	};
 
@@ -563,80 +544,113 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 
 
 
-
-
 	/*
 
-		TIMING OBJECT
+		TIMING OBJECT BASE
 
 	*/
 
-	var TimingObject = function (timingsrc) {
-		TimingBase.call(this);
-
+	var TimingObjectBase = function (options) {
+		TimingBase.call(this, options);
+		this._version = 4;
 		/*
-			store a wrapper function on the instance used as a callback handler from timingsrc
+			store a wrapper function used as a callback handler from timingsrc
 			(if this was a prototype function - it would be shared by multiple objects thus
 			prohibiting them from subscribing to the same timingsrc)
 		*/
 		var self = this;
 		this._internalOnChange = function () {
+			console.log("got new vector");
 			var vector = self.timingsrc.vector;
 			self._preProcess(vector);
 		};
-
-		// timingsrc
-		this.timingsrc = timingsrc;
+		this._timingsrc;
+		this.timingsrc = this._options.timingsrc;
 	};
-	inherit(TimingObject, TimingBase);
+	inherit(TimingObjectBase, TimingBase);
 
 
+	// internal clock
+	Object.defineProperty(TimingObjectBase.prototype, 'clock', {
+		get : function () {	return this._timingsrc.clock; }	
+	});
 
-	// update
-	TimingObject.prototype.update = function (vector) {
-		return this._timingsrc.update(vector);
+	// invoked during timingsrc switch - timingsrc is at this point undefined
+	TimingObjectBase.prototype._onSwitch = function (){};
+
+	TimingObjectBase.prototype._getRange = function () {
+		return this._timingsrc.range;
 	};
-
 
 	/*
 
-		TIMINGSRC
+		timingsrc property and switching on assignment
 
 	*/
-	Object.defineProperty(TimingObject.prototype, 'timingsrc', {
+	Object.defineProperty(TimingObjectBase.prototype, 'timingsrc', {
 		get : function () {return this._timingsrc;},
 		set : function (timingsrc) {
-			// transformation when new timingsrc is ready
-			var self = this;
-			// check type of new timingsrc
+		
+			// new timingsrc undefined		
 			if (!timingsrc) {
-				if (this._timingsrc) {
-					var vector = this._timingsrc.vector;
-					timingsrc = new InternalProvider({vector: vector});
+				var options;
+				if (!this._timingsrc) {
+					// first time - use options
+					options = {
+						vector : this._options.vector,
+						range : this._options.range
+					}
 				} else {
-					timingsrc = new InternalProvider();
+					// not first time - use current state
+					options = {
+						vector : this._vector,
+						range : this._range
+					} 
 				}
-			} else if (!timingsrc instanceof TimingObject) {
+				console.log("InternalProvider options", options);	
+				timingsrc = new InternalProvider(options);
+			}
+
+			if (!timingsrc instanceof TimingObjectBase) {
 				// external provider - try to wrap it
 				timingsrc = new ExternalProvider(timingsrc); 
 			}
-			// doing the switch
+
+			// transformation when new timingsrc is ready
+			var self = this;
 			timingsrc.ready.then(function (){
 				// disconnect and clean up timingsrc
 				if (self._timingsrc) {
 					self._timingsrc.off("change", self._internalOnChange);
-					self._clearTimeout();
-					clearTimeout(self._tid);
+					self._timingsrc = undefined;
+					self._onSwitch();
 				}
-				this._timingsrc = timingsrc;
-				this._timingsrc.on("change", this._internalOnChange);		
-			})		
+				self._timingsrc = timingsrc;
+				self._timingsrc.on("change", self._internalOnChange);	
+			});
 		}
 	});
 
+	// update
+	TimingObjectBase.prototype.update = function (vector) {
+		return this._timingsrc.update(vector);
+	};
 	
+
+
+	/*
+		Timing Object
+	*/
+	var TimingObject = function (options) {
+		console.log("timingobject options", options);
+		TimingObjectBase.call(this, options);
+	};
+	inherit(TimingObject, TimingObjectBase);
+
 	// module
 	return {
+		InternalProvider : InternalProvider,
+		ExternalProvider : ExternalProvider,
 		TimingObject : TimingObject
 	};
 });
