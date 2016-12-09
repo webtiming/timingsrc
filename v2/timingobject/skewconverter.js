@@ -43,15 +43,14 @@ define(['./timingobject'], function (timingobject) {
 	inherit(SkewConverter, TimingObjectBase);
 
 	// overrides
-	SkewConverter.prototype._getRange = function () {
-		var range = this.timingsrc.range;
+	SkewConverter.prototype.onRangeChange = function (range) {
 		range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
 		range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
 		return range;
 	};
 	
 	// overrides
-	SkewConverter.prototype._onChange = function (vector) {
+	SkewConverter.prototype.onVectorChange = function (vector) {
 		vector.position += this._skew;	
 		return vector;
 	};

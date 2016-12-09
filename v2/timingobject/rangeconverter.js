@@ -29,14 +29,14 @@
 	Range converters will continue mirroring timingsrc once it comes into the range.
 */
 
-define(['./timingbase'], function (timingbase) {
+define(['util/motionutils', './timingobject'], function (motionutils, timingobject) {
 
 	'use strict';
 
-	var motionutils = timingbase.motionutils;
-	var ConverterBase = timingbase.ConverterBase;	
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 	var RangeState = motionutils.RangeState;
-	var inherit = timingbase.inherit;
+
 
 	var state = function () {
 		var _state = RangeState.INIT;
@@ -70,29 +70,36 @@ define(['./timingbase'], function (timingbase) {
 		if (!(this instanceof RangeConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
-		ConverterBase.call(this, timingObject, {timeout:true});
+		TimingObjectBase.call(this, timingObject, {timeout:true});
+		/*
+			note :
+			if a range point of the loop converter is the same as a range point of timingsrc,
+			then there will be duplicate events
+		*/
 		this._state = state();
 		// todo - check range
 		this._range = range;
 	};
-	inherit(RangeConverter, ConverterBase);
+	inherit(RangeConverter, TimingObjectBase);
 
 	// overrides
 	RangeConverter.prototype.query = function () {
-		if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
+		if (this._ready.value === false)  {
+			return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
+		}
 		// reevaluate state to handle range violation
-		var vector = motionutils.calculateVector(this.timingsrc.vector, this.clock.now());
+		var vector = motionutils.calculateVector(this._timingsrc.vector, this.clock.now());
 		var state = motionutils.getCorrectRangeState(vector, this._range);
 		if (state !== RangeState.INSIDE) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition
-		return motionutils.calculateVector(this.vector, this.clock.now());
+		return motionutils.calculateVector(this._vector, this.clock.now());
 	};
 	
 	// overridden
 	RangeConverter.prototype._calculateTimeoutVector = function () {
-		var freshVector = this.timingsrc.query();
+		var freshVector = this._timingsrc.query();
 		var res = motionutils.calculateDelta(freshVector, this.range);
 		var deltaSec = res[0];
 		if (deltaSec === null) return null;
@@ -103,12 +110,17 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	RangeConverter.prototype._onTimeout = function (vector) {		
-		return this._onChange(vector);
+	RangeConverter.prototype.onRangeChange = function(range) {
+		return this._range;
 	};
 
 	// overrides
-	RangeConverter.prototype._onChange = function (vector) {
+	RangeConverter.prototype.onTimeout = function (vector) {		
+		return this.onVectorChange(vector);
+	};
+
+	// overrides
+	RangeConverter.prototype.onVectorChange = function (vector) {
 		var new_state = motionutils.getCorrectRangeState(vector, this._range);
 		var state_changed = this._state.set(new_state);	
 		if (state_changed.real) {

@@ -21,7 +21,6 @@
 define([
 	'./timingobject', 
 	'./skewconverter', 
-	/*
 	'./delayconverter', 
 	'./scaleconverter', 
 	'./loopconverter', 
@@ -29,17 +28,17 @@ define([
 	'./timeshiftconverter', 
 	'./localconverter', 
 	'./derivativeconverter'
-	*/
 	], 
 	function (timingobject, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter) {		
 		'use strict';
 		return {
+			// testing
 			TimingObjectBase : timingobject.TimingObjectBase,
-			TimingObject : timingobject.TimingObject,
 			InternalProvider : timingobject.InternalProvider,
 			ExternalProvider : timingobject.ExternalProvider,
+			// api
+			TimingObject : timingobject.TimingObject,
 			SkewConverter : SkewConverter,
-			/*
 			DelayConverter : DelayConverter,
 			ScaleConverter : ScaleConverter,
 			LoopConverter : LoopConverter,
@@ -47,7 +46,6 @@ define([
 			TimeShiftConverter : TimeShiftConverter,
 			LocalConverter : LocalConverter,
 			DerivativeConverter : DerivativeConverter,
-			*/
 		};
 	}
 );

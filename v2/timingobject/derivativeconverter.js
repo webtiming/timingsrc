@@ -29,26 +29,28 @@
 	by attatching a sequencer on the derivative Converter.
 */
 
-define(['./timingbase'], function (timingbase) {
+define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var ConverterBase = timingbase.ConverterBase;	
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
-	var DerivativeConverter = function (timingObject, factor) {
+	var DerivativeConverter = function (timingsrc) {
 		if (!(this instanceof DerivativeConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingsrc);
 	};
-	inherit(DerivativeConverter, ConverterBase);
+	inherit(DerivativeConverter, TimingObjectBase);
 
 	// overrides
-	DerivativeConverter.prototype._getRange = function () { return [-Infinity, Infinity];};
+	DerivativeConverter.prototype.onRangeChange = function (range) { 
+		return [-Infinity, Infinity];
+	};
 
 	// overrides
-	DerivativeConverter.prototype._onChange = function (vector) {
+	DerivativeConverter.prototype.onVectorChange = function (vector) {
 		var newVector = {
 			position : vector.velocity,
 			velocity : vector.acceleration,

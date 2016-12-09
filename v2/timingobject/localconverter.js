@@ -39,21 +39,21 @@
 	supported by the timing provider.
 */
 
-define(['./timingbase'], function (timingbase) {
+define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var ConverterBase = timingbase.ConverterBase;	
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
-	var LocalConverter = function (timingObject) {
+	var LocalConverter = function (timingsrc) {
 		if (!(this instanceof LocalConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingsrc);
 		this._speculative = false;
 	};
-	inherit(LocalConverter, ConverterBase);
+	inherit(LocalConverter, TimingObjectBase);
 
 	// overrides
 	LocalConverter.prototype.update = function (vector) {		
@@ -68,7 +68,7 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LocalConverter.prototype._onChange = function (vector) {
+	LocalConverter.prototype.onVectorChange = function (vector) {
 		if (this._speculative) {
 			this._speculative = false;
 			// todo - suppress change only if it corresponds to change request sent by self

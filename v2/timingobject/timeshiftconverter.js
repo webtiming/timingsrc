@@ -33,46 +33,41 @@
 		- this happens only when timing object is moving.
 		- implementation requires range converter logic
 
-	To fix this, the timeshift converter is always wrapped in a range converter. Range is inherited from timingsrc, if not specified.
+	- range is infinite
 */
 
 
-define(['./timingbase', './rangeconverter'], function (timingbase, RangeConverter) {
+define(['util/motionutils', './timingobject'], function (motionutils, timingobject) {
 
 	'use strict';
 
-	var motionutils = timingbase.motionutils;
-	var ConverterBase = timingbase.ConverterBase;	
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
 
-
-	var TimeShiftConverter = function (timingObject, timeOffset) {
+	var TimeShiftConverter = function (timingsrc, timeOffset) {
 		if (!(this instanceof TimeShiftConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
 
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingsrc);
 		this._timeOffset = timeOffset;
 	};
-	inherit(TimeShiftConverter, ConverterBase);
+	inherit(TimeShiftConverter, TimingObjectBase);
 
 	// overrides
-	TimeShiftConverter.prototype._onChange = function (vector) {
+	TimeShiftConverter.prototype.onRangeChange = function (range) {
+		return [-Infinity, Infinity];
+	};
+
+
+	// overrides
+	TimeShiftConverter.prototype.onVectorChange = function (vector) {
 		// calculate timeshifted vector
 		var newVector = motionutils.calculateVector(vector, vector.timestamp + this._timeOffset);
 		newVector.timestamp = vector.timestamp;
 		return newVector;
 	};
 
-	/*
-		Hides wrapping of range converter to specify new ranges.
-		If range is not specified, default is to use range of timingObject
-	*/
-	var RangeTimeShiftConverter = function (timingObject, timeOffset, range) {
-		range = range || timingObject.range;
-		return new RangeConverter(new TimeShiftConverter(timingObject, timeOffset), range);
-	};
-
-	return RangeTimeShiftConverter;
+	return TimeShiftConverter;
 });

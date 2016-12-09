@@ -250,12 +250,18 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		Handle incoming vector, from "change" from external object
 		or from an internal timeout.
 		
-		_onChange is invoked allowing subclasses to specify transformation
+		onVectorChange is invoked allowing subclasses to specify transformation
 		on the incoming vector before processing.
 	*/
 	TimingBase.prototype._preProcess = function (vector) {
-		var vector = this._onChange(vector);
+		vector = this.onVectorChange(vector);
 		this._process(vector);
+	};
+
+
+	// may be overridden by subclsaa
+	TimingBase.prototype.onRangeChange = function (range) {
+		return range;
 	};
 
 	/*
@@ -268,7 +274,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 
 		returning null stops further processing, exept renewtimeout 
 	*/
-	TimingBase.prototype._onChange = function (vector) {
+	TimingBase.prototype.onVectorChange = function (vector) {
 		return motionutils.checkRange(vector, this._range);
 	};
 
@@ -276,7 +282,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		core processing step after change event or timeout
 		assignes the internal vector
 	*/
-	TimingBase.prototype._process = function (vector) {
+	TimingBase.prototype._process = function (vector, range) {
 		if (vector !== null) {
 			var old_vector = this._vector;
 			// update internal vector
@@ -334,7 +340,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	 		var secDelay = vector.timestamp - now;
 	 		var self = this;
 	 		this._timeout = this.clock.setTimeout(function () {
-				self._process(self._onTimeout(vector));
+				self._process(self.onTimeout(vector));
 	      	}, secDelay, {anchor: now, early: 0.005}); 
 		}
 	};
@@ -372,9 +378,9 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		to be overridden
 		subclass may implement transformation on timeout vector
 		before it is given to process.
-		returning null stops further processing, exept renewtimeout 
+		returning null stops further processing, except renewtimeout 
 	*/
-	TimingBase.prototype._onTimeout = function (vector) {
+	TimingBase.prototype.onTimeout = function (vector) {
 		return motionutils.checkRange(vector, this._range);
 	};
 
@@ -448,10 +454,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			acceleration : acc,
 			timestamp : now
 		};
-		var self = this;
-		Promise.resolve().then(function () {
-			self._preProcess(newVector);
-		});
+		this._preProcess(newVector);
 		return newVector;
 	};
 	
@@ -539,7 +542,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		*/
 		var self = this;
 		this._internalOnChange = function () {
-			var vector = self.timingsrc.vector;
+			var vector = self._timingsrc.vector;
 			self._preProcess(vector);
 		};
 		this._timingsrc = undefined;
@@ -557,12 +560,12 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	});
 
 
-	TimingObjectBase.prototype._getRange = function () {
-		return this._timingsrc.range;
+	TimingObjectBase.prototype.onRangeChange = function (range) {
+		return range;
 	};
 
 	// invoked just after timingsrc switch 
-	TimingObjectBase.prototype._onSwitch = function () {
+	TimingObjectBase.prototype.onSwitch = function () {
 	};
 
 
@@ -607,9 +610,11 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 					self._timingsrc.off("change", self._internalOnChange);
 				}
 				self._timingsrc = timingsrc;
-				self._timingsrc.on("change", self._internalOnChange);
-				self._range = self._getRange();
-				self._onSwitch();	
+				if (self._timingsrc.range !== self._range) {
+					self._range = self.onRangeChange(self._timingsrc.range);
+				}
+				self.onSwitch();
+				self._timingsrc.on("change", self._internalOnChange);	
 			});
 		}
 	});

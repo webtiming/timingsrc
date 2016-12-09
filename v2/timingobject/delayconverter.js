@@ -33,12 +33,12 @@
 */
 
 
-define(['./timingbase'], function (timingbase) {
+define(['./timingobject'], function (timingobject) {
 
 	'use strict';
-	
-	var ConverterBase = timingbase.ConverterBase;
-	var inherit = timingbase.inherit;
+
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
 	var DelayConverter = function (timingObject, delay) {
 		if (!(this instanceof DelayConverter)) {
@@ -46,14 +46,14 @@ define(['./timingbase'], function (timingbase) {
 		}
 		if (delay < 0) {throw new Error ("negative delay not supported");}
 		if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingObject);
 		// fixed delay
 		this._delay = delay;
 	};
-	inherit(DelayConverter, ConverterBase);
+	inherit(DelayConverter, TimingObjectBase);
 
 	// overrides
-	DelayConverter.prototype._onChange = function (vector) {
+	DelayConverter.prototype.onVectorChange = function (vector) {
 		/* 			
 			Vector's timestamp always time-shifted (back-dated) by delay
 

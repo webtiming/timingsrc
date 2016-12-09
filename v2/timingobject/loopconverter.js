@@ -28,13 +28,12 @@
 */
 
 
-define(['./timingbase'], function (timingbase) {
+define(['util/motionutils', './timingobject'], function (motionutils, timingobject) {
 
 	'use strict';
 
-	var motionutils = timingbase.motionutils;
-	var ConverterBase = timingbase.ConverterBase;	
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
 	/* 
 		Coordinate system based on counting segments
@@ -85,15 +84,20 @@ define(['./timingbase'], function (timingbase) {
 		LOOP CONVERTER
 	*/
 
-	var LoopConverter = function (timingObject, range) {
+	var LoopConverter = function (timingsrc, range) {
 		if (!(this instanceof LoopConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
-		ConverterBase.call(this, timingObject, {timeout:true});
+		TimingObjectBase.call(this, timingsrc, {timeout:true});
+		/*
+			note :
+			if a range point of the loop converter is the same as a range point of timingsrc,
+			then there will be duplicate events
+		*/
 		this._range = range;
 		this._coords = new SegmentCoords(range[0], range[1]-range[0]);
 	};
-	inherit(LoopConverter, ConverterBase);
+	inherit(LoopConverter, TimingObjectBase);
 
 	// transform value from coordiantes X of timing source
 	// to looper coordinates Y
@@ -150,12 +154,17 @@ define(['./timingbase'], function (timingbase) {
 	};
 
 	// overrides
-	LoopConverter.prototype._onTimeout = function (vector) {
+	LoopConverter.prototype.onRangeChange = function(range) {
+		return this._range;
+	};
+
+	// overrides
+	LoopConverter.prototype.onTimeout = function (vector) {
 		return this._calculateInitialVector();
 	};
 
 	// overrides
-	LoopConverter.prototype._onChange = function (vector) {
+	LoopConverter.prototype.onVectorChange = function (vector) {
 		return this._calculateInitialVector();
 	};
 

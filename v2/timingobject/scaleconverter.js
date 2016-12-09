@@ -27,30 +27,29 @@
 */
 
 
-define(['./timingbase'], function (timingbase) {
+define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var ConverterBase = timingbase.ConverterBase;	
-	var inherit = timingbase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var inherit = TimingObjectBase.inherit;
 
-	var ScaleConverter = function (timingObject, factor) {
+	var ScaleConverter = function (timingsrc, factor) {
 		if (!(this instanceof ScaleConverter)) {
 			throw new Error("Contructor function called without new operation");
 		}
 		this._factor = factor;
-		ConverterBase.call(this, timingObject);
+		TimingObjectBase.call(this, timingsrc);
 	};
-	inherit(ScaleConverter, ConverterBase);
+	inherit(ScaleConverter, TimingObjectBase);
 
 	// overrides
-	ScaleConverter.prototype._getRange = function () {
-		var range = this.timingsrc.range;
+	ScaleConverter.prototype.onRangeChange = function (range) {
 		return [range[0]*this._factor, range[1]*this._factor];
 	};
 
 	// overrides
-	ScaleConverter.prototype._onChange = function (vector) {
+	ScaleConverter.prototype.onVectorChange = function (vector) {
 		vector.position = vector.position * this._factor;
 		vector.velocity = vector.velocity * this._factor;
 		vector.acceleration = vector.acceleration * this._factor;

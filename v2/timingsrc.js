@@ -8,12 +8,8 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 	return {
 		version : "v2",
 		
-		// Utils
-		inherit : timingobject.inherit,
-
 		// Timing Object
 		TimingObject : timingobject.TimingObject,
-		TimingProviderState : timingobject.TimingProviderState,
 
 		// Timing Converters
 		ConverterBase : timingobject.ConverterBase,
