@@ -403,9 +403,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		// initialise internal state
 		this._clock = new MasterClock({skew:0});
 		// range
-		if (this._options.range) {
-			this._range = this._options.range || [-Infinity, Infinity];
-		}
+		this._range = this._options.range || [-Infinity, Infinity];
 		// vector
 		var vector = this._options.vector || {
 			position : 0,
@@ -508,6 +506,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		}
 		if (!this.isReady() && this._provider.vector != undefined) {
 			// just became ready (onVectorChange has fired earlier)
+			this._range = this._provider.range;
 			this._preProcess(this._provider.vector);
 		}		
 	};
@@ -515,6 +514,9 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	ExternalProvider.prototype._onVectorChange = function () {
 		if (this._clock) {
 			// is ready (onSkewChange has fired earlier)
+			if (!this._range) {
+				this._range = this._provider.range;
+			}
 			this._preProcess(this._provider.vector);
 		}
 	};
@@ -577,7 +579,6 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 	Object.defineProperty(TimingObjectBase.prototype, 'timingsrc', {
 		get : function () {return this._timingsrc;},
 		set : function (timingsrc) {
-		
 			// new timingsrc undefined		
 			if (!timingsrc) {
 				var options;
@@ -596,12 +597,15 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 				}
 				timingsrc = new InternalProvider(options);
 			}
-
-			if (!timingsrc instanceof TimingObjectBase) {
+			else if ((timingsrc instanceof TimingObjectBase) === false) {
 				// external provider - try to wrap it
-				timingsrc = new ExternalProvider(timingsrc); 
+				try {
+					timingsrc = new ExternalProvider(timingsrc); 
+				} catch (e) {
+					console.log(timingsrc);
+					throw new Error ("illegal timingsrc - not instance of timing object base and not timing provider");
+				}
 			}
-
 			// transformation when new timingsrc is ready
 			var self = this;
 			timingsrc.ready.then(function (){
@@ -629,7 +633,9 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		Timing Object
 	*/
 	var TimingObject = function (options) {
-		TimingObjectBase.call(this, options.timingsrc, options);
+		options = options || {};
+		var timingsrc = options.timingsrc || options.provider;
+		TimingObjectBase.call(this, timingsrc, options);
 	};
 	inherit(TimingObject, TimingObjectBase);
 

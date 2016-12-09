@@ -11,20 +11,21 @@
   <script type="text/javascript" src="../../lib/require.js"></script>
   <script type="text/javascript">
       var to, w, w2;
-      require(['timingsrc'], function (timingsrc) {
+      require(['timingobject/main'], function (timingobject) {
       
         var setup_converter1 = function (to) {
           // Converter objects
-          var w = new timingsrc.SkewConverter(to, 2);
+          //w = new timingobject.SkewConverter(to, 2);
 
-          w.timingsrc = to;
-
-          //w = new timingsrc.DelayConverter(to, 1.0);          
-          //w = new timingsrc.TimeShiftConverter(to, -1.0);
-          //w = new timingsrc.ScaleConverter(to, 2);
-          //w = new timingsrc.RangeConverter(to, [10,15]);
-          //w = new timingsrc.DerivativeConverter(to);
-          //w = new timingsrc.LoopConverter(to, [2, 8]);
+          //w = new timingobject.DelayConverter(to, 1.0);
+          //w = new timingobject.ScaleConverter(to, 2);         
+          //w = new timingobject.LoopConverter(to, [0, 10]);
+          //w = new timingobject.RangeConverter(to, [2,8]);
+          //w = new timingobject.TimeShiftConverter(to, -1.0);
+          //w = new timingobject.LocalConverter(to);
+       
+          w = new timingobject.DerivativeConverter(to);
+  
 
           var converterhandler = function () {
             if (converterhandler.init === false) {
@@ -80,14 +81,16 @@
 
           // timing object
           //var to = new timingsrc.TimingObject({range:[8,17]});
-          var to = new timingsrc.TimingObject();
+          var to = new timingobject.TimingObject({range:[0,10]});
+          //var to = new timingobject.TimingObject();
+          //var to = new timingobject.TimingObject({vector: {velocity:1}});
 
           var sourcehandler = function () {
             if (sourcehandler.init === false) {
-              //console.log("source range", to.range);
+              console.log("source range", to.range);
               sourcehandler.init = true;
             }
-            //console.log("source onchange", to.vector);
+            console.log("source onchange", to.vector);
           };
           sourcehandler.init = false;
 
@@ -110,9 +113,11 @@
         var run = function () {
           to = setup_timingobject();
           w = setup_converter1(to);
+          /*
           setTimeout(function() {
             w2 = setup_converter2(to);  
           }, 4000);
+          */
 
         };
         if (document.readyState === "complete") run();
