@@ -335,7 +335,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			throw new Error("Contructor function called without new operation");
 		}
 		this._to = timingObject;
-		this._clock = timingObject.clock;
+		this._clock;
 		this._axis = _axis || new axis.Axis();
 		this._schedule = null;
 		this._timeout = null; // timeout
@@ -371,7 +371,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
-			return this._processInitialEvents();
+			return (this._isReady()) ? this._processInitialEvents() : [];
 		}
 		return [];
 	};
@@ -416,9 +416,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	Sequencer.prototype._onTimingChange = function (event) {
 
 		// Set the time for this processing step
+		if (!this._clock) {
+			this._clock = this._to.clock;
+		}
 	    var now = this._clock.now(); 
 	    var initVector = this._to.vector;
-
 	    if (this._isReady() === false) {
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
