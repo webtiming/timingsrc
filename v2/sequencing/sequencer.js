@@ -343,6 +343,8 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this._currentTimeoutPoint = null; // point associated with current timeout
 		this._activeKeys = {}; // (key -> undefined)
 
+		this._ready = new eventify.EventBoolean(false, {init:true});
+
 		// set up eventing stuff
 		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:true}); // define enter event (supporting init-event)
@@ -367,12 +369,36 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		get : function () {return Interval;}
 	});
 
+	Sequencer.prototype.isReady = function () {
+		return this._ready.value;
+	};
+
+	// ready promise
+	Object.defineProperty(Sequencer.prototype, 'ready', {
+		get : function () {
+			var self = this;
+			return new Promise (function (resolve, reject) {
+				if (self._ready.value === true) {
+					resolve();
+				} else {
+					var onReady = function () {
+						if (self._ready.value === true) {
+							self._ready.off("change", onReady);
+							resolve();
+						}
+					};
+					self._ready.on("change", onReady);
+				}
+			});
+		}
+	});
+
 	/*
 	  	overrides how immediate events are constructed 
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
-			return (this._isReady()) ? this._processInitialEvents() : [];
+			return (this._ready.value) ? this._processInitialEvents() : [];
 		}
 		return [];
 	};
@@ -410,24 +436,21 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	*/
 
-	Sequencer.prototype._isReady = function () {
-		return (this._schedule !== null);
-	};
-
 	Sequencer.prototype._onTimingChange = function (event) {
 
-		// Set the time for this processing step
-		if (!this._clock) {
+	    var now, initVector = this._to.vector;		
+
+		if (this._ready.value === false) {
+			// initialization	
 			this._clock = this._to.clock;
-		}
-	    var now = this._clock.now(); 
-	    var initVector = this._to.vector;
-	    if (this._isReady() === false) {
+			now = this._to.clock.now();
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
 			this._axis.on("events", this._wrappedOnAxisChange, this);
-	    } else {
+			// ready
+			this._ready.value = true;
+		} else {
 	    	// Deliberately set time (a little) back for delayed updates
 	    	now = initVector.timestamp;
 	    	// Empty schedule
