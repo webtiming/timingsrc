@@ -75,8 +75,7 @@
               s += " " + e.key;
               s += " " + e.interval.toString();
               s += " " + e.type;
-              s += " " + e.op;
-               var verb = "none";
+              var verb = "none";
               if (e.enter) verb = "enter";
               else if (e.exit) verb = "exit";
               s += " (" + e.op + "," + verb + ")";
@@ -97,10 +96,16 @@
 
           var value = document.getElementById("value");
           var value2 = document.getElementById("value2");
-          to.on("timeupdate", function () {
+
+
+          toA.on("timeupdate", function () {
             value.innerHTML = toA.query().position.toFixed(2);
+          });
+
+          toB.on("timeupdate", function () {
             value2.innerHTML = toB.query().position.toFixed(2);
           });
+
 
           createCue = function () {
               console.log("create six");
