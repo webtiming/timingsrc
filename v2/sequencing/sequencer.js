@@ -71,6 +71,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
     var OpType = axis.OpType;
 
 
+
 	/*
 
       SCHEDULE
@@ -560,13 +561,37 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this._axis.updateAll(argList);
 	};
 
+	// remove duplicates - keeps the ordering and keeps the last duplicate
+	var removeDuplicates = function (opList) {
+		if (opList.length < 2) {
+			return opList;
+		}
+		var res = [], op, map = {}; // op.key -> opList index
+		for (var i=0; i<opList.length; i++) {
+			op = opList[i];
+			map[op.key] = i;
+		}
+		for (var i=0; i<opList.length; i++) {
+			op = opList[i];
+			if (map[op.key] === i) {
+				res.push(op);
+			}
+		}
+		return res;
+	};
+
+
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
+
 		// filter out NOOPS (i.e. remove operations that removed nothing)
 		origOpList = origOpList.filter(function (op) {
 			return (op.type !== OpType.NONE);
 		});
 	
+		// remove duplicate operations (save last one)
+		origOpList = removeDuplicates(origOpList);
+
 	    var now = this._clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 	    var nowPos = nowVector.position;
