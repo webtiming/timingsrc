@@ -336,7 +336,6 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			throw new Error("Contructor function called without new operation");
 		}
 		this._to = timingObject;
-		this._clock;
 		this._axis = _axis || new axis.Axis();
 		this._schedule = null;
 		this._timeout = null; // timeout
@@ -438,12 +437,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	Sequencer.prototype._onTimingChange = function (event) {
 
-	    var now, initVector = this._to.vector;		
-
+	    var now = this._to.clock.now();
+	    var initVector = this._to.vector;		
 		if (this._ready.value === false) {
 			// initialization	
-			this._clock = this._to.clock;
-			now = this._to.clock.now();
+			
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
@@ -451,8 +449,11 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			// ready
 			this._ready.value = true;
 		} else {
-	    	// Deliberately set time (a little) back for delayed updates
-	    	now = initVector.timestamp;
+	    	// set time (a little) back for live (delayed) updates ?
+	    	// since timingobjects may switch source there is no longer 
+	    	// a way to distinguish a live update from one originating
+	    	// from timingobject switching source  
+
 	    	// Empty schedule
 	    	this._schedule.advance(now);
 	    }
@@ -615,7 +616,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		// remove duplicate operations (save last one)
 		origOpList = removeDuplicates(origOpList);
 
-	    var now = this._clock.now();
+	    var now = this._to.clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 	    var nowPos = nowVector.position;
 
@@ -825,7 +826,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		});
 		*/
 		var eList;
-	    now = now || this._clock.now();
+	    now = now || this._to.clock.now();
 	    // process tasks (empty due tasks from schedule)
         eList = this._processScheduleEvents(now, this._schedule.pop(now));   
         this.eventifyTriggerEvents(eList);
@@ -871,12 +872,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				// clear timeout
 				this._clearTimeout();
 				// update timeout 
-	        	var secAnchor = this._clock.now();	
+	        	var secAnchor = this._to.clock.now();	
 				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 				this._currentTimeoutPoint = nextTimeoutPoint;
 				var self = this;
 				//console.log("main done - set timeout", this._schedule.queue.length);
-				this._timeout = this._clock.setTimeout(function () {
+				this._timeout = this._to.clock.setTimeout(function () {
 					self._clearTimeout();
 					self._main(undefined, true);
 				}, secDelay, {anchor: secAnchor, early: 0.005});
@@ -1049,7 +1050,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	   	var eArg, eArgList = [];	   		
 	   	var nowVector = motionutils.calculateVector(this._to.vector, now);
    		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now();
+		var ts = this._to.clock.now();
 	    eventList.forEach(function (e) {
 			if (e.task.interval.singular) {
 				// make two events for singular
@@ -1075,7 +1076,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    }
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now(); 
+		var ts = this._to.clock.now(); 
 	    var eArgList = [];
     	var opType;
     	// trigger events
@@ -1097,10 +1098,10 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	Sequencer.prototype._processInitialEvents = function () {
 		// called by makeInitEvents - return event list based on activeKeys
 		var item, eArg;
-		var now = this._clock.now();
+		var now = this._to.clock.now();
 		var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now();
+		var ts = this._to.clock.now();
 		return Object.keys(this._activeKeys).map(function (key) {
 			item = this._axis.getItem(key);
 			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);
