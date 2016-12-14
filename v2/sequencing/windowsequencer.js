@@ -46,10 +46,12 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		this._axis = _axis || new axis.Axis();
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;
+
 		this._seqA = new seq.DefaultSequencer(this._toA, this._axis);
 		this._seqB = new seq.DefaultSequencer(this._toB, this._axis);
-		this._readyA = false;
-		this._readyB = false;
+
+		// ready
+		this._ready = new eventify.EventBoolean(false, {init:true});
 
 		// active keys
 		this._activeKeys = {}; // key -> undefined
@@ -61,22 +63,45 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		this.eventifyDefineEvent("remove");
 
 
-		// Wrapping prototype event handlers and store references on instance
-		this._wrappedOnAxisChange = function (eItemList) {
+		var self = this;
+
+		// Store references to handler on instance
+		this._onAxisChange = function (eItemList) {
 			var eArgList = eItemList.map(function (eItem) {
 				return eItem.e;
 			});
-			this._onAxisChange(eArgList);
+			//console.log("on Axis Change");
+			self._reevaluate(eArgList);
 		};
-		this._wrappedOnTimingChangeA = function () {this._onTimingChangeA();};
-		this._wrappedOnTimingChangeB = function () {this._onTimingChangeB();};
-		this._wrappedOnSequencerChangeA = function (e) {this._onSequencerChangeA(e);};
-		this._wrappedOnSequencerChangeB = function (e) {this._onSequencerChangeB(e);};
+		this._onToAChange = function () {
+			//console.log("on ToA Change");
+			self._reevaluate();
+		};
+		this._onToBChange = function () {
+			//console.log("on ToB Change");
+			self._reevaluate();
+		};
+		this._onSeqAChange = function (e) {
+			//console.log("on SeqA Change");
+			self._reevaluate();
+		};
+		this._onSeqBChange = function (e) {
+			//console.log("on SeqB Change");
+			self._reevaluate();
+		};
+		this._toA.on("change", this._onToAChange, this);
+		this._toB.on("change", this._onToBChange, this);
+		this._seqA.on("events", this._onSeqAChange, this);
+		this._seqB.on("events", this._onSeqBChange, this);
 
-		this._toA.on("change", this._wrappedOnTimingChangeA, this);
-		this._toB.on("change", this._wrappedOnTimingChangeB, this);
-		this._seqA.on("events", this._wrappedOnSequencerChangeA, this);
-		this._seqB.on("events", this._wrappedOnSequencerChangeB, this);
+		
+		Promise.all([this._seqA.ready, this._seqB.ready]).then(function (values) {
+			// both sequencers are ready
+			// by implication - both timing objects are ready too
+			self._axis.on("events", self._onAxisChange, self);
+			self._ready.value = true;
+		});
+		
 	};
 	eventify.eventifyPrototype(WindowSequencer.prototype);
 
@@ -91,27 +116,30 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 
 		The interval sequencer is ready when both timing objects are ready
 	*/
-	WindowSequencer.prototype._setReadyA = function() {
-		if (!this._readyA) {
-			this._readyA = true;
-			if (this._readyB) this._onReady();
+	WindowSequencer.prototype.isReady = function () {
+		return (this._ready.value === true);
+	};
+
+	// ready promise
+	Object.defineProperty(WindowSequencer.prototype, 'ready', {
+		get : function () {
+			var self = this;
+			return new Promise (function (resolve, reject) {
+				if (self._ready.value === true) {
+					resolve();
+				} else {
+					var onReady = function () {
+						if (self._ready.value === true) {
+							self._ready.off("change", onReady);
+							resolve();
+						}
+					};
+					self._ready.on("change", onReady);
+				}
+			});
 		}
-	};
+	});
 
-	WindowSequencer.prototype._setReadyB = function() {
-		if (!this._readyB) {
-			this._readyB = true;
-			if (this._readyA) this._onReady();
-		}
-	};
-
-	WindowSequencer.prototype._isReady = function() {
-		return (this._readyA && this._readyB);
-	};
-
-	WindowSequencer.prototype._onReady = function () {
-		this._axis.on("events", this._wrappedOnAxisChange, this);
-	};
 
 	/*
 
@@ -161,27 +189,6 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		- not implemented
 	*/
 
-	WindowSequencer.prototype._onTimingChangeA = function () {
-		this._setReadyA();
-		this._reevaluate();
-	}; 
-
-	WindowSequencer.prototype._onTimingChangeB = function () {
-		this._setReadyB();
-		this._reevaluate();
-	};
-
-	WindowSequencer.prototype._onAxisChange = function (argList) {
-		this._reevaluate(argList);
-	};
-
-	WindowSequencer.prototype._onSequencerChangeA = function () {
-		this._reevaluate();
-	}; 
-
-	WindowSequencer.prototype._onSequencerChangeB = function () {
-		this._reevaluate();
-	};
 
 	/*
 	  	overrides how immediate events are constructed
@@ -249,10 +256,9 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		in order to bring the WindowSequencer to the correct state.
 	*/
 	WindowSequencer.prototype._reevaluate = function (axisOpList) {
-		if (!this._isReady()) {
+		if (this._ready.value === false) {
 			return [];
 		}
-
 		var activeInterval = this._getActiveInterval();
 
 		// find keys of all cues, where cue interval is partially or fully covered by searchInterval			
@@ -423,11 +429,11 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 
 	// shutdown
 	WindowSequencer.prototype.close = function () {
-		this._axis.off("change", this._wrappedOnAxisChange);
-		this._toA.off("change", this._wrappedOnTimingChangeA);
-		this._toB.off("change", this._wrappedOnTimingChangeB);
-		this._seqA.off("events", this._wrappedOnSequencerChangeA);
-		this._seqB.off("events", this._wrappedOnSequencerChangeB);
+		this._axis.off("change", this._onAxisChange);
+		this._toA.off("change", this._onToAChange);
+		this._toB.off("change", this._onToBChange);
+		this._seqA.off("events", this._onSeqAChange);
+		this._seqB.off("events", this._onSeqBChange);
 		this._seqA.close();
 		this._seqB.close();
 	};

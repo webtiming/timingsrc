@@ -11,14 +11,14 @@
     <script type="text/javascript" src="../../lib/require.js"></script>
     <!--  main -->
     <script text="javascript">
-      var to, s, createCue, updateCue, removeCue, repeatCue;
+      var to, toA, toB, s, createCue, updateCue, removeCue, repeatCue;
 
       require(['timingsrc'], function (timingsrc) {
 
         // Timing Object
-        to = new timingsrc.TimingObject({range:[0,52]});
-        var toA = new timingsrc.SkewConverter(to, -5.0);
-        var toB = new timingsrc.SkewConverter(to, 4.0);
+        to = new timingsrc.TimingObject({vector:{position:5}, range:[0,52]});
+        toA = new timingsrc.SkewConverter(to, -5.0);
+        toB = new timingsrc.SkewConverter(to, 5.0);
         
         // Sequencer
         s = new timingsrc.Sequencer(toA, toB);
