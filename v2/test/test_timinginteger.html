@@ -30,7 +30,7 @@
             value.innerHTML = to.query().position.toFixed(2); 
           });
 
-          ti = new timingsrc.TimingInteger(to);
+          ti = new timingsrc.TimingInteger(to, {min:2, max:8});
           var intElem = document.getElementById('integer');
           ti.on("change", function () {
             intElem.innerHTML = ti.value.toString();
