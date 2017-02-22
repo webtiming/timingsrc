@@ -41,7 +41,7 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
     if (!isNumeric(init_value)) {
       throw new Error ("value not nummeric", init_value);
     }
-    this._init_value = init_value;
+    this._value = init_value;
   
     // events
     eventify.eventifyInstance(this);
@@ -88,11 +88,7 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
 
   Object.defineProperty(TimingInteger.prototype, "value", {
     get : function () {
-      if (this._timingsrc.isReady()) {
-        return Math.floor(this._timingsrc.query().position);
-      } else {
-        return this._init_value;
-      }
+      return this._value;
     },
     set : function (value) {
       // set will fail if to is not ready
@@ -142,14 +138,22 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
 
   // update event from timingsrc
   TimingInteger.prototype._onChange = function () {
-    this.eventifyTriggerEvent("change");
+    this._refresh();
     this._renewTimeout();
   };
 
   // update event from timing object
   TimingInteger.prototype._onTimeout = function () {
-    this.eventifyTriggerEvent("change");
+    this._refresh();
     this._renewTimeout();
+  };
+
+  TimingInteger.prototype._refresh = function () {
+    var value = Math.floor(this._timingsrc.query().position);
+    if (value !== this._value) {
+      this._value = value;
+      this.eventifyTriggerEvent("change");
+    }
   };
 
   /*
