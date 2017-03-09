@@ -174,7 +174,7 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
     }
     if (value !== this._value) {
       this._value = value;
-      this.eventifyTriggerEvent("change");
+      this.eventifyTriggerEvent("change", this.value);
     }
   };
 
