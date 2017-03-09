@@ -221,15 +221,6 @@ define (['util/interval'], function (Interval) {
         return (i < this.array.length) ? i : -1;
     };
 
-    SortedArrayBinary.prototype.indexOf = function (element) {
-        var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-    		return -1;
-        } else {
-    		return index;
-        }
-    };
-
     SortedArrayBinary.prototype.lookup = function (interval) {
     	if (interval === undefined) 
     		interval = new Interval(-Infinity, Infinity, true, true);
