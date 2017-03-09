@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./sequencer', './windowsequencer', './timingcallbacks'], 
-	function (seq, WindowSequencer, timingcallbacks) {		
+define(['./sequencer', './windowsequencer', './timingcallbacks', './timinginteger'], 
+	function (seq, WindowSequencer, timingcallbacks, TimingInteger) {		
 		'use strict';
 
     // Common constructor for Sequencer and WindowConstructor
@@ -36,7 +36,8 @@ define(['./sequencer', './windowsequencer', './timingcallbacks'],
 			Interval : seq.Interval,
 			inherit : seq.inherit,
       setPointCallback : timingcallbacks.setPointCallback,
-      setIntervalCallback : timingcallbacks.setIntervalCallback
+      setIntervalCallback : timingcallbacks.setIntervalCallback,
+      TimingInteger : TimingInteger
 		};
 	}
 );

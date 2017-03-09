@@ -71,6 +71,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
     var OpType = axis.OpType;
 
 
+
 	/*
 
       SCHEDULE
@@ -335,12 +336,13 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 			throw new Error("Contructor function called without new operation");
 		}
 		this._to = timingObject;
-		this._clock;
 		this._axis = _axis || new axis.Axis();
 		this._schedule = null;
 		this._timeout = null; // timeout
 		this._currentTimeoutPoint = null; // point associated with current timeout
 		this._activeKeys = {}; // (key -> undefined)
+
+		this._ready = new eventify.EventBoolean(false, {init:true});
 
 		// set up eventing stuff
 		eventify.eventifyInstance(this);
@@ -366,12 +368,36 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		get : function () {return Interval;}
 	});
 
+	Sequencer.prototype.isReady = function () {
+		return this._ready.value;
+	};
+
+	// ready promise
+	Object.defineProperty(Sequencer.prototype, 'ready', {
+		get : function () {
+			var self = this;
+			return new Promise (function (resolve, reject) {
+				if (self._ready.value === true) {
+					resolve();
+				} else {
+					var onReady = function () {
+						if (self._ready.value === true) {
+							self._ready.off("change", onReady);
+							resolve();
+						}
+					};
+					self._ready.on("change", onReady);
+				}
+			});
+		}
+	});
+
 	/*
 	  	overrides how immediate events are constructed 
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
-			return (this._isReady()) ? this._processInitialEvents() : [];
+			return (this._ready.value) ? this._processInitialEvents() : [];
 		}
 		return [];
 	};
@@ -409,26 +435,25 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 
 	*/
 
-	Sequencer.prototype._isReady = function () {
-		return (this._schedule !== null);
-	};
-
 	Sequencer.prototype._onTimingChange = function (event) {
 
-		// Set the time for this processing step
-		if (!this._clock) {
-			this._clock = this._to.clock;
-		}
-	    var now = this._clock.now(); 
-	    var initVector = this._to.vector;
-	    if (this._isReady() === false) {
+	    var now = this._to.clock.now();
+	    var initVector = this._to.vector;		
+		if (this._ready.value === false) {
+			// initialization	
+			
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
 			this._axis.on("events", this._wrappedOnAxisChange, this);
-	    } else {
-	    	// Deliberately set time (a little) back for delayed updates
-	    	now = initVector.timestamp;
+			// ready
+			this._ready.value = true;
+		} else {
+	    	// set time (a little) back for live (delayed) updates ?
+	    	// since timingobjects may switch source there is no longer 
+	    	// a way to distinguish a live update from one originating
+	    	// from timingobject switching source  
+
 	    	// Empty schedule
 	    	this._schedule.advance(now);
 	    }
@@ -560,14 +585,38 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		this._axis.updateAll(argList);
 	};
 
+	// remove duplicates - keeps the ordering and keeps the last duplicate
+	var removeDuplicates = function (opList) {
+		if (opList.length < 2) {
+			return opList;
+		}
+		var res = [], op, map = {}; // op.key -> opList index
+		for (var i=0; i<opList.length; i++) {
+			op = opList[i];
+			map[op.key] = i;
+		}
+		for (var i=0; i<opList.length; i++) {
+			op = opList[i];
+			if (map[op.key] === i) {
+				res.push(op);
+			}
+		}
+		return res;
+	};
+
+
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
+
 		// filter out NOOPS (i.e. remove operations that removed nothing)
 		origOpList = origOpList.filter(function (op) {
 			return (op.type !== OpType.NONE);
 		});
 	
-	    var now = this._clock.now();
+		// remove duplicate operations (save last one)
+		origOpList = removeDuplicates(origOpList);
+
+	    var now = this._to.clock.now();
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 	    var nowPos = nowVector.position;
 
@@ -777,7 +826,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 		});
 		*/
 		var eList;
-	    now = now || this._clock.now();
+	    now = now || this._to.clock.now();
 	    // process tasks (empty due tasks from schedule)
         eList = this._processScheduleEvents(now, this._schedule.pop(now));   
         this.eventifyTriggerEvents(eList);
@@ -823,12 +872,12 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				// clear timeout
 				this._clearTimeout();
 				// update timeout 
-	        	var secAnchor = this._clock.now();	
+	        	var secAnchor = this._to.clock.now();	
 				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 				this._currentTimeoutPoint = nextTimeoutPoint;
 				var self = this;
 				//console.log("main done - set timeout", this._schedule.queue.length);
-				this._timeout = this._clock.setTimeout(function () {
+				this._timeout = this._to.clock.setTimeout(function () {
 					self._clearTimeout();
 					self._main(undefined, true);
 				}, secDelay, {anchor: secAnchor, early: 0.005});
@@ -1001,7 +1050,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	   	var eArg, eArgList = [];	   		
 	   	var nowVector = motionutils.calculateVector(this._to.vector, now);
    		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now();
+		var ts = this._to.clock.now();
 	    eventList.forEach(function (e) {
 			if (e.task.interval.singular) {
 				// make two events for singular
@@ -1027,7 +1076,7 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    }
 	    var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now(); 
+		var ts = this._to.clock.now(); 
 	    var eArgList = [];
     	var opType;
     	// trigger events
@@ -1049,10 +1098,10 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	Sequencer.prototype._processInitialEvents = function () {
 		// called by makeInitEvents - return event list based on activeKeys
 		var item, eArg;
-		var now = this._clock.now();
+		var now = this._to.clock.now();
 		var nowVector = motionutils.calculateVector(this._to.vector, now);
 		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._clock.now();
+		var ts = this._to.clock.now();
 		return Object.keys(this._activeKeys).map(function (key) {
 			item = this._axis.getItem(key);
 			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);

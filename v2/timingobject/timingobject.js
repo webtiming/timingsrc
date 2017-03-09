@@ -470,13 +470,29 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 		- implements a clock for the provider
 	*/
 
+
+	// Need a polyfill for performance,now as Safari on ios doesn't have it...
+
+	// local clock in seconds
+	var local_clock = {
+		now : function () {return performance.now()/1000.0;}
+	}; 
+
 	var ExternalProvider = function (provider, options) {
 		options = options || {};
 		options.timeout = true;
 		TimingBase.call(this);
 
 		this._provider = provider;
-		this._clock;
+		
+		this._provider_clock; // provider clock (may fluctuate based on live skew estimates)
+		/* 
+			local clock
+			provider clock normalised to values of performance now
+			normalisation based on first skew measurement, so 
+		*/
+		this._clock; 
+
 
 		// register event handlers
 		var self = this;
@@ -500,9 +516,16 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 
 	ExternalProvider.prototype._onSkewChange = function () {
 		if (!this._clock) {
-			this._clock = new MasterClock({skew: this._provider.skew});
-		} else {
-			this._clock.adjust({skew: this._provider.skew});
+			this._provider_clock = new MasterClock({skew: this._provider.skew});
+			this._clock = new MasterClock({skew:0});
+		} else {			
+			this._provider_clock.adjust({skew: this._provider.skew});
+			// provider clock adjusted with new skew - correct local clock similarly
+			// current_skew = clock_provider - clock_local
+			var current_skew = this._provider_clock.now() - this._clock.now();
+			// skew delta = new_skew - current_skew
+			var skew_delta = this._provider.skew - current_skew;
+			this._clock.adjust({skew: skew_delta});
 		}
 		if (!this.isReady() && this._provider.vector != undefined) {
 			// just became ready (onVectorChange has fired earlier)
@@ -520,6 +543,34 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			this._preProcess(this._provider.vector);
 		}
 	};
+
+
+	/*
+		- local timestamp of vector is set for each new vector, using the skew available at that time
+		- the vector then remains unchanged
+		- skew changes affect local clock, thereby affecting the result of query operations
+
+		- one could imagine reevaluating the vector as well when the skew changes, 
+			but then this should be done without triggering change events
+
+		- ideally the vector timestamp should be a function of the provider clock  
+
+	*/
+
+
+
+	// 	override timing base to recalculate timestamp
+	ExternalProvider.prototype.onVectorChange = function (provider_vector) {
+		// local_ts = provider_ts - skew
+		var local_ts = provider_vector.timestamp - this._provider.skew;
+		return {
+			position : provider_vector.position,
+			velocity : provider_vector.velocity,
+			acceleration : provider_vector.acceleration,
+			timestamp : local_ts
+		}
+	};
+
 
 	// update
 	ExternalProvider.prototype.update = function (vector) {
