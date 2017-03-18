@@ -309,6 +309,7 @@ define(function () {
 		var a0 = vector.acceleration;
 		for (var i=0; i<plist.length; i++) {
 		    var o = plist[i];
+		    if (!hasRealSolution(p0, v0, a0, o.point)) continue;
 		    var intersects = calculateRealSolutions(p0,v0,a0, o.point);
 		    for (var j=0; j<intersects.length; j++) {
 				var t = intersects[j];
@@ -335,6 +336,7 @@ define(function () {
 		var a0 = vector.acceleration;
 		for (var i=0; i<plist.length; i++) {
 		    var o = plist[i];
+		    if (!hasRealSolution(p0, v0, a0, o.point)) continue;
 		    var intersects = calculateRealSolutions(p0,v0,a0, o.point);
 		    for (var j=0; j<intersects.length; j++) {
 				var t = intersects[j];

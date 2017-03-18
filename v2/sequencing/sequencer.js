@@ -790,7 +790,9 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 				    		item.point = interval.high;
 				    	}
 				    	item.pointType = this._axis.getPointType(item.point, item.interval);
-				    	reloadPoints.push(item);
+                        if (item.pointType !== axis.PointType.OUTSIDE) {
+                            reloadPoints.push(item);
+                        }
 				    }
 				}
 			}, this);

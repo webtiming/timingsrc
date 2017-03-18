@@ -90,7 +90,7 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
   */
 
   Object.defineProperty(TimingInteger.prototype, "ready", {
-    get: function () {return this._to.ready;}
+    get: function () {return this._timingsrc.ready;}
   });
 
   TimingInteger.prototype.isReady = function () {
@@ -213,6 +213,13 @@ define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) 
   };
 
 
+  TimingInteger.prototype.close = function () {
+    this._clearTimeout();
+    if (this._timingsrc) {
+      this._timingsrc.off("change", this._wrappedOnChange, this);
+      this._timingsrc = undefined;
+    }
+  };
 
   return TimingInteger;
 }); 
