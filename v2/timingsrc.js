@@ -28,6 +28,7 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 		setPointCallback : sequencing.setPointCallback,
 		setIntervalCallback : sequencing.setIntervalCallback,
 		TimingInteger : sequencing.TimingInteger,
+		ActiveCue : sequencing.ActiveCue,
 
 		// MediaSync
 		MediaSync: mediasync.MediaSync,
