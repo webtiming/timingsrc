@@ -36,15 +36,15 @@ Synchronization and control of two video elements using timing object. Both vide
 **Player 1**
 <p>
   <video id="player1" style="height:200px">
-      <source src="http://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
-      <source src="http://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
+      <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
+      <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
   </video>
 </p>
 **Player 2**
 <p>
   <video id="player2" style="height:200px">
-      <source src="http://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
-      <source src="http://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
+      <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
+      <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
   </video>
 </p>
 
