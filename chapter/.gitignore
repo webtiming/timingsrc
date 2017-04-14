@@ -2,3 +2,6 @@ tex/*.aux
 tex/*.dvi
 tex/*.log
 tex/*.pdf
+tex/*.bbl
+tex/*.blg
+tex/*.idx

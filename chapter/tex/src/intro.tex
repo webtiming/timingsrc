@@ -1,0 +1,75 @@
+The proliferation of user devices as well as the eagerness of people to use
+them, make seamless multi-device media experiences a natural vision in the
+media industry. Such media experiences might for instance exploit big screens
+for video content, whereas laptops, tablets and smartphones may be useful for
+presenting associated content, such as infographics, backstory, foreign
+language resources, control features or interactivity. People might also
+expect much flexibility regarding the configuration of such experiences. Some
+might meticulously define their own setups for a favourite event, whereas
+others will prefer that media experiences automatically adapt to exploit
+available devices. It must also be possible to shift media experiences
+dynamically between devices, and adapt to new circumstances. For instance,
+while driving, users on a strict network quota might want a live TV show to
+adapt by dropping the high definition video stream, while keeping the audio
+and the secondary content. In short, in this new multi-device world, people
+wish to interact with media experiences through any device or multiple
+devices, and media providers must design flexible media products, capable of
+exploiting circumstances well, and be completely redefined if circumstances
+change.
+
+The Web platform appears to be a great fit for this new multi-device world. It
+is a powerful platform for multimedia, with global reach, powerful backend
+services and Web browsers with a rich set of sensors for capture, interactive
+capabilities, and a variety of frameworks for visualization and media
+presentation. The modularity, interoperability and programmability of the Web
+platform is also an excellent foundation for highly flexibly media products.
+Finally, the Web is already multi-device and global in nature. People may
+interact with their online mailbox through any device, or using multiple
+devices at the same time. Furthermore, they expect their online mailbox to be
+the same, independent of which device is used to access it, or where they
+might be at the time. Clearly, this basic promise of the Web is equally
+attractive in the context of multi-device media experiences.
+ 
+Unfortunately though, the Web lacks a crucial ingredient. Multi-device media
+experiences (unlike mailboxes) require precise, distributed media
+synchronization, and the Web platform provides no support for this. To fill
+this gap, and thereby enable the Web as a platform for flexible multi-device
+multimedia, this chapter presents the motion model, a general approach to
+media synchronization on the Web. The motion model is designed with the
+following key objectives.
+
+\begin{itemize}
+\item{\emph{Global:} Media synchronization on the Web must be multi-device 
+and global in nature, simply because the Web is multi-device and global in nature.}
+\item{\emph{Web-availability:} If a Web browser is able to load a Web page, 
+it should also be able to synchronize correctly. In other words, no assumptions 
+can be made except connectivity.}
+\item{\emph{Simplicity:} Media synchronization should be easy for Web developers. 
+In particular, developers should be shielded from complexities of distributed synchronization.}
+\end{itemize}
+
+The key idea of the motion model is very simple: Media playback must be
+represented as an online resource. This makes playback state globally
+available, and allows Web pages to connect and synchronize precisely. Media
+synchronization across Web pages is simply a consequence of connecting to the
+same playback resource.
+
+Though the primary purpose of the motion model is synchronization, the model
+has implications that go far beyond this topic. In particular the motion model
+inverts the relationship between synchronization and media. Traditionally,
+synchronization is external to media and may be applied to media, if needed.
+In contrast, the motion model defines synchronization as an integral part of
+media. As such, the motion model implies a new media model based on
+synchronization, particularly suited for highly flexible multi-device
+multimedia experiences.
+
+The chapter is structured as follows: Section 4 defines media synchronization
+as a term, along with common challenges and approach. The motion model is
+presented in section 5, followed by section 6 which highlights key properties
+of the implied media model. Section 7 surveys relevant Web technologies,
+relating them to the motion model. Section 8, 9, 10 give a more thorough
+introduction to the motion concept, to distributed synchronization of motions,
+and to the challenge of synchronizing media components in the motion model.
+Evaluation is presented in section 11, section 12 briefly references the
+standardization initiative made by the Multi-device Timing Community
+Group~\cite{mtcg}, before conclusions are given in section 13.
