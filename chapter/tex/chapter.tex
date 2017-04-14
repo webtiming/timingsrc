@@ -28,6 +28,8 @@
 % see the list of further useful packages
 % in the Reference Guide
 
+\usepackage[justification=centering]{caption}
+
 \makeindex             % used for the subject index
                        % please use the style svind.ist with
                        % your makeindex program
@@ -49,22 +51,24 @@
 \maketitle
 
 % abstract
-\abstract{\input{src/abstract}}
+\abstract{
+\input{src/abstract}
+}
 
 % introduction
 \section{Introduction}
 \label{sec:intro}
-\input{src/intro}
+%\input{src/intro}
 
 % abbreviations
 \section{Abbreviations}
 \label{sec:abbr}
-\input{src/abbr}
+%\input{src/abbr}
 
 % terminology
 \section{Terminology}
 \label{sec:terms}
-\input{src/terms}
+%\input{src/terms}
 
 % media synchronization
 \section{Media Synchronization}
@@ -74,47 +78,47 @@
 % motion model
 \section{The Motion Model}
 \label{sec:model}
-\input{src/model}
+%\input{src/model}
 
 % key properties
 \section{Key properties}
 \label{sec:properties}
-\input{src/properties}
+%\input{src/properties}
 
 % state of the Web
 \section{State of the Web}
 \label{sec:web}
-\input{src/web}
+%\input{src/web}
 
 % motion
 \section{Motion}
 \label{sec:motion}
-\input{src/motion}
+%\input{src/motion}
 
 % motion sync
 \section{Motion Synchronization}
 \label{sec:motionsync}
-\input{src/motionsync}
+%\input{src/motionsync}
 
 % component sync
 \section{Component Synchronization}
 \label{sec:compsync}
-\input{src/compsync}
+%\input{src/compsync}
 
 % evaluation
 \section{Evaluation}
 \label{sec:eval}
-\input{src/eval}
+%\input{src/eval}
 
 % standardization
 \section{Standardization}
 \label{sec:standard}
-\input{src/standard}
+%\input{src/standard}
 
 % conclusions
 \section{Conclusions}
 \label{sec:concl}
-\input{src/concl}
+%\input{src/concl}
 
 % references
 \section*{References}
