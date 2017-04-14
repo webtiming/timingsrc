@@ -2,7 +2,7 @@ The value promise of the motion model is not limited to synchronization. This
 section presents key properties of the media model that is implied by the
 motion model.
 
-\subsubsection{Decoupling media components from online motions} 
+\runinhead{Decoupling media components from online motions:} 
 
 Motion objects in the Web browser decouple media components from online
 motions. For Web developers, this means that the problem of media
@@ -18,7 +18,7 @@ usage. Offline synchronization may be supported by a local motion object (i.e.
 not connected to an online motion). A standardized API for motion would also
 open up for alternative implementations of motion synchronization.
 
-\subsubsection{Decoupling motion from media content}
+\runinhead{Decoupling motion from media content:}
 
 The motion model describe how media components connect to online motion, yet
 it does not include any references to media content. This is on purpose. In
@@ -35,7 +35,7 @@ any media format or transport protocol\footnote{Media content must refer to a
 timeline, in order for media components to be able to synchronize it with
 online motion.}.
 
-\subsubsection{Decoupling media components from each other}
+\runinhead{Decoupling media components from each other:}
 
 The motion model adopts the client-server architecture of the Web. This allows
 media components to remain independent of other media components. This is
@@ -46,7 +46,7 @@ extensibility, dynamism, and reduced complexity. In addition, independence of
 media components simplifies development and testing, as well as integration of
 media products across different technologies and platforms.
 
-\subsubsection{Online media control}
+\runinhead{Online media control:}
 
 In the motion model, Web availability is achieved by representing media
 control and an online resource. Online media control implies that media
@@ -64,7 +64,7 @@ control device. By adding access control to online motions, media control
 privileges may be appropriately restricted.
 
 
-\subsubsection{Dynamic participation}
+\runinhead{Dynamic participation:}
 
 The Web environment is characterized by high \emph{churn}, i.e. Web clients
 may be expected to disconnect and reconnect at any time. To support this,
@@ -82,7 +82,7 @@ components are connected to the online motion, remains a philosophical
 question.}. This is what is typically expected from live media productions.
 
 
-\subsubsection{Symmetri}
+\runinhead{Symmetry:}
 
 Asymmetric master-slave synchronization is a common pattern in media
 synchronization. The pattern implies that a set of media components (slaves)
@@ -95,7 +95,7 @@ application, this may easily be emulated. For instance, applications may
 ensure that only a specific media component may issue control requests to the
 motion.
 
-\subsubsection{Internal Synchronization}
+\runinhead{Internal Synchronization:}
 
 At present, external synchronization is the common pattern on the Web, where
 media components are coordinated by manipulating their control primitives.
@@ -113,7 +113,7 @@ ensures that the problem may be solved once, instead of repeatedly by
 different application developers.
 
 
-\subsubsection{Single-source media components}
+\runinhead{Single-source media components:}
 
 Dealing with multiple media assets, one approach is to collect them into
 standardized file or container formats. This approach allows co-transport of
@@ -128,9 +128,9 @@ edit them real-time, while they are being displayed for content viewers.
 Importantly though, the motion model leaves the design choices regarding media
 transport and media sources entirely to developers. Existing container-based
 media frameworks are fully compatible with the motion model, provided only
-that they may be controlled by motion (see Sect.~\ref{sec:integration}).
+that they may be controlled by motion (see Sect.~\ref{sec:html5sync}).
 
-\subsubsection{Single-purpose media components}
+\runinhead{Single-purpose media components:}
 
 In the motion model, media components may also be specialized with respect to
 purpose. For instance, a single media component may implement interactive

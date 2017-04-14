@@ -1,0 +1,140 @@
+Motion synchronization involves a client and an online motion. The client aims
+to provide a motion object locally, which is (and remains) precisely
+synchronized with the online motion. Relative synchronization between clients
+is achieved by implication.
+
+\subsection{Web availability}
+
+As a general solution for media synchronization on the Web, the primary
+objective of motion synchronization is to support Web availability. Web
+availability implies that a resource can be loaded into a browser context,
+without making any assumptions except connectivity. In other words, if a Web
+client is able to connect and load a Web page, it should also be able to
+synchronize correctly.
+
+As noted in Sect.~\ref{sec:internalstate}, the internal state of a motion is
+defined by two entities, a clock and a vector. It follows from this that
+globally available motion synchronization requires:
+
+\begin{itemize}
+\item{a Web available clock}
+\item{a Web available vector, and a mechanism for changing its value}
+\end{itemize}
+
+There are also some additional requirements for practical implementations of
+motion synchronization. Low latency is important for user experiences. Web
+clients should be able to synchronize quickly with the clock, on page load or
+after page reload. Vector changes should also be synchronized quickly across
+all connected clients. Finally, clients must be able to join and leave motion
+synchronization at any time, or fail, without affecting other clients.
+
+\runinhead{Web available vector:}
+
+Supporting Web availability for vectors is fairly simple. An online service is
+required to host a vector defining the current movement of the online motion.
+Clients will receive a copy of this vector immediately after connecting. The
+service then accepts update requests from clients, and broadcast vector change
+notifications to connected clients. A natural optimization is for such a
+service is to host a large set of vectors. Update processing requires that the
+vector is timestamped according to the Web available synchronized clock. With
+direct communication between clients and vector service, update latency
+experienced for a client will be about 1 RTT (round-trip time). Online vector
+synchronization is discussed in further detail as part in~\cite{msv}, under
+the name \emph{update synchronization}.
+
+\runinhead{Web available clock:}
+
+Web availability for a precisely synchronized clock is supported by the same
+approach used for vectors. The clock is represented as a resource hosted by an
+online service. Clock synchronization is then performed directly by connecting
+clients. The objective is to obtain an estimate for the skew (i.e. difference)
+between the local clock and the online clock. Clients will sample the online
+clock, repeatedly, and combine the results with local timestamps for sending
+requests and receiving responses. Based on this, skew may be estimated. A
+classical approach~\cite{clocksync} is to assume symmetric network latency,
+and calculate skew estimate based on samples with the lowest RTT. Clients also
+need to obtain a stable estimate quickly after connecting, so a natural
+behavior for clients is to do frequent sampling initially, and then fall back
+on periodic sampling for the remainder of the session. By dropping older
+samples it is also possible to detect relative \emph{clock drift} over time.
+
+Unfortunately, Web browsers do not provide any mechanism for online clock
+synchronization, so currently this must be implemented in JavaScript using
+TCP. Preferably though, clock synchronization should be performed by the Web
+client in native code using UDP. This would require standardization of a
+protocol for clock synchronization. Online clock synchronization is discussed
+in further detail as part in~\cite{msv}, under the name \emph{regular
+synchronization}.
+
+\runinhead{Implementation:}
+
+The digital media group at Norut has implemented and experimented with motion
+synchronization over several years. In the first phase a research prototype
+was built, and then a few years later, a production ready service called
+\emph{InMotion} was built by spin off company Motion Corporation~\cite{mcorp}.
+In both systems, vector service and clock service are merged into a single
+motion service. This implies that all communication required for motion
+synchronization is multiplexed over a single connection from the client.
+Implementations also need to facilitate two-way communication between client
+and service. In the early research prototype this was achieved using HTTP. The
+InMotion service uses WebSockets, with a significant improvement for clock
+synchronization.
+
+\runinhead{Evaluation:}
+
+The research group has used motion synchronization for a wide range of
+technical demonstration since 2010. An early evaluation of the research
+prototype is discussed in the paper titled \emph{The Media State
+Vector}~\cite{msv}. Though the interpretations of the experiments are
+conservative, the key findings indicate that motion synchronization can
+provide frame rate levels of accuracy (33 milliseconds). With the introduction
+of WebSockets in the InMotion service, results have improved significantly.
+Synchronization errors are in the order of a few milliseconds on all major
+browsers and most operating systems (including Android). In
+Sect.~\ref{sec:html5sync} it is demonstrated that this is good enough to
+support even the toughest challenge in Web-based media; echoless audio
+synchronization with HTML media elements. Furthermore, the accuracy of motion
+synchronization degrades well with poor network conditions. For instance,
+experiments with video synchronization in EDGE connectivity has not been
+visibly worse, except for longer update latency. In this instance, video data
+was fetched from local files. Conferences are also notorious hotspots for bad
+connectivity. In these circumstances, availability of media data consistently
+fails before synchronization.
+
+
+\runinhead{Future improvements:}
+
+Though the accuracy of online clock synchronization is acceptable for a wide
+range of applications, improvements are always attractive. One proposal could
+be to leverage the availability of synchronized system clocks. NTP~\cite{ntp}
+and PTP~\cite{ptp} are widely used and trusted protocols for large-scale,
+precise clock synchronization. Unfortunately, at present this is not possible.
+Synchronized system clocks is not a safe assumption in the Web domain, and Web
+clients do not expose any information indicating the quality of
+synchronization that can be expected from a systems clock. However, if this
+changes in the future, implementations of motion synchronization may take
+advantage of this.
+
+Alternatively, one might imagine a cloud hosted clock service growing more
+similar to NTP and PTP. For instance, it would be possible to reduce latency
+for clients by decentralizing the service. Synchronizing clients would then be
+routed to a nearby server, measured by network latency. Such a decentralized
+architecture would make the clock service more similar to NTP or PTP, though
+it would be designed with different assumptions for access pattern and load.
+PTP would be useful for clock synchronization internally in such a cloud-
+hosted clock service.
+
+\subsection{Summary}
+
+As a general solution for media synchronization on the Web, the primary
+objective of motion synchronization is to support Web availability: If a Web
+client is able to connect and load a Web page, it should also be able to
+synchronize correctly. Motion synchronization solves this by representing
+clock and movement vectors as online resources, implying that clock
+synchronization is performed by Web clients. With this approach
+synchronization errors are in the order of a few milliseconds on all major
+browsers and operating systems. While future optimizations may improve
+accuracy further, this is already acceptable for a wide range of use cases in
+Web-based media. Furthermore, motion synchronization implemented as a cloud-
+hosted service will be able to support the reliability and extreme scalability
+that modern media applications would often require.
