@@ -1,0 +1,128 @@
+Version history for the SVMult LaTeX2e class
+
+date      filename   version  action/reason/acknowledgements
+-----------------------------------------------------------------
+28.08.01  history.txt         introducing this file
+
+28.08.01  svmult.cls    1.7   saves token space
+                              (no more: 0 pt plus 1pt minus 1pt)
+
+11.09.01  svmult.cls    1.8   enhanced abstract environment
+                              (\abstractname may be \empty},
+                              \keywords inside the abstract environment
+                              \mainmatter clears the running heads
+
+25.09.01  svmult.cls    1.9   hanging chapter or section heading with
+                              class option [sechang]
+                              sets bibliography as section by default,
+                              whereas [chaprefs] sets it as chapter
+
+14.11.01  svmult.cls    1.10  debugged "bibsection" handling,
+                              added minitoc feature,
+                              \newenvironment{abbrsymblist},
+                              theorem name and its number can be permuted
+                              by using \normalthmheadings vs. \reversethmheadings,
+
+20.12.01  svmult.cls    1.11  fixed changeable indentation of itemize environment,
+                              removed bug that prevented \listoftables
+
+21.03.02  svmult.cls    1.12  fixed minitoc feature
+
+27.03.02  svmult.cls    1.13  oops - fixed minitoc feature again
+
+10.05.02  svmult.cls    1.14  corrected spacing after a \maketitle
+
+13.06.02  svmult.cls    1.15  modified sinkage of chapter
+                              oops - fixed minitoc feature again
+
+18.07.02  svmult.cls    1.16  corrected counting of mixed numbered and
+                              unnumbered contributions
+
+26.07.02  svmult.cls    3.0   promoted to major version 3, first release of
+                              "the global class", enabled usage of so called .clo
+                              (class option) files
+
+23.07.02  svmulthd.clo  1.0   initial release of the multhd class option, to revive
+                              the "pre global" layout for HD contributed books
+
+ 2.08.02  svmult.cls    3.1   make \thanks work in \institute field,
+                              change suggested by Daniel R. Grayson (UIUC),
+                              reset environment counters every new contribution
+
+08.10.02  svmult.cls    3.2   corrected \vec command for bold vectors, bug reported
+                              by Michael Beer, Univ. Freiburg
+
+08.10.02 svmultphys.clo 1.0   initial release of the multphys class option,
+                              to foster the diversity of layouts
+
+19.11.02  svmult.cls    3.3   new option "vecarrow" to preserve the original \vec
+                              command; revived the defective "footinfo" option
+
+ 6.12.02  svmult.cls    3.4   adapted minitoc to \secnumdepth
+
+18.12.02  svmult.cls    3.5   removed spurious blanks in language section
+
+15.04.03  svmult.cls    3.6   remove multiple info about language switch
+                              caused by [german] option of "babel", bug reported
+                              by Rüdiger Wapler, Universität Tübingen,
+                              corrected French translation of \bibname
+
+21.05.03  svmult.cls    3.7   added the titlepage environment, enhanced the
+                              thecontriblist environment
+
+26.05.03  svmult.cls    3.8   other few fixes of minitoc, bug report of
+                              Daniel R. Grayson (UIUC)
+
+27.05.03  svmult.cls    3.9   oops - fixed minitoc feature again
+
+23.07.03  svmult.cls    3.10  changed German Index to Sachverzeichnis
+
+10.01.04  svmult.cls    3.11  fixed reference to wrong counter when
+                              using the subeqnarray package
+
+07.04.04  svmult.cls    3.12  made headlines more flexible using \runheadstyle
+
+16.04.04  svmult.cls    3.13  fixed footinfo option
+
+18.05.04  svmult.cls    3.14  fix for babel option "ngerman", normal dot
+                              leaders for TOC entries of type "chapter"
+
+ 9.06.04  refguide            removed reference to obsolete style, bug reported
+                              by Martin Stepnicka, Ostrava University
+
+13.10.04  svmult.cls    3.15  fixed footnote layout when using footmisc package
+
+12.11.04  svmult.cls    3.16  corrected french spelling, grâce à Jean-Pierre
+                              Francoise, Laboratoire Jacques-Louis Lions,
+                              Université Pierre et Marie Curie, Jussieu
+
+20.03.05  svmult.cls    3.17  fixed \sidecaption; it was broken when used
+                              along with hyperref package
+
+20.07.05  svmult.cls    3.18  revive running heads for float pages at
+                              chapter ends - experimental
+
+23.09.05  svmult.cls    3.19  fix for babel option "french"
+
+10.10.05  svmult.cls    3.20  fix for hyperref compatibility in minitoc
+
+12.01.06  svmult.cls    3.21  removed Springer branches from titlepage
+
+24.01.06  svmult.cls    3.22  corrected position of pagenumbers in TOC,
+                              bug report and patch by Joachim Schrod
+
+03.08.06  svmult.cls    3.23  new command \Preface: \preface with TOC entry,
+                              suggested by Deborah Doherty, Springer Norwell
+
+22.08.06  svmult.cls    3.24  fixed minitoc feature (removed last empty page)
+                              bug reported by Carlos Langer, University of Cyprus
+
+31.10.06  svmult.cls    3.25  fix for various babel dialects in english
+                              by Ben Liblit, university of Wisconsin, Madison
+
+28.11.06  svmult.cls    3.26  fix for hyperref compatibility of \title pages;
+                              triggered by a request of Venelin Chernogorov,
+                              university of Sofia, Bulgaria
+
+29.06.07  svmono.cls    5.4   first release of the SVMult class
+                              with new global Springer layout "T1"
