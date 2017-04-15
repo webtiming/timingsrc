@@ -22,13 +22,17 @@ consequence of connecting multiple media components to the same online motion.
 This way, rich synchronized multi-device, multimedia may be crafted simply by
 connecting relevant media components to the same online motion.
 
-[ILLUSTRATION 1]
-
-[CAPTION] Three media components (A,B,C), all connected to an online motion
-[(red point). Media control requests (e.g. pause/resume) target the online
-[motion, and the corresponding state change in the online motion is then
-[communicated back to all connected media components. Each media component
-[then adjusts its behaviour independently.
+\begin{figure}[h]
+%\sidecaption
+\centering
+\includegraphics[scale=.4]{fig/motion-model.png}
+\caption{Media components on three different devices (A,B,C), all connected to an online motion
+(red circle). Media control requests (e.g. pause/resume) target the online
+motion, and the corresponding state change is then
+communicated back to all connected media components. Each media component
+adjusts its behaviour independently.}
+\label{fig:model}
+\end{figure}
 
 Importantly, the practicality of the motion model depends on Web developers
 being shielded from the complexities of distributed synchronization. This is
@@ -38,15 +42,22 @@ Instead, media components, especially those concerned with media control, may
 provide visual representations for motion, e.g. progress bar for media offset,
 or buttons for play and pause. } locally in the Web browser. The motion object
 acts as an intermediary between media components and online motions, as
-illustrated in figure[FIG]. This way, the challenge of media synchronization
+illustrated by Fig.~\ref{fig:model-2}. This way, the challenge of media synchronization
 is divided in two parts.
 
 \begin{itemize}
-\item{motion synchronization: motion object precisely synchronized with online motion (Internet problem).}
-\item{component synchronization: media component precisely synchronized with motion objects (local problem).} 
+\item{\emph{motion synchronization}: motion object precisely synchronized with online motion (Internet problem).}
+\item{\emph{component synchronization}: media component precisely synchronized with motion objects (local problem).} 
 \end{itemize}
 
-[ILLUSTRATION 2]
+
+\begin{figure}[h]
+%\sidecaption
+\centering
+\includegraphics[scale=.4]{fig/motion-model-2.png}
+\caption{Motion objects (red unfilled circles) mediate access to online motion. Motions may be shared by independent mediacomponents within the same browser context.}
+\label{fig:model-2}
+\end{figure}
 
 \emph{Motion synchronization} ensures that motion objects connected to the same
 online motion are kept precisely synchronized. The logic required for motion

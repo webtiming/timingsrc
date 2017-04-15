@@ -213,16 +213,18 @@ effects are also achieved across browser types and architectures, this is a
 strong indication that currentTime approximates the reference point
 quite well (see Sect.~\ref{sec:referencepoint}).
 
-[ILLUSTRATION]
-
-[CAPTION]
-The figure illustrates an experiment with video (mp4) synchronization on
+\begin{figure}[h]
+%\sidecaption
+\centering
+\includegraphics[scale=.23]{fig/android-video.png}
+\caption{The figure illustrates an experiment with video (mp4) synchronization on
 Android using Chrome browser. The plot shows currentTime compared to the ideal
-playback position defined by motion. The green band (echoless) is +-10ms and
-the yellow (frame accurate is) +-25ms. The media element enters frame accurate
+playback position defined by motion. The green band (echoless) is +-10 millisecond and
+the yellow (frame accurate is) +-25 millisecond. The media element enters frame accurate
 playback after two seekTo operations, and converges on echoless using
-variablePlaybackrate.
-
+variablePlaybackrate.}
+\label{fig:videosync}
+\end{figure}
 
 Though echoless synchronization is generally achievable, there are always a
 few combinations of architecture, browser and media format that pose problems.
@@ -292,7 +294,26 @@ generic programming tools such as the Sequencer,  Web developers with little
 expertise in media synchronization may develop precisely synchronized
 visualization based on application specific data sources.
 
-\runinhead{Evaluation:}
+\runinhead{Sequencer API:}
+The following code snippet outlines the Sequencer API. The
+complete API documentation, example code and demos are available at the
+Timingsrc~\cite{timingsrc} Website.
+
+\begin{lstlisting}[caption=Sequencer usage example]
+// sequencer constructor
+var seq = new Sequencer(motion);
+// add or modify cue
+seq.addCue("key", new Interval(12.2, 14.4), "data");
+// remove cue
+seq.removeCue("key");
+// register event handler
+var enter = function(e){console.log("enter", e.key, e.data)};
+var exit = function(e){console.log("exit", e.key, e.data)};
+seq.on('enter', enter);
+seq.off('exit', exit)
+\end{lstlisting}
+
+\runinhead{Implementation:}
 
 The Sequencer is implemented as a JavaScript library, and open-sourced as part
 of the Timingsrc programming model~\cite{timingsrc}. In the interest of
@@ -306,12 +327,11 @@ extensively by our research group. Further details are presented in this
 paper~\cite{sequencer}.
 
 
-\subsection{Summary}
-
-The motion model makes media synchronization very easy for Web developers,
-especially if popular media frameworks have already been integrated, and
-reusable, common-purpose media components are already available. If not,
-programmers may have to implement wrapper code for media frameworks
-themselves, or implement custom media components. Fortunately, sequencing
-tools makes development of custom media components much easier.
+%\subsection{Summary}
+%The motion model makes media synchronization very easy for Web developers,
+%especially if popular media frameworks have already been integrated and
+%made available as reusable, common-purpose media components. If not,
+%developers may have to implement wrapper code for media frameworks
+%themselves, or implement custom media components. Sequencing
+%tools makes development of custom media components much easier.
 
