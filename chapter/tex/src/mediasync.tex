@@ -6,11 +6,11 @@ used the term \emph{media timing} to highlight the universal utility of clocks
 in digital media, for capture, control, synchronization, timeshifting,
 scheduling and playback. In this chapter we use the term \emph{media
 synchronization} in a broad sense, as a synonym to \emph{media orchestration}
-and \emph{media timing}. We also limit the definition in two regards:
+and \emph{media timing}. We also limit the definition in a few regards:
 
 \begin{itemize}
-\item{Media synchronization on the Web is clock-based. The latencies and heterogeneity of the Web environment requires a clock-based approach for acceptable synchronization quality.}
-\item{Media synchronization involves one media instance and a clock. The term relative synchronization is reserved for comparisons between media instances.}
+\item{Media synchronization on the Web is client-side and clock-based. The latencies and heterogeneity of the Web environment requires a clock-based approach for acceptable synchronization quality.}
+\item{Media synchronization involves a media instance and a clock. The term \emph{relative synchronization} is reserved for comparisons between two or more synchronized media instances.}
 \end{itemize}
 
 \subsection{Challenges}
@@ -53,12 +53,12 @@ synchronized Web visualizations for a global audience.
 \subsection{Approach}
 
 The challenges posed by all these use-cases may be very different in terms of
-complexity, requirements for precision, scale, infrastructure and more. Yet,
+complexity, requirements for precision, scale, infrastructure and more. Still,
 we argue that a single solution is needed. Implementing specific solutions for
 specific use-cases is very expensive and time-consuming, and lays heavy
 restrictions on reusability. Even worse, circumstances regarding
 synchronization may change dynamically during a media session. For instance, a
-smartphone involved in synchronization over the local network, will have to
+smartphone involved in synchronization over the local network will have to
 switch approach for synchronization once the user leaves the house, or
 switches from WiFi to the mobile network. Crucially though, by solving media
 synchronization across Internet, all challenges listed above are solved by

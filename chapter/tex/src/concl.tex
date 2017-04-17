@@ -2,16 +2,21 @@ In this chapter we presented the motion model, a general approach to media
 synchronization on the Web. In the motion model, media clock and media
 controls are merged into a single concept, motion, and made available as an
 online resource. This ensures global synchronization and Web availability.
-Media synchronization is simply a consequence of connecting multiple media
-components to the same online motion. Furthermore, online motions are
-represented in Web browsers by local motion objects. This way, media
-synchronization is reduced to a local challenge, thereby shielding Web
-developers from the complexities of distributed motion synchronization.
-Existing media frameworks may be integrated into the motion model by
-JavaScript wrapper code, yet internal support would likely be better.
-Sequencing tools simplify the construction of custom media components,
-effectively reducing the challenge of media synchronization to the challenge
-of regular Web development.
+Furthermore, in the motion model, media synchronization is solved by media
+components internally. This shifts the challenge of synchronization from
+developers using a media component, to the author of the media component.
+Media synchronization is then simply a consequence of connecting multiple media
+components to the same online motion. 
+
+The motion model also simplifies authoring and integration of media
+components. Online motions are represented in Web browsers by local motion
+objects. This reduces media synchronization to a local challenge and shields
+authors from the complexities of distributed motion synchronization. Existing
+media frameworks may be integrated into the motion model by JavaScript wrapper
+code, yet internal support would likely be better. Sequencing tools simplify
+the construction of custom media components, effectively reducing the
+challenge of media synchronization to the challenge of regular Web
+programming.
 
 The feasibility of the motion model is confirmed by evaluating synchronization
 of HTML5 media elements connected to shared online motion. By this approach,

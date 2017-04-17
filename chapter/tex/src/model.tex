@@ -1,8 +1,7 @@
 The primary objectives of the motion model are global synchronization, Web
 availability and simplicity for Web developers. Global synchronization implies
-media synchronization across Internet. Locality might be exploited for media
-synchronization, but only as optimization. Web availability essentially means
-that no assumptions can be made, except connectivity. If a Web browser is able
+media synchronization across Internet. Web availability essentially means
+that no additional assumptions can be introduced for media synchronization. If a Web browser is able
 to load an online Web page, it should also be able to synchronize correctly.
 The model proposed for this can be outlined in three simple steps:
 
@@ -27,8 +26,7 @@ connecting relevant media components to the same online motion.
 \centering
 \includegraphics[scale=.4]{fig/motion-model.png}
 \caption{Media components on three different devices (A,B,C), all connected to an online motion
-(red circle). Media control requests (e.g. pause/resume) target the online
-motion, and the corresponding state change is then
+(red circle). Media control requests (e.g. pause/resume) target the online motion and are transmitted across Internet (light blue cloud). The corresponding state change is
 communicated back to all connected media components. Each media component
 adjusts its behaviour independently.}
 \label{fig:model}
@@ -55,7 +53,7 @@ is divided in two parts.
 %\sidecaption
 \centering
 \includegraphics[scale=.4]{fig/motion-model-2.png}
-\caption{Motion objects (red unfilled circles) mediate access to online motion. Motions may be shared by independent mediacomponents within the same browser context.}
+\caption{Motion objects (red unfilled circles) mediate access to online motion. Motions objects may be shared by independent mediacomponents within the same browser context.}
 \label{fig:model-2}
 \end{figure}
 

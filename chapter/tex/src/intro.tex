@@ -10,19 +10,24 @@ others will prefer that media experiences automatically adapt to exploit
 available devices. It must also be possible to shift media experiences
 dynamically between devices, and adapt to new circumstances. For instance,
 while driving, users on a strict network quota might want a live TV show to
-adapt by dropping the high definition video stream, while keeping the audio
-and the secondary content. In short, in this new multi-device world, people
-wish to interact with media experiences through any device or multiple
-devices, and media providers must design flexible media products, capable of
-exploiting circumstances well, and be completely redefined if circumstances
-change.
+adapt by dropping the video stream all toghether, while keeping the audio and
+the secondary content. In addition, users always need the ability to control
+their media sessions; e.g. pausing a live experience and resuming it at a more
+convenient time, perhaps the following day on a different device. Importantly,
+controls such as pause, rewind, fastforward or \emph{go to next scene} should
+generally apply to all devices. In short, in this new multi-device world,
+people wish to interact with media experiences through any device or multiple
+devices, and media providers must create flexible media products capable of
+exploiting these circumstances well. In particular, media products must support
+radical transformations when circumstances change in significant ways. 
 
-The Web platform appears to be a great fit for this new multi-device world. It
+
+The Web platform appears to be a great match for this new multi-device world. It
 is a powerful platform for multimedia, with global reach, powerful backend
-services and Web browsers with a rich set of sensors for capture, interactive
+services. Web browsers have a rich set of sensors for capture, interactive
 capabilities, and a variety of frameworks for visualization and media
 presentation. The modularity, interoperability and programmability of the Web
-platform is also an excellent foundation for highly flexibly media products.
+platform is also an excellent foundation for highly flexible media products.
 Finally, the Web is already multi-device and global in nature. People may
 interact with their online mailbox through any device, or using multiple
 devices at the same time. Furthermore, they expect their online mailbox to be
@@ -33,8 +38,7 @@ attractive in the context of multi-device media experiences.
 Unfortunately though, the Web lacks a crucial ingredient. Multi-device media
 experiences (unlike mailboxes) require precise, distributed media
 synchronization, and the Web platform provides no support for this. To fill
-this gap, and thereby enable the Web as a platform for flexible multi-device
-multimedia, this chapter presents the motion model, a general approach to
+this gap, this chapter presents the motion model, a general approach to
 media synchronization on the Web. The motion model is designed with the
 following key objectives.
 
@@ -42,34 +46,32 @@ following key objectives.
 \item{\emph{Global:} Media synchronization on the Web must be multi-device 
 and global in nature, simply because the Web is multi-device and global in nature.}
 \item{\emph{Web-availability:} If a Web browser is able to load a Web page, 
-it should also be able to synchronize correctly. In other words, no assumptions 
-can be made except connectivity.}
+it should also be able to synchronize correctly.}
 \item{\emph{Simplicity:} Media synchronization should be easy for Web developers. 
 In particular, developers should be shielded from complexities of distributed synchronization.}
 \end{itemize}
 
 The key idea of the motion model is very simple: Media playback must be
-represented as an online resource. This makes playback state globally
-available, and allows Web pages to connect and synchronize precisely. Media
-synchronization across Web pages is simply a consequence of connecting to the
+represented as an online resource. This allows Web pages globally to
+synchronize presentations relative to a shared playback state. Media
+synchronization between Web pages is simply a consequence of connecting to the
 same playback resource.
 
 Though the primary purpose of the motion model is synchronization, the model
-has implications that go far beyond this topic. In particular, the motion model
-inverts the relationship between synchronization and media. Traditionally,
-synchronization is external to media and may be applied to media, if needed.
-In contrast, the motion model defines synchronization as an integral part of
-media. As such, the motion model implies a new media model based on
-synchronization, particularly suited for highly flexible multi-device
-multimedia experiences.
+has implications that go far beyond this topic. In particular, the motion
+model inverts the relationship between synchronization and media.
+Traditionally, synchronization is external to media and may be applied to
+media, if needed. In contrast, the motion model defines synchronization as an
+integral part of media. As such, the motion model implies a new media model
+particularly suited for highly flexible multi-device multimedia experiences.
 
 The chapter is structured as follows: Sect.~\ref{sec:mediasync} defines media
-synchronization as a term, and presentes challenges and approach. The motion
+synchronization as a term and briefly presents common challenges for synchronization on the Web. The motion
 model is presented in Sect.~\ref{sec:model}, followed by
 Sect.~\ref{sec:properties} which highlights key properties of the implied
 media model. Sect.~\ref{sec:web} surveys relevant Web technologies, relating
 them to the motion model.
-Sect.~\ref{sec:motion},\ref{sec:motionsync},\ref{sec:compsync} give a more
+Sect.~\ref{sec:motion},~\ref{sec:motionsync} and~\ref{sec:compsync} give a more
 thorough introduction to the motion concept, to distributed synchronization of
 motions, and to the challenge of synchronizing media components. Evaluation is
 presented in Sect.~\ref{sec:eval}. Sect.~\ref{sec:standard} briefly references
