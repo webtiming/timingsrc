@@ -38,6 +38,7 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	'use strict';
 
 	var Interval = seq.Interval;
+	var Sequencer = seq.DefaultSequencer;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
 		if (!(this instanceof WindowSequencer)) {
@@ -47,8 +48,8 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 		this._toA = timingObjectA;
 		this._toB = timingObjectB;
 
-		this._seqA = new seq.DefaultSequencer(this._toA, this._axis);
-		this._seqB = new seq.DefaultSequencer(this._toB, this._axis);
+		this._seqA = new Sequencer(this._toA, this._axis);
+		this._seqB = new Sequencer(this._toB, this._axis);
 
 		// ready
 		this._ready = new eventify.EventBoolean(false, {init:true});
@@ -425,6 +426,25 @@ define(['util/eventify', 'util/motionutils', './axis', './sequencer'],
 	// return all cues covered by searchInterval
 	WindowSequencer.prototype.getCuesCoveredByInterval = function (searchInterval) {
 		return this._seqA.getCuesCoveredByInterval(searchInterval);
+	};
+
+
+	WindowSequencer.prototype.clone = function (toA, toB) {
+		if (toB === undefined) {
+    	    return new Sequencer(toA, this._axis);
+	    } else {
+	        return new WindowSequencer(toA, toB, this._axis); 
+	    }
+	};
+
+	// override clone on Sequencer to provide support for 
+	// windowsequencer as well
+	Sequencer.prototype.clone = function (toA, toB) {
+		if (toB === undefined) {
+    	    return new Sequencer(toA, this._axis);
+	    } else {
+	        return new WindowSequencer(toA, toB, this._axis); 
+	    }
 	};
 
 	// shutdown
