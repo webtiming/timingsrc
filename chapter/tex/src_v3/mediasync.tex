@@ -1,0 +1,69 @@
+Dictionary definitions of \emph{media synchronization} typically refer to
+presentation of multiple instances of media at the same time. A related term
+is \emph{media orchestration}, possibly emphasizing more the importance of
+media control and planned scheduling of media playback. Similarly, we have
+used the term \emph{media timing} to highlight the universal utility of clocks
+in digital media, for capture, control, synchronization, timeshifting,
+scheduling and playback. In this chapter we use the term \emph{media
+synchronization} in a broad sense, as a synonym to \emph{media orchestration}
+and \emph{media timing}. We also limit the definition in a few regards:
+
+\begin{itemize}
+\item{Media synchronization on the Web is client-side and clock-based. The latencies and heterogeneity of the Web environment requires a clock-based approach for acceptable synchronization quality.}
+\item{Media synchronization involves a media instance and a clock. The term \emph{relative synchronization} is reserved for comparisons between two or more synchronized media instances.}
+\end{itemize}
+
+\subsection{Challenges}
+
+
+\begin{table}
+\centering
+\caption{Common challenges for media synchronization on the Web.}
+\label{tab:challenges}
+\setlength{\tabcolsep}{10pt}
+\begin{tabular}{cc}
+\hline\noalign{\smallskip}
+Synchronization challenges & Use-cases \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+across media sources & multi-angle video, ad-insertion \\
+across media types & video, WebAudio, animated map \\
+across iframes & video, timed ad-banner \\
+across tabs, browsers, devices & split content, interaction \\
+across platforms & Web, native, broadcast \\
+across people and groups & collaboration, social \\
+across Internet & global media experiences \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\end{tabular}
+\end{table} 
+
+
+
+Media synchronization has a wide range of use-cases on the Web, as illustrated
+by Table~\ref{tab:challenges}. Well known use-cases for synchronization within
+a single Web page include multi-angle video, accessibility features for video,
+ad-insertion, as well as media experiences spanning different media types,
+media frameworks, or iframe boundaries. Synchronization across Web pages allow
+Web pages to present alternative views into a single experience; dividing or
+duplicating media experiences across devices. Popular use-cases in the home
+environment involve collaborative viewing, multi-speaker audio, or big screen
+video synchronized with related content on handheld devices. Use-cases towards
+the end of the list target global scenarios, such as distributed capture and
+synchronized Web visualizations for a global audience.
+
+\subsection{Approach}
+
+The challenges posed by all these use-cases may be very different in terms of
+complexity, requirements for precision, scale, infrastructure and more. Still,
+we argue that a single solution is needed. Implementing specific solutions for
+specific use-cases is very expensive and time-consuming, and lays heavy
+restrictions on reusability. Even worse, circumstances regarding
+synchronization may change dynamically during a media session. For instance, a
+smartphone involved in synchronization over the local network will have to
+switch approach for synchronization once the user leaves the house, or
+switches from WiFi to the mobile network. Crucially though, by solving media
+synchronization across Internet, all challenges listed above are solved by
+implication. For instance, if video synchronization is possible across Web
+pages on the Internet, then synchronizing two videos within the same Web page
+is just a special case. It follows that the general solution to media
+synchronization on the Web is distributed and global in nature. Locality may
+be exploited for synchronization, yet only as optimization.

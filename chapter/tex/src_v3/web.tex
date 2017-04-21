@@ -1,0 +1,77 @@
+The Web platform\footnote{In this chapter, the Web is seen through the eyes of
+an end user browsing the Web with her favorite \emph{user agent} in 2017. The
+Web technologies that are relevant for this end user are those supported by
+her user agent.} is composed of a series of technologies centered around \emph{HTML}.
+These technologies have been developed over the years and have grown steadily
+since the advent of \emph{HTML5}, allowing Web applications to access an 
+ever-increasing pool of features such as local storage, geolocation, peer-to-peer
+communications, notifications, background execution, media capture, etc. In
+this section, we propose to take a look at Web technologies that produce or
+consume timed data, and to highlight issues that arise when these technologies
+are used or combined with others for synchronization purposes. These issues
+are classified and summarized at the end of the section. Please note that this
+section is written early 2017. It references technologies that are still under
+development.
+
+\subsection {HTML}
+\label{sec:web-html}
+
+First versions of the HTML specification (including HTML~3.2~\cite{html32}) were
+targeting static documents and did not have any particular support for timed playback. 
+HTML5 [REF] introduced the AUDIO and VIDEO media elements to add support for
+audio and video data playback. Web applications may control the playback of
+media elements using commands such as \emph{play} or \emph{pause} as well as
+properties such as \emph{currentTime} (the current position on the timeline)
+and \emph{playbackRate} (the playback speed). In theory, this should be enough
+to harness media element playback to any synchronization logic that authors
+may be willing to implement. However, there are practical issues:
+
+The playback offset of the media element is measured against a media clock, which
+the specification defines as:
+\begin{quote}
+user-agent defined, and may be media resource-dependent, but [which] should approximate the user's wall clock".
+\end{quote}
+
+In other words, HTML5 does not impose any particular clock for media playback.
+One second on the wall clock may not correspond to one second of playback, and
+the relationship between the two may not be linear. Two media elements playing
+at once on the same page may also follow different clocks, and thus media
+offset of these two media elements may diverge over time even if playback was
+initiated at precisely the same time. HTML5 gives no guarantee about the
+latency that the software and the hardware may introduce when the play button
+is pressed, and no compensation is done to resorb that time afterwards. The
+media clock in HTML5 automatically pauses when the user agent needs to fetch
+more data before it may resume playback. This behavior matches the
+expectations of authors for all simple media use cases. However, more advanced
+scenarios where media playback is just one part of a larger and potentially
+cross-device orchestration, would likely require that the media clock keeps
+ticking no matter what. The playbackrate property is a coarse-grained
+property, meant to mimic the fast forward and rewind features of \emph{DVD}
+players. It was not meant for precise control of playback velocity on the
+media timeline.
+
+To address use cases that would require synchronized playback of media
+elements within a single page, for instance to play a sign language track as
+an overlay video on top of the video it describes, HTML5 introduced the
+concept of a \emph{media controller}. Each media element can be associated with a media
+controller and all the media elements that share the same media controller use
+the same media clock, allowing synchronized playback. In practice though, browser vendors did not implement media
+controllers and the feature may be deprecated in future revisions of HTML. It
+is also worth noting that this mechanism is restricted to media elements and
+cannot be used to orchestrate scenarios that involve non media animations and
+other types of timed data.
+
+While sometimes incorrectly viewed as a property of the JavaScript language,
+the \emph{setTimeout}, \emph{setInterval} and other related timer functions, which allow
+apps to schedule timeouts, are actually methods of the \emph{window} interface,
+defined in HTML5. These methods take a timeout counter in milliseconds, but
+the specification only mandates that Web browsers wait until at least this
+number of milliseconds have passed (and only provided the Web page has had the
+focus during that time). In particular, Web browsers may choose to wait a
+further arbitrary length of time. This allows browsers to optimise power
+consumption on devices that are in low-power mode. Even if browsers do not
+wait any further, the event loop may introduce further delays (see Sect. ~\ref{sec:eventloop}). Surprisingly, browsers also fire timers too early on occasion. All in all, the precision of timeouts is not guaranteed on
+the Web, although experience shows that timeouts are relatively reliable in
+practice.
+
+

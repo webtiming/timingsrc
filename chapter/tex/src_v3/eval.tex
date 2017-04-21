@@ -1,0 +1,47 @@
+The evaluation is concerned with feasibility of the motion model, as well as
+it two primary objectives; Web availability and simplicity for developers.
+
+Sect.~\ref{sec:motionsync} discussed motion synchronization, and reported
+synchronizations errors in the 0-5 millisecond range. Typically we observe 0-1
+millisecond errors for desktop browsers, compared to a system clock
+synchronized by NTS. These results are achieved using the \emph{InMotion}
+service provided by Motion Corporation~\cite{mcorp}. This service has been running
+continuously for years, supporting a wide range of technical demonstrations,
+at any time, at any place, and across a wide range of devices. As such, the
+value of a production grade service is also confirmed.
+
+Sect.~\ref{sec:compsync} discussed synchronization of HTML5 media
+elements, and reported how the MediaSync library produces synchronization
+errors of about 7 milliseconds for both audio and video, as documented in
+technical reports~\cite{syncreport1,syncreport2}. These results have been consistently
+confirmed by day to day usage over several years. The user experience of
+multi-device video synchronization is very good, to the point that errors are
+hardly visible. The exception might be content with particular geometries and
+rapid movements, as demonstrated by this video~\cite{carneval}. Synchronization
+has also been maintained for hours and days at end, without any visible
+errors. In addition, loading speeds are acceptable. Even though the MediaSync
+library requires about 3 seconds to reach echoless, the experience is
+perceived as acceptable much before this. A variety of video demonstrations
+have been published at the Multi-device Timing Community Group
+Website~\cite{mtcg}.
+
+Interestingly, the results for motion synchronization and HTML5 media
+synchronization are well aligned with current limitations of the Web platform.
+For instance, the precision of timed operation in JavaScript is about 1
+millisecond, and a 60Hz screen refresh rate corresponds to 16 milliseconds.
+Furthermore, these results also match limitations in human sensitivity to
+synchronization errors. Identical audio signals skewed by less than 7
+milliseconds will likely be interpreted as natural echo by the brain, and
+collapsed into one signal (with directional information)~\cite{syncreport2}.
+
+Finally, programming synchronized media experiences in the motion model is
+both easy and rewarding. In our experience, motions and sequencers are
+effective thinking tools as well as programming tools. A globally synchronized
+video experience essentially requires three code statements.
+
+With this, we argue that the feasibility of the motion model is confirmed. Web
+availability for media synchronization is demonstrated by the \emph{InMotion} hosting
+service for online motions. It is also clear that synchronization errors in
+online synchronization are currently dominated by errors in synchronization in
+HTML5 media elements. Future standardization efforts and optimizations would
+likely yield significant improvements.
