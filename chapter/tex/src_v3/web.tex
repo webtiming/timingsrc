@@ -225,12 +225,25 @@ applications. An instance of this class represents a number of milliseconds
 since 1. January, 1970 UTC. In many cases, this clock is a good enough
 reference. It has a couple of drawbacks though:
 
+\begin{enumerate}
+
+\item{
+
 The system clock is not monotonic and it is subject to adjustments. There is
 no guarantee that a further reading of the system clock will yield a greater
 result than a previous one. Most synchronization scenarios need to rely on the
-monotonicity of the clock. Sub-millisecond resolution may be needed in some
+monotonicity of the clock. 
+
+}
+\item {
+
+Sub-millisecond resolution may be needed in some
 cases, e.g. to compute the frame rate of a script based animation, or to
 precisely schedule audio cues at the right point in an animation.
+
+}
+
+\end{enumerate}
 
 As focus on the Web platform shifted away from documents to applications and
 as the need to improve and measure performance arose, roughly once HTML5 was
