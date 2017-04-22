@@ -120,15 +120,16 @@ RealPlayer~\cite{realplayer}. With the disappearance of plugins in Web
 browsers, authors are left without any simple way to unleash the power of SMIL
 in their Web applications.
 
-That said, SMIL 1.0 gave birth to the child SMIL Animation specification~\cite{smilanimation}
-in 2001, which builds on the SMIL 1.0 timing model to describe an animation
-framework suitable for integration with XML documents. SMIL Animation has
-notably been incorporated in the Scalable Vector Graphics (SVG) 1.0
-specification~\cite{svg}, published as a Web standard immediately afterwards. It took many years for SVG to
-take over Flash~\cite{flash} and become a first class citizen on the Web supported across
-browsers; with the notable exception of SMIL animations, which \emph{Microsoft}~\cite{microsoft} never
-implemented, and which \emph{Google}~\cite{google} now intends to drop in favor of \emph{CSS Animations}
-and of the \emph{Web Animations specification}.
+That said, SMIL 1.0 gave birth to the child SMIL Animation
+specification~\cite{smilanimation} in 2001, which builds on the SMIL 1.0
+timing model to describe an animation framework suitable for integration with
+XML documents. SMIL Animation has notably been incorporated in the Scalable
+Vector Graphics (SVG) 1.0 specification~\cite{svg}, published as a Web
+standard immediately afterwards. It took many years for SVG to take over
+Flash~\cite{flash} and become supported across browsers; with the notable
+exception of SMIL animations, which \emph{Microsoft}~\cite{microsoft} never
+implemented, and which \emph{Google}~\cite{google} now intends to drop in
+favor of \emph{CSS Animations} and of the \emph{Web Animations specification}.
 
 While still a draft when this book is written, Web Animations~\cite{webanimation} appears as
 a good candidate specification to unite all Web animation frameworks into one,
@@ -189,10 +190,9 @@ queue that helps prioritize some of the tasks added by HTML algorithms, but
 this does not change the gist of the comments contained in this section.},
 composed of a queue of tasks that are run in sequence. For instance, when the
 user clicks a button, the user agent queues a task on the event loop to
-dispatch the \emph{click} event onto the document. That task will just sit
-there until its turn comes. The user agent cannot interrupt a running task in
-particular, meaning that, on the Web, all scripts run to completion before
-further tasks may be processed.
+dispatch the \emph{click} event onto the document. The user agent cannot
+interrupt a running task in particular, meaning that, on the Web, all scripts
+run to completion before further tasks may be processed.
 
 The event loop may explain why a task scheduled to run in 2 seconds from now
 through a call to the \emph{setTimeout} function may actually run in 2.5 seconds
@@ -336,8 +336,8 @@ data to be sent to and received from another browser. The use of \emph{time}
 in the title is somewhat misleading here. There is basically nothing at the
 API level that relates to time: the goal is simply to pass the content to the
 other peer as fast as possible. How this is achieved in practice is up to the
-protocols used under the hoods, which have been precisely designed to reduce
-latency and allow peer-to-peer communications between devices.
+underlying protocols, which have been designed to reduce latency and allow
+peer-to-peer communications between devices.
 
 The WebRTC API builds on top of the Media Capture and Streams specification
 and allows the exchange of MediaStreams. On top of the synchronization
@@ -426,11 +426,11 @@ media synchronization, although it may still take time before the situation
 improves.
 
 We believe that a shift of paradigm is also needed. The Web is all about
-modularity, composition and interoperability. It is somewhat ironic that
-temporal aspects have remained an internal issue specific to each technology
-until now. In the rest of this chapter, we propose a new programming model to
-work around the restrictions mentioned above allowing media to be precisely
-orchestrated on the Web, even across devices.
+modularity, composition and interoperability. Temporal aspects have however
+remained an internal issue specific to each technology until now. In the rest
+of this chapter, we propose a new programming model to work around the
+restrictions mentioned above allowing media to be precisely orchestrated on
+the Web, even across devices.
 
 
 
