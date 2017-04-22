@@ -1,11 +1,11 @@
 
-\runinhead{Timeline:} logical axis for a media presentation. Values on the timeline are usually associated with a unit, e.g. seconds, milliseconds, frame count or slide number. Timelines may be infinite, or bounded by a range (i.e minimum and maximum values).
+\runinhead{Timeline:} logical axis for media presentation. Values on the timeline are usually associated with a unit, e.g. seconds, milliseconds, frame count or slide number. Timelines may be infinite, or bounded by a range (i.e minimum and maximum values).
 
-\runinhead {Clock:} a point moving predictably along a timeline, at a fixed, positive rate. Hardware clocks ultimately depend on a crystal oscillator. System clocks typically count seconds or milliseconds from epoch (i.e. 1. Jan 1970), and may be corrected by clock synchronization protocols (e.g. NTP, PTP). From the perspective of application programmers, clocks are read-only.
+\runinhead {Clock:} a point moving predictably along a timeline, at a fixed, positive rate. Hardware clocks ultimately depend on a crystal oscillator. System clocks typically count seconds or milliseconds from epoch (i.e. 1. Jan 1970 UTC), and may be corrected by clock synchronization protocols (e.g. NTP~\cite{ntp}, PTP~\cite{ptp}). From the perspective of application programmers, the value of a clock may be read, but not altered.
 
-\runinhead {Motion:} a unifying concept for timing and control. Motion represents a point moving predictably along a timeline, with added support for flexibility in movement and interactive control. Motions support discrete jumps on the timeline, as well as a variety of continuous movements expressed through velocity and acceleration. Not moving (i.e. paused) is considered a special case of movement. Motion is a generalization over classical concepts in multimedia, such as clocks, media clocks, timers, playback controls, progress, etc. Motions are implemented by an internal clock (seconds) and a vector describing current movement (position, velocity, acceleration), timestamped relative to the internal clock. Motions are read-write, allowing application programmers to modify the movement vector of a motion.
+\runinhead {Motion:} a unifying concept for timing and control. Motion represents a point moving predictably along a timeline, with added support for flexibility in movement and interactive control. Motions support discrete jumps on the timeline, as well as a variety of continuous movements expressed through velocity and acceleration. Not moving (i.e. paused) is considered a special case of movement. Motion is a generalization over classical concepts in multimedia, such as \emph{clocks}, \emph{media clocks}, \emph{timers}, \emph{playback controls}, \emph{progress}, etc. Motions are implemented by an internal clock (seconds) and a vector describing current movement (position, velocity, acceleration), timestamped relative to the internal clock. Application developers may update the movement vector of a motion at any time.
 
-\runinhead {Timed data:} data whose temporal validity is defined in reference to a timeline. For instance, the temporal validity of subtitles are typically expressed by means of points or intervals on a media timeline. Similarly, the temporal validity of video frames essentially map to fixed-size, back-to-back intervals. Timed scripts are a special case of timed data where data represent functions, operations or commands to be executed.
+\runinhead {Timed data:} data whose temporal validity is defined in reference to a timeline. For instance, the temporal validity of subtitles are typically expressed in terms of points or intervals on a media timeline. Similarly, the temporal validity of video frames essentially map to fixed-size, back-to-back intervals. Timed scripts are a special case of timed data where data represents functions, operations or commands to be executed.
 
 \runinhead {User Interface (UI):} refers to the interface between a computer process and an end-user. Computer processes might communicate with end-users visually, by audio, by vibration, or other forms or cognitive stimulation. End-users may also provide feedback to computer processes through the same interface, for instance by touching, typing, clicking or talking. On the Web, UI is often represented through DOM elements and/or JavaScript api’s. 
 
@@ -13,22 +13,15 @@
 
 
 
-
 \begin{itemize}
-\item{\textbf{epoch:} clock counting seconds (or milliseconds) since Jan 1. 1970}
-\item{\textbf{timeline:} logical axis for media playback}
+\item{\textbf{epoch:} clock counting seconds (or milliseconds) since Jan 1. 1970 UTC}
 \item{\textbf{media clock:} clock representing media playback state, e.g. media offset}
 \item{\textbf{media controls:} operations that alter a media clock, e.g. play/pause}
 \item{\textbf{timed data:} data tied to points or intervals on the timeline}
 \item{\textbf{continuous media:} ordered sequence of media objects, e.g. audio or video frames}
 \item{\textbf{discrete media:} not continuous media, e.g media objects which overlap on the timeline, or are distributed scarcely or non-uniformly}
-\item{\textbf{JavaScript:} programming language of the Web}
+\item{\textbf{JavaScript:} (ECMAScript) programming language of the Web}
 \item{\textbf{browser context:} JavaScript runtime hosted by a Web browser}
 \item{\textbf{user agent:} Any software that retrieves, renders and facilitates end user interaction with Web content, or whose user interface is implemented using Web technologies.}
 \item{\textbf{iframe:} Webpage within a Webpage, with its own browser context}
-\item{\textbf{media component:} anything from a simple $<div/>$ element to a highly sophisticated media player or framework. Media components have \emph{media data} and \emph{media clock}. Media data
-is organized according to a timeline, and media clock represents playback along
-this timeline. Through its \emph{user interface (UI)}, media components
-express \emph{media output} (e.g. pixels on screen, audio, vibration) and
-receive \emph{media input} (e.g. key-presses, touch or mouse-events, camera, mic).}
 \end{itemize}
