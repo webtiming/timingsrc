@@ -20,31 +20,32 @@ single-device as well as multi-device scenarios.
 
 The key to temporal interoperability is finding the right approach to media
 synchronization. There are two basic approaches; \emph{external
-synchronization} or \emph{internal synchronization}. External synchronization
+timing} or \emph{internal timing}. External timing
 is the familiar approach, where media components are coordinated by
-manipulating their control primitives. Internal synchronization is the
+manipulating their control primitives. Internal timing is the
 opposite approach, where media components are explicitly designed to be parts
 of a bigger experience, by accepting direction from an external timing source.
 
-Though external synchronization is currently the predominant approach in Web-
-based media, internal synchronization is the key to temporal interoperability;
+Though internal timing is currently the predominant approach in Web-
+based media, external timing is the key to temporal interoperability;
 If multiple media components are connected to the same external timing source,
-synchronized behavior across media components follows by implication. THis
-makes media synchronization very easy for application developers. Furthermore,
+synchronized behavior across media components follows by implication. This
+simplifies media synchronization for application developers. Furthermore,
 by allowing external timing sources to be synchronized and shared across a
 network, external timing is also a gateway to precise distributed multimedia
 playback and orchestration on the Web platform.
 
-This chapter provides an introduction to internal synchronization as well as
-the flexible media model and programming model that follows from this
-approach, proposed for standardization within the \emph{W3C Multi-device
-Timing Community Group (MTCG)}~\cite{mtcg} to encourage temporal
-interoperability on the Web platform. The \emph{timing object} is the central
-concept in this initiative, defining a common interface to external timing and
-control for the Web. The MTCG has published a draft specification for the
-timing object~\cite{timingobject} and also maintains
+This chapter provides an introduction to external timing as well as the
+flexible media model and programming model that follows from this approach,
+proposed for standardization within the \emph{W3C Multi-device Timing
+Community Group (MTCG)}~\cite{mtcg} to encourage temporal interoperability on
+the Web platform. The \emph{timing object} is the central concept in this
+initiative, defining a common interface to external timing and control for the
+Web. The MTCG has published a draft specification for the timing
+object~\cite{timingobject} and also maintains
 \emph{Timingsrc}~\cite{timingsrc}, an open source JavaScript implementation of
-the timing object programming model.
+the timing object programming model. The chapter also describes the
+\emph{motion model}, which provides online synchronization of timing objects.
 
 The chapter is structured as follows: Sect.~\ref{sec:mediasync} defines media
 synchronization as a term and briefly presents common challenges for
