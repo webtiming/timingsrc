@@ -319,18 +319,20 @@ raised above when discussing media support in HTML5. The media clock is
 implementation-dependent in particular. Moreover, a MediaStream is a
 \emph{live} element and is not seekable. The \emph{currentTime} and
 \emph{playbackRate} properties of the media element that renders a MediaStream
-are read-only, and thus cannot be adjusted for synchronization\footnote{In the
-future, it may be possible to re-create a seekable stream out of a
-MediaStream, thanks to the \emph{MediaRecorder} interface defined in the
-MediaStream Recording specification. This specification is not yet stable when
-this book is written.}.
+are \emph{read-only} (i.e. media controls do not apply), and thus cannot be
+adjusted for synchronization\footnote{In the future, it may be possible to re-
+create a seekable stream out of a MediaStream, thanks to the
+\emph{MediaRecorder} interface defined in the MediaStream Recording
+specification. This specification is not yet stable when this book is
+written.}.
 
 
 \subsection{Web RTC}
 \label{sec:webrtc}
 
-Work on the WebRTC 1.0: Real-time Communication Between Browsers
-specification~\cite{webrtc}  started at the same time as the work on media
+Work on \emph{Web Real-Time Communication (WebRTC)} and its first specification;
+the WebRTC 1.0: Real-time Communication Between Browsers
+specification~\cite{webrtc} started at the same time as the work on media
 capture, in 2011. As the name suggests, the specification allows media and
 data to be sent to and received from another browser. The use of \emph{time}
 in the title is somewhat misleading here. There is basically nothing at the
