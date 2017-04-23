@@ -1,0 +1,103 @@
+This section lists abbreviations and central terms used in this chapter.
+
+\subsection{Abbreviations}
+
+\begin{itemize}
+\item{\textbf{URL:} universal resource locator}
+\item{\textbf{HTML5:} hypertext markup language, version 5}
+\item{\textbf{W3C:} World Wide Web Consortium}
+\item{\textbf{HTTP:} hypertext transfer protocol}
+\item{\textbf{AV:} audio and/or video}
+\item{\textbf{DOM:} document object model}
+\item{\textbf{UI:} user interface}
+\item{\textbf{API:} application programmer interface}
+\item{\textbf{IP:} Internet protocol}
+\item{\textbf{NTP:} network time protocol}
+\item{\textbf{PTP:} precision time protocol}
+\item{\textbf{EDGE:} Enhanced Data rates for GSM Evolution, typically lowest level of Internet connectivity for smart phones.}
+\item{\textbf{JS:}} JavaScript (ECMAScript): programming language of the Web.
+\item{\textbf{JSON:} JavaScript object notation}
+\item{\textbf{GPS:} global positioning system}
+\item{\textbf{UTC:} coordinated universial time}
+\item{\textbf{XML:} extendible markup language}
+\item{\textbf{WiFi:} wireless local area networking}
+\item{\textbf{CSS:}} cascading style sheets
+\item{\textbf{TAG:}} named element in HTML
+\item{\textbf{{\textless}DIV{\textgreater}:}} TAG for grouping elements in HTML
+
+
+\end{itemize}
+
+
+\subsection{Central terms}
+
+\runinhead{Timeline:} 
+
+logical axis for media presentation. Values on the timeline are usually
+associated with a unit, e.g. seconds, milliseconds, frame count or slide
+number. Timelines may be infinite, or bounded by a range (i.e minimum and
+maximum values).
+
+\runinhead {Clock:} 
+
+a point moving predictably along a timeline, at a fixed, positive rate.
+Hardware clocks ultimately depend on a crystal oscillator. System clocks
+typically count seconds or milliseconds from \emph{epoch} (i.e. 1. Jan 1970
+UTC), and may be corrected by clock synchronization protocols (e.g.
+NTP~\cite{ntp}, PTP~\cite{ptp}). From the perspective of application
+developers, the value of a clock may be read, but not altered.
+
+\runinhead {Motion:} 
+
+a unifying concept for \emph{media playback} and \emph{media control}. Motion
+represents a point moving predictably along a timeline, with added support for
+flexibility in movement and interactive control. Motions support discrete
+jumps on the timeline, as well as a variety of continuous movements expressed
+through velocity and acceleration. Not moving (i.e. paused) is considered a
+special case of movement. Motion is a generalization over classical concepts
+in multimedia, such as \emph{clocks}, \emph{media clocks}, \emph{timers},
+\emph{playback controls}, \emph{progress}, etc. Motions are implemented by an
+\emph{internal clock} and a \emph{vector} describing current movement (position,
+velocity, acceleration), timestamped relative to the internal clock.
+Application developers may update the movement vector of a motion at any time.
+
+\runinhead {Timed data:} 
+
+data whose temporal validity is defined in reference to a timeline. For
+instance, the temporal validity of subtitles are typically expressed in terms
+of points or intervals on a media \emph{timeline}. Similarly, the temporal validity
+of video frames essentially maps to frame-length intervals. Timed scripts are
+a special case of timed data where data represents functions, operations or
+commands to be executed.
+
+
+\runinhead {Continuous media:} 
+
+Typically audio or video data. More formally, a subset of \emph{timed data}
+where media objects cover the timeline without gaps.
+
+
+\runinhead {Media component:} 
+
+essentially a player for some kind of timed data. Media components are based
+on two basic types of resources: timed data and motion. The timeline of timed
+data must be mapped to the timeline of motion. This way, motion defines the
+temporal validity of timed data. At all times, the media component works to
+produce correct media output in the UI, given the current state of timed data
+and motion. A media component may be anything from a simple text animation in
+a {\textless}div{\textgreater} tag, to a highly sophisticated media framework.
+
+
+\runinhead {User agent:} 
+
+any software that retrieves, renders and facilitates end user interaction with
+Web content, or whose user interface is implemented using Web technologies.
+
+\runinhead {Browsing context:} 
+
+JavaScript runtime assosciated with Web document. Browser windows, tabs or
+\emph{iframes} each have their own browsing context.
+
+\runinhead {Iframe:} 
+
+Web document nested within a Web document, with its own browsing context.
