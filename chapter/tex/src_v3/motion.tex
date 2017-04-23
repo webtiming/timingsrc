@@ -165,7 +165,36 @@ resumed for the media player.
 \subsection{Synchronizing Audio and Video}
 \label{sec:avsync}
 
+On the Web, playback of audio and video is supported by HTML5 media
+elements\cite{html5media}. Synchronizing media elements relative to a timing
+object means that the \emph{currentTime} property (i.e. media offset) must be
+kept equal to the position of the timing object at all times, at least to a
+good approximation. The general approach is simply to monitor the media
+element continuously, and try to rectify whenever the synchronization error
+grows beyond a certain threshold. For larger errors \emph{seekTo} is used. This is
+typically the case on \emph{page load}, or after timing object \emph{change} events. Smaller
+errors are rectified gradually by manipulating \emph{playbackrate}. \emph{SeekTo} is
+quite disruptive to the user experience, so support for variable playbackrate
+is currently required for high quality synchronization.
 
+\emph{MediaSync} is a JavaScript library allowing HTML5 media elements to be
+synchronized by timing objects. The MediaSync library targets usage across the
+most common Web browsers, so it is not optimized for any particular scenario.
+Though synchronization of HTML5 media is simple in theory, it involves a few
+practical challenges, as indicated in Sect.~\ref{sec:web-html}. First,
+\emph{currentTime} is only a coarse representation of the media offset, and it
+fluctuates considerably when compared to the system clock. The MediaSync
+library solves this by collecting a backlog of samples, from which a value of
+currentTime can be estimated. Building up this backlog requires some samples,
+so it may take more than a second for estimates to stabilize. Another issue
+relates to unpredictable time-consumption in media control operations. In
+particular, seekTo(X) will change currentTime to X, but it will require a non-
+negligible amount of time to do so. In the context of synchronization, it aims
+for a fixed target when it should be aiming for a moving target. The MediaSync
+library compensates for this by overshooting the target. Furthermore, in order
+to overshoot by the correct amount, the algorithm collects statistics from
+every seekTo operation. Surprisingly perhaps, this strategy works reasonably
+well. Evaluation for the MediaSync library is presented in Sect.~\ref{sec:eval}.
 
 
 \subsection{Synchronizing timed data}
