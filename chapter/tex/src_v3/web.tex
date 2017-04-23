@@ -53,7 +53,7 @@ resorb that time afterwards.
 
 The media clock in HTML5 automatically pauses when the user agent needs to
 fetch more data before it may resume playback. This behavior matches the
-expectations of authors for all simple media use cases. However, more advanced
+expectations of authors for most simple media use cases. However, more advanced
 scenarios where media playback is just one part of a larger and potentially
 cross-device orchestration, would likely require that the media clock keeps
 ticking no matter what.
@@ -62,10 +62,10 @@ ticking no matter what.
 
 \item{
 
-The playbackrate property is a coarse-grained property, meant to mimic the
-fast forward and rewind features of \emph{digital video disc (DVD)} players
-and previously \emph{videocasette recorders (VCR)}. It was not meant for
-precise control of playback velocity on the media timeline.
+The playbackrate property was motivated by the fast forward and rewind
+features of \emph{digital video disc (DVD)} players and previously
+\emph{videocasette recorders (VCR)}. It was not meant for precise control of
+playback velocity on the media timeline.
 
 }
 
@@ -120,7 +120,7 @@ RealPlayer~\cite{realplayer}. With the disappearance of plugins in Web
 browsers, authors are left without any simple way to unleash the power of SMIL
 in their Web applications.
 
-That said, SMIL 1.0 gave birth to the child SMIL Animation
+That said, SMIL 1.0 sparked the SMIL Animation
 specification~\cite{smilanimation} in 2001, which builds on the SMIL 1.0
 timing model to describe an animation framework suitable for integration with
 XML documents. SMIL Animation has notably been incorporated in the Scalable
@@ -246,18 +246,17 @@ precisely schedule audio cues at the right point in an animation.
 \end{enumerate}
 
 As focus on the Web platform shifted away from documents to applications and
-as the need to improve and measure performance arose, roughly once HTML5 was
-already sufficiently stable and implemented across browsers circa 2012, people
-started to consider designing a better clock for the Web that would not have
-these restrictions. The High Resolution Time specification~\cite{hrt1} defines
-a new clock, \emph{Performance.now()}, that is both guaranteed to be monotonic
-and accurate to 5 microseconds, unless the user agent cannot achieve that
-accuracy due to software or hardware constraints. The specification defines
-the time origin of the clock, which is basically the time when the
-\emph{browsing context} (i.e. browser Window, tab or iFrame) is first created.
-The very recent High Resolution Time Level 2 specification~\cite{hrt2} aims to
-expose a similar clock to background workers, and provide a mechanism to
-relate times between the browsing context and workers.
+as the need to improve and measure performance arose, a need for a better
+clock for the Web that would not have these restrictions emerged. The High
+Resolution Time specification~\cite{hrt1} defines a new clock,
+\emph{Performance.now()}, that is both guaranteed to be monotonic and accurate
+to 5 microseconds, unless the user agent cannot achieve that accuracy due to
+software or hardware constraints. The specification defines the time origin of
+the clock, which is basically the time when the \emph{browsing context} (i.e.
+browser Window, tab or iFrame) is first created. The very recent High
+Resolution Time Level 2 specification~\cite{hrt2} aims to expose a similar
+clock to background workers, and provide a mechanism to relate times between
+the browsing context and workers.
 
 It seems useful to point out that the 5 microseconds accuracy was not chosen
 because of hardware limitations. It was rather triggered by privacy concerns
@@ -334,12 +333,10 @@ Work on \emph{Web Real-Time Communication (WebRTC)} and its first specification;
 the WebRTC 1.0: Real-time Communication Between Browsers
 specification~\cite{webrtc} started at the same time as the work on media
 capture, in 2011. As the name suggests, the specification allows media and
-data to be sent to and received from another browser. The use of \emph{time}
-in the title is somewhat misleading here. There is basically nothing at the
-API level that relates to time: the goal is simply to pass the content to the
-other peer as fast as possible. How this is achieved in practice is up to the
-underlying protocols, which have been designed to reduce latency and allow
-peer-to-peer communications between devices.
+data to be sent to and received from another browser. There is no fixed timing
+defined, and the goal is to minimize latency. How this is achieved in practice
+is up to the underlying protocols, which have been designed to reduce latency
+and allow peer-to-peer communications between devices.
 
 The WebRTC API builds on top of the Media Capture and Streams specification
 and allows the exchange of MediaStreams. On top of the synchronization
@@ -356,15 +353,11 @@ avoid accumulation of delays and glitches.
 
 \subsection{Summary}
 
-The Web has a complex and convoluted history. It is tempting to look at the
-High Resolution Time clock and wonder why that clock has not been used as the
-reference clock across the platform. The response is fairly simple in
-practice: it is but a recent addition to the Web platform.
-
-As of early 2017, given an arbitrary set of timed data composed of
-audio/video content, animations, synthesized audio, events, and more. Here are
-the main issues that Web developers need to face to synchronize that set in a
-Web application:
+While the High Resolution Time clock is a step in the right direction, the
+adoption is still incomplete. As of early 2017, given an arbitrary set of
+timed data composed of audio/video content, animations, synthesized audio,
+events, and more there are several issues Web developers need to face to
+synchronize the presentation:
 
 
 \begin{enumerate}
@@ -377,21 +370,19 @@ HTML5 and for the Web Audio API.
 
 \item{
 The clock used by a media component or a media subsystem may not be monotonic
-or precise enough, as for DOM events and timeout scheduling.
+or sufficiently precise.
 }
 
 \item{
 Additionally, specifications may leave some leeway to implementers on the
 accuracy of timed operations, leading to notable differences in behavior
-across browsers, as for media playback in HTML5, or timeout scheduling in 
-low-power mode.
+across browsers.
 }
 
 \item{
 Operations may introduce latencies that cannot easily be accounted for. This
 includes running Web Animations, playing/resuming/capturing media, or
-scheduling events on the event loop. Resorbing the delay afterwards may not be
-easy either.
+scheduling events on the event loop.
 }
 
 \item{
@@ -428,11 +419,11 @@ media synchronization, although it may still take time before the situation
 improves.
 
 We believe that a shift of paradigm is also needed. The Web is all about
-modularity, composition and interoperability. Temporal aspects have however
-remained an internal issue specific to each technology until now. In the rest
-of this chapter, we propose a new programming model to work around the
-restrictions mentioned above allowing media to be precisely orchestrated on
-the Web, even across devices.
+modularity, composition and interoperability. Temporal aspects have remained
+an internal issue specific to each technology until now. In the rest of this
+chapter, we propose a new programming model to work around the restrictions
+mentioned above allowing media to be precisely orchestrated on the Web, even
+across devices.
 
 
 

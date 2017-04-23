@@ -36,19 +36,21 @@ simply by supplying a new initial vector. The motion concept was first
 published under the name Media State Vector (MSV)~\cite{msv}.
 
 
-\subsection{Motion API}
+\subsection{Timing object API}
 \label{sec:motionapi}
 
+Timing objects provides access to motions. Timing objects may be constructed
+with a URL to an online motion. If the URL is omitted, it will represent a
+local motion instead.
 
-Motions may constructed with a URL to an online motion. If the URL is omitted,
-a purely local motion is created instead. 
-\begin{lstlisting}[caption=Constructing a motion.]
+\begin{lstlisting}[caption=Constructing a timing object.]
 var URL = "...";
-var motion = new Motion(URL);
+var timingObject = new TimingObject(URL);
 \end{lstlisting}
 
-The \emph{Motion API} defines two operations,
-\emph{query} and \emph{update}, and emits one \emph{change} event.
+The \emph{Timing object API} defines two operations, \emph{query} and
+\emph{update}, and emits a \emph{change} event as well as a periodic
+\emph{timeupdate} event.
 
 
 \runinhead{query():} 
@@ -58,8 +60,8 @@ motion. This vector includes position, velocity and acceleration, as well as a
 timestamp. For instance, if a query returns position 4.0 and velocity 1.0 and no acceleration, a
 new query one second later will return position 5.0.
 
-\begin{lstlisting}[caption=Querying the motion to get a snapshot vector.]
-var v = motion.query();
+\begin{lstlisting}[caption=Querying the timing object to get a snapshot vector.]
+var v = timingObject.query();
 console.log("pos:" + v.position);
 console.log("vel:" + v.velocity);
 console.log("acc:" + v.acceleration);
@@ -73,15 +75,15 @@ position, velocity and acceleration. This initiates a new movement for the
 motion. Omitting say position implies that the current position will be used.
 So, an update with velocity 0 pauses the motion at the current position.
 
-\begin{lstlisting}[caption=Querying the motion for a snapshot vector.]
+\begin{lstlisting}[caption=Updating the motion.]
 // play, resume
-motion.update({ velocity: 1.0 }); 
+timingObject.update({ velocity: 1.0 }); 
 // pause
-motion.update({ velocity: 0.0 });
+timingObject.update({ velocity: 0.0 });
 // jump and play from 10
-motion.update({ position: 10.0, velocity: 1.0});
+timingObject.update({ position: 10.0, velocity: 1.0});
 // jump to position 10, keeping the current velocity
-motion.update({ position: 10.0 });
+timingObject.update({ position: 10.0 });
 \end{lstlisting}
 
 
@@ -92,8 +94,12 @@ will immediately be invoked. Note that the change event is not emitted
 periodically like the \emph{timeupdate} event of HTML5 media elements. The change event signifies the start of a
 new movement, not the continuation of a movement.
 
-\begin{lstlisting}[caption=Querying the motion for a snapshot vector.]
-motion.on("change", function (e) {
+\runinhead{timeupdate event:}
+
+For compatibility with existing HTML5 media elements and an easy way to update graphical elements, a \emph{timeupdate} evens is emitted periodically.
+
+\begin{lstlisting}[caption=Monitoring changes to the motion through the change event.]
+timingObject.on("change", function (e) {
   var v = motion.query();
   if (v.velocity === 0.0 && v.acceleration === 0.0) {
     console.log("I'm not moving!");
@@ -126,22 +132,22 @@ set the velocity to 1000 (advances the position of the motion by 1000
 milliseconds per second). Or, for certain musical applications it may be
 practical to let the motion represent beats per second.
 
-\runinhead{Motion converters:}
+\runinhead{Timing converters:}
 
 A common challenge in media synchronization is that different sources of media
 content may reference different timelines. For instance, one media stream may
 have a logical timeline starting with 0, whereas another is timestamped with
-epoch values. If the relation between these timelines is known (i.e. \emph{relative
-skew}), it may be practical to create a skewed motion for one of the media
-components, connected to the other motion. This is supported by \emph{motion
-converters}. Multiple motion converters may be connected to a root motion, each
-implementing different transformations such as scaling and looping. Motion
-converters may also be chained. Motion converters implement the \emph{Motion API},
-so media components can not distinguish between a motion and a motion
-converter. Motion converters are implemented under the name \emph{timing converters}
-in the Timingsrc programming model~\cite{timingsrc}.
+epoch values. If the relation between these timelines is known (i.e.
+\emph{relative skew}), it may be practical to create a skewed timing object
+for one of the media components, connected to the motion. This is supported by
+\emph{timing converters}. Multiple timing converters may be connected to a
+motion, each implementing different transformations such as scaling and
+looping. Timing converters may also be chained. Timign converters implement
+the \emph{timing object API}, so media components can not distinguish between
+a timing object and a timig converter. A number of timing converters are
+implemented in the Timingsrc programming model~\cite{timingsrc}.
 
-\runinhead{Too much flexibility:}
+\runinhead{Flexibility:}
 \label{sec:toomuch}
 
 The mathematical nature of the motion concept makes it flexible, yet for a

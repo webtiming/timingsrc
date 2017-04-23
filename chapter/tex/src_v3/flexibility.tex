@@ -7,17 +7,18 @@ design, integration with social networks etc.
 
 In an attempt to meet such demands, new features have been added to media
 frameworks allowing programmers to customize the media player to a larger
-extent. For example, the Flash~\cite{flash} framework has grown increasingly feature-rich
-over time, even duplicating central features of the Web platform (e.g. ajax-
-based data fetching). Media Source Extensions (MSE)~\cite{mse} in HTML5 provides a way to
-manipulate the video stream client-side. It is also common for media players
-to expose events and timed cues, allowing custom functionality to be
-implemented in application code. The text track system of HTML5 is an example
-of this. MPEG-4~\cite{mpeg4} adds support for synchronization and composition of
-multiple media streams, including discrete media such as graphical objects (2D
-and 3D). In particular, the MPEG-4 Systems part~\cite{mpeg4sys} defines an architecture
-for media clients (terminals) integrating a variety of media formats, delivery
-methods, interactivity and rendering.
+extent. For example, the Flash~\cite{flash} framework has grown increasingly
+feature-rich over time, even having partially overlapping features with the
+Web platform itself. Media Source Extensions (MSE)~\cite{mse} in HTML5
+provides a way to manipulate the video stream client-side. It is also common
+for media players to expose events and timed cues, allowing custom
+functionality to be implemented in application code. The text track system of
+HTML5 is an example of this. MPEG-4~\cite{mpeg4} adds support for
+synchronization and composition of multiple media streams, including discrete
+media such as graphical objects (2D and 3D). In particular, the MPEG-4 Systems
+part~\cite{mpeg4sys} defines an architecture for media clients (terminals)
+integrating a variety of media formats, delivery methods, interactivity and
+rendering.
 
 In short, the need for extensibility has driven a development towards
 standardization of new data formats and features, leading media players to
@@ -105,13 +106,9 @@ server-side synthesis (and client-side playback). While server-side synthesis
 may have certain advantages (e.g. robustness and simplicity), the
 disadvantages are evident. By assembling data within media files and container
 formats, data is decoupled from its source and effectively flattened into an
-immutable copy. This could be inherited from the broadcasting world, where
-media is essentially bits transported through a broadcasting network. On the
-Web however, media should not be a stale copy, but a live object connected to
-its online (and possibly live) data sources, and open for modification and
-interaction. Furthermore, in this model extensibility must often be addressed
-through standardization of new media and container formats, and support must
-be implemented by media players. These may be time-consuming processes. That
+immutable copy. New media types must therefore often be addressed through
+standardization of new media and container formats, and support must be
+implemented by media players. These may be time-consuming processes. That
 said, server-side synthesis may still be an appropriate choice for a wide
 range of media products.
 
