@@ -162,42 +162,48 @@ Later, when motion re-enters a supported state, normal operation may be
 resumed for the media player.
 
 
-\subsection{MediaSync}
+\subsection{Synchronizing Audio and Video}
+\label{sec:avsync}
 
 
 
-\subsection{Sequencing timed data}
 
+\subsection{Synchronizing timed data}
+\label{sec:sequencer}
 
 Synchronization of timed data using timing objects is an important challenge.
 Timed data such as subtitles, tracks, scripts, logs or time series typically
-include items tied to points or intervals on the timeline. Synchronization
-then involves activating and deactivating such items at the correct time, in
-reference to a timing object. To simplify programming of media components
-based on timed data, the Timingsrc programming model~\cite{timingsrc} includes
-a generic \emph{Sequencer}~\cite{sequencer} for timed data. The sequencer is
-similar to the HTML5 track element, but is directed by the timing object
-instead of HTML5 media elements. It fully supports the timing object,
-including skipping, reverse playback and acceleration and provides event
-upcalls whenever an item is activated or deactivated. The sequencer may be
-used for any data type and also supports dynamic changes to cues during
-playback.
+include items tied to \emph{points} or \emph{intervals} on the timeline.
+Synchronization then involves activating and deactivating such items at the
+correct time, in reference to a timing object. To simplify programming of
+media components based on timed data, a generic
+\emph{Sequencer}~\cite{sequencer} is defined. The sequencer is similar to the
+HTML5 track element~\cite{html5track}, but is directed by the timing object
+instead of a HTML5 media element~\cite{html5media}. Web developers register cues associated with
+intervals on the timeline, and receive event upcalls whenever a cue is
+activated or deactivated. The sequencer fully supports the timing object,
+including skipping, reverse playback and acceleration. It may be used for any
+data type and supports dynamic changes to cues during playback.
 
 \begin{figure}[h]
 %\sidecaption
 \centering
-\includegraphics[scale=.4]{fig/sequencer.jpg}
+\includegraphics[scale=.3]{fig/sequencer.jpg}
 \caption{Five data sources of timed data, with items tied to intervals on the timeline. Motion along the same timeline defines which items are active (vertical dotted line), and precisely when items will be activated or deactivated.}
 \label{fig:sequencer}
 \end{figure}
 
-The Sequencer is implemented as a JavaScript library. In the interest of
-precisely synchronized activation and deactivation and low cpu consumption,
-the sequencer implementation is not based on frequent polling. Instead, the
-deterministic nature of the timing object allows events to be calculated and scheduled
-using \emph{setTimeout}, the timeout mechanism available in Web browsers. Though this
-mechanism is not optimized for precision, Web browsers may be precise down to
-a few milliseconds. 
+
+
+The sequencer is implemented as a JavaScript library and made available as
+part of the open-source \emph{Timingsrc}~\cite{timingsrc} programming model
+(see Sect.~\ref{sec:standard}). In the interest of precisely synchronized
+activation and deactivation and low cpu consumption, the sequencer
+implementation is not based on frequent polling. Instead, the deterministic
+nature of the timing object allows events to be calculated and scheduled using
+\emph{setTimeout}, the timeout mechanism available in Web browsers. Though
+this mechanism is not optimized for precision, Web browsers may be precise
+down to a few milliseconds.
 
 
 
