@@ -12,12 +12,8 @@ This section lists abbreviations and central terms used in this chapter.
 \item{\textbf{UI:} user interface}
 \item{\textbf{API:} application programmer interface}
 \item{\textbf{IP:} Internet protocol}
-\item{\textbf{UDP:} user datagram protocol}
-\item{\textbf{TCP:} transmission control protocol}
 \item{\textbf{NTP:} network time protocol}
 \item{\textbf{PTP:} precision time protocol}
-\item{\textbf{RTT:} network round-trip time}
-\item{\textbf{WAN:} wide area network}
 \item{\textbf{EDGE:} Enhanced Data rates for GSM Evolution, typically lowest level of Internet connectivity for smart phones.}
 \item{\textbf{JS:}} JavaScript (ECMAScript): programming language of the Web.
 \item{\textbf{JSON:} JavaScript object notation}
@@ -61,7 +57,7 @@ through velocity and acceleration. Not moving (i.e. paused) is considered a
 special case of movement. Motion is a generalization over classical concepts
 in multimedia, such as \emph{clocks}, \emph{media clocks}, \emph{timers},
 \emph{playback controls}, \emph{progress}, etc. Motions are implemented by an
-\emph{internal clock} (seconds) and a \emph{vector} describing current movement (position,
+\emph{internal clock} and a \emph{vector} describing current movement (position,
 velocity, acceleration), timestamped relative to the internal clock.
 Application developers may update the movement vector of a motion at any time.
 
@@ -89,7 +85,7 @@ data must be mapped to the timeline of motion. This way, motion defines the
 temporal validity of timed data. At all times, the media component works to
 produce correct media output in the UI, given the current state of timed data
 and motion. A media component may be anything from a simple text animation in
-a div element, to a highly sophisticated media framework.
+a {\textless}div{\textgreater} tag, to a highly sophisticated media framework.
 
 
 \runinhead {User agent:} 

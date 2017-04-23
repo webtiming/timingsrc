@@ -30,7 +30,7 @@ circumstances, availability of media data consistently fails before
 synchronization.
 
 
-\subsection {Synchronization of HTML media elements}
+\subsection {Synchronization of HTML5 media elements}
 
 Two technical reports~\cite{syncreport1,syncreport2} document the abilities
 and limitations of HTML5 media elements with respect to media synchronization,
@@ -42,7 +42,7 @@ a ChromeCast can be expected to provide frame accurate synchronization.
 
 These results have been consistently confirmed by day to day usage over
 several years. The user experience of multi-device video synchronization is
-very good, to the point that errors are hardly visible, as demonstrated by
+also very good, to the point that errors are hardly visible, as demonstrated by
 this video~\cite{carneval}. Echoless synchronization with the MediaSync
 library may also produce various audio effects, like failing to hear one audio
 source, until volume levels are changed and only the other audio source can be
@@ -64,7 +64,7 @@ Website~\cite{mtcg}.
 \caption{The figure illustrates an experiment with video (mp4) synchronization on
 Android using Chrome browser. The plot shows currentTime compared to the ideal
 playback position defined by motion. The green band (echoless) is +-10 millisecond and
-the yellow (frame accurate is) +-25 millisecond. This is achived using variablePlaybackrate.}
+the yellow (frame accurate is) +-25 millisecond. This is achived using variable playbackRate.}
 \label{fig:videosync}
 \end{figure}
 

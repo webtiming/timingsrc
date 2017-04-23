@@ -39,7 +39,7 @@ published under the name Media State Vector (MSV)~\cite{msv}.
 \subsection{Timing object API}
 \label{sec:motionapi}
 
-Timing objects provides access to motions. Timing objects may be constructed
+Timing objects provide access to motions. Timing objects may be constructed
 with a URL to an online motion. If the URL is omitted, it will represent a
 local motion instead.
 
@@ -75,7 +75,7 @@ position, velocity and acceleration. This initiates a new movement for the
 motion. Omitting say position implies that the current position will be used.
 So, an update with velocity 0 pauses the motion at the current position.
 
-\begin{lstlisting}[caption=Updating the motion.]
+\begin{lstlisting}[caption=Updating the timing object.]
 // play, resume
 timingObject.update({ velocity: 1.0 }); 
 // pause
@@ -87,16 +87,18 @@ timingObject.update({ position: 10.0 });
 \end{lstlisting}
 
 
-\runinhead{change event:}
-
-Whenever the motion is updated, all event listeners (i.e. media components)
-will immediately be invoked. Note that the change event is not emitted
-periodically like the \emph{timeupdate} event of HTML5 media elements. The change event signifies the start of a
-new movement, not the continuation of a movement.
-
 \runinhead{timeupdate event:}
 
 For compatibility with existing HTML5 media elements and an easy way to update graphical elements, a \emph{timeupdate} evens is emitted periodically.
+
+\runinhead{change event:}
+
+Whenever a motion is updated, event listeners on the timing object (i.e. media components)
+will immediately be invoked. Note that the \emph{change} event is not emitted
+periodically like the \emph{timeupdate} event of HTML5 media elements. The change event signifies the start of a
+new movement, not the continuation of a movement.
+
+
 
 \begin{lstlisting}[caption=Monitoring changes to the motion through the change event.]
 timingObject.on("change", function (e) {
@@ -108,6 +110,8 @@ timingObject.on("change", function (e) {
   }
 });
 \end{lstlisting}
+
+
 
 
 \subsection{Programming with motions}
@@ -132,7 +136,7 @@ epoch values. If the relation between these timelines is known (i.e.
 for one of the media components, connected to the motion. This is supported by
 \emph{timing converters}. Multiple timing converters may be connected to a
 motion, each implementing different transformations such as scaling and
-looping. Timing converters may also be chained. Timign converters implement
+looping. Timing converters may also be chained. Timing converters implement
 the \emph{timing object API}, so media components can not distinguish between
 a timing object and a timig converter. A number of timing converters are
 implemented in the Timingsrc programming model~\cite{timingsrc}.
@@ -158,7 +162,7 @@ resumed for the media player.
 The timing object API is particularly designed to mediate access to online motions,
 as illustrated by Fig.~\ref{fig:model-repeat}. \emph{Update} operations are forwarded to the
 online motion, and will not take effect until notification is received from
-the online motion, and \emph{change events} are emitted. In contrast, \emph{query} is a local
+the online motion and \emph{change events} are emitted. In contrast, \emph{query} is a local
 (and cheap) operation. This ensures that media components may sample the
 motion frequently if needed. So, through the Timing Object API, online motions
 are made available to Web developers as local objects. Only the latency of the
@@ -175,24 +179,24 @@ update operation should be evidence of a distributed nature.
 To support this abstraction, precise, distributed \emph{motion
 synchronization} is required. In particular, the internal \emph{clock} of the
 motion must be precisely synchronized with the clock at the online motion
-server. Synchronized system clocks (e.g. NTP~\cite{ntp} or PTP~\cite{ptp}) is generally not a valid
-assumption in the Web domain. As a consequence, clock synchronization must be
-addressed by Web agents in JavaScript. By sampling the online clock repeatedly
-an estimate for \emph{clock skew} (i.e. difference between clocks) may be
-obtained. In addition, low latency is important for user experiences. Web
-agents should be able to join synchronization quickly on page load or after
-page reload. To achieve this, joining agents must quickly obtain the current
-vector and the synchronized clock. For some applications the user experience
-might also benefit from motion updates being disseminated quickly to all
-agents. Web agents should also be able to join and leave synchronization at
-any time, or fail, without affecting the synchronization of other agents.
-Motion synchronization is discussed in more detail in~\cite{msv}.
+server. Synchronized system clocks (e.g. NTP~\cite{ntp} or PTP~\cite{ptp}) is
+generally not a valid assumption in the Web domain.  As a consequence, an
+alternative method of estimating a shared clock needs to be used, for example
+by sampling an online clock directly. In addition, low latency is important
+for user experiences. Web agents should be able to join synchronization
+quickly on page load or after page reload. To achieve this, joining agents
+must quickly obtain the current vector and the synchronized clock. For some
+applications the user experience might also benefit from motion updates being
+disseminated quickly to all agents. Web agents should also be able to join and
+leave synchronization at any time, or fail, without affecting the
+synchronization of other agents. Motion synchronization is discussed in more
+detail in~\cite{msv}.
 
 \emph{InMotion} is a hosting service for online motions, built by spin off
 company Motion Corporation~\cite{mcorp}. A dedicated onlice service supporting
 online motions is likely key to achieving non-functional goals, such as
-high availability, reliability and scalability. Evaluation for the
-\emph{InMotion} service is presented in Sect.~\ref{sec:eval}.
+high availability, reliability and scalability. Evaluation of
+motion synchronization is presented in Sect.~\ref{sec:eval}.
 
 Finally, the timing object API emphasizes an attractive programming model for
 multi-device media applications. In particular, by making online motions
@@ -230,8 +234,8 @@ library solves this by collecting a backlog of samples, from which a value of
 currentTime can be estimated. Building up this backlog requires some samples,
 so it may take more than a second for estimates to stabilize. Another issue
 relates to unpredictable time-consumption in media control operations. In
-particular, seekTo(X) will change currentTime to X, but it will require a non-
-negligible amount of time to do so. In the context of synchronization, it aims
+particular, seekTo(X) will change currentTime to X, but it will require a non-negligible 
+amount of time to do so. In the context of synchronization, it aims
 for a fixed target when it should be aiming for a moving target. The MediaSync
 library compensates for this by overshooting the target. Furthermore, in order
 to overshoot by the correct amount, the algorithm collects statistics from
@@ -263,7 +267,6 @@ data type and supports dynamic changes to cues during playback.
 \caption{Five data sources of timed data, with items tied to intervals on the timeline. Motion along the same timeline defines which items are active (vertical dotted line), and precisely when items will be activated or deactivated.}
 \label{fig:sequencer}
 \end{figure}
-
 
 
 The sequencer is implemented as a JavaScript library and made available as
