@@ -19,12 +19,17 @@ This section lists abbreviations and central terms used in this chapter.
 \item{\textbf{RTT:} network round-trip time}
 \item{\textbf{WAN:} wide area network}
 \item{\textbf{EDGE:} Enhanced Data rates for GSM Evolution, typically lowest level of Internet connectivity for smart phones.}
+\item{\textbf{JS:}} JavaScript (ECMAScript): programming language of the Web.
 \item{\textbf{JSON:} JavaScript object notation}
 \item{\textbf{GPS:} global positioning system}
 \item{\textbf{UTC:} coordinated universial time}
 \item{\textbf{XML:} extendible markup language}
 \item{\textbf{WiFi:} wireless local area networking}
 \item{\textbf{CSS:}} cascading style sheets
+\item{\textbf{TAG:}} named element in HTML
+\item{\textbf{{\textless}DIV{\textgreater}:}} TAG for grouping elements in HTML
+
+
 \end{itemize}
 
 
@@ -72,47 +77,25 @@ commands to be executed.
 
 \runinhead {Continuous media:} 
 
-Typically audio or video data. More formally; subset of \emph{timed data}
+Typically audio or video data. More formally, a subset of \emph{timed data}
 where media objects cover the timeline without gaps.
 
-\runinhead {Discrete media:} 
 
-E.g. subtitles or sensor data. Not \emph{continuous media}.
-Media objects may be distributed scarcely, non-uniformly on the
-timeline, or overlap.
-
-\runinhead {User Interface (UI):} 
-
-refers to the interface between a computer process and an end-user. Computer
-processes might communicate with end-users visually, by audio, by vibration,
-or other forms or cognitive stimulation. End-users may also provide feedback
-to computer processes through the same interface, for instance by touching,
-typing, clicking or talking. On the Web, UI is often represented through DOM
-elements and/or JavaScript API’s.
-
-\runinhead {Media Component:} 
+\runinhead {Media component:} 
 
 essentially a player for some kind of timed data. Media components are based
-on two basic types of resources; timed data and motion. The timeline of timed
+on two basic types of resources: timed data and motion. The timeline of timed
 data must be mapped to the timeline of motion. This way, motion defines the
 temporal validity of timed data. At all times, the media component works to
 produce correct media output in the UI, given the current state of timed data
 and motion. A media component may be anything from a simple text animation in
 a div element, to a highly sophisticated media framework.
 
-\runinhead {{\textless}div{\textgreater}} 
 
-The div tag is a frequently used tag in HTML. It defines a section in an
-HTML document and is used to group block-elements to format them with CSS.
-
-\runinhead {User Agent:} 
+\runinhead {User agent:} 
 
 any software that retrieves, renders and facilitates end user interaction with
 Web content, or whose user interface is implemented using Web technologies.
-
-\runinhead {JavaScript:} 
-
-(ECMAScript) programming language of the Web. 
 
 \runinhead {Browsing context:} 
 

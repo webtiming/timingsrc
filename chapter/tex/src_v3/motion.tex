@@ -112,16 +112,6 @@ timingObject.on("change", function (e) {
 
 \subsection{Programming with motions}
 
-\runinhead{Online Motion:}
-
-The Motion API is particularly designed to mediate access to online motions.
-As discussed in Sect.~\ref{sec:model}, update operations are forwarded to the
-online motion, and will not take effect until notification is received from
-the online motion, and change events are emitted. In contrast, query is a local
-(and cheap) operation. This ensures that media components may sample the
-motion frequently if needed. In short, through the Motion API, online motions
-are made available to Web developers as local objects. Only the latency of the
-update operation is evidence of a distributed nature.
 
 \runinhead{Using motions:}
 
@@ -161,6 +151,58 @@ or simply stop operation altogether (e.g. black screen with error message).
 Later, when motion re-enters a supported state, normal operation may be
 resumed for the media player.
 
+
+\subsection{Online Motion}
+\label{sec:motionsync}
+
+The timing object API is particularly designed to mediate access to online motions,
+as illustrated by Fig.~\ref{fig:model-repeat}. \emph{Update} operations are forwarded to the
+online motion, and will not take effect until notification is received from
+the online motion, and \emph{change events} are emitted. In contrast, \emph{query} is a local
+(and cheap) operation. This ensures that media components may sample the
+motion frequently if needed. So, through the Timing Object API, online motions
+are made available to Web developers as local objects. Only the latency of the
+update operation should be evidence of a distributed nature.
+
+\begin{figure}[h]
+%\sidecaption
+\centering
+\includegraphics[scale=.3]{fig/motion-model-2.png}
+\caption{Timing objects (red unfilled circles) mediate access to online motion. Timing objects may be shared by independent mediacomponents within the same browsing context.}
+\label{fig:model-repeat}
+\end{figure}
+
+To support this abstraction, precise, distributed \emph{motion
+synchronization} is required. In particular, the internal \emph{clock} of the
+motion must be precisely synchronized with the clock at the online motion
+server. Synchronized system clocks (e.g. NTP~\cite{ntp} or PTP~\cite{ptp}) is generally not a valid
+assumption in the Web domain. As a consequence, clock synchronization must be
+addressed by Web agents in JavaScript. By sampling the online clock repeatedly
+an estimate for \emph{clock skew} (i.e. difference between clocks) may be
+obtained. In addition, low latency is important for user experiences. Web
+agents should be able to join synchronization quickly on page load or after
+page reload. To achieve this, joining agents must quickly obtain the current
+vector and the synchronized clock. For some applications the user experience
+might also benefit from motion updates being disseminated quickly to all
+agents. Web agents should also be able to join and leave synchronization at
+any time, or fail, without affecting the synchronization of other agents.
+Motion synchronization is discussed in more detail in~\cite{msv}.
+
+\emph{InMotion} is a hosting service for online motions, built by spin off
+company Motion Corporation~\cite{mcorp}. A dedicated onlice service supporting
+online motions is likely key to achieving non-functional goals, such as
+high availability, reliability and scalability. Evaluation for the
+\emph{InMotion} service is presented in Sect.~\ref{sec:eval}.
+
+Finally, the timing object API emphasizes an attractive programming model for
+multi-device media applications. In particular, by making online motions
+available under the same API as local motions (see Sect.~\ref{sec:motionapi}),
+media components may be used in single-page as well as multi-device media
+experiences, without modification. Also, by hiding the complexity of
+distributed motion synchronization, application developers may focus on
+building great media components using the timing object API. As such, the
+timing object API provides much needed separation of concern in multi-device
+media.
 
 \subsection{Synchronizing Audio and Video}
 \label{sec:avsync}
@@ -205,10 +247,10 @@ Timed data such as subtitles, tracks, scripts, logs or time series typically
 include items tied to \emph{points} or \emph{intervals} on the timeline.
 Synchronization then involves activating and deactivating such items at the
 correct time, in reference to a timing object. To simplify programming of
-media components based on timed data, a generic
-\emph{Sequencer}~\cite{sequencer} is defined. The sequencer is similar to the
-HTML5 track element~\cite{html5track}, but is directed by the timing object
-instead of a HTML5 media element~\cite{html5media}. Web developers register cues associated with
+media components based on timed data, a generic \emph{Sequencer} is defined.
+The sequencer is similar to the HTML5 track element~\cite{html5track}, but is
+directed by the timing object instead of a HTML5 media
+element~\cite{html5media}. Web developers register cues associated with
 intervals on the timeline, and receive event upcalls whenever a cue is
 activated or deactivated. The sequencer fully supports the timing object,
 including skipping, reverse playback and acceleration. It may be used for any
@@ -217,7 +259,7 @@ data type and supports dynamic changes to cues during playback.
 \begin{figure}[h]
 %\sidecaption
 \centering
-\includegraphics[scale=.3]{fig/sequencer.jpg}
+\includegraphics[scale=.4]{fig/sequencer.jpg}
 \caption{Five data sources of timed data, with items tied to intervals on the timeline. Motion along the same timeline defines which items are active (vertical dotted line), and precisely when items will be activated or deactivated.}
 \label{fig:sequencer}
 \end{figure}
@@ -232,15 +274,10 @@ implementation is not based on frequent polling. Instead, the deterministic
 nature of the timing object allows events to be calculated and scheduled using
 \emph{setTimeout}, the timeout mechanism available in Web browsers. Though
 this mechanism is not optimized for precision, Web browsers may be precise
-down to a few milliseconds.
+down to a few milliseconds. The sequencer is presentation in further detail in~\cite{sequencer}.
 
 
 
 
 
 
-
-%\subsection {Summary}
-%Motion is a simple concept encapsulating media clock and media controls. It is
-%designed particularly to be monitored by multiple media components, and as an
-%interface towards online motions.

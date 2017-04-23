@@ -1,9 +1,9 @@
 Modern multimedia increasingly demands high flexibility and extensibility.
-This is driven by a number of strong trends; device proliferation, new
+This is driven by a number of strong trends: device proliferation, new
 sensors, new data types (e.g. sensor data, 3D, 360 video), multiple data
 sources, live data, personalization, interactivity, responsiveness and multi-
 device support. On top of all this there are also rising expectations to UI
-design, integration with social networks etc.
+design, integration with social networks, and more.
 
 In an attempt to meet such demands, new features have been added to media
 frameworks allowing programmers to customize the media player to a larger
@@ -14,8 +14,8 @@ provides a way to manipulate the video stream client-side. It is also common
 for media players to expose events and timed cues, allowing custom
 functionality to be implemented in application code. The text track system of
 HTML5 is an example of this. MPEG-4~\cite{mpeg4} adds support for
-synchronization and composition of multiple media streams, including discrete
-media such as graphical objects (2D and 3D). In particular, the MPEG-4 Systems
+synchronization and composition of multiple media streams, including timed data
+such as graphical objects (2D and 3D). In particular, the MPEG-4 Systems
 part~\cite{mpeg4sys} defines an architecture for media clients (terminals)
 integrating a variety of media formats, delivery methods, interactivity and
 rendering.
@@ -41,7 +41,7 @@ and complex media experiences from simpler parts.
 %\sidecaption
 \centering
 \includegraphics[scale=.4]{fig/motion-media.png}
-\caption{A single media experience made from multiple media components (blue). Each media component is connected to motion (red) and a source of timed data (black). There are different types of timed data; an AV container, a subtitle track, photos, comments and two extra audio tracks. The motion defines the timeline for the presentation, and timed data is mapped to this timeline by each media component. Since all the media components are connected to the same motion, they will operate in precise synchrony. One particular media component (bottom media element) provides interactive controls for the presentation, and connects only with motion.}
+\caption{A single media experience made from multiple media components (blue). Each media component is connected to motion (red) and a source of timed data (black). There are different types of timed data: an AV container, a subtitle track, photos, comments and two extra audio tracks. The motion defines the timeline for the presentation, and timed data is mapped to this timeline by each media component. Since all the media components are connected to the same motion, they will operate in precise synchrony. One particular media component (bottom media element) provides interactive controls for the presentation, and connects only with motion.}
 \label{fig:motion-media}
 \end{figure}
 
