@@ -4,22 +4,22 @@ simplicity for Web developers.
 
 \subsection {Motion Synchronization}
 
-The research group has used motion synchronization for a wide range of
-technical demonstration since 2010. An early evaluation of the research
-prototype is discussed in the paper titled \emph{The Media State
-Vector}~\cite{msv}. Though the interpretations of the experiments are
-conservative, early findings indicated that motion synchronization could
-provide frame rate levels of accuracy (33 milliseconds). A few years later, a
-production ready service called \emph{InMotion} was built by spin off company
-Motion Corporation~\cite{mcorp}. With the introduction of
-WebSockets~\cite{websocket} in the InMotion service, results improved
-significantly. Synchronization errors are in the order of a few milliseconds
-on all major browsers and most operating systems (including Android).
-Typically we observe 0-1 millisecond errors for desktop browsers, compared to
-a system clock synchronized by NTS. The \emph{InMotion} service has also been
-running continuously for years, supporting a wide range of technical
-demonstrations, at any time, at any place, and across a wide range of devices.
-As such, the value of a production grade online service is also confirmed.
+We have used motion synchronization for a wide range of technical
+demonstration since 2010. An early evaluation of the research prototype is
+discussed in the paper titled \emph{The Media State Vector}~\cite{msv}. Though
+the interpretations of the experiments are conservative, early findings
+indicated that motion synchronization could provide frame rate levels of
+accuracy (33 milliseconds). A few years later, a production ready service
+called \emph{InMotion} was built by spin off company Motion
+Corporation~\cite{mcorp}. With the introduction of
+WebSockets~\cite{websocket}, results improved significantly. Synchronization
+errors are in the order of a few milliseconds on all major browsers and most
+operating systems (including Android). Typically we observe 0-1 millisecond
+errors for desktop browsers, compared to a system clock synchronized by NTP.
+The \emph{InMotion} service has also been running continuously for years,
+supporting a wide range of technical demonstrations, at any time, at any
+place, and across a wide range of devices. As such, the value of a production
+grade online service is also confirmed.
 
 Furthermore, the precision of motion synchronization degrades well with poor
 network conditions. For instance, experiments with video synchronization in
@@ -47,8 +47,8 @@ this video~\cite{carneval}. Echoless synchronization with the MediaSync
 library may also produce various audio effects, like failing to hear one audio
 source, until volume levels are changed and only the other audio source can be
 heard. Since these effects are also achieved across browser types and
-architectures, this is a strong indication that \emph{currentTime} is a good
-basis for synchronization.
+architectures, this is a strong indication that external timing is feasible
+and already at a useful level.
 
 Synchronization has also been maintained for hours and days at end, without
 accumulated errors. Loading speeds are also acceptable. Even though the
@@ -64,19 +64,18 @@ Website~\cite{mtcg}.
 \caption{The figure illustrates an experiment with video (mp4) synchronization on
 Android using Chrome browser. The plot shows currentTime compared to the ideal
 playback position defined by motion. The green band (echoless) is +-10 millisecond and
-the yellow (frame accurate is) +-25 millisecond. The media element enters frame accurate
-playback after two seekTo operations, and converges on echoless using
-variablePlaybackrate.}
+the yellow (frame accurate is) +-25 millisecond. This is achived using variablePlaybackrate.}
 \label{fig:videosync}
 \end{figure}
 
-Though echoless synchronization is generally achievable, there are always a
-few combinations of architecture, browser and media format that pose problems.
-Errors may also occur and vanish across software updates. To be able to
-support echoless synchronization reliably across the board, standards must
-include requirements for synchronization, and testing-suites must be developed
-to ensure that those requirements are met. Ideally though, media
-synchronization should be implemented natively in media elements.
+Though echoless synchronization is generally achievable, a lack of
+standardization and common tests makes it impossible to provide any
+guarantees. The experience might also be improved or become broken across
+software updates. To be able to support echoless synchronization reliably
+across browsers and devices, standards must include requirements for
+synchronization, and testing-suites must be developed to ensure that those
+requirements are met. Ideally though, media synchronization should be
+implemented natively in media elements.
 
 
 \subsection {Summary}
@@ -86,9 +85,7 @@ synchronization are well aligned with current limitations of the Web platform.
 For instance, the precision of timed operation in JavaScript is about 1
 millisecond, and a 60Hz screen refresh rate corresponds to 16 milliseconds.
 Furthermore, these results also match limitations in human sensitivity to
-synchronization errors. Identical audio signals skewed by less than 7
-milliseconds will likely be interpreted as natural echo by the brain, and
-collapsed into one signal (with directional information)~\cite{syncreport2}.
+synchronization errors. 
 
 Finally, programming synchronized media experiences in the motion model is
 both easy and rewarding. In our experience, motions and sequencers are
