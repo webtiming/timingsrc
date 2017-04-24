@@ -5,11 +5,11 @@ seen through the eyes of an end user browsing the Web with her favorite
 \emph{user agent} in 2017.} is composed of a series of technologies centered
 around the \emph{Hypertext Markup Language (HTML)}. These technologies have
 been developed over the years and have grown steadily since the advent of
-\emph{HTML5}~\cite{html5}, allowing Web applications to access an  ever-
-increasing pool of features such as local storage, geolocation, peer-to-peer
+\emph{HTML5}~\cite{html5}, allowing Web applications to access an  ever-increasing 
+pool of features such as local storage, geo{\-}location, peer-to-peer
 communications, notifications, background execution, media capture, and more.
-This section focus on Web technologies that produce or
-consume timed data, and to highlight issues that arise when these technologies
+This section focuses on Web technologies that produce or
+consume timed data, and highlights issues that arise when these technologies
 are used or combined with others for synchronization purposes. These issues
 are classified and summarized at the end of the section. Please note that this
 section is written early 2017. It references technologies that are still under
@@ -21,9 +21,9 @@ development.
 First versions of the HTML specification (including HTML3.2~\cite{html32}) were
 targeting static documents and did not have any particular support for timed playback. 
 HTML5 introduced the Audio and Video media elements to add support for
-audio and video data playback. Web applications may control the playback of
+\mbox{audio} and video data playback. Web applications may control the playback of
 media elements using commands such as \emph{play} or \emph{pause} as well as
-properties such as \emph{currentTime} (the current media offset)
+properties such as \mbox{\emph{currentTime}} (the current media offset)
 and \emph{playbackRate} (the playback speed). In theory, this should be enough
 to harness media element playback to any synchronization logic that authors
 may be willing to implement. However, there are practical issues:
@@ -57,17 +57,17 @@ resorb that time afterwards.
 The media clock in HTML5 automatically pauses when the user agent needs to
 fetch more data before it may resume playback. This behavior matches the
 expectations of authors for most simple media use cases. However, more advanced
-scenarios where media playback is just one part of a larger and potentially
-cross-device orchestration, would likely require that the media clock keeps
+scenarios where media playback is just a part of a larger and potentially
+cross-device orchestration would likely require that the media clock keeps
 ticking no matter what.
 
 }
 
 \item{
 
-The playbackrate property was motivated by the fast forward and rewind
+The \emph{playbackRate} property was motivated by the fast forward and rewind
 features of \emph{digital video disc (DVD)} players and previously
-\emph{videocasette recorders (VCR)}. It was not meant for precise control of
+\emph{videocassette recorders (VCR)}. It was not meant for precise control of
 playback velocity on the media timeline.
 
 }
@@ -81,10 +81,10 @@ concept of a \emph{media controller}~\cite{mediacontroller}. Each media
 element can be associated with a media controller and all the media elements
 that share the same media controller use the same media clock, allowing
 synchronized playback. In practice though, browser vendors did not implement
-media controllers and the feature may be deprecated in future revisions of
-HTML. It is also worth noting that this mechanism is restricted to media
-elements and cannot be used to orchestrate scenarios that involve other types
-of timed data.
+media controllers and the feature was dropped in HTML5.1~\cite{html51}. It is
+also worth noting that this mechanism was restricted to media elements and
+could not be used to orchestrate scenarios that involved other types of timed
+data.
 
 While sometimes incorrectly viewed as a property of the JavaScript language,
 the \emph{setTimeout}, \emph{setInterval} and other related timer functions,
@@ -287,15 +287,15 @@ synchronized with other clocks in the system}. In particular, there is little
 chance that this clock be synchronized with the High Resolution Time clock,
 the global clock of Web Animations, or the media clock of a media element.
 
-The group that develops the Web Audio API at W3C is well aware of these
-limitations and has been investigating technical solutions that may be
-included in the specification before it gets published as a Web standard, such
-as exposing the relationship between the audio clock and the high resolution
-clock, coupled with the latency introduced by the software and hardware, so
-that Web applications may compute the exact times at which a sound will be
-heard. This would be particularly valuable to support cross-device audio
-scenarios, but would also allow audio to be output on multiple sound cards at
-once on a single device.
+The group that develops the Web Audio API at W3C investigated technical
+solutions to overcome these limitations. The API now exposes the relationship
+between the audio clock and the high resolution clock, coupled with the
+latency introduced by the software and hardware, so that Web applications may
+compute the exact times at which a sound will be heard. This is particularly
+valuable for cross-device audio scenarios, but also allows audio to
+be output on multiple sound cards at once on a single device.
+
+
 
 
 \subsection{Media Capture}
@@ -322,8 +322,8 @@ implementation-dependent in particular. Moreover, a MediaStream is a
 \emph{live} element and is not seekable. The \emph{currentTime} and
 \emph{playbackRate} properties of the media element that renders a MediaStream
 are \emph{read-only} (i.e. media controls do not apply), and thus cannot be
-adjusted for synchronization\footnote{In the future, it may be possible to re-
-create a seekable stream out of a MediaStream, thanks to the
+adjusted for synchronization\footnote{In the future, it may be possible to re-create 
+a seekable stream out of a MediaStream, thanks to the
 \emph{MediaRecorder} interface defined in the MediaStream Recording
 specification. This specification is not yet stable when this book is
 written.}.
@@ -345,7 +345,7 @@ The WebRTC API builds on top of the Media Capture and Streams specification
 and allows the exchange of MediaStreams. On top of the synchronization
 restrictions noted above, a remote peer does not have any way to relate the
 media timeline of the MediaStream it receives with the clock of the local
-peer that sent it. The WebRTC API does not expose synchronization primitives.
+peer that sent it. The \mbox{WebRTC} API does not expose synchronization primitives.
 This is up to Web applications, which may for instance exchange
 synchronization parameters over a peer-to-peer data channel. Also, the
 MediaStreamTracks that compose a MediaStream are essentially treated
@@ -404,7 +404,7 @@ convert timestamps and account for the transport latency. }
 
 \item{
 When they exist, controls exposed to harness media components may not be
-sufficiently fine-grained. For example, the playbackRate property of media
+sufficiently fine-grained. For example, the \emph{playbackRate} property of media
 elements in HTML5 was not designed for precise adjustments, and setting the
 start time of a Web animation to a specific time value may result in a
 significant jump between the first and second frames of the animation.
@@ -414,10 +414,8 @@ significant jump between the first and second frames of the animation.
 
 Small improvements to Web technologies should resolve some of these issues,
 and discussions are underway in relevant standardization groups at W3C when
-this book is written. For example, the Web Audio API should soon expose the
-latency introduced by the system as well as the relationship between the audio
-stream time and Performance.now(). Similarly, timestamps in DOM Events may
-switch to using the same Performance.now() clock. This is all good news for
+this book is written. For example, timestamps in DOM Events may
+switch to using the same \emph{Performance.now()} clock. This is all good news for
 media synchronization, although it may still take time before the situation
 improves.
 
