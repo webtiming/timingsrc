@@ -59,9 +59,9 @@ define(['../util/eventify'], function (eventify) {
 			} else if (eArg.type === "remove") {
 				var i = this._stack.findIndex(function (element, index, array) {
 					return (element[0] === seqCue.key); 
-				})
+				});
 				if (i > -1) {
-					this._stack.slice(i, 1);
+					this._stack.splice(i, 1);
 					this._touch();
 				}
 			}
