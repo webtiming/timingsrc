@@ -659,7 +659,7 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 			}
 			// transformation when new timingsrc is ready
 			var self = this;
-			timingsrc.ready.then(function (){
+			var doSwitch = function () {
 				// disconnect and clean up timingsrc
 				if (self._timingsrc) {
 					self._timingsrc.off("change", self._internalOnChange);
@@ -670,7 +670,14 @@ define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (even
 				}
 				self.onSwitch();
 				self._timingsrc.on("change", self._internalOnChange);	
-			});
+			};
+			if (timingsrc.isReady()) {
+				doSwitch();
+			} else {
+				timingsrc.ready.then(function (){
+					doSwitch();
+				});
+			}
 		}
 	});
 
