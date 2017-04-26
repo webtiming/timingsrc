@@ -995,7 +995,18 @@ define(['util/motionutils', 'util/eventify', 'util/interval', './axis'],
 	    	var d = e[0];
 			var task = e[1];
 			var push = true;
-			
+
+			/*
+				events from within the time interval may still be too late,
+				if they are before now <now>.
+				this may happen when new items are added dynamically
+				even though we drop them here, they already had their
+				effect in calculation of enter/exit events.
+			*/
+			if (tStart + d < now) {
+				push = false;
+			}
+						
 			/* 
 			   drop events exactly at the start of the time covering
 			   interval.
