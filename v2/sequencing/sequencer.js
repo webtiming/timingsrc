@@ -18,7 +18,7 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['util/motionutils', 'util/eventify', 'util/interval', './axis'], 
+define(['../util/motionutils', '../util/eventify', '../util/interval', './axis'], 
 	function (motionutils, eventify, Interval, axis)  {
 
 	'use strict';

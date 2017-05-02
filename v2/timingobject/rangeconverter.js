@@ -29,7 +29,7 @@
 	Range converters will continue mirroring timingsrc once it comes into the range.
 */
 
-define(['util/motionutils', './timingobject'], function (motionutils, timingobject) {
+define(['../util/motionutils', './timingobject'], function (motionutils, timingobject) {
 
 	'use strict';
 

@@ -18,7 +18,7 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define (['util/motionutils'], function (motionutils) {
+define (['../util/motionutils'], function (motionutils) {
 
   'use strict';
 

@@ -2,6 +2,10 @@ name: timingsrc
 markdown: kramdown
 #highlighter: pygments.rb
 highligher: rouge
+
+kramdown:
+  input: GFM
+  hard_wrap: false
 #safe: true
 #lsi: false
 baseurl: /timingsrc

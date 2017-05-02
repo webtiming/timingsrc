@@ -19,7 +19,7 @@
 */
 
 
-define (['util/interval'], function (Interval) {
+define (['../util/interval'], function (Interval) {
 
     'use strict';
 

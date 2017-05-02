@@ -18,7 +18,7 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define (['util/motionutils', 'util/eventify'], function (motionutils, eventify) {
+define (['../util/motionutils', '../util/eventify'], function (motionutils, eventify) {
 
   /*
     Integer value that is controlled by a timing object.

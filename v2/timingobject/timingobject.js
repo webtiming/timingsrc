@@ -20,7 +20,7 @@
 
 
 
-define(['util/eventify', 'util/motionutils', 'util/masterclock'], function (eventify, motionutils, MasterClock) {
+define(['../util/eventify', '../util/motionutils', '../util/masterclock'], function (eventify, motionutils, MasterClock) {
 
 	'use strict';
 

@@ -32,7 +32,7 @@
 */
 
 
-define(['util/eventify', 'util/motionutils', './axis', './sequencer'], 
+define(['../util/eventify', '../util/motionutils', './axis', './sequencer'], 
 	function (eventify, motionutils, axis, seq) {
 	
 	'use strict';
