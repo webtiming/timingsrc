@@ -21,10 +21,7 @@ For multi-device timing support, simply plug a *timing provider* into your *timi
 
 ## Standardization
 
-The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) advocates standardization of the timing object. 
-
-> In the 80's *sockets* provided a unified API for different types of communication. Similarly, we now wish to provide a unified API for timing. It's about time!
-
+The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) advocates standardization of the timing object.
 Agreement on a common API for timing resources would enable:
 
 #### 1) temporal interoperability
