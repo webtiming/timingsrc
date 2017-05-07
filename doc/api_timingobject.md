@@ -33,10 +33,10 @@ var timingObject = new timingsrc.TimingObject(options);
 - param: optional {Object} [options] options given to timing object
 - param: optional {[start,end]} [options.range] range restrictions on timeline, start and end are floats (may be Infinity)
 - param: optional {StateVector} [options.vector] initial state of timing object
-- param: optional {Object} [options.provider] timing provider object
+- param: optional {Object} [options.timingsrc] timingsrc
 - return: {Object} timing object
 
-Note that options *range* and *vector* are ignored if option *provider* is supplied.
+Note that options *range* and *vector* are ignored if option *timingsrc* is supplied.
 
 ---
 
@@ -44,14 +44,14 @@ Note that options *range* and *vector* are ignored if option *provider* is suppl
 Returns a snapshot vector of the timing object
 
 ```javascript
-var snapshotVector = timingObject.query();
+var vector = timingObject.query();
 ```
 
 - return: {StateVector} current state
 
 ---
 
-#### .update()
+#### .update(vector)
 Update issues a request for modification to the timing object.
 
 
@@ -77,8 +77,8 @@ Timing objects supports two event types ["change", "timeupdate"].
 
 Event handlers currently do not provide event arguments.
 
-Timing Object implements immediate events semantics for event types "change", "timeupdate"].
-Read more about immediate events in [Immediate Events Background](background_eventing.html).
+Timing Object implements initial events semantics for event types ["change", "timeupdate"].
+Read more about initial events in [Initial Events Background](background_eventing.html).
 
 
 ---
@@ -90,7 +90,7 @@ Registers an event handler on the timing object.
 timingObject.on(type, handler, ctx);
 ```
 
-- param: {String} [type] event type ["change"|"timeupdate"]
+- param: {String} [type] event type ["change","timeupdate"]
 - param: {Function} [handler] event handler
 - param: optional {Object} [ctx] context for handler callback invocation, default is timingObject
 
@@ -103,8 +103,35 @@ Un-registers an event handler from the timing object.
 timingObject.off(type, handler);
 ```
 
-- param: {String} [type] event type ["change"|"timeupdate"]
+- param: {String} [type] event type ["change","timeupdate"]
 - param: {Function} [handler] event handler
+
+
+---
+
+#### .timingsrc
+The timingsrc property, if defined, denotes a parent object, on which the timing object depends.
+
+The timingsrc property points to one of the following
+
+- [timing provider](api_timingprovider.html)
+- [timing object](api_timingobject.html)
+- [timing converter](api:timingconverter.html)
+
+Local timing objects are defined without a timingsrc, so their
+timingsrc property should be undefined. However, internally, an InternalProvider object
+is created as timingsrc.
+
+The timingsrc property is both a getter and setter. 
+
+```javascript
+// connecting timing object with external timing provider
+timingObject.timingsrc = timingProvider;
+// disconnecting timing object from external timing provider
+timingObject.timingsrc = undefined;
+// connecting timingobject to another timing object
+timingObject.timingsrc = anotherTimingObject;
+```
 
 ---
 
@@ -118,7 +145,7 @@ var range = timingObject.range;
 ---
 
 #### .clock
-Getter for clock used by timing object.
+Getter for internal clock used by timing object.
 
 ```javascript
 var timestamp = timingObject.clock.now();

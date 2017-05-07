@@ -46,14 +46,14 @@ This documentation includes the following sections:
 
 An [Interval](#interval) is expressed by two floating point values <code>low, high</code>, where <code>low <= high</code>. <code>-Infinity</code> or <code>Infinity</code> may be used to create un-bounded Intervals, e.g. <code>[low, Infinity)</code> or <code>(-Infinity, high]</code>. If <code>low === high</code> the Interval is said to represent a singular point <code>[low]</code>.
 
-Intervals may or may not include its endpoints; <code>[a,b], [a,b>, \<b,a], \<a,b></code>. This is defined by optional boolean flags <code>lowInclude</code> and <code>highInclude</code>. If <code>lowInclude</code> and <code>highInclude</code> are omitted, <code>[a,b></code> is the default setting. When multiple Intervals have the same endpoint, these endpoint flags influence [event ordering](#event ordering). The Sequencer implementation also depends on this feature internally for correctness.
+Intervals may or may not include its endpoints; <code>[a,b], [a,b>, <b,a], <a,b></code>. This is defined by optional boolean flags <code>lowInclude</code> and <code>highInclude</code>. If <code>lowInclude</code> and <code>highInclude</code> are omitted, <code>[a,b></code> is the default setting. When multiple Intervals have the same endpoint, these endpoint flags influence [event ordering](#event ordering). The Sequencer implementation also depends on this feature internally for correctness.
 
 Interval objects are immutable.
 
 ### Interval: Constructor
 
 ```javascript
-var i = new timingsrc.Interval(low, high, lowInclude, highInclude);
+var i = new TIMINGSRC.Interval(low, high, lowInclude, highInclude);
 ```
 - param: {float} [low] value of lower endpoint of interval 
 - param: {float} [high] value of higher endpoint of interval
@@ -116,13 +116,13 @@ if (i.isSingular()) {}
 
 ## Sequencer Cue
 
-[SequencerCue](#cue) is a simple datatype used by [Sequencer](#sequencer) for query responses (and in some cases as parameter to event callback parameters). A SequencerCue is essentially an association between a key (string) and an [Interval](#interval). It is representated as a simple JavaScript object. The property *data* is only used in context of [sequencer specialization](usage_sequencer.html#specialization). 
+[SequencerCue](#cue) is a simple datatype used by [Sequencer](#sequencer) for query responses (and in some cases as parameter to event callback parameters). A SequencerCue is essentially an association between a key (string), an [Interval](#interval), and a data object.
 
 ```javascript
 var cue = {
     key : "string",                  // unique string key
     interval : new Interval(12,13),  // interval object
-    data : {}                        // javascript object - only used in context of sequencer specialization
+    data : {}                        // javascript object
 };
 ```
 
@@ -138,9 +138,9 @@ var eArg = {
 	// SequencerCue properties
     key : "string", 				 // unique key
     interval : new Interval(12,13),  // interval 
-    data : {}, 						 // javascript object - only used in context of sequencer specialization
+    data : {}, 						 // application object
     // additional properties
-    src: object, 					 // reference to emitter of event, i.e. Sequencer object
+    src: object, 					 // reference to emitter of event, i.e. the Sequencer object
     point : 12.0, 					 // position of timing object when event was (should have been) triggered
     pointType : "low",				 // how point relates to the interval {"low"|"high"|"inside"|"outside"|"singular"}
     dueTs : 1441266518486, 			 // timestamp when the event should ideally be emitted - from performance.now()
@@ -161,7 +161,7 @@ var eArg = {
 Returns a Sequencer object. There is no need to start the Sequencer. Execution is driven by the given timing object, and the Sequencer is operational when the constructed finalizes. 
 
 ```javascript
-var s = new timingsrc.Sequencer(timingObject);
+var s = new TIMINGSRC.Sequencer(timingObject);
 ```
 - param: {object} [timingObject] The [TimingObject](http://webtiming.github.io/timingobject) that drives the execution of the Sequencer. 
 
@@ -173,7 +173,7 @@ To do window sequencing with the Sequencer, simply specify two timing objects in
 Note that in window sequencing mode the Sequencer provides [SequencerCues](#cue) with events instead of [EArg](#earg).  
 
 ```javascript
-var s = new timingsrc.Sequencer(timingObjectA, timingObjectB);
+var s = new TIMINGSRC.Sequencer(timingObjectA, timingObjectB);
 ```
 - param: {object} [timingObjectA] Timing object A represents one endpoint of the *active interval* of the IntervaSequencer. 
 - param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 
@@ -182,41 +182,38 @@ var s = new timingsrc.Sequencer(timingObjectA, timingObjectB);
 
 ### Sequencer: Operations
 
-#### .addCue(key, interval)
+#### .addCue(key, interval, data)
 - param: {string} [key] unique key identifying an Interval.  
 - param: {Interval} [interval] defines when the associated key is active. 
+- param: {Object} [data] application object associated with key and interval
 - returns : {undefined}
 
-Associate a unique key with an Interval. addCue() will replace any previous association for given key. Since Intervals are immutable objects, modification of a cue must be be done by generating a new Interval and replacing the association using .addCue() with the same key.
+Associate a unique key with an Interval and a data object. addCue() will replace any previous association for given key. Since Intervals are immutable objects, modification of a cue must be be done by generating a new Interval and replacing the association using .addCue() with the same key.
 
->  The keyspace is designed by the programmer. In this regard, the Sequencer is essentially an associative array for Interval objects. Often, application specific datamodels include unique keys of some sort, and these may be used directly with the sequencer. These application specific keys are then reported back to application code by correctly timed Sequencer events. Intervals define when keys are *active*. So, when the current position of the timing object enters an Interval, the associated key becomes *active*.
+>  The keyspace is designed by the programmer. In this regard, the Sequencer is essentially an associative array for (Interval, data) tuples. Often, application specific datamodels include unique keys of some sort, and these may be used directly with the sequencer. These application specific keys are then reported back to application code by correctly timed Sequencer events. Intervals define when keys are *active*. So, when the current position of the timing object enters an Interval, the associated key becomes *active*.
 
 
 ```javascript
-s.addCue("key", new Interval(12.1, 24.22));
+s.addCue("key", new Interval(12.1, 24.22), {value:42});
 ```
 
-#### .removeCue(key, removedData)
-- param: {string} [key] unique key identifying an Interval.
-- param: optional: {object} [removeData] data associated with cue that is to be removed
+#### .removeCue(key)
+- param: {string} [key] unique key identifying (Interval, data).
 
-Removes existing association (if any) between key and Interval. The removeData parameter is only useful in context of [sequencer specialization](usage_sequencer.html#specialization). If some data item has been removed from a datamodel, the removed item can still be provided in [exit](#exit) events from the Sequencer.
+Removes existing association (if any) between key and (Interval, data).
 
 ```javascript
 s.removeCue("key");
 ```
 
-#### .request().submit()
-Using the builder pattern .addCue() and .removeCue() operations may be batched and processed together. This allows related operations to be performed together by the Sequencer. Resulting events will also be batched, reducing the number of event callbacks and allowing application code to make decisions on the level of event-batches of the event type [events](#events), as opposed to individual events. 
+#### Batch processing
+AddCue and removeCue operations are processed as a new task on the JavaScript event queue, so multiple operations may be processed in one batch. On the other hand, this means that the effects of addCue are not visible immediately after the operation.
 
-- returns {object} request object, where Sequencer operations can be registered and submitted.
 
 ```javascript
-var r = s.request()
-    .addCue("key1", new Interval(23.56, 27.8))
-    .addCue("key2", new Interval(27.8, Infinity))
-    .removeCue("key3")
-    .submit();
+cueList.forEach(function (cue) {
+    s.addCue(cue.key, cue.interval, cue.data);
+});
 ```
 
 
@@ -358,16 +355,16 @@ s.off("enter", handler);
 ```
 
 
-#### Immediate Events
+#### Initial Events
 
 The classical pattern for programming towards an event source typically involves two steps
 
 1. fetch the current state from the event source
 2. register event handlers for listening to subsequent changes to the state of the event source
 
-The Sequencer event API simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *immediately after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "enter" or "events" will cause a batch of immediate "enter" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *immediately after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the .on() call has completed.  
+The Sequencer event API simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *just after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "enter" or "events" will cause a batch of initial "enter" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *just after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the current task has completed.  
 
-Read more about immediate events in [Immediate Events Background](background_eventing.html).
+Read more about initial events in [Initial Events Background](background_eventing.html).
 
 
 #### Event delay

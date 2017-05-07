@@ -120,7 +120,7 @@ Timing provider objects supports three event types ["readystatechange", "skewcha
 
 Event handlers do not provide event arguments.
 
-Timing providers *do not* implement [immediate events](background_eventing.html) semantics for any of its events.
+Timing providers *do not* implement [initial events](background_eventing.html) semantics for any of its events.
 
 
 #### .on()

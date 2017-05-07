@@ -31,7 +31,7 @@ Getter and setter for source timing object.
 
 ```javascript
 // getter
-var timingObject = new timingConverter.timingsrc;
+var timingObject = timingConverter.timingsrc;
 // setter
 timingConverter.timingsrc = timingObject;
 ```

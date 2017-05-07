@@ -45,18 +45,16 @@ var to = new TIMINGSRC.TimingObject({range:[0,52]});
 var s = new TIMINGSRC.Sequencer(to); 
 
 // Load data
-var r = s.request();
 Object.keys(data).forEach(function (key) {
-	r.addCue(key, new TIMINGSRC.Interval(data[key].start, data[key].end));
+	s.addCue(key, new TIMINGSRC.Interval(data[key].start, data[key].end));
 });
-r.submit();
 
 // Register Handlers
-s.on("enter", function (e) {
+s.on("change", function (e) {
   var el =  document.getElementById(e.key);
   el.classList.add("active");
 });
-s.on("exit", function (e) {
+s.on("remove", function (e) {
   var el = document.getElementById(e.key);
   el.classList.remove("active");
 });

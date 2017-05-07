@@ -38,11 +38,11 @@ var run = function (timingProvider) {
 	};
 
 	// load timed data into sequencer
-	var r = s.request();
+
 	Object.keys(data).forEach(function (key) {
-	r.addCue(key, new Interval(data[key].start, data[key].end));
+		s.addCue(key, new Interval(data[key].start, data[key].end), data);
 	});
-	r.submit();
+
 
 	// Set up controls for timing object
     document.getElementById("pause").onclick = function () {to.update({velocity: 0.0});};
@@ -61,12 +61,12 @@ var run = function (timingProvider) {
     Object.keys(data).forEach(function (key) {
       html += "<div id='"+ key +"'>" + JSON.stringify(data[key]) + "</div>";
     });
-    document.getElementById("data").innerHTML = html;     
-    s.on("enter", function (e) {
+    document.getElementById("data").innerHTML = html;
+    s.on("change", function (e) {
       var el =  document.getElementById(e.key);
       el.classList.add("active");
     });
-    s.on("exit", function (e) {
+    s.on("remove", function (e) {
       var el = document.getElementById(e.key);
       el.classList.remove("active");
     });

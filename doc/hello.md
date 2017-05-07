@@ -3,6 +3,13 @@ layout: default
 title: Hello World
 ---
 
+The timingsrc scripts are available from GitHub.
+
+- [timingsrc-v2.js](../lib/timingsrc-v2.js)
+- [timingsrc-min-v2.js](../lib/timingsrc-min-v2.js)
+- [timingsrc-require-v2.js](../lib/timingsrc-require-v2.js)
+- [timingsrc-require-min-v2.js](../lib/timingsrc-require-min-v2.js)
+
 
 ### Single-page
 

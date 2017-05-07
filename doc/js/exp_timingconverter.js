@@ -34,7 +34,9 @@ var run = function (timingProvider) {
         elem = item[1];
         pos = to.query();
         if (pos !== null) {
-          elem.innerHTML = to.query().position.toFixed(2);
+            if (to.isReady()) {
+                elem.innerHTML = to.query().position.toFixed(2);
+            }
         }
       });
     }, 200);                  

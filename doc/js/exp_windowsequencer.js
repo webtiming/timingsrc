@@ -40,11 +40,9 @@ var run = function (timingProvider) {
 	};
 
 	// load timed data into sequencer
-	var r = s.request();
 	Object.keys(data).forEach(function (key) {
-		r.addCue(key, new Interval(data[key].start, data[key].end));
+		s.addCue(key, new Interval(data[key].start, data[key].end));
 	});
-	r.submit();
 
 	// Set up controls for timing object
     document.getElementById("pause").onclick = function () {to.update({velocity: 0.0});};
@@ -53,26 +51,28 @@ var run = function (timingProvider) {
     document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
 
     // Report position of timing objects
-    var posBefore = document.getElementById("posBefore");
-    to.on("timeupdate", function () {
-      posBefore.innerHTML = toA.query().position.toFixed(2);
+    Promise.all([toA.ready, toB.ready]).then(function(){
+    	var posBefore = document.getElementById("posBefore");
+	    to.on("timeupdate", function () {
+	      posBefore.innerHTML = toA.query().position.toFixed(2);
+	    });
+	    var posAfter = document.getElementById("posAfter");
+	    to.on("timeupdate", function () {
+	      posAfter.innerHTML = toB.query().position.toFixed(2);
+	    });
     });
-    var posAfter = document.getElementById("posAfter");
-    to.on("timeupdate", function () {
-      posAfter.innerHTML = toB.query().position.toFixed(2);
-    });
-
+    
     // Visualize timed data
     var html = "";
     Object.keys(data).forEach(function (key) {
       html += "<div id='"+ key +"'>" + JSON.stringify(data[key]) + "</div>";
     });
     document.getElementById("data").innerHTML = html;     
-    s.on("enter", function (e) {
+    s.on("change", function (e) {
       var el =  document.getElementById(e.key);
       el.classList.add("active");
     });
-    s.on("exit", function (e) {
+    s.on("remove", function (e) {
       var el = document.getElementById(e.key);
       el.classList.remove("active");
     });

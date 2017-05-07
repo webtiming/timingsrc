@@ -12,7 +12,7 @@ This document briefly introduces the following concepts and provides links for f
 - [sequencing tools](#sequencing)
 - [media synchronization tools](#mediasync)
  
-Note that the timingsrc library implements [Immediate Events](background_eventing.html) semantics for many of its event types. 
+Note that the timingsrc library implements [Initial Events](background_eventing.html) semantics for many of its event types. 
 
  
 
@@ -98,8 +98,8 @@ The **Sequencer** is a more sophisticated tool designed to work on larger sets o
 - [Sequencer Background](background_sequencer.html)
 - [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
-- [Default Sequencer Example (page-local)](exp_sequencer.html)
-- [Default Sequencer Example (multi-device)](online_sequencer.html)
+- [Sequencer Example (page-local)](exp_sequencer.html)
+- [Sequencer Example (multi-device)](online_sequencer.html)
 - [Window sequencing Example (page-local)](exp_windowsequencer.html)
 - [Window sequencing Example (multi-device)](online_windowsequencer.html)
 
