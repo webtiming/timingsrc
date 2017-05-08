@@ -22,7 +22,7 @@ The core idea is that programmers express temporal validity of objects by associ
 An *Interval* is simply the mathematical concept [12.75, 13.1>. Singular points [3.02] are considered a special case of *Interval* where length is 0. 
 An *Interval* defines when a *key* is *active* or *inactive*, according to a time source. 
 
-Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.io/timingobject) as timing source. The main function of a Sequencer is to emit [enter](#enter) and [exit](#exit) events at the correct time, as cue intervals dynamically transition between *active* and *inactive*. Sequencers also maintain a list of *active cues*, always consistent with the history of event callbacks and the state of the timing object. The Sequencer API is similar to the [TrackElement](http://www.html5rocks.com/en/tutorials/track/basics/) API.
+Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.io/timingobject) as timing source. The main function of a Sequencer is to emit [change](#change) and [remove](#remove) events at the correct time, as cue intervals dynamically transition between *active* and *inactive*. Change means that the cue has become active, or that it remained active while the cue data changed in some way. Remove means the cue became inactive, or was removed from the Sequencer all together. Sequencers also maintain a list of *active cues*, always consistent with the history of event callbacks and the state of the timing object. The Sequencer API is similar to the [TrackElement](http://www.html5rocks.com/en/tutorials/track/basics/) API.
 
 > A Sequencer is data agnostic and can therefore be used by any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
 
@@ -38,6 +38,10 @@ This documentation includes the following sections:
 - [SequencerCue](#cue)
 - [SequencerEArg](#earg)
 - [Sequencer](#sequencer)
+- [Sequencer Operations](#operations)
+- [Sequencer Search](#search)
+- [Sequencer Active Cues](#active-cues)
+- [Sequencer Events](#events)
 
 
 <a name="interval"></a>
@@ -46,7 +50,7 @@ This documentation includes the following sections:
 
 An [Interval](#interval) is expressed by two floating point values <code>low, high</code>, where <code>low <= high</code>. <code>-Infinity</code> or <code>Infinity</code> may be used to create un-bounded Intervals, e.g. <code>[low, Infinity)</code> or <code>(-Infinity, high]</code>. If <code>low === high</code> the Interval is said to represent a singular point <code>[low]</code>.
 
-Intervals may or may not include its endpoints; <code>[a,b], [a,b>, <b,a], <a,b></code>. This is defined by optional boolean flags <code>lowInclude</code> and <code>highInclude</code>. If <code>lowInclude</code> and <code>highInclude</code> are omitted, <code>[a,b></code> is the default setting. When multiple Intervals have the same endpoint, these endpoint flags influence [event ordering](#event ordering). The Sequencer implementation also depends on this feature internally for correctness.
+Intervals may or may not include its endpoints; <code>[a,b], [a,b>, <b,a], <a,b></code>. This is defined by optional boolean flags <code>lowInclude</code> and <code>highInclude</code>. If <code>lowInclude</code> and <code>highInclude</code> are omitted, <code>[a,b></code> is the default setting. When multiple Intervals have the same endpoint, these endpoint flags influence [event ordering](#event-ordering). The Sequencer implementation also depends on this feature internally for correctness.
 
 Interval objects are immutable.
 
@@ -146,7 +150,10 @@ var eArg = {
     dueTs : 1441266518486, 			 // timestamp when the event should ideally be emitted - from performance.now()
     delay : 0.9,					 // lateness in milliseconds relative to dueTs
     directionType : "forwards",		 // direction of timingobject at point {"backwards"|"forwards"|"nodirection"}
-    type : "enter"				     // entering or leaving interval, or cue change {"enter"|"exit"|"change"}
+    type : "change"				     // cue event type {"change","remove"}
+    op : "add"                       // operation type {"init", "add", "update", "remove", "none"}
+    enter: true                      // enter flag {true, false}
+    exit: false                      // exit flag {true, false}
 };
 
 ```
@@ -180,7 +187,7 @@ var s = new TIMINGSRC.Sequencer(timingObjectA, timingObjectB);
 
 
 
-### Sequencer: Operations
+### Operations
 
 #### .addCue(key, interval, data)
 - param: {string} [key] unique key identifying an Interval.  
@@ -217,7 +224,7 @@ cueList.forEach(function (cue) {
 ```
 
 
-### Sequencer: Search
+### Search
 
 The Sequencer supports a number of efficient search operations on its collection of [SequencerCues](#cue).
 
@@ -312,22 +319,80 @@ The cost of this operation is logarithmic O(logN), with N being the number of [S
 
 <a name="events"></a>
 
-### Sequencer: Events
+### Events
 
-The Sequencer supports four event types; <code>"enter", "exit", "change", "events"</code>. "Enter" and "exit" correspond to the timing object entering or exiting the interval of a specific [SequencerCue](#cue). "Events" delivers a batch (list) of events and may include both "enter", "exit" and "change" events. The programmer should likely choose to handle events in batch mode using "events" callback, or handle events individually using "enter", "exit" and "change" events. 
+The Sequencer supports three event types; <code>"change"|"remove"|"events"</code>. 
 
-Event types "enter", "exit" relate to changes to the set of [active cues](#activecue). In constrast, "change" events report modifications to [active cues](#activecue) that **remain** active, even though they have been modified in some way. This allow visualizations to pick up all events relevant to active cues.
+- "change" : a cue was inactive and became active, or remained active.
+- "remove" : a cue was active and became inactive 
+- "events" : a batch (list) of events including both "change" and "remove" events. 
 
-Intervals that are singular points will emit both "enter" and "exit" events during playback. If the timing object is paused precisely within a singular Interval, only the "enter" event is emitted, just like non-singular Interval. The "exit" event will be emitted as the position is later changed.
+The programmer should likely choose to handle events in batch mode using "events", or handle events individually using "change" and "remove" events. 
 
-#### EventHandler(e)
+
+#### initial events
+
+The classical pattern for programming towards an event source typically involves two steps
+
+1. fetch the current state from the event source
+2. register event handlers for listening to subsequent changes to the state of the event source
+
+The Sequencer event API simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *just after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "change" or "events" will cause a batch of initial "change" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *just after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the current task has completed.
+
+Read more about initial events in [Initial Events Background](background_eventing.html).
+
+
+#### enter and exit flags
+Events include two boolean flags *enter* and *exit*.
+
+- *enter* : true if the cue was *inactive* (or non-existent) and became *active*, else false
+- *exit* : true if the cue was *active* and became *inactive* (or non-existent), else false
+
+Event flags "enter" and "exit" relate to changes to the set of [active cues](#activecue). Enter and exit flags may both be false if a cue changed but remained *active*. Enter and exit flags can never both be true.
+
+
+
+#### cause
+
+Events also expose the *cause* of the event {"init", "create", "update", "delete", "motion"}.
+
+- "init"   : [Initial events](background_eventing.html) communicate active cues when event handler is registered.
+- "create" : cue added to the sequencer
+- "update" : cue updated (i.e. replaced)
+- "delete" : cue removed from sequencer
+- "motion" : cue event due to motion of the timing object (e.g. playback).
+
+
+#### permutations
+
+These are the legal permutations expressed as tuples <code>(type, cause, enter, exit)</code>
+
+- ("change", "init"  , true,  false) : initial events when event handler is registered
+- ("change", "create", true,  false) : cue added and became active
+- ("change", "update", true,  false) : inactive cue updated and became active
+- ("change", "update", true,  false) : inactive cue became active during playback
+- ("change", "update", false, false) : active cue updated and remained active
+- ("remove", "update", false, true ) : active cue updated and became inactive
+- ("remove", "delete", false, true ) : active cue removed
+- ("remove", "motion", false, true ) : active cue became inactive during playback
+
+
+#### data changes
+
+When using the sequencer, it is very convenient that all events relative to an active cue are made available through "change" and "remove" events of the sequencer. In particular, data changes on active cues often need to be reflected in visualization. This is achieved by exposing events for active cues that remain active ("change", "update", false, false). To exploit this feature, always refresh cues after data changes <code>addCue(key, interval, data)</code>, whether the interval is changed or not.
+
+#### singular points
+
+Intervals that are singular points will emit both "enter" and "exit" events during playback. If the timing object is paused precisely within a singular Interval, only the "enter" event is emitted, just like a non-singular Interval. The "exit" event will then be emitted as the position is later changed.
+
+#### event handler
 - param: {[SequencerEArg](#earg)|[SequencerCue](#cue)} [e] event argument.
 An event handlers is a function that takes one parameter type [SequencerEArg](#earg) or [SequencerCue](#cue) (depending on event type).
 
 ```javascript
 var handler = function (e) {};
 ```
-Events "enter", "exit" and "events" provide [SequencerEArgs](#earg) as event parameter, whereas event "change" provides [SequencerCue](#cue) as event parameter.
+Events "change", "remove" and "events" provide [SequencerEArgs](#earg) as event parameter.
 
 #### .on(type, handler, ctx)
 - param: {string} [type] event type
@@ -337,7 +402,7 @@ Events "enter", "exit" and "events" provide [SequencerEArgs](#earg) as event par
 ```javascript
 this.handler = function (e) {};
 // register callback
-s.on("enter", this.handler, this);
+s.on("change", this.handler, this);
 
 // callback invocation from sequencer
 handler.call(ctx, e);
@@ -350,31 +415,19 @@ Remove handler from Sequencer.
 
 ```javascript
 var handler = function(e) {};
-s.on("enter", handler);
-s.off("enter", handler);
+s.on("change", handler);
+s.off("change", handler);
 ```
 
 
-#### Initial Events
-
-The classical pattern for programming towards an event source typically involves two steps
-
-1. fetch the current state from the event source
-2. register event handlers for listening to subsequent changes to the state of the event source
-
-The Sequencer event API simplifies this process for the programmer by delivering current state ([active cues](#activecue)) as events on handler callback, *just after* an event handler is registered, but before any subsequent events. So, registering a handler or event types "enter" or "events" will cause a batch of initial "enter" events corresponding to [active cues](#activecue). This is equivalent to current state being empty initially, but then changing quickly. This implies that current state based on [active cues](#activecue) can always be built the same way, through a single event handler. In this context, *just after* means that the events will be dispatched to the JaveScript task queue during .on() call, and consequently not be processed until after the current task has completed.  
-
-Read more about initial events in [Initial Events Background](background_eventing.html).
-
-
-#### Event delay
+#### event delay
 Note that event delay is not a direct measure of the timeliness of the Sequencer. This is because dueTs is derived from the timestamp of the underlying timing object. In particular, whenever a timing object connected to an online timing resource is updated, the effects will suffer network delay before clients (Sequencers) are notified. The Sequencer is aware of the distributed nature of the timing object, and takes such delays into account. In short, the Sequencer replays events that should ideally have been emitted earlier, were it not for the network delay. This effect can only be observed for a brief moment following "change" events from the timing object. In these cases, dueTs effectively means the time when the event would have been emitted if network delay was zero. This behavior of the Sequencer also ensures consistent behaviour between distributed Sequencers (provided that they are working on the same collection of timed data).
 
-#### Event ordering.
+#### event ordering.
 
-If multiple Intervals are bound to the same endpoint, multiple events will be emitted according to the following ordering, given that direction of the timing object is forwards. If direction is backwards, the ordering is reversed.
+If multiple Interval endpoints are bound to the same point on the timeline, playback across this point implies that multiple events should be emitted at the same time. In this case, events will be emitted according to the following ordering, given that direction of the timing object is forwards. If direction is backwards, the ordering is reversed.
 
-- > exit Interval with > exit-endpoint
+- \> exit Interval with > exit-endpoint
 - [ enter Interval with [ enter-endpoint
 - [ enter singular Interval
 - ] exit singular Interval

@@ -273,7 +273,14 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		Sequencer EArgs
 	*/
 
-					
+	var seqOpType = function (op) {
+		if (op === OpType.INIT) return "init";
+		if (op === OpType.NONE) return "motion";
+		if (op === OpType.ADD) return "create";
+		if (op === OpType.UPDATE || op === OpType.REPEAT) return "update";
+		if (op === OpType.REMOVE) return "delete";
+		return "";
+	};
 			
 	var SequencerEArgs = function (sequencer, key, interval, data, directionInt, point, ts, dueTs, op, verb) {
 		var directionType = DirectionType.fromInteger(directionInt);
@@ -288,7 +295,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		this.delay = ts - dueTs;
 		this.directionType = directionType;
 		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
-		this.op = op;
+		this.cause = seqOpType(op);
 		this.enter = (verb === VerbType.ENTER);
 		this.exit = (verb === VerbType.EXIT);
 	};
@@ -301,7 +308,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         var verb = "none";
         if (this.enter) verb = "enter";
         else if (this.exit) verb = "exit";
-        s += " (" + this.op + "," + verb + ")";
+        s += " (" + this.cause + "," + verb + ")";
         s += " " + this.directionType;
         s += " " + this.pointType;
         s += " delay:" + this.delay.toFixed(4);

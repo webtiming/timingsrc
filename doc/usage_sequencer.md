@@ -102,7 +102,7 @@ for (var i=0; i<array.length; i++) {
 
 ## Develop UI
 
-To implement a timed Web presentation using the Sequencer, simply translate "enter" and "exit" events into approapriate effects in the DOM. The following example shows how a timing sensitive data viewer can easily be built by virtue of connecting a Sequencer to a DOM element. The Sequencer effectively takes care of adding active cues to the DOM, and removing inactive cues from the DOM, always at the correct time.
+To implement a timed Web presentation using the Sequencer, simply translate "change" and "remove" events into approapriate effects in the DOM. The following example shows how a timing sensitive data viewer can easily be built by virtue of connecting a Sequencer to a DOM element. The Sequencer effectively takes care of adding active cues to the DOM, and removing inactive cues from the DOM, always at the correct time.
 
 ```javascript
 /*
@@ -112,20 +112,20 @@ To implement a timed Web presentation using the Sequencer, simply translate "ent
 */
 var viewer = function (sequencer, elem) {
     var key = undefined;
-    var enter = function (e) {
+    var change = function (e) {
         key = e.key;
         elem.innerHTML = e.data;
         console.log(e.toString());
     };
-    var exit = function (e) {
+    var remove = function (e) {
         if (e.key === key) {
             elem.innerHTML = "";
             key = undefined;
         }
         console.log(e.toString());
     };
-    sequencer.on("enter", enter);
-    sequencer.on("exit", exit);
+    sequencer.on("change", change);
+    sequencer.on("remove", remove);
 };
 viewer(s, document.getElementById("viewer"));
 ```

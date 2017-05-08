@@ -78,7 +78,7 @@
               var verb = "none";
               if (e.enter) verb = "enter";
               else if (e.exit) verb = "exit";
-              s += " (" + e.op + "," + verb + ")";
+              s += " (" + e.cause + "," + verb + ")";
               if (e.data) s += " " + JSON.stringify(e.data);
               console.log(s);
             });

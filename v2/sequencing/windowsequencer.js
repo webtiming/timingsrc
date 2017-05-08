@@ -204,7 +204,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	    			interval : item.interval,
 	    			data : item.data,
 	    			type : "change",
-	    			op : "init",
+	    			cause: "init",
 	    			enter : true,
 	    			exit : false
 	    		};
@@ -238,6 +238,16 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 		return op;
 	};
 
+	var seqOpType = function (op) {
+		if (op === "init") return "init";
+		if (op === "none") return "motion";
+		if (op === "add") return "create";
+		if (op === "update" || op === "repeat") return "update";
+		if (op === "remove") return "delete";
+		return "";
+	};
+		
+
 
 	WindowSequencer.prototype._getItem = function (axisOpList, key) {
 		var item;
@@ -247,6 +257,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
     		item = this._axis.getItem(key);
     		item.type = "none";
     	}
+    	item.type = seqOpType(item.type);
     	return item;
 	};
 
@@ -303,7 +314,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	    			interval : item.interval,
 	    			type : "remove",
 	    			data : item.data,
-	    			op : item.type,
+	    			cause : item.type,
 	    			enter: false,
 	    			exit : true
 	    		}
@@ -318,7 +329,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	    			interval: item.interval,
 	    			type: "change",
 	    			data: item.data,
-	    			op : item.type,
+	    			cause : item.type,
 	    			enter : true,
 	    			exit : false
 	    		}
@@ -333,7 +344,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	    			interval: item.interval,
 	    			type: "change",
 	    			data: item.data,
-	    			op : item.type,
+	    			cause : item.type,
 	    			enter : false,
 	    			exit : false
 	    		}
