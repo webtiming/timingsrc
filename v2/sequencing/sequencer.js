@@ -276,9 +276,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	var seqOpType = function (op) {
 		if (op === OpType.INIT) return "init";
 		if (op === OpType.NONE) return "motion";
-		if (op === OpType.ADD) return "create";
+		if (op === OpType.ADD) return "add";
 		if (op === OpType.UPDATE || op === OpType.REPEAT) return "update";
-		if (op === OpType.REMOVE) return "delete";
+		if (op === OpType.REMOVE) return "remove";
 		return "";
 	};
 			
@@ -349,6 +349,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		this._currentTimeoutPoint = null; // point associated with current timeout
 		this._activeKeys = {}; // (key -> undefined)
 
+		this._first = false;
 		this._ready = new eventify.EventBoolean(false, {init:true});
 
 		// set up eventing stuff
@@ -443,24 +444,23 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 
 	Sequencer.prototype._onTimingChange = function (event) {
-
 	    var now = this._to.clock.now();
 	    var initVector = this._to.vector;		
-		if (this._ready.value === false) {
-			// initialization	
-			
+		if (this._first === false) {
 			// Initial update from timing object starts the sequencer
 			this._schedule = new Schedule(now);
 			// Register handler on axis
 			this._axis.on("events", this._wrappedOnAxisChange, this);
-			// ready
-			this._ready.value = true;
+			// ensure that sequencer execution starts with initial events from axis
+			this._first = true;
+			return;
+		} else if (this._ready.value === false) {
+			return;
 		} else {
 	    	// set time (a little) back for live (delayed) updates ?
 	    	// since timingobjects may switch source there is no longer 
 	    	// a way to distinguish a live update from one originating
 	    	// from timingobject switching source  
-
 	    	// Empty schedule
 	    	this._schedule.advance(now);
 	    }
@@ -614,6 +614,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	Sequencer.prototype._onAxisChange = function (origOpList) {
 		var self = this;
+
+		// sequencer becomes ready when first onTimingChange and then onAxisChange has fired.
+		if (this._ready.value === false) {
+			this._ready.value = true;
+		}
 
 		// filter out NOOPS (i.e. remove operations that removed nothing)
 		origOpList = origOpList.filter(function (op) {

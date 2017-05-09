@@ -45,17 +45,20 @@
               s.addCue("five", new Interval(4.4, 5.5), "five.data");
               s.removeCue("five");
               s.addCue("five", new Interval(4.4, 5.6), "five.data");
+
+              s.on("events", function (eList) {
+                eList.forEach(function (item) {
+                    console.log(item.e.toString());
+                });
+              });
+
+
             });
 
 
             //s.on("enter", function (e) {console.log(e.toString())});
             //s.on("exit", function (e) {console.log(e.toString())});
-            s.on("events", function (eList) {
-              eList.forEach(function (item) {
-                  console.log(item.e.toString());
-              });
-            });
-
+        
             var jumpRunBtn = document.getElementById("jumprun");
             jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
             var pauseBtn = document.getElementById("pause");

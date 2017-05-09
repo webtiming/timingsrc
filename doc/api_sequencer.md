@@ -24,7 +24,7 @@ An *Interval* defines when a *key* is *active* or *inactive*, according to a tim
 
 Sequencers in the timingsrc library uses [TimingObject](http://webtiming.github.io/timingobject) as timing source. The main function of a Sequencer is to emit [change](#change) and [remove](#remove) events at the correct time, as cue intervals dynamically transition between *active* and *inactive*. Change means that the cue has become active, or that it remained active while the cue data changed in some way. Remove means the cue became inactive, or was removed from the Sequencer all together. Sequencers also maintain a list of *active cues*, always consistent with the history of event callbacks and the state of the timing object. The Sequencer API is similar to the [TrackElement](http://www.html5rocks.com/en/tutorials/track/basics/) API.
 
-> A Sequencer is data agnostic and can therefore be used by any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
+> A Sequencer is data agnostic and may therefore be used by any application-specific data model, provided only that application data can be associated with unique keys, and that temporal aspects can be expressed in terms of intervals or singular points.
 
 
 <a name="toc"></a>
@@ -151,7 +151,7 @@ var eArg = {
     delay : 0.9,					 // lateness in milliseconds relative to dueTs
     directionType : "forwards",		 // direction of timingobject at point {"backwards"|"forwards"|"nodirection"}
     type : "change"				     // cue event type {"change","remove"}
-    op : "add"                       // operation type {"init", "add", "update", "remove", "none"}
+    cause : "add"                    // operation type {"init", "add", "update", "remove", "motion"}
     enter: true                      // enter flag {true, false}
     exit: false                      // exit flag {true, false}
 };
@@ -186,6 +186,23 @@ var s = new TIMINGSRC.Sequencer(timingObjectA, timingObjectB);
 - param: {object} [timingObjectB] Timing object B represents the other endpoint of the *active interval* of the IntervaSequencer. 
 
 
+### Readiness
+
+The sequencer becomes ready when its timing object is ready and necessary initialization is done. 
+
+- Event handlers may be registered before the sequencer is ready. 
+- Cues may also be added before the sequencer is ready
+
+The sequencer also defines a *ready* promise, although this is typically not important as handlers and cues may be added without regard for readiness.
+
+#### .isReady()
+- returns : {boolean}
+
+```javascript
+s.ready.then(function(){
+    // now the sequencer is ready
+})
+```
 
 ### Operations
 
@@ -354,26 +371,26 @@ Event flags "enter" and "exit" relate to changes to the set of [active cues](#ac
 
 #### cause
 
-Events also expose the *cause* of the event {"init", "create", "update", "delete", "motion"}.
+Events also expose the *cause* of the event {"init", "add", "update", "remove", "motion"}.
 
-- "init"   : [Initial events](background_eventing.html) communicate active cues when event handler is registered.
-- "create" : cue added to the sequencer
+- "init"   : initial events corresponding to active cues
+- "add"    : cue added to the sequencer
 - "update" : cue updated (i.e. replaced)
-- "delete" : cue removed from sequencer
+- "remove" : cue removed from sequencer
 - "motion" : cue event due to motion of the timing object (e.g. playback).
 
-
+  
 #### permutations
 
 These are the legal permutations expressed as tuples <code>(type, cause, enter, exit)</code>
 
-- ("change", "init"  , true,  false) : initial events when event handler is registered
-- ("change", "create", true,  false) : cue added and became active
+- ("change", "init"  , true,  false) : initial events (active cues)
+- ("change", "add"   , true,  false) : added cue became active
 - ("change", "update", true,  false) : inactive cue updated and became active
 - ("change", "update", true,  false) : inactive cue became active during playback
 - ("change", "update", false, false) : active cue updated and remained active
 - ("remove", "update", false, true ) : active cue updated and became inactive
-- ("remove", "delete", false, true ) : active cue removed
+- ("remove", "remove", false, true ) : active cue removed
 - ("remove", "motion", false, true ) : active cue became inactive during playback
 
 

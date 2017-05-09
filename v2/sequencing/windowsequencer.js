@@ -241,9 +241,9 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	var seqOpType = function (op) {
 		if (op === "init") return "init";
 		if (op === "none") return "motion";
-		if (op === "add") return "create";
+		if (op === "add") return "add";
 		if (op === "update" || op === "repeat") return "update";
-		if (op === "remove") return "delete";
+		if (op === "remove") return "remove";
 		return "";
 	};
 		

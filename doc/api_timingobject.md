@@ -40,6 +40,57 @@ Note that options *range* and *vector* are ignored if option *timingsrc* is supp
 
 ---
 
+
+#### .isReady()
+- returns : {boolean}
+
+The timing object becomes ready when its internal vector and clock is defined.
+Local timing objects are ready immediately after instantiation. 
+However, timing objects depending on a parent timingsrc may not be ready immediately, so as a general rule timing objects should not be queried until after they are ready.
+
+- if not ready, position, velocity and acceleration are undefined.
+- event handlers may be registered before the timing object is ready.
+
+---
+
+#### .ready
+
+The timing object also defines a *ready* promise.
+
+```javascript
+timingObject.ready.then(function(){
+    // now the timing object is ready
+});
+```
+
+---
+
+#### .timingsrc
+The timingsrc property, if defined, denotes a parent object, on which the timing object depends.
+
+The timingsrc property points to one of the following
+
+- [timing provider](api_timingprovider.html)
+- [timing object](api_timingobject.html)
+- [timing converter](api:timingconverter.html)
+
+Local timing objects are defined without a timingsrc, so their
+timingsrc property should be undefined. However, internally, an InternalProvider object
+is created as timingsrc.
+
+The timingsrc property is both a getter and setter. 
+
+```javascript
+// connecting timing object with external timing provider
+timingObject.timingsrc = timingProvider;
+// disconnecting timing object from external timing provider
+timingObject.timingsrc = undefined;
+// connecting timingobject to another timing object
+timingObject.timingsrc = anotherTimingObject;
+```
+
+---
+
 #### .query()
 Returns a snapshot vector of the timing object
 
@@ -69,7 +120,7 @@ timingObject.update({position:14.0});
 
 ---
 
-#### Event types
+#### event types
 Timing objects supports two event types ["change", "timeupdate"].
 
 - Event type "change" is emitted after every update operation. 
@@ -109,31 +160,6 @@ timingObject.off(type, handler);
 
 ---
 
-#### .timingsrc
-The timingsrc property, if defined, denotes a parent object, on which the timing object depends.
-
-The timingsrc property points to one of the following
-
-- [timing provider](api_timingprovider.html)
-- [timing object](api_timingobject.html)
-- [timing converter](api:timingconverter.html)
-
-Local timing objects are defined without a timingsrc, so their
-timingsrc property should be undefined. However, internally, an InternalProvider object
-is created as timingsrc.
-
-The timingsrc property is both a getter and setter. 
-
-```javascript
-// connecting timing object with external timing provider
-timingObject.timingsrc = timingProvider;
-// disconnecting timing object from external timing provider
-timingObject.timingsrc = undefined;
-// connecting timingobject to another timing object
-timingObject.timingsrc = anotherTimingObject;
-```
-
----
 
 #### .range
 Getter for range of timing object

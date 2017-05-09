@@ -13,8 +13,7 @@ This describes the Timing Converter API
 
 #### Timing Converter
 
-All timing converters implement the [Timing Object API](api_timingobject.html),
-and extend this API with a *timingsrc* property that identifies the source timing object (on which the timing converter depends).
+All timing converters implement the [Timing Object API](api_timingobject.html).
 
 - [SkewConverter](#skewconverter)
 - [ScaleConverter](#scaleconverter)
@@ -24,17 +23,6 @@ and extend this API with a *timingsrc* property that identifies the source timin
 - [LoopConverter](#loopconverter)
 - [LocalConverter](#localconverter)
 - [DerivativeConverter](#derivativeconverter)
-
-
-#### .timingsrc
-Getter and setter for source timing object.
-
-```javascript
-// getter
-var timingObject = timingConverter.timingsrc;
-// setter
-timingConverter.timingsrc = timingObject;
-```
 
 
 
