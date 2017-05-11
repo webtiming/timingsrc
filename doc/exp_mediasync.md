@@ -2,6 +2,7 @@
 layout: default
 title: Example MediaSync (page-local)
 demojs : exp_mediasync
+mediasync: 1
 ---
 
 - [MediaSync Background](background_mediasync.html) 
@@ -40,6 +41,8 @@ Synchronization and control of two video elements using timing object. Both vide
       <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
   </video>
 </p>
+
+
 
 
 #### JavaScript

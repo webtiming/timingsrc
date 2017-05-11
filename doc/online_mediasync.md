@@ -3,6 +3,7 @@ layout: default
 title: Example MediaSync (multi-device)
 demojs : exp_mediasync
 appidmcorp: 8456579076771837888
+mediasync: 1
 ---
 
 - [MediaSync Background](background_mediasync.html) 
