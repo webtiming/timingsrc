@@ -43,7 +43,11 @@ Synchronization and control of two video elements using timing object. Both vide
 </p>
 
 
+#### HTML
 
+```html
+<script text="javascript" src="https://mcorp.no/lib/mediasync.js"></script>
+```
 
 #### JavaScript
 
@@ -52,8 +56,8 @@ Synchronization and control of two video elements using timing object. Both vide
 var to = new TIMINGSRC.TimingObject({range:[0,100]});
 
 // set up video sync
-var sync1 = new TIMINGSRC.MediaSync(document.getElementById('player1'), to);
+var sync1 = MCorp.mediaSync(document.getElementById('player1'), to);
 
 // set up video sync
-var sync2 = new TIMINGSRC.MediaSync(document.getElementById('player2'), to);
+var sync2 = MCorp.mediaSync(document.getElementById('player2'), to);
 ```    

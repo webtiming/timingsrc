@@ -2,6 +2,7 @@
 <html>
 <head>
   <script text="javascript" src="../lib/timingsrc.js"></script>
+  <script text="javascript" src="https://mcorp.no/lib/mediasync.js"></script>
   <script type="text/javascript">
       var m, w;
 
@@ -46,10 +47,10 @@
         });
 
         // set up video sync
-        var sync1 = new TIMINGSRC.MediaSync(document.getElementById('player1'), to);
+        var sync1 = MCorp.mediaSync(document.getElementById('player1'), to);
 
         // set up video sync
-        var sync2 = new TIMINGSRC.MediaSync(document.getElementById('player2'), to);
+        var sync2 = MCorp.mediaSync(document.getElementById('player2'), to);
 
       };
 
