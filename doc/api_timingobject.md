@@ -74,11 +74,10 @@ The timingsrc property points to one of the following
 - [timing object](api_timingobject.html)
 - [timing converter](api:timingconverter.html)
 
-Local timing objects are defined without a timingsrc, so their
-timingsrc property should be undefined. However, internally, an InternalProvider object
-is created as timingsrc.
-
 The timingsrc property is both a getter and setter. 
+
+Local timing objects are defined without a timingsrc, so their
+timingsrc property is undefined.
 
 ```javascript
 // connecting timing object with external timing provider
