@@ -1,7 +1,7 @@
 With temporal interoperability established as a goal for the Web, this section
 surveys current abilities and limitations of the Web with respect to
 media synchronization. The Web platform\footnote{In this chapter, the Web is
-seen through the eyes of an end user browsing the Web with her favorite
+seen through the eyes of an end user browsing the Web with his/her favorite
 \emph{user agent} in 2017.} is composed of a series of technologies centered
 around the \emph{Hypertext Markup Language (HTML)}. These technologies have
 been developed over the years and have grown steadily since the advent of
@@ -66,8 +66,8 @@ ticking no matter what.
 \item{
 
 The \emph{playbackRate} property was motivated by the fast forward and rewind
-features of \emph{digital video disc (DVD)} players and previously
-\emph{videocassette recorders (VCR)}. It was not meant for precise control of
+features of \emph{Digital Video Disc (DVD)} players and previously
+\emph{Videocassette Recorders (VCR)}. It was not meant for precise control of
 playback velocity on the media timeline.
 
 }
@@ -96,7 +96,7 @@ the Web page has had the focus during that time). In particular, Web browsers
 may choose to wait a further arbitrary length of time. This allows browsers to
 optimise power consumption on devices that are in low-power mode. Even if
 browsers do not wait any further, the event loop may introduce further delays
-(see Sect. ~\ref{sec:eventloop}). Surprisingly, browsers also fire timers too
+(see Section~\ref{sec:eventloop}). Surprisingly, browsers also fire timers too
 early on occasion. All in all, the precision of timeouts is not guaranteed on
 the Web, although experience shows that timeouts are relatively reliable in
 practice.
@@ -146,7 +146,7 @@ The specification also defines the notion of a \emph{document timeline}
 that provides time values tied to the global clock for a particular document.
 It is easy to relate the global clock of Web Animations with other clocks
 available to a Web application (e.g. the \emph{High Resolution Time} clock mentioned
-in Sect.~\ref{sec:hrt}). However, the specification acknowledges that the setup of some
+in Section~\ref{sec:hrt}). However, the specification acknowledges that the setup of some
 animations \emph{may incur some setup overhead}, for instance when the user agent
 delegates the animation to specialized graphics hardware. In other words, the
 exact start time of an animation cannot be known a priori.
@@ -174,7 +174,7 @@ clock.
 
 The precision of the timestamp value is currently limited to milliseconds, but
 Google has now switched to using higher resolution timestamps associated with
-the \emph{high resolution clock} (see Sect.~\ref{sec:hrt}). On top of
+the \emph{high resolution clock} (see Section~\ref{sec:hrt}). On top of
 improving the precision down to a few microseconds, this change also means
 that the monotonicity of timestamp values can now be guaranteed. This change
 will hopefully be included in a future revision of the DOM standard and
@@ -189,7 +189,7 @@ On the Web, all activities (including \emph{events, user interactions,
 scripts, rendering, networking}) are coordinated through the use of an
 \emph{event loop}\footnote{There may be more than one event loop, more than
 one queue of tasks per event loop, and event loops also have a micro-task
-queue that helps prioritize some of the tasks added by HTML algorithms, but
+queue that helps prioritizing some of the tasks added by HTML algorithms, but
 this does not change the gist of the comments contained in this section.},
 composed of a queue of tasks that are run in sequence. For instance, when the
 user clicks a button, the user agent queues a task on the event loop to
@@ -225,7 +225,7 @@ than one millisecond precision on the Web today if the event loop is involved.
 
 In JavaScript, the \emph{Date} class exposes the system clock to Web
 applications. An instance of this class represents a number of milliseconds
-since 1. January, 1970 UTC. In many cases, this clock is a good enough
+since January 1., 1970 UTC. In many cases, this clock is a good enough
 reference. It has a couple of drawbacks though:
 
 \begin{enumerate}
@@ -281,7 +281,7 @@ audio rendering.
 
 Sample frames exposed by the Web Audio API have a \emph{currentTime} property that
 represents the position on the Audio timeline, according to the clock used to
-generate the audio stream, in other words the hardware clock of the underlying
+generate the audio stream. In other words, the hardware clock of the underlying
 sound card. As alluded to in the specification, this clock \emph{may not be
 synchronized with other clocks in the system}. In particular, there is little
 chance that this clock be synchronized with the High Resolution Time clock,
@@ -325,16 +325,16 @@ are \emph{read-only} (i.e. media controls do not apply), and thus cannot be
 adjusted for synchronization\footnote{In the future, it may be possible to re-create 
 a seekable stream out of a MediaStream, thanks to the
 \emph{MediaRecorder} interface defined in the MediaStream Recording
-specification. This specification is not yet stable when this book is
+specification~\cite{mediastreamrecording}. This specification is not yet stable when this book is
 written.}.
 
 
-\subsection{Web RTC}
+\subsection{WebRTC}
 \label{sec:webrtc}
 
 Work on \emph{Web Real-Time Communication (WebRTC)} and its first specification, 
 the WebRTC 1.0: Real-time Communication Between Browsers
-specification~\cite{webrtc} started at the same time as the work on media
+specification~\cite{webrtc}, started at the same time as the work on media
 capture, in 2011. As the name suggests, the specification allows media and
 data to be sent to and received from another browser. There is no fixed timing
 defined, and the goal is to minimize latency. How this is achieved in practice

@@ -1,16 +1,17 @@
 The Web is all about modularity, composition and interoperability, and this
-applies across the board, from HTML-based layout and styling to JavaScript-based
-tools and frameworks. Unfortunately, there is a notable exception to
-this rule. Composing presentations from multiple, timed media components is
-far from easy. For instance, consider a Web page covering motor sport, using
-Web Audio~\cite{webaudio} for sound effects and visuals made from HTML5
-videos, a map with timed GPS-data, WebGL~\cite{webgl} for timed infographics,
-a timed Twitter~\cite{twitter} widget for social integration, and finally an
-ad-banner for paid advertisements timed to the race.
+applies across the board, from layout and styling defined in \emph{Hypertext
+Markup Language (HTML)} to JavaScript-based tools and frameworks.
+Unfortunately, there is a notable exception to this rule. Composing
+presentations from multiple, timed media components is far from easy. For
+example, consider a Web page covering motor sport, using Web
+Audio~\cite{webaudio} for sound effects and visuals made from HTML5~\cite{html5} videos, a
+map with timed GPS-data, WebGL~\cite{webgl} for timed infographics, a timed
+Twitter~\cite{twitter} widget for social integration, and finally an ad-banner
+for paid advertisements timed to the race.
 
 In this chapter we focus on media synchronization challenges of this kind,
 making multiple, heterogeneous media components operate consistently with
-reference to a common timeline, as well as common media control. This, we call
+reference to a common timeline, as well as common media control. We call this
 \emph{temporal interoperability}. Lack of support for temporal
 interoperability represents a significant deviation from the core principles
 of the Web. Harnessing the combined powers of timed media components
@@ -46,11 +47,11 @@ object~\cite{timingobject} and also maintains
 the timing object programming model. The chapter also describes the
 \emph{motion model}, which provides online synchronization of timing objects.
 
-The chapter is structured as follows: Sect.~\ref{sec:mediasync} defines media
+The chapter is structured as follows: Section~\ref{sec:mediasync} defines media
 synchronization as a term and briefly presents common challenges for
 synchronization on the Web. The motion model is presented in
-Sect.~\ref{sec:model} followed by an introduction to temporal interoperability
-and external timing in Sect.~\ref{sec:interoperability}. Sect.~\ref{sec:web} surveys the abilities and limitations of Web technologies with respect to media synchronization.
-Sect.~\ref{sec:motion} gives a more detailed presentation of the motion model, including online motion synchronization, synchronization of AV media and timed data. Evaluation is presented in Sect.~\ref{sec:eval}.
-Sect.~\ref{sec:standard} briefly references the standardization initiative before
-conclusions are given in Sect.~\ref{sec:concl}.
+Section~\ref{sec:model} followed by an introduction to temporal interoperability
+and external timing in Section~\ref{sec:interoperability}. Section~\ref{sec:web} surveys the abilities and limitations of Web technologies with respect to media synchronization.
+Section~\ref{sec:motion} gives a more detailed presentation of the motion model, including online motion synchronization, synchronization of AV media and timed data. Evaluation is presented in Section~\ref{sec:eval}.
+Section~\ref{sec:standard} briefly references the standardization initiative before
+conclusions are given in Section~\ref{sec:concl}.

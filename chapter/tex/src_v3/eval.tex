@@ -22,8 +22,8 @@ place, and across a wide range of devices. As such, the value of a production
 grade online service is also confirmed.
 
 Furthermore, the precision of motion synchronization degrades well with poor
-network conditions. For instance, experiments with video synchronization in
-EDGE connectivity has not been visibly worse, except for longer update
+network conditions. For instance, experiments with video synchronization in \emph{Enhanced Data rates for GSM Evolution (EDGE)}
+connectivity has not been visibly worse, except for longer update
 latency. In this instance, video data was fetched from local files.
 Conferences are also notorious hotspots for bad connectivity. In these
 circumstances, availability of media data consistently fails before
@@ -63,8 +63,11 @@ Website~\cite{mtcg}.
 \includegraphics[scale=.23]{fig/android-video.png}
 \caption{The figure illustrates an experiment with video (mp4) synchronization on
 Android using Chrome browser. The plot shows currentTime compared to the ideal
-playback position defined by motion. The green band (echoless) is +-10 millisecond and
-the yellow (frame accurate is) +-25 millisecond. This is achived using variable playbackRate.}
+playback position defined by motion. The X-axis denotes the timeline of the experiment (seconds).
+The left Y-axis denotes difference \emph{Diff} (milliseconds) between currentTime and motion.
+The green band (echoless) is +-10 millisecond and the yellow (frame accurate is) +-25 millisecond. 
+This is achived using variable playbackRate. No skips were performed in this experiment. 
+The right Y-axis denotes the value of playbackrate (seconds per second). The media element was muted until playbackrate stabilized.}
 \label{fig:videosync}
 \end{figure}
 

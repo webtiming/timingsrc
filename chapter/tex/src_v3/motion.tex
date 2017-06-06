@@ -17,7 +17,7 @@ of a point, along an axis (timeline). At any moment the point has well
 defined position, velocity and acceleration\footnote{Some animation frameworks
 support acceleration. Acceleration broadens the utility of motions, yet will
 likely be ignored in common use cases in classical media (see
-Sect.~\ref{sec:toomuch}).}. Velocity and acceleration describe continuous
+Section~\ref{sec:toomuch}).}. Velocity and acceleration describe continuous
 movements. Velocity is defined as position-change per second, whereas
 acceleration is defined as position- change per second squared. Discrete jumps
 on the timeline are also supported, simply by modifying the position of the
@@ -138,7 +138,7 @@ for one of the media components, connected to the motion. This is supported by
 motion, each implementing different transformations such as scaling and
 looping. Timing converters may also be chained. Timing converters implement
 the \emph{timing object API}, so media components can not distinguish between
-a timing object and a timig converter. A number of timing converters are
+a timing object and a timing converter. A number of timing converters are
 implemented in the Timingsrc programming model~\cite{timingsrc}.
 
 \runinhead{Flexibility:}
@@ -172,14 +172,14 @@ update operation should be evidence of a distributed nature.
 %\sidecaption
 \centering
 \includegraphics[scale=.3]{fig/motion-model-2.png}
-\caption{Timing objects (red unfilled circles) mediate access to online motion. Timing objects may be shared by independent mediacomponents within the same browsing context.}
+\caption{(Fig.~\ref{fig:model-2} repeated for convenience.) Timing objects (red unfilled circles) mediate access to online motion. Timing objects may be shared by independent media components within the same browsing context.}
 \label{fig:model-repeat}
 \end{figure}
 
 To support this abstraction, precise, distributed \emph{motion
 synchronization} is required. In particular, the internal \emph{clock} of the
 motion must be precisely synchronized with the clock at the online motion
-server. Synchronized system clocks (e.g. NTP~\cite{ntp} or PTP~\cite{ptp}) is
+server. Synchronized system clocks (e.g. \emph{Network Time Protocol (NTP)}~\cite{ntp} or \emph{Precision Time Protocol (PTP)}~\cite{ptp}) is
 generally not a valid assumption in the Web domain.  As a consequence, an
 alternative method of estimating a shared clock needs to be used, for example
 by sampling an online clock directly. In addition, low latency is important
@@ -192,15 +192,14 @@ leave synchronization at any time, or fail, without affecting the
 synchronization of other agents. Motion synchronization is discussed in more
 detail in~\cite{msv}.
 
-\emph{InMotion} is a hosting service for online motions, built by spin off
-company Motion Corporation~\cite{mcorp}. A dedicated onlice service supporting
+\emph{InMotion} is a hosting service for online motions, built by the Motion Corporation~\cite{mcorp}. A dedicated onlice service supporting
 online motions is likely key to achieving non-functional goals, such as
 high availability, reliability and scalability. Evaluation of
-motion synchronization is presented in Sect.~\ref{sec:eval}.
+motion synchronization is presented in Section~\ref{sec:eval}.
 
 Finally, the timing object API emphasizes an attractive programming model for
 multi-device media applications. In particular, by making online motions
-available under the same API as local motions (see Sect.~\ref{sec:motionapi}),
+available under the same API as local motions (see Section~\ref{sec:motionapi}),
 media components may be used in single-page as well as multi-device media
 experiences, without modification. Also, by hiding the complexity of
 distributed motion synchronization, application developers may focus on
@@ -212,7 +211,7 @@ media.
 \label{sec:avsync}
 
 On the Web, playback of audio and video is supported by HTML5 media
-elements\cite{html5media}. Synchronizing media elements relative to a timing
+elements~\cite{html5media}. Synchronizing media elements relative to a timing
 object means that the \emph{currentTime} property (i.e. media offset) must be
 kept equal to the position of the timing object at all times, at least to a
 good approximation. The general approach is simply to monitor the media
@@ -220,14 +219,14 @@ element continuously, and try to rectify whenever the synchronization error
 grows beyond a certain threshold. For larger errors \emph{seekTo} is used. This is
 typically the case on \emph{page load}, or after timing object \emph{change} events. Smaller
 errors are rectified gradually by manipulating \emph{playbackrate}. \emph{SeekTo} is
-quite disruptive to the user experience, so support for variable playbackrate
+quite disruptive to the user experience, so support for variable \emph{playbackrate}
 is currently required for high quality synchronization.
 
 \emph{MediaSync} is a JavaScript library allowing HTML5 media elements to be
 synchronized by timing objects. The MediaSync library targets usage across the
 most common Web browsers, so it is not optimized for any particular scenario.
 Though synchronization of HTML5 media is simple in theory, it involves a few
-practical challenges, as indicated in Sect.~\ref{sec:web-html}. First,
+practical challenges, as indicated in Section~\ref{sec:web-html}. First,
 \emph{currentTime} is only a coarse representation of the media offset, and it
 fluctuates considerably when compared to the system clock. The MediaSync
 library solves this by collecting a backlog of samples, from which a value of
@@ -240,7 +239,7 @@ for a fixed target when it should be aiming for a moving target. The MediaSync
 library compensates for this by overshooting the target. Furthermore, in order
 to overshoot by the correct amount, the algorithm collects statistics from
 every seekTo operation. Surprisingly perhaps, this strategy works reasonably
-well. Evaluation for the MediaSync library is presented in Sect.~\ref{sec:eval}.
+well. Evaluation for the MediaSync library is presented in Section~\ref{sec:eval}.
 
 
 \subsection{Synchronizing timed data}
@@ -271,13 +270,13 @@ data type and supports dynamic changes to cues during playback.
 
 The sequencer is implemented as a JavaScript library and made available as
 part of the open-source \emph{Timingsrc}~\cite{timingsrc} programming model
-(see Sect.~\ref{sec:standard}). In the interest of precisely synchronized
-activation and deactivation and low cpu consumption, the sequencer
+(see Section~\ref{sec:standard}). In the interest of precisely synchronized
+activation and deactivation and low CPU consumption, the sequencer
 implementation is not based on frequent polling. Instead, the deterministic
 nature of the timing object allows events to be calculated and scheduled using
 \emph{setTimeout}, the timeout mechanism available in Web browsers. Though
 this mechanism is not optimized for precision, Web browsers may be precise
-down to a few milliseconds. The sequencer is presentation in further detail in~\cite{sequencer}.
+down to a few milliseconds. The sequencer is presented in further detail in~\cite{sequencer}.
 
 
 

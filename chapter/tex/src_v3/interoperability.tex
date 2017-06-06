@@ -22,10 +22,11 @@ motion model.
 
 \subsection{Internal timing}
 
-Internal timing is the most familiar one, where media components are typically
-media players or frameworks internalizing aspects of timing and control.
-Synchronizing such media components is an external process, utilizing the
-control primitives provided by each component.
+Internal timing (Fig.~\ref{fig:internalexternal} - left) is the most
+familiar one, where media components are typically media players or frameworks
+internalizing aspects of timing and control. Synchronizing such media
+components is an external process, utilizing the control primitives provided
+by each component.
 
 Internal timing means that media components implement timed operations
 internally, based on the system clock or some other (hardware) timer and state
@@ -41,14 +42,14 @@ procedures, buffering, decoding and AV-subsystems.
 
 \subsection {External timing}
 
-External timing is the opposite approach, where media components consider
-themselves parts of a bigger experience. Such media components are explicitly
-designed to take direction from an external motion, and always do their best
-to synchronize their own behavior accordingly. If multiple media components
-are connected to the same external motion, synchronized behavior across media
-components follows by implication. In this approach, media synchronization is
-redefined as an internal challenge, to be addressed by each media component
-independently.
+External timing (Fig.~\ref{fig:internalexternal} - right) is the opposite
+approach, where media components consider themselves parts of a bigger
+experience. Such media components are explicitly designed to take direction
+from an external motion, and always do their best to synchronize their own
+behavior accordingly. If multiple media components are connected to the same
+external motion, synchronized behavior across media components follows by
+implication. In this approach, media synchronization is redefined as an
+internal challenge, to be addressed by each media component independently.
 
 
 \runinhead{Media control:}
@@ -72,7 +73,7 @@ Precision is a key ambition in media synchronization. With internal timing,
 synchronization with other media is performed using the control primitives
 that each media component defines. In the Web environment, such control
 primitives have typically not been designed with precise timing in mind  (see
-Sect.~\ref{sec:web-html}).  This makes high quality synchronization hard to
+Section~\ref{sec:web-html}).  This makes high quality synchronization hard to
 achieve. In this model media synchronization generally gets more difficult as
 the number of components increases. Heterogeneity in media types and control
 interfaces complicate matters further. For precise synchronization, external
@@ -125,7 +126,7 @@ presentation. In other words, the internal motion of live media
 components is tied to data arrival. This may be problematic in some
 applications, as differences in transport latency imply that media components
 will be out of sync. For example, live Web-based streaming solutions may be
-seconds apart, even on the same network. Timing issues with live media is even
+seconds apart, even on the same network. Timing issues with live media are even
 more evident in rich media productions involving multiple live feeds with very
 different production chains and transport mechanisms. The external timing
 approach provides the control and flexibility needed for applications to deal
