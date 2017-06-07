@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: chapter-websync.aux
+The style file: spmpsci.bst
+Database file #1: chapter-websync.bib
+You've used 46 entries,
+            2946 wiz_defined-function locations,
+            820 strings with 10327 characters,
+and the built_in function-call counts, 15979 in all, are:
+= -- 1532
+> -- 177
+< -- 6
++ -- 126
+- -- 48
+* -- 564
+:= -- 1532
+add.period$ -- 58
+call.type$ -- 46
+change.case$ -- 207
+chr.to.int$ -- 0
+cite$ -- 46
+duplicate$ -- 1666
+empty$ -- 1726
+format.name$ -- 57
+if$ -- 3685
+int.to.chr$ -- 0
+int.to.str$ -- 46
+missing$ -- 238
+newline$ -- 199
+num.names$ -- 22
+pop$ -- 789
+preamble$ -- 1
+purify$ -- 151
+quote$ -- 0
+skip$ -- 872
+stack$ -- 0
+substring$ -- 501
+swap$ -- 995
+text.length$ -- 6
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 184
+warning$ -- 0
+while$ -- 39
+width$ -- 48
+write$ -- 412

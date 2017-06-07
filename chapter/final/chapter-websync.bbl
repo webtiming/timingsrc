@@ -1,0 +1,224 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{{#1}}
+\providecommand{\urlprefix}{URL }
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{DOI~\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{DOI~\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+
+\bibitem{flash}
+Adobe: Adobe {F}lash.
+\newblock \url{https://www.adobe.com/products/flashruntimes.html}
+
+\bibitem{compositemedia}
+Arntzen, I.M., Borch, N.T.: Composite {M}edia, {A} new paradigm for online
+  media.
+\newblock In: 2013 NEM Summit (Networked Electronic Media), NEM Summit '13, pp.
+  105--110. Eurescom (2013).
+\newblock
+  \urlprefix\url{\url{http://nem-initiative.org/wp-content/uploads/2015/06/2013-NEM-Summit{\_}Proceedings.pdf}}
+
+\bibitem{timingsrc}
+Arntzen, I.M., Borch, N.T.: Timingsrc: {A} programming model for timed {W}eb
+  applications, based on the {T}iming {O}bject. {P}recise timing,
+  synchronization and control enabled for single-device and multi-device {W}eb
+  applications.
+\newblock \url{http://webtiming.github.io/timingsrc/} (2015)
+
+\bibitem{sequencer}
+Arntzen, I.M., Borch, N.T.: Data-independent {S}equencing with the {T}iming
+  {O}bject: {A} {J}ava{S}cript {S}equencer for {S}ingle-device and
+  {M}ulti-device {W}eb {M}edia.
+\newblock In: Proceedings of the 7th International Conference on Multimedia
+  Systems, MMSys '16, pp. 24:1--24:10. ACM, New York, NY, USA (2016).
+\newblock \doi{10.1145/2910017.2910614}.
+\newblock \urlprefix\url{http://doi.acm.org/10.1145/2910017.2910614}
+
+\bibitem{temporalcomposition}
+Arntzen, I.M., Borch, N.T., Daoust, F., Hazael-Massieux, D.: Multi-device
+  {L}inear {C}omposition on the {W}eb; {E}nabling {M}ulti-device {L}inear
+  {M}edia with {HTMLT}imingobject and {S}hared {M}otion.
+\newblock In: Media Synchronization Workshop (MediaSync) in conjunction with
+  ACM TVX 2015. ACM (2015).
+\newblock
+  \urlprefix\url{\url{https://sites.google.com/site/mediasynchronization/Paper4{\_}Arntzen{\_}webComposition{\_}CR.pdf}}
+
+\bibitem{msv}
+Arntzen, I.M., Borch, N.T., Needham, C.P.: The {M}edia {S}tate {V}ector: {A}
+  unifying concept for {M}ulti-device {M}edia {N}avigation.
+\newblock In: Proceedings of the 5th Workshop on Mobile Video, MoVid '13, pp.
+  61--66. ACM, New York, NY, USA (2013).
+\newblock \doi{10.1145/2457413.2457427}.
+\newblock \urlprefix\url{\url{http://doi.acm.org/10.1145/2457413.2457427}}
+
+\bibitem{timingobject}
+Arntzen, I.M., Daoust, F., Borch, N.T.: Timing {O}bject; {D}raft community
+  group report.
+\newblock \url{http://webtiming.github.io/timingobject/} (2015)
+
+\bibitem{syncreport1}
+Borch, N.T., Arntzen, I.M.: Distributed {S}ynchronization of {HTML5} {M}edia.
+\newblock Tech. Rep.~15, Norut Northern Research Institute (2014)
+
+\bibitem{syncreport2}
+Borch, N.T., Arntzen, I.M.: Mediasync {R}eport 2015: {E}valuating timed
+  playback of {HTML5} {M}edia.
+\newblock Tech. Rep.~28, Norut Northern Research Institute (2015)
+
+\bibitem{carneval}
+Video synchronization by {M}otion {C}orporation.
+\newblock \url{https://youtu.be/lfoUstnusIE} (2015)
+
+\bibitem{dom1}
+Document {O}bject {M}odel ({DOM}) {L}evel-1.
+\newblock \url{https://www.w3.org/TR/REC-DOM-Level-1/} (1998)
+
+\bibitem{dom2}
+Document {O}bject {M}odel ({DOM}) {L}evel-2.
+\newblock \url{https://www.w3.org/TR/DOM-Level-2/} (2000)
+
+\bibitem{domevents}
+Document {O}bject {M}odel ({DOM}) {L}evel-2 {E}vents.
+\newblock \url{https://www.w3.org/TR/DOM-Level-2-Events/} (2000)
+
+\bibitem{ptp}
+Eidson, J., Lee, K.: Ieee 1588 standard for a precision clock synchronization
+  protocol for networked measurement and control systems.
+\newblock In: Sensors for Industry Conference, 2002. 2nd ISA/IEEE, pp. 98--105.
+  Ieee (2002)
+
+\bibitem{google}
+Google.
+\newblock \url{https://www.google.com} (2017)
+
+\bibitem{hrt1}
+High {R}esolution {T}ime.
+\newblock \url{https://www.w3.org/TR/hr-time-1/} (2012)
+
+\bibitem{hrt2}
+High {R}esolution {T}ime {L}evel 2.
+\newblock \url{https://www.w3.org/TR/hr-time-2/} (2016)
+
+\bibitem{html32}
+{HTML} 3.2 {R}eference {S}pecification.
+\newblock \url{https://www.w3.org/TR/REC-html32} (1997)
+
+\bibitem{html5}
+{HTML5}.
+\newblock \url{https://www.w3.org/TR/html5/} (2014)
+
+\bibitem{html5media}
+{HTML5} {M}edia {E}lements.
+\newblock \url{http://dev.w3.org/html5/spec-preview/media-elements.html} (2012)
+
+\bibitem{html51}
+{HTML5.1}.
+\newblock \url{https://www.w3.org/TR/html51/} (2016)
+
+\bibitem{capture}
+Media {C}apture and {S}treams.
+\newblock \url{https://www.w3.org/TR/mediacapture-streams/} (2016)
+
+\bibitem{mediacontroller}
+{HTML5} {M}edia {C}ontroller.
+\newblock \url{https://dev.w3.org/html5/spec-preview/media-elements.html}
+  (2014)
+
+\bibitem{mse}
+Media {S}ource {E}xtensions.
+\newblock \url{https://www.w3.org/TR/media-source/} (2016)
+
+\bibitem{mediastreamrecording}
+Media{S}tream {R}ecording.
+\newblock \url{https://www.w3.org/TR/mediastream-recording/} (2017)
+
+\bibitem{microsoft}
+Microsoft.
+\newblock \url{https://www.microsoft.com/} (2017)
+
+\bibitem{ntp}
+Mills, D.L.: Internet time synchronization: the network time protocol.
+\newblock IEEE Transactions on Communications \textbf{39}(10), 1482--1493
+  (1991).
+\newblock \doi{10.1109/26.103043}
+
+\bibitem{mcorp}
+Motion {C}orporation.
+\newblock \url{http://motioncorporation.com}
+
+\bibitem{mozilla}
+Mozilla.
+\newblock \url{https://www.mozilla.org} (2017)
+
+\bibitem{mpeg4}
+{MPEG}-4.
+\newblock \url{http://mpeg.chiariglione.org/standards/mpeg-4}
+
+\bibitem{mpeg4sys}
+{MPEG}-4 {S}ystems.
+\newblock \url{http://mpeg.chiariglione.org/standards/mpeg-4/systems} (2005)
+
+\bibitem{mtcg}
+Multi-device {T}iming {C}ommunity {G}roup.
+\newblock \url{https://www.w3.org/community/webtiming/} (2015)
+
+\bibitem{realplayer}
+Real{P}layer.
+\newblock \url{http://www.real.com/} (2017)
+
+\bibitem{svg}
+Scalable {V}ector {G}raphics ({SVG}) 1.1.
+\newblock \url{https://www.w3.org/TR/SVG/} (2011)
+
+\bibitem{smil1}
+Synchronized {M}ultimedia {I}ntegration {L}anguage ({SMIL}) 1.0
+  {S}pecification.
+\newblock \url{ https://www.w3.org/TR/1998/REC-smil-19980615/} (1998)
+
+\bibitem{smil3}
+{SMIL} 3.0 {S}ynchronized {M}ultimedia {I}ntegration {L}anguage.
+\newblock \url{http://www.w3.org/TR/REC-smil/} (2008)
+
+\bibitem{smilanimation}
+Smil {A}nimation.
+\newblock \url{https://www.w3.org/TR/smil-animation/} (2001)
+
+\bibitem{html5track}
+{HTML5} {T}ext {T}rack.
+\newblock
+  \url{http://dev.w3.org/html5/spec-preview/media-elements.html{\#}text-track}
+  (2012)
+
+\bibitem{twitter}
+Twitter.
+\newblock \url{https://twitter.com/} (2017)
+
+\bibitem{dom4}
+{W3C DOM4}.
+\newblock \url{https://www.w3.org/TR/dom/} (2015)
+
+\bibitem{webanimation}
+Web {A}nimations.
+\newblock \url{http://www.w3.org/TR/web-animations/} (2016)
+
+\bibitem{webaudio}
+Web {A}udio {API}.
+\newblock \url{https://www.w3.org/TR/webaudio/} (2015)
+
+\bibitem{websocket}
+The {W}eb {S}ocket {P}rotocol.
+\newblock \url{https://tools.ietf.org/html/rfc6455} (2011)
+
+\bibitem{webworkers}
+Web {W}orkers.
+\newblock \url{https://www.w3.org/TR/workers/} (2015)
+
+\bibitem{webgl}
+Web{GL}.
+\newblock \url{https://www.khronos.org/webgl/} (2017)
+
+\bibitem{webrtc}
+Web{RTC} {R}eal-time {C}ommunication {B}etween {B}rowsers.
+\newblock \url{https://www.w3.org/TR/webrtc/} (2017)
+
+\end{thebibliography}
