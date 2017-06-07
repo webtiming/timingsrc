@@ -5,3 +5,10 @@ tex/*.pdf
 tex/*.bbl
 tex/*.blg
 tex/*.idx
+final/*.aux
+final/*.dvi
+final/*.log
+final/*.pdf
+final/*.bbl
+final/*.blg
+final/*.idx
