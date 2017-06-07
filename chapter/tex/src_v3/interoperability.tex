@@ -33,7 +33,7 @@ internally, based on the system clock or some other (hardware) timer and state
 representing motion. Timed operations may also be affected by other internal
 factors, such as the buffering of timed data, time consumption in processing,
 or delays in UI pipelines. The outside world is typically given access to the
-internal motion of the media component via interactive elements in the UI, or
+internal motion of the media component via interactive elements in the \emph{User Interface (UI)}, or
 programmatically through control primitives defined in the component API. For
 example, the HTML5 media element allows media playback to be requested by
 clicking the play button or invoking the play method. The media element then
@@ -62,7 +62,7 @@ component may still be exposed through the UI or API of the component.
 However, such control requests must be routed to the external motion. This
 ensures that control applies to all media components connected to the same
 external motion. It also ensures that media components may process control
-requests without regard to the origin of the request. Importantly, media
+requests without regard to the origin of the request. Media
 components directed by external motions may still make use of an internal
 clock. Importantly though, the external motion takes precedence, so deviations
 must be compensated for by adjusting the internal clock.

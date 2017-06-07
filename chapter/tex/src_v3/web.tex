@@ -126,7 +126,7 @@ in their Web applications.
 That said, SMIL 1.0 sparked the SMIL Animation
 specification~\cite{smilanimation} in 2001, which builds on the SMIL 1.0
 timing model to describe an animation framework suitable for integration with
-XML documents. SMIL Animation has notably been incorporated in the Scalable
+\emph{Extensible Markup Language (XML)} documents. SMIL Animation has notably been incorporated in the Scalable
 Vector Graphics (SVG) 1.0 specification~\cite{svg}, published as a Web
 standard immediately afterwards. It took many years for SVG to take over
 Flash~\cite{flash} and become supported across browsers, with the notable
@@ -176,7 +176,8 @@ The precision of the timestamp value is currently limited to milliseconds, but
 Google has now switched to using higher resolution timestamps associated with
 the \emph{high resolution clock} (see Section~\ref{sec:hrt}). On top of
 improving the precision down to a few microseconds, this change also means
-that the monotonicity of timestamp values can now be guaranteed. This change
+that the \emph{monotonicity} of timestamp values can now be guaranteed.
+\emph{Monotonicity} means that clock values are never decreasing. This change
 will hopefully be included in a future revision of the DOM standard and
 implemented across browsers.
 
