@@ -453,6 +453,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			this._axis.on("events", this._wrappedOnAxisChange, this);
 			// ensure that sequencer execution starts with initial events from axis
 			this._first = true;
+			// Kick off main loop
+    		this._load(now);
+    		this._main(now);
 			return;
 		} else if (this._ready.value === false) {
 			return;
@@ -558,7 +561,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         	from update vector rather than an actual timestamp. 
         */
 
-	    // Kick off main loop
+        // Kick off main loop
     	this._load(now);
     	this._main(now);
 	};
@@ -672,7 +675,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		    }
 	    }, this);
 
-
 		/* 
 			change events
 			generate change events for currently active cues, which did change, 
@@ -757,10 +759,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		// TODO - simplify the following based on above filtering of relevant cue operatiosn
 
 		if (!_isMoving) {
-			// not moving - not sure this is necessary
+			// not moving - not sure this is necessary (unreachable?)
 			this._schedule.advance(now);
 		} else {
-			// moving - invalidate all events - possibly advance is just as good
+			// moving - invalidate all scheduled events relating to the same op keys. 
 			opList.forEach(function (op) {
 				this._schedule.invalidate(op.key);
 			}, this);
@@ -808,6 +810,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				    }
 				}
 			}, this);
+
 
 		   	// reload relevant points
 		    if (reloadPoints.length > 0) {
