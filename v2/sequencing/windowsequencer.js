@@ -448,16 +448,6 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 	    }
 	};
 
-	// override clone on Sequencer to provide support for 
-	// windowsequencer as well
-	Sequencer.prototype.clone = function (toA, toB) {
-		if (toB === undefined) {
-    	    return new Sequencer(toA, this._axis);
-	    } else {
-	        return new WindowSequencer(toA, toB, this._axis); 
-	    }
-	};
-
 	// shutdown
 	WindowSequencer.prototype.close = function () {
 		this._axis.off("change", this._onAxisChange);

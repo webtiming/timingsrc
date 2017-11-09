@@ -22,14 +22,25 @@ define(['./sequencer', './windowsequencer', './timingcallbacks', './timingintege
 	function (seq, WindowSequencer, timingcallbacks, TimingInteger, ActiveCue) {		
 		'use strict';
 
+
     // Common constructor for Sequencer and WindowConstructor
-    var Sequencer = function (timingObjectA, timingObjectB, _axis) {
-      if (timingObjectB === undefined) {
-        return new seq.DefaultSequencer(timingObjectA, _axis);
+    var Sequencer = function (toA, toB, _axis) {
+      if (toB === undefined) {
+        return new seq.DefaultSequencer(toA, _axis);
       } else {
-        return new WindowSequencer(timingObjectA, timingObjectB, _axis); 
+        return new WindowSequencer(toA, toB, _axis); 
       }
     };
+
+    // Add clone prototype to both Sequencer and WindowSequencer
+    seq.DefaultSequencer.prototype.clone = function (toA, toB) {
+      return Sequencer(toA, toB, this._axis);
+    };
+    WindowSequencer.prototype.clone = function (toA, toB) {
+      return Sequencer(toA, toB, this._axis);
+    };
+
+
 
 		return {
 			Sequencer : Sequencer,

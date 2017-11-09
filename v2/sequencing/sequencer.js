@@ -1346,12 +1346,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		}, this);
 	};
 
-	// clone
-	// create new sequencer with same axis
-	Sequencer.prototype.clone = function (timingObject) {
-		return new Sequencer(timingObject, this._axis);
-	};
-
 	// shutdown
 	Sequencer.prototype.close = function () {
 	    this._to.off("change", this._wrappedOnTimingChange, this);
@@ -1361,8 +1355,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			this._timeout = null;		
 	    }
 	};
-
-
 
 	// Module Definition
 	return {
