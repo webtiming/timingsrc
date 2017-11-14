@@ -698,14 +698,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			- no changes to axis - no need to touch the SCHEDULE
 		*/
 		if (opList.length === 0) {
-			if (changeItems.length > 0) {
-				// break control flow so that events are emitted after addCue has completed
-				Promise.resolve().then(function () {
-					// enterItems and exitItems are empty
-					var eList = self._processIntervalEvents(now, [], [], changeItems);
-					self.eventifyTriggerEvents(eList);
-					// no need to call main - will be called by scheduled timeout
-				});
+			if (changeItems.length > 0) {			
+				// enterItems and exitItems are empty
+				var eList = self._processIntervalEvents(now, [], [], changeItems);
+				self.eventifyTriggerEvents(eList);
+				// no need to call main - will be called by scheduled timeout
 			}			
 			return;
 		}
@@ -716,13 +713,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		*/
 		var _isMoving = isMoving(nowVector);
 		if (!_isMoving) {
-			// break control flow so that events are emitted after addCue has completed
-			Promise.resolve().then(function () {
-				var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-				self.eventifyTriggerEvents(eList);
-				// not moving should imply that SCHEDULE be empty
-				// no need to call main - will be called by scheduled timeout
-			});
+			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+			self.eventifyTriggerEvents(eList);
+			// not moving should imply that SCHEDULE be empty
+			// no need to call main - will be called by scheduled timeout
 			return;
 		}
 
@@ -817,17 +811,13 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				this._load(now, reloadPoints);
 		    }
 		}
-	
-		// break control so that events are emitted after addCue has completed
-		Promise.resolve().then(function () {
-			// notify interval events and change events
-			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-			self.eventifyTriggerEvents(eList);
-			// kick off main loop (should only be required if moving?)
-			// TODO - should only be necessary if the SCHEDULE is touched - to cause a new timeout to be set.
-			self._main(now);
-		});
-	
+		
+		// notify interval events and change events
+		var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
+		self.eventifyTriggerEvents(eList);
+		// kick off main loop (should only be required if moving?)
+		// TODO - should only be necessary if the SCHEDULE is touched - to cause a new timeout to be set.
+		self._main(now);
 	};
 
 
