@@ -101,8 +101,8 @@ focus on temporal interoperability on the Web, how to allow heterogeneous
 media components to operate consistently together, synchronized to a common
 timeline and subject to shared media control. A programming model based on
 external timing is presented, enabling modularity, interoperability and
-precise timing among media components, in single-device as well as multi-
-device  media experiences. The model has been proposed within the W3C Multi-device 
+precise timing among media components, in single-device as well as multi-device 
+media experiences. The model has been proposed within the W3C Multi-device 
 Timing Community Group as a new standard, and this could establish
 temporal interoperability as one of the foundations of the Web platform.
 }
@@ -147,12 +147,12 @@ If multiple media components are connected to the same source of external timing
 synchronized behavior across media components follows by implication. This
 simplifies media synchronization for application developers. Furthermore,
 by allowing external timing sources to be synchronized and shared across a
-network, external timing is also a gateway to precise distributed multimedia
+network, external timing is also a gateway to precise, distributed multimedia
 playback and orchestration on the Web platform.
 
 This chapter provides an introduction to external timing as well as the
-flexible media model and programming model that follow from this approach,
-proposed for standardization within the \emph{W3C Multi-device Timing
+flexible media model and programming model that follow from this approach.
+The programming model is proposed for standardization within the \emph{W3C Multi-device Timing
 Community Group (MTCG)}~\cite{mtcg} to encourage temporal interoperability on
 the Web platform. The \emph{timing object} is the central concept in this
 initiative, defining a common interface to external timing and control for the
@@ -261,11 +261,22 @@ definition in a few regards:
 
 \begin{itemize}
 \item{Media synchronization on the Web is client-side and clock-based. The latencies and heterogeneity of the Web environment requires a clock-based approach for acceptable synchronization.}
-\item{Media synchronization involves a media instance and a clock. The term \emph{relative synchronization} is reserved for comparisons between two or more synchronized media instances.}
+\item{Media synchronization involves a media component and a clock. The term \emph{relative synchronization} is reserved for comparisons between two or more synchronized media components.}
 \end{itemize}
 
 \subsection{Challenges}
 
+Media synchronization has a wide range of use-cases on the Web, as illustrated
+by Table~\ref{tab:challenges}. Well known use-cases for synchronization within
+a single Web page include multi-angle video, accessibility features for video,
+ad-insertion, as well as media experiences spanning different media types,
+media frameworks, or iframe boundaries. Synchronization across Web pages allow
+Web pages to present alternative views into a single experience, dividing or
+duplicating media experiences across devices. Popular use-cases in the home
+environment involve collaborative viewing, multi-speaker audio, or big screen
+video synchronized with related content on handheld devices. The last use-cases on the list
+target global scenarios, such as distributed capture and
+synchronized Web visualizations for a global audience.
 
 \begin{table}
 \centering
@@ -289,17 +300,6 @@ across Internet & global media experiences \\
 
 
 
-Media synchronization has a wide range of use-cases on the Web, as illustrated
-by Table~\ref{tab:challenges}. Well known use-cases for synchronization within
-a single Web page include multi-angle video, accessibility features for video,
-ad-insertion, as well as media experiences spanning different media types,
-media frameworks, or iframe boundaries. Synchronization across Web pages allow
-Web pages to present alternative views into a single experience, dividing or
-duplicating media experiences across devices. Popular use-cases in the home
-environment involve collaborative viewing, multi-speaker audio, or big screen
-video synchronized with related content on handheld devices. Use-cases towards
-the end of the list target global scenarios, such as distributed capture and
-synchronized Web visualizations for a global audience.
 
 \subsection{Approach}
 
@@ -422,7 +422,7 @@ motion model.
 \subsection{Internal timing}
 
 Internal timing (Fig.~\ref{fig:internalexternal} - left) is the most
-familiar one, where media components are typically media players or frameworks
+familiar approach, where media components are typically media players or frameworks
 internalizing aspects of timing and control. Synchronizing such media
 components is an external process, utilizing the control primitives provided
 by each component.
@@ -557,7 +557,7 @@ This section focuses on Web technologies that produce or
 consume timed data, and highlights issues that arise when these technologies
 are used or combined with others for synchronization purposes. These issues
 are classified and summarized at the end of the section. Please note that this
-section is written early 2017. It references technologies that are still under
+section is written early 2017, and references technologies that are still under
 development.
 
 \subsection {HTML}
@@ -826,8 +826,7 @@ audio routing graph paradigm where audio nodes are connected to define the
 audio rendering.
 
 Sample frames exposed by the Web Audio API have a \emph{currentTime} property that
-represents the position on the Audio timeline, according to the clock used to
-generate the audio stream. In other words, the hardware clock of the underlying
+represents the position on the Audio timeline, according to the hardware clock of the underlying
 sound card. As alluded to in the specification, this clock \emph{may not be
 synchronized with other clocks in the system}. In particular, there is little
 chance that this clock be synchronized with the High Resolution Time clock,
@@ -935,7 +934,7 @@ scheduling events on the event loop.
 }
 
 \item{
-Standards may require browsers to pause a motion for buffering, as typically
+Standards may require browsers to pause for buffering, as typically
 happens for media playback in HTML5. This behavior does not play well with the
 orchestration of video with other types of timed data that do not pause for
 buffering.
@@ -1049,7 +1048,7 @@ console.log("acc:" + v.acceleration);
 
 The update operation accepts a vector parameter specifying new values for
 position, velocity and acceleration. This initiates a new movement for the
-motion. Omitting say position implies that the current position will be used.
+motion. For instance, omitting position implies that the current position will be used.
 So, an update with velocity 0 pauses the motion at the current position.
 
 \begin{lstlisting}[caption=Updating the timing object.]
@@ -1128,7 +1127,7 @@ to operate well with negative velocities, very high velocities, or with
 acceleration. Fortunately, it does not have to. Instead, the media player may
 define alternative modes of operation as long as the motion is in an
 unsupported state. It could show a still image every second for high velocity,
-or simply stop operation altogether (e.g. black screen with error message).
+or simply stop operation altogether (e.g. black screen with relevant message).
 Later, when motion re-enters a supported state, normal operation may be
 resumed for the media player.
 
@@ -1139,7 +1138,7 @@ resumed for the media player.
 The timing object API is particularly designed to mediate access to online motions,
 as illustrated by Fig.~\ref{fig:model-repeat}. \emph{Update} operations are forwarded to the
 online motion, and will not take effect until notification is received from
-the online motion and \emph{change events} are emitted. In contrast, \emph{query} is a local
+the online motion. After this, a \emph{change event} will be emitted by the timing object. In contrast, \emph{query} is a local
 (and cheap) operation. This ensures that media components may sample the
 motion frequently if needed. So, through the Timing Object API, online motions
 are made available to Web developers as local objects. Only the latency of the
@@ -1169,7 +1168,7 @@ leave synchronization at any time, or fail, without affecting the
 synchronization of other agents. Motion synchronization is discussed in more
 detail in~\cite{msv}.
 
-\emph{InMotion} is a hosting service for online motions, built by the Motion Corporation~\cite{mcorp}. A dedicated onlice service supporting
+\emph{InMotion} is a hosting service for online motions, built by the Motion Corporation~\cite{mcorp}. A dedicated online service supporting
 online motions is likely key to achieving non-functional goals, such as
 high availability, reliability and scalability. Evaluation of
 motion synchronization is presented in Section~\ref{sec:eval}.
@@ -1191,12 +1190,12 @@ On the Web, playback of audio and video is supported by HTML5 media
 elements~\cite{html5media}. Synchronizing media elements relative to a timing
 object means that the \emph{currentTime} property (i.e. media offset) must be
 kept equal to the position of the timing object at all times, at least to a
-good approximation. The general approach is simply to monitor the media
+good approximation. The basic approach is to monitor the media
 element continuously, and try to rectify whenever the synchronization error
 grows beyond a certain threshold. For larger errors \emph{seekTo} is used. This is
 typically the case on \emph{page load}, or after timing object \emph{change} events. Smaller
-errors are rectified gradually by manipulating \emph{playbackrate}. \emph{SeekTo} is
-quite disruptive to the user experience, so support for variable \emph{playbackrate}
+errors are rectified gradually by manipulating playbackrate. \emph{SeekTo} is
+quite disruptive to the user experience, so support for variable playbackrate
 is currently required for high quality synchronization.
 
 \emph{MediaSync} is a JavaScript library allowing HTML5 media elements to be
@@ -1227,8 +1226,9 @@ Timed data such as subtitles, tracks, scripts, logs or time series typically
 include items tied to \emph{points} or \emph{intervals} on the timeline.
 Synchronization then involves activating and deactivating such items at the
 correct time, in reference to a timing object. To simplify programming of
-media components based on timed data, a generic \emph{Sequencer} is defined.
-The sequencer is similar to the HTML5 track element~\cite{html5track}, but is
+media components based on timed data, a generic \emph{Sequencer} is defined 
+(Fig.~\ref{fig:sequencer}). The sequencer is similar to the HTML5 track 
+element~\cite{html5track}, but is
 directed by the timing object instead of a HTML5 media
 element~\cite{html5media}. Web developers register cues associated with
 intervals on the timeline, and receive event upcalls whenever a cue is
@@ -1240,7 +1240,7 @@ data type and supports dynamic changes to cues during playback.
 %\sidecaption
 \centering
 \includegraphics[scale=.4]{fig/sequencer.jpg}
-\caption{Five data sources of timed data, with items tied to intervals on the timeline. Motion along the same timeline defines which items are active (vertical dotted line), and precisely when items will be activated or deactivated.}
+\caption{Sequencing five data sources of timed data, with items tied to intervals on the timeline. Motion along the same timeline defines which items are active (vertical dotted line), and precisely when items will be activated or deactivated.}
 \label{fig:sequencer}
 \end{figure}
 
@@ -1414,9 +1414,10 @@ place, and across a wide range of devices. As such, the value of a production
 grade online service is also confirmed.
 
 Furthermore, the precision of motion synchronization degrades well with poor
-network conditions. For instance, experiments with video synchronization in \emph{Enhanced Data rates for GSM Evolution (EDGE)}
-connectivity has not been visibly worse, except for longer update
-latency. In this instance, video data was fetched from local files.
+network conditions. For instance, experiments with video synchronization in 
+\emph{EDGE} connectivity (\emph{Enhanced Data rates for GSM Evolution})
+has not been visibly worse, except for longer update
+latency. In this instance, video data were fetched from local files.
 Conferences are also notorious hotspots for bad connectivity. In these
 circumstances, availability of media data consistently fails before
 synchronization.
@@ -1427,10 +1428,11 @@ synchronization.
 Two technical reports~\cite{syncreport1,syncreport2} document the abilities
 and limitations of HTML5 media elements with respect to media synchronization,
 as well the quality of synchronization achieved by the \emph{MediaSync}
-library. Synchronization errors of about 7 milliseconds is reported for both
+library (Fig.~\ref{fig:videosync}). Synchronization errors of about 7 milliseconds 
+is reported for both
 audio and video, on desktops, laptops and high-end smartphones. This
 corresponds to echoless audio playback. Smartphones and embedded devices such
-a ChromeCast can be expected to provide frame accurate synchronization. 
+as \emph{ChromeCast} can be expected to provide frame accurate synchronization. 
 
 These results have been consistently confirmed by day to day usage over
 several years. The user experience of multi-device video synchronization is
@@ -1458,7 +1460,7 @@ Android using Chrome browser. The plot shows currentTime compared to the ideal
 playback position defined by motion. The X-axis denotes the timeline of the experiment (seconds).
 The left Y-axis denotes difference \emph{Diff} (milliseconds) between currentTime and motion.
 The green band (echoless) is +-10 millisecond and the yellow (frame accurate is) +-25 millisecond. 
-This is achived using variable playbackRate. No skips were performed in this experiment. 
+This is achived using variable \emph{playbackRate}. No skips were performed in this experiment. 
 The right Y-axis denotes the value of playbackrate (seconds per second). The media element was muted until playbackrate stabilized.}
 \label{fig:videosync}
 \end{figure}
@@ -1522,7 +1524,7 @@ While internal timing is the popular approach to Web-based media, external
 timing is the key to temporal interoperability.
 
 This chapter provided an introduction to external timing as well as the media
-model and the programming model that follows from this approach. By focusing
+model and programming model that follow from this approach. By focusing
 on modularity, loose coupling and client-side synthesis, this media model is
 well aligned with key design principles of the Web, thereby fully extending
 the flexibility and extensibility of the Web platform to timed Web
