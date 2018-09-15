@@ -109,6 +109,15 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		return vector;
 	};
 
+
+	// NOTE - NOT TESTED
+	// set range
+	RangeConverter.prototype.setRange = function(range) {
+		// todo check range
+		this._range = range;
+		this._preProcess(this.vector);
+	};
+
 	// overrides
 	RangeConverter.prototype.onRangeChange = function(range) {
 		return this._range;
