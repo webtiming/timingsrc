@@ -206,7 +206,8 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this._vector, this.clock.now());
 		var state = motionutils.getCorrectRangeState(vector, this._range);
-		if (state !== motionutils.RangeState.INSIDE) {
+		// detect range violation - only if timeout is set
+		if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
 			this._preProcess(vector);
 		} 
 		// re-evaluate query after state transition

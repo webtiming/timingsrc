@@ -40,23 +40,38 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 
 	var state = function () {
 		var _state = RangeState.INIT;
-		var is_real_state_change = function (old_state, new_state) {
-			// only state changes between INSIDE and OUTSIDE* are real state changes.
+		var _range = null;
+		var is_special_state_change = function (old_state, new_state) {
+			// only state changes between INSIDE and OUTSIDE* are special state changes.
 			if (old_state === RangeState.OUTSIDE_HIGH && new_state === RangeState.OUTSIDE_LOW) return false;
 			if (old_state === RangeState.OUTSIDE_LOW && new_state === RangeState.OUTSIDE_HIGH) return false;
 			if (old_state === RangeState.INIT) return false;
 			return true;
 		}
 		var get = function () {return _state;};
-		var set = function (new_state) {
-			if (new_state === RangeState.INSIDE || new_state === RangeState.OUTSIDE_LOW || new_state === RangeState.OUTSIDE_HIGH) {
-				if (new_state !== _state) {
-					var old_state = _state;
-					_state = new_state;
-					return {real: is_real_state_change(old_state, new_state), abs: true};
-				}
-			};
-			return {real:false, abs:false};
+		var set = function (new_state, new_range) {
+	
+			var absolute = false; // absolute change
+			var special = false;  // special change
+
+			// check absolute change
+			if (new_state !== _state || new_range !== _range) {
+				absolute = true;
+			}
+			// check special change
+			if (new_state !== _state) {
+				special = is_special_state_change(_state, new_state);			
+			}			
+			// range change
+			if (new_range !== _range) {
+				_range = new_range;
+			}
+			// state change
+			if (new_state !== _state) {
+				_state = new_state;
+			}
+			return {special:special, absolute:absolute};
+
 		}
 		return {get: get, set:set};
 	};
@@ -90,9 +105,10 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this._timingsrc.vector, this.clock.now());
 		var state = motionutils.getCorrectRangeState(vector, this._range);
-		if (state !== RangeState.INSIDE) {
+		// detect range violation - only if timeout is set
+		if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
 			this._preProcess(vector);
-		} 
+		}
 		// re-evaluate query after state transition
 		return motionutils.calculateVector(this._vector, this.clock.now());
 	};
@@ -115,7 +131,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 	RangeConverter.prototype.setRange = function(range) {
 		// todo check range
 		this._range = range;
-		this._preProcess(this.vector);
+		this._preProcess(this._timingsrc.vector);
 	};
 
 	// overrides
@@ -124,18 +140,18 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 	};
 
 	// overrides
-	RangeConverter.prototype.onTimeout = function (vector) {		
+	RangeConverter.prototype.onTimeout = function (vector) {	
 		return this.onVectorChange(vector);
 	};
 
 	// overrides
 	RangeConverter.prototype.onVectorChange = function (vector) {
-		console.log("onvectorchange", vector, this._range);
+		// console.log("onVectorChange vector", vector);
+		// console.log("onVectorChange range", this._range);
 		var new_state = motionutils.getCorrectRangeState(vector, this._range);
-		console.log("state", new_state);
-		var state_changed = this._state.set(new_state);	
-		console.log(state_changed)
-		if (state_changed.real) {
+		// console.log("onVectorChange state", new_state);
+		var state_changed = this._state.set(new_state, this._range);
+		if (state_changed.special) {
 			// state transition between INSIDE and OUTSIDE
 			if (this._state.get() === RangeState.INSIDE) {
 				// OUTSIDE -> INSIDE, generate fake start event
@@ -152,16 +168,19 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 				// stay inside or first event inside
 				// forward event unchanged
 			} else {
-				// stay outside or first event inside 
-				// drop unless 
+				// stay outside or first event outside 
+				// forward if
 				// - first event outside
 				// - skip from outside-high to outside-low
 				// - skip from outside-low to outside-high
-				if (state_changed.abs) {
+				// - range change
+				// else drop
+				// - outside-high to outside-high (no range change)
+				// - outside-low to outside-low (no range change)
+				if (state_changed.absolute) {
 					vector = motionutils.checkRange(vector, this._range);
 				} else {
 					// drop event
-
 					return null;
 				}
 			}
