@@ -20,11 +20,11 @@
           //w = new timingobject.DelayConverter(to, 1.0);
           //w = new timingobject.ScaleConverter(to, 2);         
           //w = new timingobject.LoopConverter(to, [0, 10]);
-          //w = new timingobject.RangeConverter(to, [2,8]);
+          w = new timingobject.RangeConverter(to, [2,8]);
           //w = new timingobject.TimeShiftConverter(to, -1.0);
           //w = new timingobject.LocalConverter(to);
        
-          w = new timingobject.DerivativeConverter(to);
+          //w = new timingobject.DerivativeConverter(to);
   
 
           var converterhandler = function () {

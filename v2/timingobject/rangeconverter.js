@@ -130,8 +130,11 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 
 	// overrides
 	RangeConverter.prototype.onVectorChange = function (vector) {
+		console.log("onvectorchange", vector, this._range);
 		var new_state = motionutils.getCorrectRangeState(vector, this._range);
+		console.log("state", new_state);
 		var state_changed = this._state.set(new_state);	
+		console.log(state_changed)
 		if (state_changed.real) {
 			// state transition between INSIDE and OUTSIDE
 			if (this._state.get() === RangeState.INSIDE) {

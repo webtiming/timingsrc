@@ -54,6 +54,9 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 		// ready
 		this._ready = new eventify.EventBoolean(false, {init:true});
 
+		// true if re_evalute has been requested but not performed yet
+		this._pending_reevaluate = false;
+
 		// active keys
 		this._activeKeys = {}; // key -> undefined
 
@@ -76,19 +79,19 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 		};
 		this._onToAChange = function () {
 			//console.log("on ToA Change");
-			self._reevaluate();
+			self._request_reevaluate();
 		};
 		this._onToBChange = function () {
 			//console.log("on ToB Change");
-			self._reevaluate();
+			self._request_reevaluate();
 		};
 		this._onSeqAChange = function (e) {
 			//console.log("on SeqA Change");
-			self._reevaluate();
+			self._request_reevaluate();
 		};
 		this._onSeqBChange = function (e) {
 			//console.log("on SeqB Change");
-			self._reevaluate();
+			self._request_reevaluate();
 		};
 		this._toA.on("change", this._onToAChange, this);
 		this._toB.on("change", this._onToBChange, this);
@@ -247,8 +250,6 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 		return "";
 	};
 		
-
-
 	WindowSequencer.prototype._getItem = function (axisOpList, key) {
 		var item;
     	if (axisOpList) {
@@ -261,12 +262,33 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
     	return item;
 	};
 
+	/* 
+		Request reevaluate 
+		noop if reevaluate has already been requested, but not performed
+		else - append reevaluate to the task queue
+	*/
+
+	WindowSequencer.prototype._request_reevaluate = function () {
+		if (this._pending_reevaluate == false) {
+			this._pending_reevaluate = true;
+			var self = this;
+			setTimeout(function() {
+				self._pending_reevaluate = false;
+				self._reevaluate()
+			}, 0)
+		}
+	};
+
 	/*
 		RE-EVALUATE
 
 		Figure out what kind of events need to be triggered (if any)
 		in order to bring the WindowSequencer to the correct state.
 	*/
+
+
+
+
 	WindowSequencer.prototype._reevaluate = function (axisOpList) {
 		if (this._ready.value === false) {
 			return [];

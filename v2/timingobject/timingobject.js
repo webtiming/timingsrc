@@ -282,7 +282,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		core processing step after change event or timeout
 		assignes the internal vector
 	*/
-	TimingBase.prototype._process = function (vector, range) {
+	TimingBase.prototype._process = function (vector) {
 		if (vector !== null) {
 			var old_vector = this._vector;
 			// update internal vector
