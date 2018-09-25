@@ -177,6 +177,11 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		get : function () { 
 			// copy range
 			return [this._range[0], this._range[1]]; 
+		},
+		set : function (range) {
+			this._range = range;
+			// use vector to emulate new vector change event
+			this._preProcess(this.vector);
 		}
 	});
 
@@ -218,6 +223,43 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 	TimingBase.prototype.update = function (vector) {
 		throw new Error ("not implemented");
 	};
+
+	TimingBase.prototype.checkUpdateVector = function(vector) {
+		if (vector == undefined) {
+			throw new Error ("drop update, illegal updatevector");
+		}
+
+		// todo - check that vector properties are numbers
+		var pos = vector.position;
+		var vel = vector.velocity;
+		var acc = vector.acceleration;
+
+		if (pos == undefined && vel == undefined && acc == undefined) {
+			throw new Error ("drop update, noop");
+		}
+
+		// default values
+		var p = 0, v = 0, a = 0;
+		var now = vector.timestamp || this.clock.now();
+		if (this.isReady()) {
+			var nowVector = motionutils.calculateVector(this._vector, now);
+			nowVector = motionutils.checkRange(nowVector, this._range);
+			p = nowVector.position;
+			v = nowVector.velocity;
+			a = nowVector.acceleration;
+		} 
+
+		pos = (pos != undefined) ? pos : p;
+		vel = (vel != undefined) ? vel : v;
+		acc = (acc != undefined) ? acc : a;
+		return {
+			position : pos,
+			velocity : vel,
+			acceleration : acc,
+			timestamp : now
+		};
+	} 
+
 
 	// shorthand accessors
 	Object.defineProperty(TimingBase.prototype, 'pos', {
@@ -422,37 +464,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 
 	// update
 	InternalProvider.prototype.update = function (vector) {
-		if (vector == undefined) {throw new Error ("drop update, illegal updatevector");}
-
-		// todo - check that vector properties are numbers
-		var pos = vector.position;
-		var vel = vector.velocity;
-		var acc = vector.acceleration;
-
-		if (pos == undefined && vel == undefined && acc == undefined) {
-			throw new Error ("drop update, noop");
-		}
-
-		// default values
-		var p = 0, v = 0, a = 0;
-		var now = vector.timestamp || this.clock.now();
-		if (this.isReady()) {		
-			var nowVector = motionutils.calculateVector(this._vector, now);
-			nowVector = motionutils.checkRange(nowVector, this._range);
-			p = nowVector.position;
-			v = nowVector.velocity;
-			a = nowVector.acceleration;
-		} 
-
-		pos = (pos != undefined) ? pos : p;
-		vel = (vel != undefined) ? vel : v;
-		acc = (acc != undefined) ? acc : a;
-		var newVector = {
-			position : pos,
-			velocity : vel,
-			acceleration : acc,
-			timestamp : now
-		};
+		var newVector = this.checkUpdateVector(vector);
 		this._preProcess(newVector);
 		return newVector;
 	};
@@ -697,7 +709,8 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 
 	// update
 	TimingObjectBase.prototype.update = function (vector) {
-		return this._timingsrc.update(vector);
+		var newVector = this.checkUpdateVector(vector);
+		return this._timingsrc.update(newVector);
 	};
 	
 
