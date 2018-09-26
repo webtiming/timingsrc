@@ -173,17 +173,14 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 	});
 
 	// range
+	
 	Object.defineProperty(TimingBase.prototype, 'range', {
 		get : function () { 
 			// copy range
 			return [this._range[0], this._range[1]]; 
-		},
-		set : function (range) {
-			this._range = range;
-			// use vector to emulate new vector change event
-			this._preProcess(this.vector);
 		}
 	});
+	
 
 	// internal vector
 	Object.defineProperty(TimingBase.prototype, 'vector', {
@@ -630,7 +627,6 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		get : function () {	return this._timingsrc.clock; }	
 	});
 
-
 	TimingObjectBase.prototype.onRangeChange = function (range) {
 		return range;
 	};
@@ -709,8 +705,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 
 	// update
 	TimingObjectBase.prototype.update = function (vector) {
-		var newVector = this.checkUpdateVector(vector);
-		return this._timingsrc.update(newVector);
+		return this._timingsrc.update(vector);
 	};
 	
 
