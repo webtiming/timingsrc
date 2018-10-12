@@ -242,19 +242,34 @@ define (['../util/interval', './sortedarraybinary', './multimap', '../util/event
 	};
 
 	/*
-		Find keys for all intervals that partially cover interval.
+		Find keys for all intervals that partially or fully covers search interval.
 		returns map {key -> undefined}
+		used only by window sequencer
 	*/
-
-
 	Axis.prototype.lookupKeysByInterval = function (interval) {
-		// [{key: key, point: point, interval:interval},]
+		// [{key: key, point: point, interval:interval},]		
 		var res = {};
+
+		// find keys of all intervals that have endpoints within interval
 		this._index.lookup(interval).forEach(function (point) {
 			this._reverse.getItemsByKey(point).forEach(function (item) {
 				res[item.value] = undefined;
 			});
 		}, this);
+
+		// add keys of all intervals that have endpoints on both sides of interval
+		var leftInterval = new Interval(-Infinity, interval.low);
+		var rightInterval = new Interval(interval.high, Infinity);
+		this._index.lookup(leftInterval).forEach(function(point) {
+			this._reverse.getItemsByKey(point).forEach(function (item) {
+				var _interval = this._map[item.value];
+				if (rightInterval.coversPoint(_interval.high)) {
+					res[item.value] = undefined;
+				}
+			}, this);
+		
+		}, this);
+
 		return res;
 	};
 
