@@ -25,11 +25,10 @@ define([
 	'./scaleconverter', 
 	'./loopconverter', 
 	'./rangeconverter', 
-	'./timeshiftconverter', 
-	'./localconverter', 
+	'./timeshiftconverter',
 	'./derivativeconverter'
 	], 
-	function (timingobject, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, LocalConverter, DerivativeConverter) {		
+	function (timingobject, SkewConverter, DelayConverter, ScaleConverter, LoopConverter, RangeConverter, TimeShiftConverter, DerivativeConverter) {		
 		'use strict';
 		return {
 			// testing
@@ -44,7 +43,6 @@ define([
 			LoopConverter : LoopConverter,
 			RangeConverter : RangeConverter,
 			TimeShiftConverter : TimeShiftConverter,
-			LocalConverter : LocalConverter,
 			DerivativeConverter : DerivativeConverter,
 		};
 	}
