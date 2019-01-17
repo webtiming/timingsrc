@@ -74,23 +74,23 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 			var eArgList = eItemList.map(function (eItem) {
 				return eItem.e;
 			});
-			//console.log("on Axis Change");
+			// console.log("on Axis Change");
 			self._reevaluate(eArgList);
 		};
 		this._onToAChange = function () {
-			//console.log("on ToA Change");
+			// console.log("on ToA Change");
 			self._request_reevaluate();
 		};
 		this._onToBChange = function () {
-			//console.log("on ToB Change");
+			// console.log("on ToB Change");
 			self._request_reevaluate();
 		};
 		this._onSeqAChange = function (e) {
-			//console.log("on SeqA Change");
+			// console.log("on SeqA Change");
 			self._request_reevaluate();
 		};
 		this._onSeqBChange = function (e) {
-			//console.log("on SeqB Change");
+			// console.log("on SeqB Change");
 			self._request_reevaluate();
 		};
 		this._toA.on("change", this._onToAChange, this);
@@ -295,9 +295,9 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
 		}
 		var activeInterval = this._getActiveInterval();
 
-		// find keys of all cues, where cue interval is partially or fully covered by searchInterval			
-
+		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
 		var newKeys = this._axis.lookupKeysByInterval(activeInterval);
+		
 	    // exitKeys are in activeKeys - but not in newKeys
 	    var exitKeys = Object.keys(this._activeKeys).filter(function(key) {
 	    	return !newKeys.hasOwnProperty(key);
