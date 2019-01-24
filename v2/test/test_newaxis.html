@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+      require(['timingsrc'], function (timingsrc) {
+
+        a = new timingsrc.Axis();
+
+        var run = function () {
+          console.log("hello axis");
+          console.log(a);
+        };
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Axis</h1>
+  </body>
+</html>
