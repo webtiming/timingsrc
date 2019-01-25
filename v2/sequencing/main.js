@@ -40,8 +40,6 @@ define(['./newaxis', './sequencer', './windowsequencer', './timingcallbacks', '.
       return Sequencer(toA, toB, this._axis);
     };
 
-
-
 		return {
       Axis : axis.Axis,
 			Sequencer : Sequencer,

@@ -11,7 +11,7 @@
     <script type="text/javascript" src="../../lib/require.js"></script>
     <!--  main -->
     <script text="javascript">
-
+      var cue;
       require(['timingsrc'], function (timingsrc) {
 
         a = new timingsrc.Axis();
@@ -20,6 +20,44 @@
           console.log("hello axis");
           console.log(a);
         };
+
+
+        var Cue = timingsrc.Cue;
+        var Interval = timingsrc.Interval;
+
+        var addBatch = function (size) {
+          var batch = [];
+          let low;
+
+          // random
+          /*
+          for (let i=0; i<size; i++) {
+            low = Math.random()*100;
+            batch.push(new Cue(i.toString(), new Interval(low, low+1), "data"));
+          }
+          */
+
+          // regular
+          for (let i=0; i<size; i++) {
+            low = Math.random()*100;
+            batch.push(new Cue(i.toString(), new Interval(i, i + 1.5), "data"));
+          }
+
+
+
+          let t0 = performance.now();
+          a.addCues(batch);
+          let t1 = performance.now();
+          console.log(t1-t0);
+        };
+
+
+        addBatch(100000);
+
+
+
+
+
 
         if (document.readyState === "complete") run();
         else window.onload = run;

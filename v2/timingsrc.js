@@ -3,8 +3,8 @@
   Written by Ingar Arntzen, Norut
 */
 
-define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'], 
-	function (timingobject, sequencing, mediasync) {
+define (['./timingobject/main', './sequencing/main', './mediasync/mediasync', './util/cue'], 
+	function (timingobject, sequencing, mediasync, Cue) {
 	return {
 		version : "v2",
 		
@@ -30,6 +30,7 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync'],
 		setIntervalCallback : sequencing.setIntervalCallback,
 		TimingInteger : sequencing.TimingInteger,
 		ActiveCue : sequencing.ActiveCue,
+		Cue : Cue,
 
 		// MediaSync
 		MediaSync: mediasync.MediaSync,
