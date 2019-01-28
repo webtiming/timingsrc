@@ -16,45 +16,73 @@
 
         a = new timingsrc.Axis();
 
-        var run = function () {
-          console.log("hello axis");
-          console.log(a);
-        };
-
-
         var Cue = timingsrc.Cue;
         var Interval = timingsrc.Interval;
 
-        var addBatch = function (size) {
-          var batch = [];
-          let low;
-
-          // random
-          /*
+        var makeBatch = function (size, random, scale) {
+          let batch = [];
+          random = random || false;
+          scale = scale || 1;
           for (let i=0; i<size; i++) {
-            low = Math.random()*100;
-            batch.push(new Cue(i.toString(), new Interval(low, low+1), "data"));
+            if (random) {
+              low = Math.random()*scale;
+            } else {
+              low = i;
+            }
+            batch.push(low);
           }
-          */
+          return batch;
+        };
 
-          // regular
-          for (let i=0; i<size; i++) {
-            low = Math.random()*100;
-            batch.push(new Cue(i.toString(), new Interval(i, i + 1.5), "data"));
-          }
-
-
-
+        var timeit = function (func, name) {
           let t0 = performance.now();
-          a.addCues(batch);
+          let result = func();
           let t1 = performance.now();
-          console.log(t1-t0);
+          console.log(name, t1-t0);
+          return result;
         };
 
 
-        addBatch(100000);
+
+        var binary1 = function (batch1, batch2) {
+          let b = new timingsrc.BinarySearch(batch1);
+          timeit(function () {
+            b.insertBatch(batch2);
+          }, "binary1 insert " + batch1.length + " " + batch2.length);
+
+        };
+
+        var binary2 = function (batch1, batch2) {
+          let b = new timingsrc.BinarySearch(batch1);
+          timeit(function () {
+            b.insertBatch2(batch2);
+          }, "binary2 insert " + batch1.length + " " + batch2.length);
+        };
 
 
+        var timeitmakebatch = function (size) {
+          let result;
+          timeit(function () {
+            result = makeBatch(size);
+          }, "batch " + size);
+          return result;
+        };
+
+        var run = function () {
+
+
+          let DATASIZE = 1000000;
+          let BATCHSIZE = 55;
+
+          let batch1 = timeitmakebatch(DATASIZE);
+          let big_batch1 = binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
+          
+          let batch2 = timeitmakebatch(DATASIZE);
+          let big_batch2 = binary2(batch2, makeBatch(BATCHSIZE, true, DATASIZE));
+       
+  
+
+        };
 
 
 

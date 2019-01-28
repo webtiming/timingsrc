@@ -1,5 +1,5 @@
-define (['../util/interval', './sortedarraybinary', './newmultimap', '../util/eventify', '../util/cue'], 
-	function (Interval, SortedArrayBinary, MultiMap, eventify, Cue) {
+define (['../util/interval', './sortedarraybinary', '../util/eventify', '../util/cue'], 
+	function (Interval, SortedArrayBinary, eventify, Cue) {
 
 	'use strict';
 
@@ -31,9 +31,7 @@ define (['../util/interval', './sortedarraybinary', './newmultimap', '../util/ev
 		// sorted array of points
 		this.points = [];
 
-		// efficient lookup of cues by point on the timeline
-		// point -> [cue0, cue1, cue3]
-		this.pointmap = new MultiMap();
+
 	};
 
 
