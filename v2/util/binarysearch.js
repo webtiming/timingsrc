@@ -29,32 +29,102 @@ define (['../util/interval'], function (Interval) {
         return (n==N && !isNaN(N));
     };
 
-    var cmp = function (a,b) {
+    // default comparison function
+    var default_cmp = function (a,b) {
         return a-b;
     };
 
-    var SortedArrayError = function (message) {
-        this.name = "SortedArrayError";
+    /* 
+        batch inserts have two strategies
+        1) CONCATSORT - concat arrays and sort
+        2) SEARCHSPLICE - binary search to the right location and splice the array
+    
+        Searchsplice is preferable only when very small batches (<40) are inserted into
+        an array. For small arrays (<100) concatsort is still preferable, even for small batches.  
+    */
+
+
+    /*
+        dataset limit
+        dataset must be larger than this for searchsplice to be considered
+    */
+    const DATASET_LIMIT = 500;
+
+    /*
+        magic table to set appropriate batch limit where
+        batch must be smaller than this for for searchsplice to be considered
+    */
+    var get_batch_limit = function (size) {
+        if (size < 50) return 5;
+        if (size < 500) return 10;
+        if (size < 5000) return 30;
+        if (size < 50000) return 40;
+        return 50;
+    };
+
+    /*
+        empty iterator
+    */
+    var emptyIterator = function () {
+        let it = {};
+        it[Symbol.iterator] = function () {
+            return {
+                next() {
+                    return {done:true};
+                }
+            };
+        };
+        return it;
+    };
+
+
+    /*
+        iterator for array slice
+    */
+    var sliceIterator = function (array, start, stop) {
+        let slice = {
+            array: array,
+            start: start,
+            stop: stop
+        };
+        slice[Symbol.iterator] = function () {
+            return {
+                array: this.array,
+                current: this.start,
+                stop: this.stop,
+                next() {
+                    if (this.current < this.stop) {
+                        return { done: false, value: this.array[this.current++]};
+                    } else {
+                        return { done: true };
+                    }
+                }
+            };
+        };
+        return slice;
+    };
+
+
+    var BinarySearchError = function (message) {
+        this.name = "BinarySearchError";
         this.message = (message||"");
     };
-    SortedArrayError.prototype = Error.prototype;
+    BinarySearchError.prototype = Error.prototype;
 
     /*
 
-    SORTED ARRAY BINARY
+    BINARY SEARCH
+
+    TODO
+    - duplicate checking ?
 
     */
 
-    var SortedArrayBinary = function (array) {
-    	/*
-    	  use binary search to implement sorted insert
-    	  guard against duplicates
-    	 */
-        if (array) {
-            array.sort(cmp);
-        }
-    	this.array = array || [];
-
+    var BinarySearch = function (options) {
+        this.array = [];
+        this.options = options || {};
+        // comparison function defining sorting (see Array.prototypye.sort())
+        this.options.cmp = this.options.cmp || default_cmp;
     };
     	
     /**
@@ -62,18 +132,21 @@ define (['../util/interval'], function (Interval) {
      * @param {*} searchElement The item to search for within the array.
      * @return {Number} The index of the element which defaults to -1 when not found.
      */
-    SortedArrayBinary.prototype.binaryIndexOf = function (searchElement) {
+    BinarySearch.prototype.binaryIndexOf = function (searchElement) {
         var minIndex = 0;
         var maxIndex = this.array.length - 1;
         var currentIndex;
         var currentElement;
+        let diff;
+        let cmp = this.options.cmp;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
     		currentElement = this.array[currentIndex];
-    		if (currentElement < searchElement) {
+            diff = cmp(currentIndex, searchElement);
+    		if (diff < 0) {
     		    minIndex = currentIndex + 1;
     		}
-    		else if (currentElement > searchElement) {
+    		else if (diff > 0) {
     		    maxIndex = currentIndex - 1;
     		}
     		else {
@@ -82,33 +155,60 @@ define (['../util/interval'], function (Interval) {
         }
     	return ~maxIndex;
     	
-        // NOTE : ambiguity?
-        // search for minimum element returns 0 if it exists, and 0 if it does not exists
+        // NOTE : ambiguity
+        // search for value of minimum element returns 0 if it exists, and 0 if it does not exists
+        // this ambiguity is compensated for in relvant methods
     };
     
 
-    SortedArrayBinary.prototype.insertBatch = function (batch) {
+    /*
+        insert - binarysearch and splice
+    */
+    BinarySearch.prototype.insert_searchsplice = function (batch) {
+        if (this.array.length == 0) {
+            // initialise
+            this.array = batch;
+            this.array.sort(this.options.cmp)
+        }
         let len_batch = batch.length;
+        let element, index;
         for (let i=0; i<len_batch; i++) {
-            this.insert(batch[i]);
+            element = batch[i];
+            index = this.binaryIndexOf(element);
+            if (index < 0 || (index === 0 && this.array[0] !== element)) { 
+                this.array.splice(Math.abs(index), 0, element);
+            }
         }
     };
 
-
-
-    SortedArrayBinary.prototype.insertBatch2 = function (batch) {
-        this.array = this.array.concat(batch);
-        this.array.sort();
+    /*
+        insert - concat and sort
+    */
+    BinarySearch.prototype.insert_concatsort = function (batch) {
+        if (this.array.length == 0) {
+            // initialise
+            this.array = batch;
+        } else {
+            this.array = this.array.concat(batch);
+        }
+        this.array.sort(this.options.cmp);
     };
 
-    SortedArrayBinary.prototype.insert = function (element) {
-        var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-    		this.array.splice(Math.abs(index), 0, element);
+
+    /*
+        insert - select appropriate method
+    */
+    BinarySearch.prototype.insert = function (batch) {
+        let len_ds = this.array.length;
+        let batch_limit = get_batch_limit(len_ds);
+        if (batch.length < batch_limit && this.array.length > DATASET_LIMIT) {
+            this.insert_searchsplice(batch)
+        } else {
+            this.insert_concatsort(batch);
         }
     };
 
-    SortedArrayBinary.prototype.indexOf = function (element) {
+    BinarySearch.prototype.indexOf = function (element) {
         var index = this.binaryIndexOf(element);
         if (index < 0 || (index === 0 && this.array[0] !== element)) { 
     		return -1;
@@ -117,7 +217,7 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
-    SortedArrayBinary.prototype.hasElement = function (element) {
+    BinarySearch.prototype.has = function (element) {
         var index = this.binaryIndexOf(element);
         if (index < 0 || (index === 0 && this.array[0] !== element)) { 
     		return false;
@@ -126,7 +226,7 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
-    SortedArrayBinary.prototype.remove = function (element) {
+    BinarySearch.prototype.remove = function (element) {
         var index = this.binaryIndexOf(element);
         if (index < 0 || (index === 0 && this.array[0] !== element)) { 
     		return;
@@ -135,11 +235,11 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
-    SortedArrayBinary.prototype.getMinimum = function () {
+    BinarySearch.prototype.getMinimum = function () {
         return (this.array.length > 0) ? this.array[0] : null;
     };
 
-    SortedArrayBinary.prototype.getMaximum = function () {
+    BinarySearch.prototype.getMaximum = function () {
         return (this.array.length > 0) ? this.array[this.array.length - 1] : null;
     };
 
@@ -147,7 +247,7 @@ define (['../util/interval'], function (Interval) {
        Find index of largest value less than x
        Returns -1 if noe values exist that are less than x
      */
-    SortedArrayBinary.prototype.ltIndexOf = function(x) {
+    BinarySearch.prototype.ltIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         // consider element to the left
         i = (i < 0) ? Math.abs(i) - 1 : i - 1;
@@ -158,7 +258,7 @@ define (['../util/interval'], function (Interval) {
        Find index of largest value less than x or equal to x 
        Returns -1 if noe values exist that are less than x or equal to x
      */
-    SortedArrayBinary.prototype.leIndexOf = function(x) {
+    BinarySearch.prototype.leIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         // equal
         if (i > 0 || (i === 0 && this.array[0] === x)) {
@@ -195,7 +295,7 @@ define (['../util/interval'], function (Interval) {
 
     */
 
-    SortedArrayBinary.prototype.gtIndexOf = function (x) {
+    BinarySearch.prototype.gtIndexOf = function (x) {
         var i = this.binaryIndexOf(x);
         
     	// ambiguity if i === 0
@@ -222,7 +322,7 @@ define (['../util/interval'], function (Interval) {
        Returns -1 if noe values exist that are greater than x or equal to x
      */
 
-     SortedArrayBinary.prototype.geIndexOf = function(x) {
+     BinarySearch.prototype.geIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         // equal
         if (i > 0 || (i === 0 && this.array[0] === x)) {
@@ -243,11 +343,11 @@ define (['../util/interval'], function (Interval) {
         return (i < this.array.length) ? i : -1;
     };
 
-    SortedArrayBinary.prototype.lookup = function (interval) {
+    BinarySearch.prototype.lookup = function (interval) {
     	if (interval === undefined) 
     		interval = new Interval(-Infinity, Infinity, true, true);
     	if (interval instanceof Interval === false) 
-            throw new SortedArrayError("lookup requires Interval argument");
+            throw new BinarySearchError("lookup requires Interval argument");
         var start_index = -1, end_index = -1;
         if (interval.lowInclude) {
     		start_index = this.geIndexOf(interval.low);
@@ -255,7 +355,7 @@ define (['../util/interval'], function (Interval) {
     		start_index = this.gtIndexOf(interval.low);
         }
         if (start_index === -1) {
-    		return [];
+    		return emptyIterator();
         }
         if (interval.highInclude) {
     		end_index = this.leIndexOf(interval.high);
@@ -263,15 +363,17 @@ define (['../util/interval'], function (Interval) {
     		end_index = this.ltIndexOf(interval.high);
         }
         if (end_index === -1) { // not reachable - I think
-    		return [];
+    		return emptyIterator();
         }
-        return this.array.slice(start_index, end_index + 1);
+        return sliceIterator(this.array, start_index, end_index +1);
+
+        //return this.array.slice(start_index, end_index + 1);
     };
 
-    SortedArrayBinary.prototype.get = function (i) {return this.array[i];};
-    SortedArrayBinary.prototype.list = function () {return this.array;};
+    BinarySearch.prototype.get = function (i) {return this.array[i];};
+    BinarySearch.prototype.list = function () {return this.array;};
 
-    return SortedArrayBinary;
+    return BinarySearch;
 });
 
 

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+      require(['util/binarysearch', 'util/interval'], function (BinarySearch, Interval) {
+
+
+        var makeBatch = function (size, random, scale) {
+          let batch = [];
+          random = random || false;
+          scale = scale || 1;
+          for (let i=0; i<size; i++) {
+            if (random) {
+              low = Math.random()*scale;
+            } else {
+              low = i;
+            }
+            batch.push(low);
+          }
+          return batch;
+        };
+
+        var timeit = function (func, name) {
+          let t0 = performance.now();
+          let result = func();
+          let t1 = performance.now();
+          console.log(name, t1-t0);
+          return result;
+        };
+
+        var binary1 = function (batch1, batch2) {
+          let b = new BinarySearch();
+          b.insert(batch1);
+          timeit(function () {
+            b.insert_searchsplice(batch2);
+          }, "binarysearch insert " + batch1.length + " " + batch2.length);
+
+        };
+
+        var binary2 = function (batch1, batch2) {
+          let b = new BinarySearch();
+          b.insert(batch1)
+          timeit(function () {
+            b.insert_concatsort(batch2);
+          }, "appendsort insert " + batch1.length + " " + batch2.length);
+        };
+
+
+        var binary3 = function (batch1, batch2) {
+          let b = new BinarySearch();
+          b.insert(batch1)
+          timeit(function () {
+            b.insert(batch2);
+          }, "insert " + batch1.length + " " + batch2.length);
+        };
+
+
+        var test_lookup = function () {
+          let b = new BinarySearch();
+          let batch = makeBatch(100);
+          b.insert(batch);
+          let interval = new Interval(4, 8, true, true);
+          console.log(interval);
+          let it = b.lookup(interval);
+          for (let p of it) {
+            console.log(p);
+          }
+        }
+
+
+        var timeitmakebatch = function (size) {
+          let result;
+          timeit(function () {
+            result = makeBatch(size);
+          }, "batch " + size);
+          return result;
+        };
+
+        var run = function () {
+
+
+          let DATASIZE = 50000;
+          let BATCHSIZE = 100;
+
+          let batch1 = timeitmakebatch(DATASIZE);
+          binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
+          
+          let batch2 = timeitmakebatch(DATASIZE);
+          binary2(batch2, makeBatch(BATCHSIZE, true, DATASIZE));
+       
+          let batch3 = timeitmakebatch(DATASIZE);
+          binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
+
+          test_lookup();
+
+        };
+
+
+
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Binary Search</h1>
+  </body>
+</html>
