@@ -55,7 +55,6 @@
           }, "appendsort insert " + batch1.length + " " + batch2.length);
         };
 
-
         var binary3 = function (batch1, batch2) {
           let b = new BinarySearch();
           b.insert(batch1)
@@ -72,7 +71,6 @@
           return result;
         };
 
-
         var test_batch_insert = function () {
           let DATASIZE = 50000;
           let BATCHSIZE = 100;
@@ -87,52 +85,78 @@
           binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
         };
 
-
         var test_lookup = function () {
           let b = new BinarySearch();
-          let batch = makeBatch(100);
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
           b.insert(batch);
-          let interval = new Interval(4, 8, true, true);
-          console.log(interval);
-          let it = b.lookup(interval);
-          for (let p of it) {
-            console.log(p);
-          }
+          console.log(batch);
+
+          let test_intervals = [
+            new Interval(4, 7, true, true),
+            new Interval(4, 7, true, false),
+            new Interval(4, 7, false, true),
+            new Interval(4, 7, false, false)
+          ];
+
+          test_intervals.forEach(function(interval){
+            console.log(interval);
+            let it = b.lookup(interval);
+            for (let p of it) {
+              console.log(p);
+            }
+          });
+
         }
 
+        var test_ge = function(b) {
+          console.log("leftmost greater or equal to x")
+          let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
+          a.forEach(function(num) {
+            console.log("x: " + num + " -> " + b.geIndexOf(num));
+          });
+        };
+
+        var test_le = function(b) {
+          console.log("rightmost less or equal to x")
+          let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
+          a.forEach(function(num) {
+            console.log("x: " + num + " -> " + b.leIndexOf(num));
+          });
+        };
+
+        var test_gt = function(b) {
+          console.log("leftmost greater than x")
+          let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
+          a.forEach(function(num) {
+            console.log("x: " + num + " -> " + b.gtIndexOf(num));
+          });
+        };
+
+        var test_lt = function(b) {
+          console.log("rightmost less than x")
+          let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
+          a.forEach(function(num) {
+            console.log("x: " + num + " -> " + b.ltIndexOf(num));
+          });
+        };
 
         var test_duplicates = function () {
           console.log("test_duplicates");
           let b = new BinarySearch();
-          //let batch = [1,2,3,4,4,4,5,6,6,7,7,7,7,8];
-          let batch = [1,4,2,7,5,6,3,6,7,4,7,7,8,4];
-          //let batch = [1,2,3,4,5,6,7,8];
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
           b.insert_concatsort(batch);
-          //let interval = new Interval(4, 8, true, false);
-          //console.log(interval);
           console.log(batch);
-
-          // index of largest value less than 7 - should be index 8
-          console.log(b.ltIndexOf(7));
-          // index of smallest value greater than 7 - should be 13
-          console.log(b.gtIndexOf(7));
-
-
-
+          test_ge(b);
+          test_le(b);
+          test_gt(b);
+          test_lt(b);
         };
 
         var run = function () {
-
-
-          /*
-          test_batch_insert();
-          test_lookup();
-          */
+          //test_batch_insert();
+          //test_lookup();
           test_duplicates();
         };
-
-
-
 
         if (document.readyState === "complete") run();
         else window.onload = run;

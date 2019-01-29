@@ -140,7 +140,6 @@ define (['../util/interval'], function (Interval) {
      * @return {Number} The index of the element which defaults to -1 when not found.
      */
     BinarySearch.prototype.binaryIndexOf = function (searchElement) {
-        console.log("binaryIndexOf");
         var minIndex = 0;
         var maxIndex = this.array.length - 1;
         var currentIndex;
@@ -166,9 +165,18 @@ define (['../util/interval'], function (Interval) {
     	return ~maxIndex;
     	
         // NOTE : ambiguity
-        // search for value of minimum element returns 0 if it exists, and 0 if it does not exists
-        // this ambiguity is compensated for in relevant methods
 
+        /*
+        search for for an element that is less than array[0]
+        should return a negative value indicating that the element 
+        was not found. Furthermore, as it escapes the while loop
+        the returned value should indicate the index that this element 
+        would have had - had it been there - as is the idea of this bitwise 
+        operator trick
+
+        so, it follows that search for value of minimum element returns 0 if it exists, and 0 if it does not exists
+        this ambiguity is compensated for in relevant methods
+        */
     };
     
 
@@ -262,106 +270,120 @@ define (['../util/interval'], function (Interval) {
      */
     BinarySearch.prototype.ltIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        // consider element to the left
-        i = (i < 0) ? Math.abs(i) - 1 : i - 1;
-        let idx_left = (i >= 0) ? i : -1;
-
-
-        
-        // if the left element is a duplicate of current element, continue to scan left
-        while (idx_left > 0 && this.array[idx_left] == this.array[idx_left-1]) {
-            i--;
-        }
-
+        if (i>0 || (i==0 && this.array[0] == x)) 
+        {
+            /* 
+                found - x is found on index i
+                make sure there are no duplicates by scanning to the left
+                if scanning reaches the left end of the array nothing is found 
+                return -1
+            */ 
+            while (i > 0) {
+                if (this.array[i-1] < x) {
+                    return i-1;
+                } else {
+                    i--;
+                }
+            }
+            return -1;
+        } else {
+            /* 
+                not found - Math.abs(i) is index where x should be inserted
+                => Math.abs(i) - 1 is the largest value less than x
+            */
+            return Math.abs(i)-1;
+        } 
     };
 
     /* 
-       Find index of largest value less than x or equal to x 
+       Find index of rightmost value less than x or equal to x 
        Returns -1 if noe values exist that are less than x or equal to x
      */
     BinarySearch.prototype.leIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        // equal
         if (i > 0 || (i === 0 && this.array[0] === x)) {
-    		return i;
+            /* 
+                element found
+                check for duplicates towards the right
+            */
+            let last_idx = this.array.length-1;
+            while (i<last_idx) {
+                if (this.array[i+1] > x) {
+                    return i;
+                } else {
+                    i++
+                }     
+            }
+            return last_idx;
+        } else {
+            // not found - consider element to the left
+            i = Math.abs(i) - 1;
+            return (i >= 0) ? i : -1;
         }
-        // consider element to the left
-        i = Math.abs(i) - 1;
-        return (i >= 0) ? i : -1;
     };
 
     /* 
-       	Find index of smallest value greater than x
-       	Returns -1 if noe values exist that are greater than x
-
-    	note ambiguity :
-    	
-    	search for for an element that is less than array[0]
-    	should return a negative value indicating that the element 
-    	was not found. Furthermore, as it escapes the while loop
-    	the returned value should indicate the index that this element 
-    	would have had - had it been there - as is the idea of this bitwise 
-    	or trick
-    	
-    	it should return a negative value x so that
-    	Math.abs(x) - 1 gives the correct index which is 0
-    	thus, x needs to be -1
-
-    	instead it returns 0 - indicating that the non-existing value
-    	was found!
-    	
-    	I think this bug is specific to breaking out on (minIndex,maxIndex) === (0,-1)
-
-
-
+       	Find index of leftmost value greater than x
+       	Returns -1 if no values exist that are greater than x
     */
 
     BinarySearch.prototype.gtIndexOf = function (x) {
         var i = this.binaryIndexOf(x);
-        
-    	// ambiguity if i === 0
-    	if (i === 0) {
-    		if (this.array[0] === x) {
-    			// found element - need to exclude it
-    			// since this is gt it is element to the right
-    			i = 1;
-    		} else {
-    			// did not find element 
-    			// - the first element is the correct
-    			// i === 0
-    		}
-    	}
-    	else {		
-    		i = (i < 0) ? Math.abs(i): i + 1;
-    	}
-        return (i < this.array.length) ? i : -1;
+        if (i>0 || (i==0 && this.array[0] == x)) {
+            /*
+                found - x is found on index i
+                make sure there are no duplicates by scanning to the right
+                if scanning reaches the right end of the array this is the greates value 
+                return -1
+            */ 
+            let last_idx = this.array.length-1;
+            while (i < last_idx) {
+                if (this.array[i+1] > x) {
+                    return i+1;
+                } else {
+                    i++;
+                }
+            }
+            return -1;
+        } else {
+            /* 
+                not found - Math.abs(i) is index where x should be inserted
+                => Math.abs(i) is the smallest value greater than x
+                unless we hit the end of the array, in which cas no smalles value
+                exist which is greater than x
+            */
+            let idx = Math.abs(i);
+            return (idx < this.array.length) ? idx : -1;
+        }
     };
 
 
     /* 
-       Find index of smallest value greater than x or equal to x 
+       Find index of leftmost value which is greater than x or equal to x 
        Returns -1 if noe values exist that are greater than x or equal to x
      */
 
      BinarySearch.prototype.geIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        // equal
-        if (i > 0 || (i === 0 && this.array[0] === x)) {
-    		return i;
-        }
-    	/*		    
-    	if (i === 0) {
-        	// ambiguity - either there is no element > x or array[0] is the smallest value > x
-        	if (array.length >= 0 && array[0] > x) {
-        		return 0;
-        	} else return -1;
+        if (i > 0 || (i === 0 && this.array[0] == x)) {
+            /* 
+                found
+                check for duplicates towards the left
+                if there are duplicates all the way - return the one at the beginning of the array
+            */
+            while (i>0) {
+                if (this.array[i-1] < x) {
+                    return i;
+                } else {
+                    i--
+                }     
+            }
+            return 0;
         } else {
-        	// consider element to the right
-        	i = Math.abs(i);
-    	}
-    	*/
-    	i = Math.abs(i);	
-        return (i < this.array.length) ? i : -1;
+            // not found - consider the element where x would be inserted
+            i = Math.abs(i);
+            return (i<this.array.length) ? i : -1;
+        }
     };
 
     BinarySearch.prototype.lookup = function (interval) {
@@ -392,7 +414,9 @@ define (['../util/interval'], function (Interval) {
     };
 
     BinarySearch.prototype.get = function (i) {return this.array[i];};
-    BinarySearch.prototype.list = function () {return this.array;};
+    BinarySearch.prototype.items = function () {
+        return sliceIterator(this.array, 0, this.array.length);
+    };
 
     return BinarySearch;
 });
