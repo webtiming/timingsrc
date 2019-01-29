@@ -115,8 +115,15 @@ define (['../util/interval'], function (Interval) {
 
     BINARY SEARCH
 
-    TODO
-    - duplicate checking ?
+    The implementation supports duplicate obects.
+    If duplicates are present
+
+    - insert - insert along with equal values, no particular order is maintained between duplicates
+    - lookup - return all duplicates
+    - remove - removing one value only removes one value - even if there are duplicates, which one is undefined
+
+    If duplicates are not wanted, duplicate protection may be turned on.
+    - duplicate
 
     */
 
@@ -157,7 +164,8 @@ define (['../util/interval'], function (Interval) {
     	
         // NOTE : ambiguity
         // search for value of minimum element returns 0 if it exists, and 0 if it does not exists
-        // this ambiguity is compensated for in relvant methods
+        // this ambiguity is compensated for in relevant methods
+
     };
     
 

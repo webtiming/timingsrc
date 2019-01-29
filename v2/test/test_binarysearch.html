@@ -65,6 +65,33 @@
         };
 
 
+
+
+
+        var timeitmakebatch = function (size) {
+          let result;
+          timeit(function () {
+            result = makeBatch(size);
+          }, "batch " + size);
+          return result;
+        };
+
+
+        var test_batch_insert = function () {
+          let DATASIZE = 50000;
+          let BATCHSIZE = 100;
+
+          let batch1 = timeitmakebatch(DATASIZE);
+          binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
+          
+          let batch2 = timeitmakebatch(DATASIZE);
+          binary2(batch2, makeBatch(BATCHSIZE, true, DATASIZE));
+       
+          let batch3 = timeitmakebatch(DATASIZE);
+          binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
+        };
+
+
         var test_lookup = function () {
           let b = new BinarySearch();
           let batch = makeBatch(100);
@@ -78,31 +105,29 @@
         }
 
 
-        var timeitmakebatch = function (size) {
-          let result;
-          timeit(function () {
-            result = makeBatch(size);
-          }, "batch " + size);
-          return result;
+        var test_duplicates = function () {
+          console.log("test_duplicates");
+          let b = new BinarySearch();
+          //let batch = [1,2,3,4,4,4,5,6,6,7,7,7,7,8];
+          let batch = [1,4,2,7,5,6,3,6,7,4,7,7,8,4];
+          b.insert_searchsplice(batch);
+          let interval = new Interval(4, 8, true, false);
+          console.log(interval);
+          console.log(batch);
+          let it = b.lookup(interval);
+          for (let p of it) {
+            console.log(p);
+          }
         };
 
         var run = function () {
 
 
-          let DATASIZE = 50000;
-          let BATCHSIZE = 100;
-
-          let batch1 = timeitmakebatch(DATASIZE);
-          binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
-          
-          let batch2 = timeitmakebatch(DATASIZE);
-          binary2(batch2, makeBatch(BATCHSIZE, true, DATASIZE));
-       
-          let batch3 = timeitmakebatch(DATASIZE);
-          binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
-
+          /*
+          test_batch_insert();
           test_lookup();
-
+          */
+          test_duplicates();
         };
 
 
