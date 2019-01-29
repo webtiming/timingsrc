@@ -152,10 +152,38 @@
           test_lt(b);
         };
 
+        var test_objects = function() {
+
+          var Point = function (num) {
+            this.num = num;
+          };
+
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7].reverse();
+          let points = batch.map(function(num){
+            return new Point(num);
+          });
+
+          console.log(points);
+
+          var getValue = function(point) {
+            return point.num;
+          };
+
+          let b = new BinarySearch({getValue:getValue});
+          b.insert(points);
+          for (let p of b.items()) {
+            console.log(p);
+          }
+
+
+        };
+
+
         var run = function () {
           //test_batch_insert();
           //test_lookup();
-          test_duplicates();
+          //test_duplicates();
+          //test_objects();
         };
 
         if (document.readyState === "complete") run();

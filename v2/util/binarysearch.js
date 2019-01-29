@@ -29,11 +29,6 @@ define (['../util/interval'], function (Interval) {
         return (n==N && !isNaN(N));
     };
 
-    // default comparison function
-    var default_cmp = function (a,b) {
-        return a-b;
-    };
-
     /* 
         batch inserts have two strategies
         1) CONCATSORT - concat arrays and sort
@@ -130,8 +125,17 @@ define (['../util/interval'], function (Interval) {
     var BinarySearch = function (options) {
         this.array = [];
         this.options = options || {};
-        // comparison function defining sorting (see Array.prototypye.sort())
-        this.options.cmp = this.options.cmp || default_cmp;
+        // optional getter for object values
+        if (this.options.getValue) {
+            let getValue = this.options.getValue;
+            this.cmp = function(a, b) {
+                return getValue(a) - getValue(b);
+            }
+        } else {
+            this.cmp = function(a, b) {
+                return a - b;
+            }
+        }
     };
     	
     /**
@@ -145,10 +149,11 @@ define (['../util/interval'], function (Interval) {
         var currentIndex;
         var currentElement;
         let diff;
-        let cmp = this.options.cmp;
+        let cmp = this.cmp;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
     		currentElement = this.array[currentIndex];
+            
             diff = cmp(currentElement, searchElement);
             if (diff < 0) {
     		    minIndex = currentIndex + 1;
@@ -196,7 +201,7 @@ define (['../util/interval'], function (Interval) {
         if (this.array.length == 0) {
             // initialise
             this.array = batch;
-            this.array.sort(this.options.cmp); 
+            this.array.sort(this.cmp); 
         } else {
             let len_batch = batch.length;
             let element, index;
@@ -221,7 +226,7 @@ define (['../util/interval'], function (Interval) {
         } else {
             this.array = this.array.concat(batch);
         }
-        this.array.sort(this.options.cmp);
+        this.array.sort(this.cmp);
     };
 
 
