@@ -110,15 +110,12 @@ define (['../util/interval'], function (Interval) {
 
     BINARY SEARCH
 
-    The implementation supports duplicate obects.
+    The implementation supports duplicate objects.
     If duplicates are present
 
     - insert - insert along with equal values, no particular order is maintained between duplicates
-    - lookup - return all duplicates
+    - lookup - returns all duplicates or none
     - remove - removing one value only removes one value - even if there are duplicates, which one is undefined
-
-    If duplicates are not wanted, duplicate protection may be turned on.
-    - duplicate
 
     */
 
@@ -153,7 +150,6 @@ define (['../util/interval'], function (Interval) {
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
     		currentElement = this.array[currentIndex];
-            
             diff = cmp(currentElement, searchElement);
             if (diff < 0) {
     		    minIndex = currentIndex + 1;
@@ -185,19 +181,26 @@ define (['../util/interval'], function (Interval) {
     };
     
 
+    // utility function for resolving ambiguity
+    BinarySearch.prototype._isFound = function(index, element) {
+        return (index > 0 || (index === 0 && this.cmp(this.array[0], element) === 0)) ? true : false;
+    };
+
     BinarySearch.prototype.indexOf = function (element) {
         var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-            return -1;
-        } else {
-            return index;
-        }
+        return (this._isFound(index, element)) ? index : -1;
+    };
+
+    BinarySearch.prototype.has = function (element) {
+        var index = this.binaryIndexOf(element);
+        return (this._isFound(index, element)) ? true : false;
     };
 
     /*
         insert - binarysearch and splice
     */
     BinarySearch.prototype.insert_searchsplice = function (batch) {
+        // no protection against duplicates
         if (this.array.length == 0) {
             // initialise
             this.array = batch;
@@ -208,18 +211,16 @@ define (['../util/interval'], function (Interval) {
             for (let i=0; i<len_batch; i++) {
                 element = batch[i];
                 index = this.binaryIndexOf(element);
-                if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-                    this.array.splice(Math.abs(index), 0, element);
-                }
+                this.array.splice(Math.abs(index), 0, element);
             }
         }
-
     };
 
     /*
         insert - concat and sort
     */
     BinarySearch.prototype.insert_concatsort = function (batch) {
+        // no protection against duplicates
         if (this.array.length == 0) {
             // initialise
             this.array = batch;
@@ -243,30 +244,19 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
-    BinarySearch.prototype.has = function (element) {
-        var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-    		return false;
-        } else {
-    		return true;
-        }
-    };
-
     BinarySearch.prototype.remove = function (element) {
         var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-    		return;
-        } else {
-    		this.array.splice(index, 1);
+        if (this._isFound(index, element)) {
+            this.array.splice(index, 1);
         }
     };
 
     BinarySearch.prototype.getMinimum = function () {
-        return (this.array.length > 0) ? this.array[0] : null;
+        return (this.array.length > 0) ? this.array[0] : undefined;
     };
 
     BinarySearch.prototype.getMaximum = function () {
-        return (this.array.length > 0) ? this.array[this.array.length - 1] : null;
+        return (this.array.length > 0) ? this.array[this.array.length - 1] : undefined;
     };
 
     /* 
@@ -275,8 +265,7 @@ define (['../util/interval'], function (Interval) {
      */
     BinarySearch.prototype.ltIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (i>0 || (i==0 && this.array[0] == x)) 
-        {
+        if (this._isFound(i, x)) {
             /* 
                 found - x is found on index i
                 make sure there are no duplicates by scanning to the left
@@ -284,7 +273,7 @@ define (['../util/interval'], function (Interval) {
                 return -1
             */ 
             while (i > 0) {
-                if (this.array[i-1] < x) {
+                if (this.cmp(this.array[i-1], x) < 0) {
                     return i-1;
                 } else {
                     i--;
@@ -306,14 +295,14 @@ define (['../util/interval'], function (Interval) {
      */
     BinarySearch.prototype.leIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (i > 0 || (i === 0 && this.array[0] === x)) {
+        if (this._isFound(i, x)) {
             /* 
                 element found
                 check for duplicates towards the right
             */
             let last_idx = this.array.length-1;
             while (i<last_idx) {
-                if (this.array[i+1] > x) {
+                if (this.cmp(this.array[i+1], x) > 0) {
                     return i;
                 } else {
                     i++
@@ -334,7 +323,7 @@ define (['../util/interval'], function (Interval) {
 
     BinarySearch.prototype.gtIndexOf = function (x) {
         var i = this.binaryIndexOf(x);
-        if (i>0 || (i==0 && this.array[0] == x)) {
+        if (this._isFound(i, x)) {
             /*
                 found - x is found on index i
                 make sure there are no duplicates by scanning to the right
@@ -343,7 +332,7 @@ define (['../util/interval'], function (Interval) {
             */ 
             let last_idx = this.array.length-1;
             while (i < last_idx) {
-                if (this.array[i+1] > x) {
+                if (this.cmp(this.array[i+1], x) > 0) {
                     return i+1;
                 } else {
                     i++;
@@ -370,17 +359,17 @@ define (['../util/interval'], function (Interval) {
 
      BinarySearch.prototype.geIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (i > 0 || (i === 0 && this.array[0] == x)) {
+        if (this._isFound(i, x)) {
             /* 
                 found
                 check for duplicates towards the left
                 if there are duplicates all the way - return the one at the beginning of the array
             */
             while (i>0) {
-                if (this.array[i-1] < x) {
+                if (this.cmp(this.array[i-1], x) < 0) {
                     return i;
                 } else {
-                    i--
+                    i--;
                 }     
             }
             return 0;

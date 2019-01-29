@@ -112,7 +112,7 @@
           console.log("leftmost greater or equal to x")
           let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
           a.forEach(function(num) {
-            console.log("x: " + num + " -> " + b.geIndexOf(num));
+            console.log("x: " + num + " -> " + b.geIndexOf(new Point(num)));
           });
         };
 
@@ -120,7 +120,7 @@
           console.log("rightmost less or equal to x")
           let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
           a.forEach(function(num) {
-            console.log("x: " + num + " -> " + b.leIndexOf(num));
+            console.log("x: " + num + " -> " + b.leIndexOf(new Point(num)));
           });
         };
 
@@ -128,7 +128,7 @@
           console.log("leftmost greater than x")
           let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
           a.forEach(function(num) {
-            console.log("x: " + num + " -> " + b.gtIndexOf(num));
+            console.log("x: " + num + " -> " + b.gtIndexOf(new Point(num)));
           });
         };
 
@@ -136,16 +136,30 @@
           console.log("rightmost less than x")
           let a = [0.1, 1, 1.1, 6.9, 7, 7.1];
           a.forEach(function(num) {
-            console.log("x: " + num + " -> " + b.ltIndexOf(num));
+            console.log("x: " + num + " -> " + b.ltIndexOf(new Point(num)));
           });
         };
 
+        var Point = function (num) {
+          this.num = num;
+        };
+
+        var getValue = function(point) {
+          return point.num;
+        };
+
         var test_duplicates = function () {
+          
           console.log("test_duplicates");
-          let b = new BinarySearch();
-          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
-          b.insert_concatsort(batch);
-          console.log(batch);
+          let b = new BinarySearch({getValue:getValue});
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7].reverse();
+
+          let points = batch.map(function(num){
+            return new Point(num);
+          });
+
+          b.insert(points);
+          console.log(points);
           test_ge(b);
           test_le(b);
           test_gt(b);
@@ -154,10 +168,6 @@
 
         var test_objects = function() {
 
-          var Point = function (num) {
-            this.num = num;
-          };
-
           let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7].reverse();
           let points = batch.map(function(num){
             return new Point(num);
@@ -165,16 +175,11 @@
 
           console.log(points);
 
-          var getValue = function(point) {
-            return point.num;
-          };
-
           let b = new BinarySearch({getValue:getValue});
           b.insert(points);
           for (let p of b.items()) {
             console.log(p);
           }
-
 
         };
 
@@ -182,7 +187,7 @@
         var run = function () {
           //test_batch_insert();
           //test_lookup();
-          //test_duplicates();
+          test_duplicates();
           //test_objects();
         };
 
