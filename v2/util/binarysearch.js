@@ -140,6 +140,7 @@ define (['../util/interval'], function (Interval) {
      * @return {Number} The index of the element which defaults to -1 when not found.
      */
     BinarySearch.prototype.binaryIndexOf = function (searchElement) {
+        console.log("binaryIndexOf");
         var minIndex = 0;
         var maxIndex = this.array.length - 1;
         var currentIndex;
@@ -149,17 +150,19 @@ define (['../util/interval'], function (Interval) {
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
     		currentElement = this.array[currentIndex];
-            diff = cmp(currentIndex, searchElement);
-    		if (diff < 0) {
+            diff = cmp(currentElement, searchElement);
+            if (diff < 0) {
     		    minIndex = currentIndex + 1;
     		}
     		else if (diff > 0) {
     		    maxIndex = currentIndex - 1;
     		}
-    		else {
+            else {
+                // found - duplicates may exist on both sides
     		    return currentIndex;
     		}
         }
+        // not found - indicate at what index the element should be inserted
     	return ~maxIndex;
     	
         // NOTE : ambiguity
@@ -169,6 +172,15 @@ define (['../util/interval'], function (Interval) {
     };
     
 
+    BinarySearch.prototype.indexOf = function (element) {
+        var index = this.binaryIndexOf(element);
+        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
+            return -1;
+        } else {
+            return index;
+        }
+    };
+
     /*
         insert - binarysearch and splice
     */
@@ -176,17 +188,19 @@ define (['../util/interval'], function (Interval) {
         if (this.array.length == 0) {
             // initialise
             this.array = batch;
-            this.array.sort(this.options.cmp)
-        }
-        let len_batch = batch.length;
-        let element, index;
-        for (let i=0; i<len_batch; i++) {
-            element = batch[i];
-            index = this.binaryIndexOf(element);
-            if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-                this.array.splice(Math.abs(index), 0, element);
+            this.array.sort(this.options.cmp); 
+        } else {
+            let len_batch = batch.length;
+            let element, index;
+            for (let i=0; i<len_batch; i++) {
+                element = batch[i];
+                index = this.binaryIndexOf(element);
+                if (index < 0 || (index === 0 && this.array[0] !== element)) { 
+                    this.array.splice(Math.abs(index), 0, element);
+                }
             }
         }
+
     };
 
     /*
@@ -213,15 +227,6 @@ define (['../util/interval'], function (Interval) {
             this.insert_searchsplice(batch)
         } else {
             this.insert_concatsort(batch);
-        }
-    };
-
-    BinarySearch.prototype.indexOf = function (element) {
-        var index = this.binaryIndexOf(element);
-        if (index < 0 || (index === 0 && this.array[0] !== element)) { 
-    		return -1;
-        } else {
-    		return index;
         }
     };
 
@@ -259,7 +264,15 @@ define (['../util/interval'], function (Interval) {
         var i = this.binaryIndexOf(x);
         // consider element to the left
         i = (i < 0) ? Math.abs(i) - 1 : i - 1;
-        return (i >= 0) ? i : -1;
+        let idx_left = (i >= 0) ? i : -1;
+
+
+        
+        // if the left element is a duplicate of current element, continue to scan left
+        while (idx_left > 0 && this.array[idx_left] == this.array[idx_left-1]) {
+            i--;
+        }
+
     };
 
     /* 
