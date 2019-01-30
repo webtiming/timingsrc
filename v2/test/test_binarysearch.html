@@ -73,7 +73,7 @@
 
         var test_batch_insert = function () {
           let DATASIZE = 50000;
-          let BATCHSIZE = 100;
+          let BATCHSIZE = 10;
 
           let batch1 = timeitmakebatch(DATASIZE);
           binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
@@ -200,12 +200,12 @@
         };
 
         var run = function () {
-          //test_batch_insert();
+          test_batch_insert();
           //test_lookup();
           //test_duplicates();
           //test_remove_duplicates();
           //test_objects();
-          test_big_batch();
+          //test_big_batch();
         };
 
         if (document.readyState === "complete") run();

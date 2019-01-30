@@ -136,7 +136,6 @@ define (['../util/interval'], function (Interval) {
             this.cmp = function (a, b) {return value(a)-value(b);}
         } else {
             this.value = function (x) {return x;};
-            this.cmp = function (a, b) {return a-b;};
         }
     };
     	
@@ -239,7 +238,7 @@ define (['../util/interval'], function (Interval) {
     BinarySearch.prototype.insert_concatsort = function (batch) {
         // concat
         this.array = this.array.concat(batch)
-        // sort 
+        // sort
         this.array.sort(this.cmp);
         // remove duplicates
         if (!this.options.allow_duplicates) {
