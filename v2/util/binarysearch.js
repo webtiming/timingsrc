@@ -29,12 +29,7 @@ define (['../util/interval'], function (Interval) {
         return (n==N && !isNaN(N));
     };
 
-    /*
-        remove duplicates
-    */
-    var unique = function unique(A) {
-        return [...new Set(A)];
-    };
+
 
 
     /* 
@@ -126,6 +121,7 @@ define (['../util/interval'], function (Interval) {
     - insert - insert along with equal values, no particular order is maintained between duplicates
     - lookup - returns all duplicates or none
     - remove - removing all duplicates of a given value
+    - indexOf - returns one index, also in case of duplicates - not defined which
 
     */
 
@@ -133,6 +129,15 @@ define (['../util/interval'], function (Interval) {
         this.array = [];
         this.options = options || {};
         this.options.allow_duplicates = this.options.allow_duplicates || false;
+        // optional getter for object values
+        if (this.options.value) {
+            let value = this.options.value;
+            this.value = value;
+            this.cmp = function (a, b) {return value(a)-value(b);}
+        } else {
+            this.value = function (x) {return x;};
+            this.cmp = function (a, b) {return a-b;};
+        }
     };
     	
     /**
@@ -140,22 +145,19 @@ define (['../util/interval'], function (Interval) {
      * @param {*} searchElement The item to search for within the array.
      * @return {Number} The index of the element which defaults to -1 when not found.
      */
-    BinarySearch.prototype.binaryIndexOf = function (searchElement) {
-        var minIndex = 0;
-        var maxIndex = this.array.length - 1;
-        var currentIndex;
-        var currentElement;
-        let diff;
+    BinarySearch.prototype.binaryIndexOf = function (value_searchElement) {
+        let minIndex = 0;
+        let maxIndex = this.array.length - 1;
+        let currentIndex;
+        let value_currentElement;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
-    		currentElement = this.array[currentIndex];
-            if (currentElement < searchElement) {
+    		value_currentElement = this.value(this.array[currentIndex]);
+            if (value_currentElement < value_searchElement) {
                 minIndex = currentIndex + 1;
-            }
-            else if (currentElement > searchElement) {
+            } else if (value_currentElement > value_searchElement) {
                 maxIndex = currentIndex - 1;
-            }
-            else {
+            } else {
                 // found - duplicates may exist on both sides
     		    return currentIndex;
     		}
@@ -180,33 +182,53 @@ define (['../util/interval'], function (Interval) {
     
 
     // utility function for resolving ambiguity
-    BinarySearch.prototype._isFound = function(index, element) {
-        return (index > 0 || (index === 0 && this.array[0] == element)) ? true : false;
+    BinarySearch.prototype._isFound = function(index, x) {
+        return (index > 0 || (index == 0 && this.value(this.array[0]) == x)) ? true : false;
     };
 
-    BinarySearch.prototype.indexOf = function (element) {
-        var index = this.binaryIndexOf(element);
-        return (this._isFound(index, element)) ? index : -1;
+    BinarySearch.prototype.indexOf = function (x) {
+        var index = this.binaryIndexOf(x);
+        return (this._isFound(index, x)) ? index : -1;
     };
 
-    BinarySearch.prototype.has = function (element) {
-        var index = this.binaryIndexOf(element);
-        return (this._isFound(index, element)) ? true : false;
+    BinarySearch.prototype.has = function (x) {
+        var index = this.binaryIndexOf(x);
+        return (this._isFound(index, x)) ? true : false;
     };
+
+
+    /*
+        remove duplicates from array
+
+        removing duplicates using Set is natural, 
+        but if objects and a value function is provided, 
+        but Set equality will not work if the array containes objects and not values.
+        in this case use map instead - this is slower by a factor 2
+        due to repeated use of the custom value() function
+    */
+    BinarySearch.prototype.unique = function (A) {
+        if (this.value) {
+            let m = new Map(A.map(i => [this.value(i), i]));
+            return [...m.values()];
+        } else {
+            return [...new Set(A)];
+        }
+    };
+
 
     /*
         insert - binarysearch and splice
     */
     BinarySearch.prototype.insert_searchsplice = function (batch) {
         let len_batch = batch.length;
-        let element, index;
-        let duplicates = this.options.duplicates;
+        let x, index;
+        let allow_duplicates = this.options.allow_duplicates;
         for (let i=0; i<len_batch; i++) {
-            element = batch[i];
-            index = this.binaryIndexOf(element);
+            x = this.value(batch[i]);
+            index = this.binaryIndexOf(x);
             // protect agaist duplicate entries
             if (!this._isFound(index) || allow_duplicates) {
-                this.array.splice(Math.abs(index), 0, element);
+                this.array.splice(Math.abs(index), 0, x);
             }
         }
     };
@@ -215,14 +237,13 @@ define (['../util/interval'], function (Interval) {
         insert - concat and sort
     */
     BinarySearch.prototype.insert_concatsort = function (batch) {
-
         // concat
         this.array = this.array.concat(batch)
-        // sort
-        this.array.sort();
+        // sort 
+        this.array.sort(this.cmp);
         // remove duplicates
         if (!this.options.allow_duplicates) {
-            this.array = unique(this.array);
+            this.array = this.unique(this.array);
         }
     };
 
@@ -255,7 +276,7 @@ define (['../util/interval'], function (Interval) {
     BinarySearch.prototype.remove = function (x) {
         // find leftmost value greater than x or equal to x
         let left_index = this.geIndexOf(x);
-        if (left_index == -1 || this.array[x] > x) {
+        if (left_index == -1 || this.value(this.array[x]) > x) {
             // x not found, or only values greater than x found 
             return;
         }
@@ -263,7 +284,7 @@ define (['../util/interval'], function (Interval) {
         let last_idx = this.array.length-1;
         let i = left_index;
         while (i<last_idx) {
-            if (this.array[i+1] > x) {
+            if (this.value(this.array[i+1]) > x) {
                 break;
             } else {
                 i++;
@@ -295,7 +316,7 @@ define (['../util/interval'], function (Interval) {
                 return -1
             */ 
             while (i > 0) {
-                if (this.array[i-1] < x) {
+                if (this.value(this.array[i-1]) < x) {
                     return i-1;
                 } else {
                     i--;
@@ -324,7 +345,7 @@ define (['../util/interval'], function (Interval) {
             */
             let last_idx = this.array.length-1;
             while (i<last_idx) {
-                if (this.array[i+1] > x) {
+                if (this.value(this.array[i+1]) > x) {
                     return i;
                 } else {
                     i++;
@@ -354,7 +375,7 @@ define (['../util/interval'], function (Interval) {
             */ 
             let last_idx = this.array.length-1;
             while (i < last_idx) {
-                if (this.array[i+1] > x) {
+                if (this.value(this.array[i+1]) > x) {
                     return i+1;
                 } else {
                     i++;
@@ -388,7 +409,7 @@ define (['../util/interval'], function (Interval) {
                 if there are duplicates all the way - return the one at the beginning of the array
             */
             while (i>0) {
-                if (this.array[i-1] < x) {
+                if (this.value(this.array[i-1]) < x) {
                     return i;
                 } else {
                     i--;

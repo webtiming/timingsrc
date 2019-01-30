@@ -85,6 +85,13 @@
           binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
         };
 
+        var test_big_batch = function () {
+          let DATASIZE = 500000;
+          let BATCHSIZE = 500000;
+          let batch3 = timeitmakebatch(DATASIZE);
+          binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
+        };
+
         var test_lookup = function () {
           let b = new BinarySearch({allow_duplicates:true});
           let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
@@ -105,8 +112,9 @@
               console.log(p);
             }
           });
+        };
 
-        }
+
 
         var test_ge = function(b) {
           console.log("leftmost greater or equal to x")
@@ -168,12 +176,36 @@
         };
 
 
+        var test_objects = function () {
+          let b = new BinarySearch({allow_duplicates:false, value: function(o){return o.value;}});
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
+          let objs = batch.map(x => {return {value:x}});
+          b.insert(objs);
+          
+          let test_intervals = [
+            new Interval(4, 7, true, true),
+            new Interval(4, 7, true, false),
+            new Interval(4, 7, false, true),
+            new Interval(4, 7, false, false)
+          ];
+
+          test_intervals.forEach(function(interval){
+            console.log(interval);
+            let it = b.lookup(interval);
+            for (let p of it) {
+              console.log(p);
+            }
+          });
+          
+        };
 
         var run = function () {
           //test_batch_insert();
           //test_lookup();
           //test_duplicates();
-          test_remove_duplicates();
+          //test_remove_duplicates();
+          //test_objects();
+          test_big_batch();
         };
 
         if (document.readyState === "complete") run();
