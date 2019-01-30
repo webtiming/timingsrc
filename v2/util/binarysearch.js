@@ -29,6 +29,14 @@ define (['../util/interval'], function (Interval) {
         return (n==N && !isNaN(N));
     };
 
+    /*
+        remove duplicates
+    */
+    var unique = function unique(A) {
+        return [...new Set(A)];
+    };
+
+
     /* 
         batch inserts have two strategies
         1) CONCATSORT - concat arrays and sort
@@ -110,29 +118,21 @@ define (['../util/interval'], function (Interval) {
 
     BINARY SEARCH
 
-    The implementation supports duplicate objects.
+    The implementation supports duplicate elements.
+    - elements must support Javascript comparison operators
+    
     If duplicates are present
 
     - insert - insert along with equal values, no particular order is maintained between duplicates
     - lookup - returns all duplicates or none
-    - remove - removing one value only removes one value - even if there are duplicates, which one is undefined
+    - remove - removing all duplicates of a given value
 
     */
 
     var BinarySearch = function (options) {
         this.array = [];
         this.options = options || {};
-        // optional getter for object values
-        if (this.options.getValue) {
-            let getValue = this.options.getValue;
-            this.cmp = function(a, b) {
-                return getValue(a) - getValue(b);
-            }
-        } else {
-            this.cmp = function(a, b) {
-                return a - b;
-            }
-        }
+        this.options.allow_duplicates = this.options.allow_duplicates || false;
     };
     	
     /**
@@ -146,17 +146,15 @@ define (['../util/interval'], function (Interval) {
         var currentIndex;
         var currentElement;
         let diff;
-        let cmp = this.cmp;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
     		currentElement = this.array[currentIndex];
-            diff = cmp(currentElement, searchElement);
-            if (diff < 0) {
-    		    minIndex = currentIndex + 1;
-    		}
-    		else if (diff > 0) {
-    		    maxIndex = currentIndex - 1;
-    		}
+            if (currentElement < searchElement) {
+                minIndex = currentIndex + 1;
+            }
+            else if (currentElement > searchElement) {
+                maxIndex = currentIndex - 1;
+            }
             else {
                 // found - duplicates may exist on both sides
     		    return currentIndex;
@@ -183,7 +181,7 @@ define (['../util/interval'], function (Interval) {
 
     // utility function for resolving ambiguity
     BinarySearch.prototype._isFound = function(index, element) {
-        return (index > 0 || (index === 0 && this.cmp(this.array[0], element) === 0)) ? true : false;
+        return (index > 0 || (index === 0 && this.array[0] == element)) ? true : false;
     };
 
     BinarySearch.prototype.indexOf = function (element) {
@@ -200,17 +198,14 @@ define (['../util/interval'], function (Interval) {
         insert - binarysearch and splice
     */
     BinarySearch.prototype.insert_searchsplice = function (batch) {
-        // no protection against duplicates
-        if (this.array.length == 0) {
-            // initialise
-            this.array = batch;
-            this.array.sort(this.cmp); 
-        } else {
-            let len_batch = batch.length;
-            let element, index;
-            for (let i=0; i<len_batch; i++) {
-                element = batch[i];
-                index = this.binaryIndexOf(element);
+        let len_batch = batch.length;
+        let element, index;
+        let duplicates = this.options.duplicates;
+        for (let i=0; i<len_batch; i++) {
+            element = batch[i];
+            index = this.binaryIndexOf(element);
+            // protect agaist duplicate entries
+            if (!this._isFound(index) || allow_duplicates) {
                 this.array.splice(Math.abs(index), 0, element);
             }
         }
@@ -220,14 +215,15 @@ define (['../util/interval'], function (Interval) {
         insert - concat and sort
     */
     BinarySearch.prototype.insert_concatsort = function (batch) {
-        // no protection against duplicates
-        if (this.array.length == 0) {
-            // initialise
-            this.array = batch;
-        } else {
-            this.array = this.array.concat(batch);
+
+        // concat
+        this.array = this.array.concat(batch)
+        // sort
+        this.array.sort();
+        // remove duplicates
+        if (!this.options.allow_duplicates) {
+            this.array = unique(this.array);
         }
-        this.array.sort(this.cmp);
     };
 
 
@@ -235,20 +231,46 @@ define (['../util/interval'], function (Interval) {
         insert - select appropriate method
     */
     BinarySearch.prototype.insert = function (batch) {
+        if (batch.length == 0) {
+            return;
+        }
         let len_ds = this.array.length;
         let batch_limit = get_batch_limit(len_ds);
-        if (batch.length < batch_limit && this.array.length > DATASET_LIMIT) {
+        if (this.array.length == 0) {
+            this.insert_concatsort(batch);
+        } else if (batch.length < batch_limit && this.array.length > DATASET_LIMIT) {
             this.insert_searchsplice(batch)
         } else {
             this.insert_concatsort(batch);
         }
     };
 
-    BinarySearch.prototype.remove = function (element) {
-        var index = this.binaryIndexOf(element);
-        if (this._isFound(index, element)) {
-            this.array.splice(index, 1);
+    /*
+        removes x, also duplicates
+
+        - works by finding lefmost occurence of x and scanning to rightmost occurence
+        - alternative method might be to use lookup()
+        - scanning is preferable under the assumption that the number of duplicates is not very large.
+    */
+    BinarySearch.prototype.remove = function (x) {
+        // find leftmost value greater than x or equal to x
+        let left_index = this.geIndexOf(x);
+        if (left_index == -1 || this.array[x] > x) {
+            // x not found, or only values greater than x found 
+            return;
         }
+        // scan right to find the rightmost value with value == x
+        let last_idx = this.array.length-1;
+        let i = left_index;
+        while (i<last_idx) {
+            if (this.array[i+1] > x) {
+                break;
+            } else {
+                i++;
+            }     
+        }
+        let right_index = i+1;
+        return this.array.splice(left_index, right_index-left_index);
     };
 
     BinarySearch.prototype.getMinimum = function () {
@@ -273,7 +295,7 @@ define (['../util/interval'], function (Interval) {
                 return -1
             */ 
             while (i > 0) {
-                if (this.cmp(this.array[i-1], x) < 0) {
+                if (this.array[i-1] < x) {
                     return i-1;
                 } else {
                     i--;
@@ -302,10 +324,10 @@ define (['../util/interval'], function (Interval) {
             */
             let last_idx = this.array.length-1;
             while (i<last_idx) {
-                if (this.cmp(this.array[i+1], x) > 0) {
+                if (this.array[i+1] > x) {
                     return i;
                 } else {
-                    i++
+                    i++;
                 }     
             }
             return last_idx;
@@ -332,7 +354,7 @@ define (['../util/interval'], function (Interval) {
             */ 
             let last_idx = this.array.length-1;
             while (i < last_idx) {
-                if (this.cmp(this.array[i+1], x) > 0) {
+                if (this.array[i+1] > x) {
                     return i+1;
                 } else {
                     i++;
@@ -366,7 +388,7 @@ define (['../util/interval'], function (Interval) {
                 if there are duplicates all the way - return the one at the beginning of the array
             */
             while (i>0) {
-                if (this.cmp(this.array[i-1], x) < 0) {
+                if (this.array[i-1] < x) {
                     return i;
                 } else {
                     i--;
@@ -403,8 +425,6 @@ define (['../util/interval'], function (Interval) {
     		return emptyIterator();
         }
         return sliceIterator(this.array, start_index, end_index +1);
-
-        //return this.array.slice(start_index, end_index + 1);
     };
 
     BinarySearch.prototype.get = function (i) {return this.array[i];};

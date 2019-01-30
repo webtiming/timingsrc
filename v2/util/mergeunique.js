@@ -22,6 +22,14 @@ define (function () {
 		return [...new Set(array)].sort(); 
 	};
 
+
+	var unique_sort_map = function (array, getValue, cmp) {
+		// remove duplicates
+		let m = new Map(array.map(i => [getValue(i), i]));
+		return [...m.values()].sort(cmp);
+	};
+
+
 	var sort_unique = function(arr) {
 		// sort first and then remove duplicates
   		if (arr.length === 0) return arr;
@@ -113,6 +121,7 @@ define (function () {
 
 	return {
 		unique_sort: unique_sort,
+		unique_sort_map: unique_sort_map, 
 		sort_unique: sort_unique,
 		mergeunique: mergeunique,
 		mergeunique2: mergeunique2,

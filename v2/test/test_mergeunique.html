@@ -48,11 +48,39 @@
           }, "sort_unique");        
         };
 
+
+        var Point = function (num) {
+          this.num = num;
+        };
+
+        var getValue = function(point) {
+          return point.num;
+        };
+
+        var cmp = function (a,b) {
+          return getValue(a) - getValue(b);
+        };
+
+        var test_sort_unique = function () {
+          let batch = Array.from({length: SIZE}, () => Math.floor(Math.random() * SCALE));
+          timeit(function () {
+            mergeunique.sort_unique(batch);
+          }, "sort_unique");        
+        };
+
         var test_unique_sort = function () {
           let batch = Array.from({length: SIZE}, () => Math.floor(Math.random() * SCALE));
           timeit(function () {
             mergeunique.unique_sort(batch);
           }, "unique_sort");      
+        };
+
+        var test_unique_sort_map = function () {
+          let batch = Array.from({length: SIZE}, () => Math.floor(Math.random() * SCALE));
+          let points = batch.map(i => new Point(i));
+          timeit(function () {
+            mergeunique.unique_sort_map(points, getValue, cmp);
+          }, "unique_sort_map");        
         };
 
         var test_correct = function () {
@@ -101,10 +129,11 @@
         var run = function () {
           // test_correct();          
           // test_sort_unique();
-          // test_unique_sort();
-          test_mergeunique();
+          test_unique_sort();
+          test_unique_sort_map();
+          // test_mergeunique();
           // test_mergeunique2();
-          test_mergeunique3();
+          // test_mergeunique3();
           //test_correct_mergeunique();
         };
 
