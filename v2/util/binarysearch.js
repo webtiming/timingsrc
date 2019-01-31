@@ -381,14 +381,18 @@ define (['../util/interval'], function (Interval) {
             return [];
         }
         let obj, index;
+        let to_remove = [];
         let removed = []
-        for (let i = objs.length-1; i > -1; i--) {
+        for (let i=0; i<objs.length; i++) {
             obj = objs[i];
             index = this.indexOfObject(obj);
             if (index > -1) {
-                removed.push(...this.array.splice(index, 1));
+                to_remove.push(index);
             }
         }
+        to_remove.sort();
+        console.log(to_remove);
+        //...this.array.splice(index, 1)
         return removed;
     };
 
@@ -402,15 +406,18 @@ define (['../util/interval'], function (Interval) {
             return [];
         }
         let x, index;
+        let to_remove = [];
         let removed = [];
-        for (let i = values.length-1; i > -1; i--) {
+        for (let i=0; i<values.length; i++) {
             // remove a single value (any if duplicates)
-            x = values[i];
+            x = this.value(values[i]);
             index = this.binaryIndexOf(x);
             if (this.isFound(index, x)) {
-                removed.push(...this.array.splice(index, 1));
+                to_remove.push(index);
             }
         }
+        to_remove.sort((a,b) => a-b);
+        //...this.array.splice(index, 1)
         return removed;
     };
 

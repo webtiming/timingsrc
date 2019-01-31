@@ -19,7 +19,7 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 
 		// efficient lookup of cues on the timeline
 		let options = {
-			allow_duplicates:true,
+			allow_duplicates:false,
 			value: function (cue) {return cue.interval.low;},
 			equals: function (cue1, cue2) {return cue1.key == cue2.key;}
 		}
@@ -31,36 +31,71 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 	
 	SingularCues.prototype.addCues = function(cues) {
 
-		/*
-			update cues map
-			- if it is not empty, record cues that are being replaced, if any 
+     	if (cues.length == 0) {
+        	return [];
+        }
+	
+		/* 
+			protect from cues with duplicate keys
+			by putting them into a map
 		*/
-		let len = cues.length;
-		let cue, old_cue;
-		let old_cues = [];
-		let empty = this.keymap.size == 0;
-		for (let i=0; i<len; i++) {
-			cue = cues[i];
-			// record replaced cues
-			if (!empty) {
+        cues = [...new Map(cues.map(cue => [cue.key, cue])).values()];
+
+        /*
+			update keymap and create event items 
+        */
+    	let cue, old_cue;
+		let items = [];
+		let to_remove = [];
+		let to_add = [];
+        if (this.keymap.size == 0) {
+        	to_add = cues;
+        	for (let i=0; i<cues.length; i++) {
+        		cue = cues[i];
+        		this.keymap.set(cue.key, cue);
+				items.push({new:cue});
+        	}
+        } else {
+        	// iterate keys in keymap
+        	for (let i=0; i<cues.length; i++) {
+				// check for cues to be replaced
+				cue = cues[i];
 				old_cue = this.keymap.get(cue.key);
-				if (old_cue != undefined) {
-					old_cues[old_cues.length] = old_cue;
+				if (old_cue) {
+					if (cue.interval) {
+						// replace cue
+						this.keymap.set(cue.key, cue);
+						items.push({new:cue, old:old_cue});	
+						to_remove.push(old_cue);
+						to_add.push(cue);
+					} else {
+						// delete cue
+						// cues without interval will be deleted 
+						this.keymap.delete(old_cue.key);
+						items.push({old:old_cue});
+						to_remove.push(old_cue);
+					}
+				} else {
+					// new cue
+					this.keymap.set(cue.key, cue);
+					items.push({new:cue});
+					to_add.push(cue);
 				}
 			}
-			// update cues
-			this.keymap.set(cue.key, cue);
-		}
+        }
 
 		/*
 			update point index
 		*/
 		// cleanup replaced cues
-		this.points.removeObjects(old_cues);
+		console.log("remove ", to_remove.length);
+		this.points.removeSingleValues(to_remove);
+		
 		// register new cues
-		this.points.insertObjects(cues);
+		console.log("add ", to_add.length);
+		this.points.insertObjects(to_add);
 
-		return old_cues;
+		return items;
 	};
 
 
