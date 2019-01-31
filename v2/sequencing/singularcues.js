@@ -20,15 +20,11 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		// efficient lookup of cues on the timeline
 		let options = {
 			allow_duplicates:false,
-			value: function (cue) {return cue.interval.low;},
-			equals: function (cue1, cue2) {return cue1.key == cue2.key;}
+			value: function (cue) {return cue.interval.low;}
 		}
 		this.points = new BinarySearch(options);
 	};
 
-
-
-	
 	SingularCues.prototype.addCues = function(cues) {
 
      	if (cues.length == 0) {
@@ -46,7 +42,7 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
         */
     	let cue, old_cue;
 		let items = [];
-		let to_remove = [];
+		let to_del = [];
 		let to_add = [];
         if (this.keymap.size == 0) {
         	to_add = cues;
@@ -66,14 +62,12 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 						// replace cue
 						this.keymap.set(cue.key, cue);
 						items.push({new:cue, old:old_cue});	
-						to_remove.push(old_cue);
-						to_add.push(cue);
 					} else {
 						// delete cue
 						// cues without interval will be deleted 
 						this.keymap.delete(old_cue.key);
 						items.push({old:old_cue});
-						to_remove.push(old_cue);
+						to_del.push(old_cue);
 					}
 				} else {
 					// new cue
@@ -87,13 +81,20 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		/*
 			update point index
 		*/
-		// cleanup replaced cues
-		console.log("remove ", to_remove.length);
-		this.points.removeSingleValues(to_remove);
+
+		// remove deleted cues
+		console.log("delete ", to_del.length);
+		this.points.removeSingleValues(to_del);
 		
+		// replace modified cues
+		console.log("replace", items.length);
+		// todo
+
 		// register new cues
-		console.log("add ", to_add.length);
+		console.log("new ", to_add.length);
 		this.points.insertObjects(to_add);
+
+		// sort if dirty
 
 		return items;
 	};
