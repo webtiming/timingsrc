@@ -199,13 +199,45 @@
           
         };
 
+        var test_remove_object = function() {
+          let b = new BinarySearch({allow_duplicates:true, value: function(o){return o.value;}});
+          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
+          let objs = batch.map(x => {return {value:x}});
+          b.insert(objs);
+          console.log(b.array);
+
+          let obj0 = b.array[0];
+          let obj1 = b.array[3];
+          let obj2 = b.array[6];
+
+          console.log(0, b.indexOfObject(obj0));
+          console.log(3, b.indexOfObject(obj1));
+          console.log(6, b.indexOfObject(obj2));
+          
+          let obj = b.removeObjects([obj2])[0];
+          console.log(obj, obj2);
+          console.log(obj === obj2);
+          console.log(obj === obj0);
+          console.log(b.array.indexOf(obj));
+          console.log(b.array);
+
+          // remove all
+          b.removeObjects(b.array);
+          console.log(b.array);
+        };
+
+
+
+
+
         var run = function () {
-          test_batch_insert();
+          //test_batch_insert();
           //test_lookup();
           //test_duplicates();
           //test_remove_duplicates();
           //test_objects();
           //test_big_batch();
+          test_remove_object();
         };
 
         if (document.readyState === "complete") run();

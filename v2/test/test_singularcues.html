@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+      require(['sequencing/singularcues', 'util/interval', 'util/cue'], function (SingularCues, Interval, Cue) {
+
+        var timeit = function (func, name) {
+          let t0 = performance.now();
+          let result = func();
+          let t1 = performance.now();
+          console.log(name, t1-t0);
+          return result;
+        };
+
+        var make_singular_cues = function (size, scale) {
+          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
+          return numbers.map(function (n) {
+            return new Cue(n.toString(), new Interval(n), "data_" + n);
+          });
+        };
+
+        var make_singular_cues_sorted_unique = function (size) {
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers.map(function (n) {
+            return new Cue(n.toString(), new Interval(n), "data_" + n);
+          });
+        };
+
+
+
+        var test_basic = function () {
+          let cues = make_singular_cues(100, 50);
+          let sc = new SingularCues();
+          let old_cues = sc.addCues(cues);
+        };
+
+        var test_bigbatch = function (size) {
+          //let cues = make_singular_cues_sorted_unique(size);
+          let cues = make_singular_cues(size, size/2);
+          let sc = new SingularCues();
+          timeit(function () {
+            sc.addCues(cues);
+          }, "add bigbatch " + size);
+
+          // add more
+          cues = make_singular_cues(size, size/2);
+          timeit(function () {
+            sc.addCues(cues);
+          }, "add bigbatch " + size);
+
+        };
+
+
+
+        var run = function () {
+          //test_basic();
+          test_bigbatch(100000);
+        };
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Singular Cues</h1>
+  </body>
+</html>

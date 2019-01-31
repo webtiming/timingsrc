@@ -134,11 +134,21 @@ define (['../util/interval'], function (Interval) {
             let value = this.options.value;
             this.value = value;
             this.cmp = function (a, b) {return value(a)-value(b);}
+            this.objectMode = true;
         } else {
             this.value = function (x) {return x;};
+            this.objectMode = false;
         }
+        // optional func for object equality
+        if (this.options.equals) {
+            this.equals = this.options.equals;
+        } else {
+            this.equals = function (o1, o2) { return o1 === o2;};
+        }
+        this.valueMode = !this.objectMode;       
     };
     	
+
     /**
      * Binary search on sorted array
      * @param {*} searchElement The item to search for within the array.
@@ -181,18 +191,84 @@ define (['../util/interval'], function (Interval) {
     
 
     // utility function for resolving ambiguity
-    BinarySearch.prototype._isFound = function(index, x) {
-        return (index > 0 || (index == 0 && this.value(this.array[0]) == x)) ? true : false;
+    BinarySearch.prototype.isFound = function(index, x) {
+        if (index > 0) {
+            return true;
+        } else if (index == 0 && this.array.length > 0 && this.value(this.array[0]) == x) {
+            return true;
+        }
+        return false;
     };
+
+
+    /*
+     Index of value.
+     If duplicates are allowed, the index of one of the duplicates will be returned.
+
+    */
 
     BinarySearch.prototype.indexOf = function (x) {
         var index = this.binaryIndexOf(x);
-        return (this._isFound(index, x)) ? index : -1;
+        return (this.isFound(index, x)) ? index : -1;
+    };
+
+    /*
+        Find start index and length of array slice containing all duplicates of given value x.
+        returns [start, end] or [array.length, array.length] if no value x exists.
+        return values may be used directly with Array.slice
+
+        - works by finding lefmost occurence of x and scanning to rightmost occurence
+        - alternative method might be to use lookup()
+        - scanning is preferable under the assumption that the sequences of duplicates are not very long.
+    */
+    BinarySearch.prototype.indexOfDuplicates = function (x) {
+        // find leftmost value greater than x or equal to x
+        let left_index = this.geIndexOf(x);
+        if (left_index == -1 || this.value(this.array[left_index]) > x) {
+            // x not found, or only values greater than x found 
+            return [this.array.length, this.array.length];
+        }
+        // scan right to find the rightmost value with value == x
+        let last_idx = this.array.length-1;
+        let i = left_index;
+        while (i<last_idx) {
+            if (this.value(this.array[i+1]) > x) {
+                break;
+            } else {
+                i++;
+            }     
+        }
+        let right_index = i+1;
+        return [left_index, right_index];
+    };
+
+    /* 
+        Find the index of a single object.
+        This should work with duplicates or without.
+        This should work with object mode and value mode.
+    */
+    BinarySearch.prototype.indexOfObject = function (obj) {
+        // find all duplicates
+        let start, end;
+        [start, end] = this.indexOfDuplicates(this.value(obj));
+        // find the one duplicate which is object
+        let i = start;
+        while (i < end) {
+            if (this.equals(obj, this.array[i])) {
+                return i;
+            } else {
+                i++;
+            }
+        }
+        return -1;
     };
 
     BinarySearch.prototype.has = function (x) {
-        var index = this.binaryIndexOf(x);
-        return (this._isFound(index, x)) ? true : false;
+        return (this.indexOf(x) > -1) ? true : false; 
+    };
+
+    BinarySearch.prototype.hasObject = function (obj) {
+        return (this.indexOfObject(obj) > -1) ? true : false;
     };
 
 
@@ -217,16 +293,26 @@ define (['../util/interval'], function (Interval) {
 
     /*
         insert - binarysearch and splice
+        return replaced objects
     */
-    BinarySearch.prototype.insert_searchsplice = function (batch) {
-        let len_batch = batch.length;
-        let x, index;
+    BinarySearch.prototype.insert_searchsplice = function (objs) {
+        let obj, index;
         let allow_duplicates = this.options.allow_duplicates;
-        for (let i=0; i<len_batch; i++) {
-            x = this.value(batch[i]);
+        let len = objs.length;
+        let replaced = [];
+        for (let i=0; i<len; i++) {
+            obj = objs[i];
+            /*
+                TODO
+                protect against duplicate entries
+                - this refers to value equality
+                - in addition, even if duplicates are allowed
+                  duplication is not allowed wrt object equality
+            */
+            x = this.value(objs[i]);
             index = this.binaryIndexOf(x);
             // protect agaist duplicate entries
-            if (!this._isFound(index) || allow_duplicates) {
+            if (!this.isFound(index) || allow_duplicates) {
                 this.array.splice(Math.abs(index), 0, x);
             }
         }
@@ -235,9 +321,9 @@ define (['../util/interval'], function (Interval) {
     /*
         insert - concat and sort
     */
-    BinarySearch.prototype.insert_concatsort = function (batch) {
+    BinarySearch.prototype.insert_concatsort = function (objs) {
         // concat
-        this.array = this.array.concat(batch)
+        this.array = this.array.concat(objs)
         // sort
         this.array.sort(this.cmp);
         // remove duplicates
@@ -250,48 +336,104 @@ define (['../util/interval'], function (Interval) {
     /*
         insert - select appropriate method
     */
-    BinarySearch.prototype.insert = function (batch) {
-        if (batch.length == 0) {
+    BinarySearch.prototype.insertObjects = function (objs) {
+        if (objs.length == 0) {
             return;
         }
         let len_ds = this.array.length;
         let batch_limit = get_batch_limit(len_ds);
         if (this.array.length == 0) {
-            this.insert_concatsort(batch);
-        } else if (batch.length < batch_limit && this.array.length > DATASET_LIMIT) {
-            this.insert_searchsplice(batch)
+            this.insert_concatsort(objs);
+        } else if (objs.length < batch_limit && this.array.length > DATASET_LIMIT) {
+            this.insert_searchsplice(objs)
         } else {
-            this.insert_concatsort(batch);
+            this.insert_concatsort(objs);
         }
     };
+
 
     /*
-        removes x, also duplicates
-
-        - works by finding lefmost occurence of x and scanning to rightmost occurence
-        - alternative method might be to use lookup()
-        - scanning is preferable under the assumption that the number of duplicates is not very large.
+        fetch objects with same value
     */
-    BinarySearch.prototype.remove = function (x) {
-        // find leftmost value greater than x or equal to x
-        let left_index = this.geIndexOf(x);
-        if (left_index == -1 || this.value(this.array[x]) > x) {
-            // x not found, or only values greater than x found 
-            return;
+    BinarySearch.prototype.getObjects = function (objs) {
+        if (this.array.length == 0) {
+            return [];
         }
-        // scan right to find the rightmost value with value == x
-        let last_idx = this.array.length-1;
-        let i = left_index;
-        while (i<last_idx) {
-            if (this.value(this.array[i+1]) > x) {
-                break;
-            } else {
-                i++;
-            }     
+        let obj, index;
+        let res = [];
+        for (let i = objs.length-1; i > -1; i--) {
+            obj = objs[i];
+            index = this.indexOfObject(obj);
+            if (index > -1) {
+                res.push(this.array[index]);
+            }
         }
-        let right_index = i+1;
-        return this.array.splice(left_index, right_index-left_index);
+        return res;
     };
+
+
+    /*
+        in object mode
+        - removes a list of objects
+    */
+    BinarySearch.prototype.removeObjects = function (objs) {
+        if (this.array.length == 0) {
+            return [];
+        }
+        let obj, index;
+        let removed = []
+        for (let i = objs.length-1; i > -1; i--) {
+            obj = objs[i];
+            index = this.indexOfObject(obj);
+            if (index > -1) {
+                removed.push(...this.array.splice(index, 1));
+            }
+        }
+        return removed;
+    };
+
+
+    /*
+        Removes all values
+        If duplicates are allowed - only a singe instance of value is removed.
+    */
+    BinarySearch.prototype.removeSingleValues = function (values) {
+        if (this.array.length == 0) {
+            return [];
+        }
+        let x, index;
+        let removed = [];
+        for (let i = values.length-1; i > -1; i--) {
+            // remove a single value (any if duplicates)
+            x = values[i];
+            index = this.binaryIndexOf(x);
+            if (this.isFound(index, x)) {
+                removed.push(...this.array.splice(index, 1));
+            }
+        }
+        return removed;
+    };
+
+
+    /*
+        Removes each duplicate of each value
+    */
+    BinarySearch.prototype.removeValues = function (values) {
+        if (this.array.length == 0) {
+            return [];
+        }
+        let start, end;
+        let x;
+        let removed = [];
+        for (let i = values.length-1; i > -1; i--) {
+            // remove all duplicates
+            x = values[i];
+            [start, end] = this.indexOfDuplicates(x);
+            removed.push(...this.array.splice(start, end-start));
+        }
+        return removed;
+    };
+
 
     BinarySearch.prototype.getMinimum = function () {
         return (this.array.length > 0) ? this.array[0] : undefined;
@@ -307,7 +449,7 @@ define (['../util/interval'], function (Interval) {
      */
     BinarySearch.prototype.ltIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (this._isFound(i, x)) {
+        if (this.isFound(i, x)) {
             /* 
                 found - x is found on index i
                 make sure there are no duplicates by scanning to the left
@@ -337,7 +479,7 @@ define (['../util/interval'], function (Interval) {
      */
     BinarySearch.prototype.leIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (this._isFound(i, x)) {
+        if (this.isFound(i, x)) {
             /* 
                 element found
                 check for duplicates towards the right
@@ -365,7 +507,7 @@ define (['../util/interval'], function (Interval) {
 
     BinarySearch.prototype.gtIndexOf = function (x) {
         var i = this.binaryIndexOf(x);
-        if (this._isFound(i, x)) {
+        if (this.isFound(i, x)) {
             /*
                 found - x is found on index i
                 make sure there are no duplicates by scanning to the right
@@ -401,7 +543,7 @@ define (['../util/interval'], function (Interval) {
 
      BinarySearch.prototype.geIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
-        if (this._isFound(i, x)) {
+        if (this.isFound(i, x)) {
             /* 
                 found
                 check for duplicates towards the left
