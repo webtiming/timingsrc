@@ -25,7 +25,14 @@
         var make_singular_cues = function (size, scale) {
           let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
           return numbers.map(function (n) {
-            return new Cue(n.toString(), new Interval(n), "data_" + n);
+            return new Cue("key " + n.toString(), new Interval(n), "data_" + n);
+          });
+        };
+
+        var make_remove_cues = function (size, scale) {
+          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
+          return numbers.map(function (n) {
+            return {key: "key " + n.toString()};
           });
         };
 
@@ -39,12 +46,23 @@
           });
         };
 
-
-
         var test_basic = function () {
-          let cues = make_singular_cues(100, 50);
+          console.log("insert");
+          let cues = make_singular_cues(10, 10);
+          console.log(cues.map(x=>x.key));
           let sc = new SingularCues();
-          let old_cues = sc.addCues(cues);
+          let items = sc.addCues(cues);
+          console.log(items);
+          console.log("keymap ", sc.keymap.size);
+          console.log("array ", sc.index.array.length);
+
+          console.log("remove")
+          let cues2 = make_remove_cues(10, 10);
+          console.log(cues2.map(x=>x.key));
+          items = sc.addCues(cues2);
+          console.log(items);
+          console.log("keymap ", sc.keymap.size);
+          console.log("array ", sc.index.array.length);
         };
 
         var test_bigbatch = function (size) {
@@ -61,13 +79,15 @@
             sc.addCues(cues);
           }, "add bigbatch " + size);
 
+
+
         };
 
 
 
         var run = function () {
-          //test_basic();
-          test_bigbatch(100000);
+          test_basic();
+          //test_bigbatch(100000);
         };
 
         if (document.readyState === "complete") run();

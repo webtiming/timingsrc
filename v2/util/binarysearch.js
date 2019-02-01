@@ -369,25 +369,11 @@ define (['../util/interval'], function (Interval) {
 
     */
 
-    BinarySearch.prototype.update = function (items) {
+    BinarySearch.prototype.update = function (objs_to_remove, objs_to_insert) {
+        console.log("remove " + objs_to_remove.length, " insert " + objs_to_insert.length);
 
-        // protect from duplicate items
-        
-        let del_items = [];
-        let mod_items = [];
-        let add_items = [];
-
-        let item;
-        for (i=0; i<items.length; i++) {
-            item = items[i];
-            if (item.new && item.old) {
-                mod_items.push(item.new);
-            } else if (item.new) {
-                add_items.push(item.new);
-            } else {
-                del_items.push(item.old);
-            }
-        }
+        this.removeByObjects(objs_to_remove);
+        this.insert(objs_to_insert);
     };
 
 
@@ -401,7 +387,7 @@ define (['../util/interval'], function (Interval) {
         search for each one and splice remove them individually
         only approprieate for very small batches.
     */
-    BinarySearch.prototype._searchsplice_remove = function (values) {
+    BinarySearch.prototype._remove_searchsplice = function (values) {
         if (this.array.length == 0) {
             return [];
         }
@@ -426,7 +412,7 @@ define (['../util/interval'], function (Interval) {
 
 
     BinarySearch.prototype.remove = function (values) {
-        return _searchsplice_remove(values);
+        return this._remove_searchsplice(values);
     };
 
 
