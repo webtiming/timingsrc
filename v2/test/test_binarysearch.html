@@ -205,15 +205,26 @@
         };
 
 
-
-
+        var test_remove = function () {
+          let DATASIZE = 50000;
+          
+          let batch = makeBatch(DATASIZE);
+          let b = new BinarySearch();
+          b.insert(batch);
+          timeit(function () {
+            b.remove(batch);
+          }, "remove all");
+          console.log(b.array);
+        };
 
         var run = function () {
           //test_batch_insert();
           //test_lookup();
           //test_objects();
-          test_big_batch();
+          //test_big_batch();
           //test_remove_object();
+        
+          test_remove();
         };
 
         if (document.readyState === "complete") run();

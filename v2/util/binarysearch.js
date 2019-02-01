@@ -332,6 +332,12 @@ define (['../util/interval'], function (Interval) {
         return res;
     };
 
+
+    BinarySearch.prototype.getByIndex = function (index) {
+        return this.array[index];
+    };
+
+
     /*
         utility function to allow functions that are defined for values
         be called with objects.
@@ -350,13 +356,55 @@ define (['../util/interval'], function (Interval) {
 
 
     /*
-        Removes all elements with given values
+        Update BinarySearch by items
+
+        items = [
+            {new: element, old: element}, // replace old element with new element
+            {new: element},               // add new element
+            {old: element}                // delete element
+        ]
+
+        a single element may only be present mentioned once in the list, thus avoiding 
+        multiple operations to one element 
+
     */
-    BinarySearch.prototype.remove = function (values) {
+
+    BinarySearch.prototype.update = function (items) {
+
+        // protect from duplicate items
+        
+        let del_items = [];
+        let mod_items = [];
+        let add_items = [];
+
+        let item;
+        for (i=0; i<items.length; i++) {
+            item = items[i];
+            if (item.new && item.old) {
+                mod_items.push(item.new);
+            } else if (item.new) {
+                add_items.push(item.new);
+            } else {
+                del_items.push(item.old);
+            }
+        }
+    };
+
+
+
+
+
+
+
+    /*
+        Removes all elements with given values
+        search for each one and splice remove them individually
+        only approprieate for very small batches.
+    */
+    BinarySearch.prototype._searchsplice_remove = function (values) {
         if (this.array.length == 0) {
             return [];
         }
-        console.log(values);
         let x, index;
         let to_remove = [];
         for (let i=0; i<values.length; i++) {
@@ -377,6 +425,9 @@ define (['../util/interval'], function (Interval) {
     };
 
 
+    BinarySearch.prototype.remove = function (values) {
+        return _searchsplice_remove(values);
+    };
 
 
     /*
