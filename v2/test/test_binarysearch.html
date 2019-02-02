@@ -206,15 +206,24 @@
 
 
         var test_remove = function () {
-          let DATASIZE = 50000;
+          let DATASIZE = 500000;
           
           let batch = makeBatch(DATASIZE);
           let b = new BinarySearch();
           b.insert(batch);
           timeit(function () {
-            b.remove(batch);
-          }, "remove all");
-          console.log(b.array);
+            b._remove_sortsplice(batch);
+          }, "remove all sortsplice ", DATASIZE);
+          console.log(b.array.length);
+
+
+          b.insert(batch);
+
+          timeit(function () {
+            b._remove_searchsplice(batch);
+          }, "remove all searchsplice ", DATASIZE);
+          console.log(b.array.length);
+
         };
 
         var run = function () {
@@ -222,9 +231,9 @@
           //test_lookup();
           //test_objects();
           //test_big_batch();
-          test_remove_object();
+          //test_remove_object();
         
-          //test_remove();
+          test_remove();
         };
 
         if (document.readyState === "complete") run();

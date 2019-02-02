@@ -154,8 +154,10 @@ define (['../util/interval'], function (Interval) {
         if (this.objectMode) {
             let propertyName = this.options.value;
             this.value = function (obj) {return obj[propertyName]};
+            this.cmp = function (a, b) {return a[propertyName]-b[propertyName];};
         } else {
             this.value = function (x) {return x;};
+            this.cmp = function (a, b) {return a-b;};
         }    
     };
 
@@ -273,19 +275,7 @@ define (['../util/interval'], function (Interval) {
         return this.array[index];
     };
 
-    /*
-        utility function sorting the array
-    */
 
-    BinarySearch.prototype._sort = function () {
-        if (this.objectMode) {
-            let value = this.value;
-            let cmp = function (a, b) {return value(a)-value(b);}
-            this.array.sort(cmp);     
-        } else {
-            this.array.sort();
-        }
-    };
 
     /*
         utility function for protecting against duplicates
@@ -350,7 +340,7 @@ define (['../util/interval'], function (Interval) {
         // concat
         this.array = this.array.concat(elements)
         // sort
-        this._sort();
+        this.array.sort(this.cmp);
         // remove duplicates
         this.array = this._unique(this.array);
     };
@@ -432,7 +422,7 @@ define (['../util/interval'], function (Interval) {
             }
         }
         // sort
-        this._sort();
+        this.array.sort(this.cmp);
         // find index of first element with Infinity value
         if (this.objectMode) {
             index = this.array.findIndex(function (o) {return o.value == Infinity});
@@ -453,19 +443,6 @@ define (['../util/interval'], function (Interval) {
                 return obj.__oldvalue;
             });
         }
-    };
-
-
-    /*
-        Removes all elements with given values
-        - visit all elements that are not to be removed copy them into other array
-        - O(N) userspace
-
-        Appropriate when removing large size batch?
-
-    */
-    BinarySearch.prototype._remove_copyremaining = function (values) {
-
     };
 
 
@@ -495,7 +472,7 @@ define (['../util/interval'], function (Interval) {
 
     /*
         utility function to allow functions that are defined for values
-        be called with objects.
+        to be called with objects.
         - in valueMode this makes no differnce
     */
     BinarySearch.prototype._callByObjects = function(func, args) {
