@@ -144,15 +144,16 @@ define (['../util/interval'], function (Interval) {
         this.options = options || {};
         /* 
             options.value : 
-            optional getter for object values
-            this.value() returns the value of the element
-            - in value mode this is the element itself
-            - in object mode this define by callback function 
+            optional propertyname for object values
+            - in value mode the value of an element is the element itself
+            - in object mode the value of an object is a named property
+            e.g. if "value" is given then this["value"] is the value of the element
         */
-        this.valueMode = (typeof this.options.value !== "function");
+        this.valueMode = (typeof this.options.value !== "string");
         this.objectMode = !this.valueMode;
         if (this.objectMode) {
-            this.value = this.options.value;
+            let propertyName = this.options.value;
+            this.value = function (obj) {return obj[propertyName]};
         } else {
             this.value = function (x) {return x;};
         }    
@@ -225,17 +226,66 @@ define (['../util/interval'], function (Interval) {
     /*
         returns index of value or -1
     */
-
-    BinarySearch.prototype.indexOf = function (x) {
+    BinarySearch.prototype.indexOfByValue = function (x) {
         var index = this.binaryIndexOf(x);
         return (this.isFound(index, x)) ? index : -1;
     };
-
-
-    BinarySearch.prototype.has = function (x) {
-        return (this.indexOf(x) > -1) ? true : false; 
+    BinarySearch.prototype.indexOfByValues = function (values) {
+        let x, index;
+        let indexes = [];
+        for (let i=0; i<values.length; i++) {
+            x = values[i];
+            index = this.indexOfByValue(x);
+            if (index > -1) {
+                indexes.push(index);
+            }
+        }
+        return indexes;
     };
 
+    /*
+        element exists with value
+    */
+    BinarySearch.prototype.hasByValue = function (x) {
+        return (this.indexOfByValue(x) > -1) ? true : false; 
+    };
+
+    /*
+        get objects with same value
+    */
+    BinarySearch.prototype.getByValues = function (values) {
+        if (this.array.length == 0) {
+            return [];
+        }
+        let x, index;
+        let res = [];
+        for (let i=0; i<values.length; i++) {
+            x = values[i];
+            index = this.indexOfByValue(x);
+            if (index > -1) {
+                res.push(this.array[index]);
+            }
+        }
+        return res;
+    };
+
+    BinarySearch.prototype.getByIndex = function (index) {
+        return this.array[index];
+    };
+
+    /*
+        utility function sorting the array
+    */
+
+    BinarySearch.prototype._sort = function () {
+        if (this.objectMode) {
+            let value = this.value;
+            let cmp = function (a, b) {return value(a)-value(b);}
+            this.array.sort(cmp);     
+        } else {
+            this.array.sort();
+        }
+    };
 
     /*
         utility function for protecting against duplicates
@@ -257,11 +307,15 @@ define (['../util/interval'], function (Interval) {
     };
 
 
-
-
     /*
         insert - binarysearch and splice
-        return replaced objects
+
+        WARNING - there should be no need to insert elements that are already
+        present in the array. This function therefore assumes that this is 
+        managed externally and that the element batch presented includes no 
+        elements that are already in the array.
+
+        Presence of such elements raises exception.
     */
     BinarySearch.prototype._insert_searchsplice = function (elements) {
         let element, x, index;
@@ -270,24 +324,33 @@ define (['../util/interval'], function (Interval) {
         for (let i=0; i<len; i++) {
             element = elements[i];
             x = value(element);
-            index = this.binaryIndexOf(x);
-            // protects agaist duplicate entries
+            index = this.binaryIndexOfByValue(x);
             if (!this.isFound(index)) {
+                // insert at correct place
                 this.array.splice(Math.abs(index), 0, element);
+            } else {
+                throw new Error("insert element that is already present", element);
             }
         }
     };
 
     /*
         insert - concat and sort
+
+        WARNING - there should be no need to insert elements that are already
+        present in the array. This function therefore assumes that this is 
+        managed externally and that the element batch presented includes no 
+        elements that are already in the array.
+
+        Duplicate protection ensures that such repeated elements do not lead
+        to duplicate elements in the array, however, it does not guarantee that
+        the new element replaces the old.  
     */
     BinarySearch.prototype._insert_concatsort = function (elements) {
         // concat
         this.array = this.array.concat(elements)
         // sort
-        let value = this.value;
-        let cmp = function (a, b) {return value(a)-value(b);}
-        this.array.sort(cmp);
+        this._sort();
         // remove duplicates
         this.array = this._unique(this.array);
     };
@@ -313,29 +376,121 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
+
     /*
-        get objects with same value
+        Removes all elements with given values
+        search for each one and splice remove them individually
+        (reverse order)
+
+        Approprieate for small size batches.
     */
-    BinarySearch.prototype.get = function (values) {
+    BinarySearch.prototype._remove_searchsplice = function (values) {
         if (this.array.length == 0) {
             return [];
         }
-        let x, index;
-        let res = [];
-        for (let i=0; i<values.length; i++) {
-            x = values[i];
-            index = this.indexOf(x);
-            if (index > -1) {
-                res.push(this.array[index]);
+        let indexes = this.indexOfByValues(values);
+        indexes.sort(function(a,b){return a-b;});
+        let removed = [];
+        for (let i=indexes.length-1; i > -1; i--) {
+            let index = indexes[i];
+            removed.push(...this.array.splice(index, 1));
+        }
+        return removed.reverse();
+    };
+
+    /*
+        Removes all elements with given values
+        - visit all elements - set their value to Infinite
+        - sort O(N) - native
+        - splice off end
+
+        Appropriate when removing a medium size batch?
+    */
+
+    BinarySearch.prototype._remove_sortsplice = function (values) {
+        // visit all elements
+        let indexes = this.indexOfByValues(values);
+        let removed = [];
+        let index;
+        let obj;
+        if (this.objectMode) {            
+            let propertyName = this.options.value;
+            for (let i=0; i<indexes.length;i++) {
+                index = indexes[i];
+                obj = this.array[index];
+                // switch values
+                obj.__oldvalue = obj.value;
+                obj.value = Infinity;
+                removed.push(obj);
+            }
+        } else {
+            for (let i=0; i<indexes.length;i++) {
+                index = indexes[i];
+                obj = {__oldvalue:this.array[index]};
+                this.array[index] = Infinity;
+                removed.push(obj);
             }
         }
-        return res;
+        // sort
+        this._sort();
+        // find index of first element with Infinity value
+        if (this.objectMode) {
+            index = this.array.findIndex(function (o) {return o.value == Infinity});
+        } else {
+            index = this.array.indexOf(Infinity);
+        } 
+        // splice
+        this.array.splice(index, this.array.length);
+        // switch values back
+        if (this.objectMode) {
+            return removed.map(function (obj) {
+                obj.value = obj.__oldvalue;
+                delete obj.__oldvalue;
+                return obj;
+            });
+        } else {
+            return removed.map(function (obj) {
+                return obj.__oldvalue;
+            });
+        }
     };
 
 
-    BinarySearch.prototype.getByIndex = function (index) {
-        return this.array[index];
+    /*
+        Removes all elements with given values
+        - visit all elements that are not to be removed copy them into other array
+        - O(N) userspace
+
+        Appropriate when removing large size batch?
+
+    */
+    BinarySearch.prototype._remove_copyremaining = function (values) {
+
     };
+
+
+    BinarySearch.prototype.removeByValues = function (values) {
+        return this._remove_sortsplice(values);
+        //return this._remove_searchsplice(values);
+    };
+
+
+    /*
+        Update BinarySearch by items
+
+        a single element should only be present once in the list, thus avoiding 
+        multiple operations to one element. This is presumed solved externally. 
+        - also objects should not be members of both lists.
+
+    */
+
+    BinarySearch.prototype.update = function (objs_to_remove, objs_to_insert) {
+        console.log("remove " + objs_to_remove.length, " insert " + objs_to_insert.length);
+
+        this.remove(objs_to_remove);
+        this.insert(objs_to_insert);
+    };
+
 
 
     /*
@@ -356,81 +511,20 @@ define (['../util/interval'], function (Interval) {
 
 
     /*
-        Update BinarySearch by items
-
-        items = [
-            {new: element, old: element}, // replace old element with new element
-            {new: element},               // add new element
-            {old: element}                // delete element
-        ]
-
-        a single element may only be present mentioned once in the list, thus avoiding 
-        multiple operations to one element 
-
-    */
-
-    BinarySearch.prototype.update = function (objs_to_remove, objs_to_insert) {
-        console.log("remove " + objs_to_remove.length, " insert " + objs_to_insert.length);
-
-        this.removeByObjects(objs_to_remove);
-        this.insert(objs_to_insert);
-    };
-
-
-
-
-
-
-
-    /*
-        Removes all elements with given values
-        search for each one and splice remove them individually
-        only approprieate for very small batches.
-    */
-    BinarySearch.prototype._remove_searchsplice = function (values) {
-        if (this.array.length == 0) {
-            return [];
-        }
-        let x, index;
-        let to_remove = [];
-        for (let i=0; i<values.length; i++) {
-            x = values[i];
-            index = this.indexOf(x);
-            if (index > -1) {
-                to_remove.push(index);
-            }
-        }
-        to_remove.sort(function(a,b){return a-b;});
-        // naive solution
-        let removed = [];
-        for (let i=to_remove.length-1; i > -1; i--) {
-            let index = to_remove[i];
-            removed.push(...this.array.splice(index, 1));
-        }
-        return removed.reverse();
-    };
-
-
-    BinarySearch.prototype.remove = function (values) {
-        return this._remove_searchsplice(values);
-    };
-
-
-    /*
         utility wrappers for accessing elements
         using objects as parameters as opposed to their values
     */
-    BinarySearch.prototype.getByObjects = function (objects) {
-        return this._callByObjects(this.get, objects);
+    BinarySearch.prototype.get = function (objects) {
+        return this._callByObjects(this.getByValues, objects);
     };
-    BinarySearch.prototype.removeByObjects = function (objects) {
-        return this._callByObjects(this.remove, objects);
+    BinarySearch.prototype.remove = function (objects) {
+        return this._callByObjects(this.removeByValues, objects);
     };
-    BinarySearch.prototype.indexOfByObject = function (object) {
-        return this._callByObjects(this.indexOf, [object]);
+    BinarySearch.prototype.indexOf = function (object) {
+        return this._callByObjects(this.indexOfByValue, [object]);
     };
-    BinarySearch.prototype.hasByObject = function (object) {
-        return this._callByObjects(this.has, [object]);
+    BinarySearch.prototype.has = function (object) {
+        return this._callByObjects(this.hasByValue, [object]);
     };
 
 

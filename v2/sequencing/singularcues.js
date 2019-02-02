@@ -18,10 +18,7 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		this.keymap = new Map();
 
 		// efficient lookup of points from the timeline
-		let options = {
-			value: function (o) {return o.value;}
-		}
-		this.index = new BinarySearch(options);
+		this.index = new BinarySearch({value:"value"});
 
 		// Node operaration manager
 		this.nodes = new NodeManager(this.index);
@@ -31,13 +28,11 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 	};
 
 	SingularCues.prototype.addCues = function(cues) {
-
-     	if (cues.length == 0) {
-        	return [];
-        }
+     	if (cues.length == 0) { return [];}
 	
     	let cue, old_cue;
         if (this.keymap.size == 0) {
+        	// initialization - first invocation of addCues
         	for (let i=0; i<cues.length; i++) {
         		cue = cues[i];
         		this.keymap.set(cue.key, cue);
@@ -148,7 +143,7 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		if (node == undefined) {
 			// node not found in cache
 			// fetch node from index
-			node = this.index.getByIndex(this.index.indexOf(value));
+			node = this.index.getByIndex(this.index.indexOfByValue(value));
 			if (node == undefined) {
 				// node not found in index
 				// create new node in cache with cues simulating result of operation
