@@ -226,14 +226,54 @@
 
         };
 
+
+        var test_main = function () {
+          let DATASIZE = 500000;
+
+          // create batch from range [0,1,2,3,...]
+          let batch1 = makeBatch(DATASIZE).map(x=>{return {value:x};})
+          let b = new BinarySearch({value:"value"});
+          
+          // initialise
+          timeit(function () {
+            b.insert(batch1);
+          }, "initialise presorted integers " + DATASIZE);
+
+          // insert
+          let batch2 = makeBatch(DATASIZE, true, DATASIZE).map(x=>{return {value:x};})
+          timeit(function () {
+            b.insert(batch2);
+          }, "insert random floats " + DATASIZE);
+
+        
+          // iterate array
+          timeit(function () {
+            let obj;
+            for (let i=0; i<b.array.length; i++) {
+              obj = b.array[i];
+            }
+          }, "iterate array " + b.array.length);
+
+          // find all indexes
+          timeit(function () {
+            let index;
+            for (let i=0; i<b.array.length; i++) {
+              index = b.indexOf(b.array[i]);
+            }
+          }, "find all indexes " + b.array.length);
+
+        };
+
+
+
         var run = function () {
           //test_batch_insert();
           //test_lookup();
           //test_objects();
           //test_big_batch();
           //test_remove_object();
-        
-          test_remove();
+          //test_remove();
+          test_main();
         };
 
         if (document.readyState === "complete") run();
