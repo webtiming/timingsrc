@@ -1,8 +1,7 @@
-define (['../util/interval', '../util/binarysearch', '../util/eventify', '../util/cue'], 
-	function (Interval, BinarySearch, eventify, Cue) {
+define (['../util/binarysearch'], 
+	function (BinarySearch) {
 
 	'use strict';
-
 
 	/*
 		this implements a collection for efficient lookup of cues on a timeline
@@ -10,21 +9,38 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		- cues are indexed both by key and by value
 	*/
 
-
 	var SingularCues = function () {
 
 		// efficient lookup of cues by key	
 		// key -> cue
 		this.keymap = new Map();
 
-		// efficient lookup of points from the timeline
-		this.index = new BinarySearch({value:"value"});
+		/*
+		nodemap maintains the associations between points on the timeline
+		and cues that reference such points. A single point value may be 
+		referenced by multiple cues, so one point maps to a list of cues.
+		a node object holds the list of cues
+		node = {cues:[]}
+		*/ 
+		this.nodemap = new Map(); 
 
-		// Node operaration manager
-		this.nodes = new NodeManager(this.index);
+		/*
+		index maintains a sorted list of numbers for efficient lookup
+		a large volume of insert and remove operations may be problematic
+		with respect to performance, so the implementation seeks to
+		do a single bulk update of this structure, for each batch of cue
+		operations (i.e. each invocations of addCues). In order to do this 
+		NodeManager processes all cue operations to calculate a single batch 
+		of deletes and a single batch of insert which then will be applied to 
+		the index, to make it consistent. 
+		*/
+		this.index = new BinarySearch();
+
+		// Node operation manager
+		this.node_manager = new NodeManager(this.nodemap, this.index);
 
 		// Items manager
-		this.items = new ItemsManager();
+		this.item_manager = new ItemManager();
 	};
 
 	SingularCues.prototype.addCues = function(cues) {
@@ -36,8 +52,8 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
         	for (let i=0; i<cues.length; i++) {
         		cue = cues[i];
         		this.keymap.set(cue.key, cue);
-        		this.nodes.processCue("add", cue.interval.low, cue);
-				this.items.setItem({new:cue});
+        		this.node_manager.processCue("add", cue.interval.low, cue);
+				this.item_manager.setItem({new:cue});
         	}
         } else {
         	// iterate keys in keymap
@@ -49,36 +65,34 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 					if (cue.interval) {
 						// replace cue
 						this.keymap.set(cue.key, cue);
-						this.nodes.processCue("remove", old_cue.interval.low, old_cue);
-						this.nodes.processCue("add", cue.interval.low, cue);
-						this.items.setItem({new:cue, old:old_cue});
+						this.node_manager.processCue("remove", old_cue.interval.low, old_cue);
+						this.node_manager.processCue("add", cue.interval.low, cue);
+						this.item_manager.setItem({new:cue, old:old_cue});
 					} else {
 						// delete cue
 						// cues without interval signify deletion 
 						this.keymap.delete(old_cue.key);
-						this.nodes.processCue("remove", old_cue.interval.low, old_cue);
-						this.items.setItem({old:old_cue});
+						this.node_manager.processCue("remove", old_cue.interval.low, old_cue);
+						this.item_manager.setItem({old:old_cue});
 					}
 				} else {
 					if (cue.interval) {
 						// new cue
 						this.keymap.set(cue.key, cue);
-						this.nodes.processCue("add", cue.interval.low, cue);
-						this.items.setItem({new:cue});
+						this.node_manager.processCue("add", cue.interval.low, cue);
+						this.item_manager.setItem({new:cue});
 					} else {
 						// attempt to dele cue that does not exist
-						// console.log("warning: attempted delete of non-existent cue");
 						continue;
 					}
 				}
 			}
         }
 
-        // update index
-        this.nodes.flush();
-		return this.items.getItems();
+        // submit changes to nodemap and  index
+        this.node_manager.submit();
+		return this.item_manager.getItems();
 	};
-
 
 
 	/*
@@ -92,11 +106,11 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		it will not be included in items.
 	*/
 
-	var ItemsManager = function () {
+	var ItemManager = function () {
 		this.items = new Map();
 	};
 
-	ItemsManager.prototype.setItem = function (item) {
+	ItemManager.prototype.setItem = function (item) {
 		let key = (item.new) ? item.new.key : item.old.key;
 		let oldItem = this.items.get(key);
 		if (oldItem == undefined) {
@@ -109,7 +123,7 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 		}
 	};
 
-	ItemsManager.prototype.getItems = function () {
+	ItemManager.prototype.getItems = function () {
 		let res = [];
 		for (let item of this.items.values()) {
 			if (item.new || item.old) {
@@ -121,99 +135,115 @@ define (['../util/interval', '../util/binarysearch', '../util/eventify', '../uti
 	};
 
 
-
 	/*
-		NodeManager processes all cue operations
-		to collect the minimum operations that need to be done
-		on the binary index, expressed as two batches,
-		one batch of insert operations and one batch of delete operations.
+		NodeManager processes translates cue operations
+		into a minimum set of operations on the point index.
 
-		On flush, the binary search index is synchronized by 
-		applying the operations.
+		To do this, it needs to build up a representation of
+		the total difference that the batch of cue operations
+		amounts to. This is expressed as two batch operations,
+		a set of values to be deleted, and a set of values to
+		be inserted.
+
+		On submit both the nodemap and the index will brought
+		up to speed
 	*/
 
-	var NodeManager = function (binarySearch) {
-		this.nodes = new Map(); // value -> node
-		this.index = binarySearch;
+	var NodeManager = function (nodemap, index) {
+		this.nodemap = nodemap;
+		this.index = index;
+		/* 
+			created includes nodes that were not in nodemap 
+			before this batch was processed
+			dirty includes nodes that were in nodemap
+			before this batch was processed, and that
+			have been modified in some way. 
+		*/
+		this.created = new Map(); // value -> node
+		this.dirty = new Map(); // value -> node
 	};
 
 	/* add cue to node of value */
 	NodeManager.prototype.processCue = function (op, value, cue) {
-		let node = this.nodes.get(value);
+		let node = this.created.get(value);
 		if (node == undefined) {
-			// node not found in cache
-			// fetch node from index
-			node = this.index.getByIndex(this.index.indexOfByValue(value));
+			// node not found in created
+			node = this.nodemap.get(value);
 			if (node == undefined) {
-				// node not found in index
-				// create new node in cache with cues simulating result of operation
-				let cues = (op == "add") ? [cue] : [];
-				this.nodes.set(value, {value: value, cues:cues, created:true});
+				// node not found in keymap
+				// create new node
+				node = (op == "add") ? {cues:[cue]} : {cues:[]};
+				this.created.set(value, node);
 			} else {
-				// node found in index
-				// update and register in cache
-				node.created = false;
+				// node found in keymap - update
 				if (op == "add") {
 					this.addCueToNode(node, cue);
 				} else {
 					this.removeCueFromNode(node, cue);
 				}
-				this.nodes.set(value, node);
-			}
+				this.dirty.set(value, node);
+			}	
 		} else {
-			// node found in cache
-			// update directly
+			// node found in created - update
 			if (op == "add") {
 				this.addCueToNode(node, cue);
 			} else {
 				this.removeCueFromNode(node, cue);
 			}
+			// created nodes do not enter the set of dirty nodes
 		}
 	};
 
 	/*
-		Flush updates in cache into binary search index
+		Submit changes to nodemap and index
 
-		iterate nodes
-		- [created,empty] : noop (series of modifications amounts to no change)
-		- [created,non-empty] : insert into index (these are new nodes)
-		- [non-created, empty] : delete from index (these all exist)
-		- [non-created, non-empty] : noop (modifications carried out on node.cues)
+		Nodemap
+		- update with contents of created
+
+		Index
+		- points to delete - dirty and empty
+		- points to insert - created and non-empty
 	*/
-	NodeManager.prototype.flush = function () {
-		// calculate operations
+	NodeManager.prototype.submit = function () {
+		// update nodemap
+		let value, node;
+		for ([value, node] of this.created.entries()) {
+			this.nodemap.set(value, node);
+		}
+		// update index
 		let to_remove = [];
 		let to_insert = [];
-		for (let node of this.nodes.values()) {
-			if (node.created && node.cues.length > 0) {
-				to_insert.push(node);
-			} else if (!node.created && node.cues.length == 0) {
-				to_remove.push(node);
+		for ([value, node] of this.created.entries()) {
+			if (node.cues.length > 0) {
+				to_insert.push(value);
+			} 
+		}
+		for ([value, node] of this.dirty.entries()) {
+			if (node.cues.length == 0) {
+				to_remove.push(value);
 			}
 		}
-		this.nodes.clear();
 		this.index.update(to_remove, to_insert);
+		// cleanup
+		this.created.clear();
+		this.dirty.clear();
 	};
 
 	NodeManager.prototype.addCueToNode = function (node, cue) {
-		// console.log("add cue to node" , node.value, cue.interval.low, cue.key);
 		// cue equality defined by key property
-		let exp = function (_cue) { 
+		let idx = node.cues.findIndex(function (_cue) { 
 			return _cue.key == cue.key;
-		};
-		let idx = node.cues.findIndex(exp);
+		});
 		if (idx == -1) {
 			node.cues.push(cue);
 		}		
 	};
 
 	NodeManager.prototype.removeCueFromNode = function (node, cue) {
-		// console.log("remove cue from node" , node.value);
-		// cue equality defined by key property
-		let exp = function (_cue) { 
+		// cue equality defined by key property 
+		let idx = node.cues.findIndex(function (_cue) { 
 			return _cue.key == cue.key;
-		};
-		let idx = node.cues.findIndex(exp);
+		});
 		if (idx > -1) {
 			node.cues.splice(idx, 1);
 		}

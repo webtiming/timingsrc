@@ -22,10 +22,28 @@
           return result;
         };
 
+        var make_presorted_ints = function (size) {          
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers;
+        };
+
+
+        var make_random_ints = function (size, scale) {
+          return Array.from({length: size}, () => Math.floor(Math.random() * scale));
+        };
+
+        var make_random_floats = function (size, scale) {
+          return Array.from({length: size}, () => Math.random() * scale);
+        };
+
+
         var make_singular_cues = function (size, scale) {
           let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
           return numbers.map(function (n) {
-            return new Cue("key " + n.toString(), new Interval(n), "data_" + n);
+            return {key: "key " + n.toString(), interval: {low:n}, data: "data_" + n}; 
           });
         };
 
@@ -42,9 +60,22 @@
             numbers.push(i);
           }
           return numbers.map(function (n) {
-            return new Cue(n.toString(), new Interval(n), "data_" + n);
+            return {key: n.toString(), interval: {low:n}, data: "data_" + n};
           });
         };
+
+        var make_cues_from_numbers = function (numbers, op) {
+          op = op || "add";
+          return numbers.map(function (n) {
+            if (op == "remove") {
+              return {key: n.toString()};
+            } else {
+              return {key: n.toString(), interval: {low:n}, data: "data_" + n};
+            }
+          });
+        };
+
+
 
         var test_basic = function () {
           console.log("insert");
@@ -79,15 +110,48 @@
             sc.addCues(cues);
           }, "add bigbatch " + size);
 
+        };
+
+
+
+        var test_main = function () {
+          let DATASIZE = 500;
+          let sc = new SingularCues();
+
+
+          // create batch from presorted numbers
+          let numbers_1 = make_presorted_ints(DATASIZE);
+          let batch_1 = make_cues_from_numbers(numbers_1);
+          
+          // initialise
+          timeit(function () {
+            sc.addCues(batch_1);
+          }, "initialise presorted ints " + DATASIZE);
+
+          // insert
+          let numbers_2 = make_random_ints(DATASIZE, DATASIZE);
+          let batch_2 = make_cues_from_numbers(numbers_2);
+          timeit(function () {
+            sc.addCues(batch_2);
+          }, "insert random ints " + DATASIZE);
+
+          // remove
+          let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
+          let batch_3 = make_cues_from_numbers(numbers_3, "remove");
+          timeit(function () {
+            sc.addCues(batch_3);
+          }, "remove random ints " + DATASIZE);
 
 
         };
 
 
 
+
         var run = function () {
-          test_basic();
+          //test_basic();
           //test_bigbatch(100000);
+          test_main();
         };
 
         if (document.readyState === "complete") run();

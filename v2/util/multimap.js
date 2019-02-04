@@ -33,67 +33,81 @@ define (function () {
 	  
 		MultiMap supports setting and removing of (key,value) bindings.  
 
-
-		This implementation works directly on items which include
-		a key.
-		
-		item = {
-			key: "key"
-		}
-
-		- set (item) 
-		- delete (item)
+		- set (key, value) 
+		- delete (key, value)
 
 		Could have used Set instead of Array for values, 
 		but the assumption is that there will be a big key set
 		(implying many Set objects), with few values in each.
 		Sets would have provided protection for duplicates, and 
 		would likely also be faster on remove.
+
+		Equality of values is regular object equality by default,
+		but may be relaxed to mean equality of object property by specifying a 
+		propertyname. 
+
 	*/
 
-	var MultiMap = function () {
-		this._map = new Map(); // key -> [obj0, obj1,...]
+	var MultiMap = function (options) {
+		this.options = options || {};
+		// value
+        if (typeof this.options.value === "string") {
+            let propertyName = this.options.value;
+
+            this.value = function (obj) {return obj[propertyName]};
+        } else {
+            this.value = function (x) {return x;};
+        }    
+		this.map = new Map(); // key -> [obj0, obj1,...]
 	};
 
 	MultiMap.prototype.setAll = function (items) {
 		let len_items = items.length;
-		let values, item;
-		for (let i=0; i<len_items, i++) {
-			item = items[i];
-			// protect against duplicate (key,value) bindings
-			values = this._map.get(item.key) || [];
-			if (values.indexOf(item) === -1) {
-			    values[values.length] = item;
+		let values, key, value;
+		for (let i=0; i<len_items; i++) {
+			[key, value] = items[i];
+			values = this.map.get(key);
+			if (values == undefined) {
+				this.map.set(key, [value])
+			} else {
+				// protect against duplicate (key,value) bindings
+				idx = values.findIndex(function (obj) {
+					return this.value(obj) == key;
+				});
+				if (idx === -1) {
+			    	values.push(item);
+				}
 			}
-			this._map.set(item.key, values);
 		}
 	};
 
-	MultiMap.prototype.set = function (item) {
-	    return this.setAll([item]);
+	MultiMap.prototype.set = function (key, value) {
+	    return this.setAll([[key, value]]);
 	};
 
 	MultiMap.prototype.deleteAll = function (items) {
 		let len_items = items.length;
-		let values, item, idx;
-		for (let i=0; i<len_items, i++) {
-			item = items[i];
-			values = this._map.get(item.key)
-			if values != undefined {
-				idx = values.indexOf(item);
+		let values, key, value, idx;
+		for (let i=0; i<len_items; i++) {
+			[key, value] = items[i];
+			values = this.map.get(key)
+			if (values != undefined) {
+				idx = values.findIndex(function (obj) {
+					return this.value(obj) == key;
+				});
 			    if (idx > -1) {
 					values.splice(idx, 1);
 					// remove key if values is left empty
 					if (values.length === 0) {
-						this._map.delete(item.key);
+						this.map.delete(key);
 					}
 			    }
 			} 
 		}
 	};
 
-	MultiMap.prototype.delete = function (item) {
-	    return this.deletAll([item]);
+	MultiMap.prototype.delete = function (key, value) {
+	    return this.deletAll([[key, value]]);
 	};
 
 	MultiMap.prototype.has = function (key) {

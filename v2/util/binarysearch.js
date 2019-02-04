@@ -126,15 +126,17 @@ define (['../util/interval'], function (Interval) {
     Public API
     - insert (elements) - insert all elements - replace if exists
     - lookup (interval) - returns iterator for all elements for element  
-    - remove (values) - remove all elements
-    - has (value)       - true if element exists with value == element, else false
-    - get (value)       - return element with value if exists, else undefined
-    - items ()          - returns iterator for elements
+    - remove (elements) - remove all elements
+    - has (element)     - returns true if element exists with value == element, else false
+    - get (element)     - returns element with value if exists, else undefined
+    - items ()          - returns iterator for all elements
+    - indexOf(element)  - returns index of element
+    - getByIndex(index) - returns element given index
 
-    There are also convenience wrappers for accessing functionality using objects as parameters
-    - getByObjects(objects)
-    - hasByObjects(object)
-    - removeByObject(objects)
+    There are also convenience wrappers for accessing functionality using object values as parameters
+    - getByValues(values)
+    - hasByValue(value)
+    - removeByValues(values)
     In value mode these function are equivalent to above functions.
 
     */
@@ -284,6 +286,10 @@ define (['../util/interval'], function (Interval) {
         but in objectModes Set equality will not work with the value callback function.
         In this case use map instead - this is slower
         due to repeated use of the custom value() function
+
+        Note. If duplicates exists, this function preserves the last duplicate given
+        that both Map and Set replaces on insert, and that iteration is guaranteed to
+        be insert ordered.
     */
     BinarySearch.prototype._unique = function (A) {
         if (this.objectMode) {
