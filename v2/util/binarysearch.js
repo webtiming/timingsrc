@@ -342,7 +342,10 @@ define (['../util/interval'], function (Interval) {
         to duplicate elements in the array, however, it does not guarantee that
         the new element replaces the old.  
     */
-    BinarySearch.prototype._insert_concatsort = function (elements) {
+    BinarySearch.prototype._insert_concatsort = function (elements, options) {
+        // options
+        options = options || {};
+        options.presorted = options.presorted || false;
         // concat
         this.array = this.array.concat(elements)
         // sort
@@ -352,25 +355,7 @@ define (['../util/interval'], function (Interval) {
     };
 
 
-    /*
-        insert 
-        - internally selects the best method - searchsplice or concatsort
-        - selection based on relative sizes of existing elements and new elements
-    */
-    BinarySearch.prototype.insert = function (elements) {
-        if (elements.length == 0) {
-            return;
-        }
-        let len_ds = this.array.length;
-        let batch_limit = get_batch_limit(len_ds);
-        if (this.array.length == 0) {
-            this._insert_concatsort(elements);
-        } else if (elements.length < batch_limit && this.array.length > DATASET_LIMIT) {
-            this._insert_searchsplice(elements)
-        } else {
-            this._insert_concatsort(elements);
-        }
-    };
+
 
 
     /*
@@ -459,6 +444,30 @@ define (['../util/interval'], function (Interval) {
 
 
     /*
+        insert 
+        - internally selects the best method - searchsplice or concatsort
+        - selection based on relative sizes of existing elements and new elements
+    */
+    
+    /*
+    BinarySearch.prototype.insert = function (elements) {
+        if (elements.length == 0) {
+            return;
+        }
+        let len_ds = this.array.length;
+        let batch_limit = get_batch_limit(len_ds);
+        if (this.array.length == 0) {
+            this._insert_concatsort(elements);
+        } else if (elements.length < batch_limit && this.array.length > DATASET_LIMIT) {
+            this._insert_searchsplice(elements)
+        } else {
+            this._insert_concatsort(elements);
+        }
+    };
+    */
+
+
+    /*
         Update BinarySearch by items
 
         a single element should only be present once in the list, thus avoiding 
@@ -466,12 +475,34 @@ define (['../util/interval'], function (Interval) {
         - also objects should not be members of both lists.
 
     */
+    BinarySearch.prototype.update = function (to_remove, to_insert, options) {
+        let size = to_remove.length + to_insert.length;
+        if (size == 0) {
+            return;
+        }
+        // regular case
+        let approach = resolve_approach(this.array.length, size);
+        if (approach == "splice") {
+            this._update_splice(to_remove, to_insert, options);
+        } else if (approach == "sort"){
+            this._update_sort(to_remove, to_insert, options);
+        }
+    };
 
-    BinarySearch.prototype.update = function (objs_to_remove, objs_to_insert) {
-        console.log("remove " + objs_to_remove.length, " insert " + objs_to_insert.length);
+    BinarySearch.prototype._update_splice = function (to_remove, to_insert, options) {
+        console.log("update splice");
+    };
 
-        this.remove(objs_to_remove);
-        this.insert(objs_to_insert);
+    BinarySearch.prototype._update_sort = function (to_remove, to_insert, options) {
+        console.log("update sort");
+    };
+
+    BinarySearch.prototype.insert = function (to_insert, options) {
+        this._update([], to_insert, options);
+    };
+    
+    BinarySearch.prototype.remove = function (to_remove, options) {
+        this._update(to_remove, [], options);
     };
 
 
