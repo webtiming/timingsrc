@@ -42,7 +42,7 @@
           let b = new BinarySearch();
           b.insert(batch1);
           timeit(function () {
-            b._insert_searchsplice(batch2);
+            b._update_splice([], batch2);
           }, "binarysearch insert " + batch1.length + " " + batch2.length);
 
         };
@@ -51,16 +51,18 @@
           let b = new BinarySearch();
           b.insert(batch1)
           timeit(function () {
-            b._insert_concatsort(batch2);
+            b._update_sort([], batch2);
           }, "appendsort insert " + batch1.length + " " + batch2.length);
         };
 
         var binary3 = function (batch1, batch2) {
           let b = new BinarySearch();
-          b.insert(batch1)
+          timeit(function () {
+            b.insert(batch1);
+          }, "insert first batch " + batch1.length);
           timeit(function () {
             b.insert(batch2);
-          }, "insert " + batch1.length + " " + batch2.length);
+          }, "insert second batch " + batch1.length + " " + batch2.length);
         };
 
         var timeitmakebatch = function (size) {
@@ -88,7 +90,7 @@
         var test_big_batch = function () {
           let DATASIZE = 500000;
           let BATCHSIZE = 500000;
-          let batch3 = timeitmakebatch(DATASIZE);
+          let batch3 = makeBatch(DATASIZE);
           binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
         };
 
@@ -151,57 +153,30 @@
         };
 
 
-
-        var test_objects = function () {
+        var test_remove_one = function() {
           let b = new BinarySearch({value: "value"});
           let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
-          let objs = batch.map(x => {return {value:x}});
-          b.insert(objs);
-          
-          let test_intervals = [
-            new Interval(4, 7, true, true),
-            new Interval(4, 7, true, false),
-            new Interval(4, 7, false, true),
-            new Interval(4, 7, false, false)
-          ];
-
-          test_intervals.forEach(function(interval){
-            console.log(interval);
-            let it = b.lookup(interval);
-            for (let p of it) {
-              console.log(p);
-            }
-          });
-          
-        };
-
-        var test_remove_object = function() {
-          let b = new BinarySearch({value: "value"});
-          let batch = [1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7];
-          let objs = batch.map(x => {return {value:x}});
-          b.insert(objs);
+          b.insert(batch);
           console.log(b.array);
 
-          let obj0 = b.array[0];
-          let obj1 = b.array[3];
-          let obj2 = b.array[6];
+          let e0 = b.array[0];
+          let e1 = b.array[3];
+          let e2 = b.array[6];
 
-          console.log(0, b.indexOf(obj0));
-          console.log(3, b.indexOf(obj1));
-          console.log(6, b.indexOf(obj2));
+          console.log(0, b.indexOf(e0));
+          console.log(3, b.indexOf(e1));
+          console.log(6, b.indexOf(e2));
           
-          let obj = b.remove([obj2])[0];
-          console.log(obj, obj2);
-          console.log(obj === obj2);
-          console.log(obj === obj0);
-          console.log(b.array.indexOf(obj));
+          b.remove([e1]);
+          console.log(b.array.indexOf(e0));
+          console.log(b.array.indexOf(e1));
+          console.log(b.array.indexOf(e2));
+
           console.log(b.array);
 
           // remove all
           b.remove(b.array);
           console.log(b.array);
-
-          
         };
 
 
@@ -212,7 +187,7 @@
           let b = new BinarySearch();
           b.insert(batch);
           timeit(function () {
-            b._remove_sortsplice(batch);
+            b._update_splice(batch, []);
           }, "remove all sortsplice ", DATASIZE);
           console.log(b.array.length);
 
@@ -220,7 +195,7 @@
           b.insert(batch);
 
           timeit(function () {
-            b._remove_searchsplice(batch);
+            b._update_splice(batch, []);
           }, "remove all searchsplice ", DATASIZE);
           console.log(b.array.length);
 
@@ -245,22 +220,7 @@
             b.insert(batch2);
           }, "insert random floats " + DATASIZE);
 
-        
-          // iterate array
-          timeit(function () {
-            let obj;
-            for (let i=0; i<b.array.length; i++) {
-              obj = b.array[i];
-            }
-          }, "iterate array " + b.array.length);
 
-          // find all indexes
-          timeit(function () {
-            let index;
-            for (let i=0; i<b.array.length; i++) {
-              index = b.indexOf(b.array[i]);
-            }
-          }, "find all indexes " + b.array.length);
 
         };
 
@@ -269,10 +229,9 @@
         var run = function () {
           //test_batch_insert();
           //test_lookup();
-          //test_objects();
-          //test_big_batch();
-          //test_remove_object();
+          //test_remove_one();
           //test_remove();
+          //test_big_batch();
           test_main();
         };
 

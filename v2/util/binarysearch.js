@@ -52,12 +52,24 @@ define (['../util/interval'], function (Interval) {
         magic table to set appropriate batch limit where
         batch must be smaller than this for for searchsplice to be considered
     */
-    var get_batch_limit = function (size) {
-        if (size < 50) return 5;
-        if (size < 500) return 10;
-        if (size < 5000) return 30;
-        if (size < 50000) return 40;
+    var get_batch_limit = function (arrayLength) {
+        if (arrayLength < 50) return 5;
+        if (arrayLength < 500) return 10;
+        if (arrayLength < 5000) return 30;
+        if (arrayLength < 50000) return 40;
         return 50;
+    };
+
+    var resolve_approach = function (arrayLength, batchLength) {
+        if (arrayLength == 0) {
+            return "sort";
+        }
+        let batchLimit = get_batch_limit(arrayLength);
+        if (batchLength < batchLimit && arrayLength > DATASET_LIMIT) {
+            return "splice";
+        } else {
+            return "sort";
+        }
     };
 
     /*
@@ -116,21 +128,15 @@ define (['../util/interval'], function (Interval) {
     - based on sorted list of unique elements
     - implements protection against duplicates
 
-    - value mode : (default) elements support direct Javascrip comparison
-    - object mode : (options.value) defines callback function value <- f(element) which is used for element comparison
-  
-
-    - In value mode, the <element> and its <value> is the same thing.
-    - In object mode, the <element> is an <object>, and <value> is derived from the callback
 
     Public API
-    - insert (elements) - insert all elements - replace if exists
+    - update (remove_elements, insert_elements)
     - lookup (interval) - returns iterator for all elements for element  
-    - remove (elements) - remove all elements
     - has (element)     - returns true if element exists with value == element, else false
     - get (element)     - returns element with value if exists, else undefined
     - items ()          - returns iterator for all elements
     - indexOf(element)  - returns index of element
+    - indexOfElements(elements)
     - getByIndex(index) - returns element given index
 
     There are also convenience wrappers for accessing functionality using object values as parameters
@@ -144,23 +150,7 @@ define (['../util/interval'], function (Interval) {
     var BinarySearch = function (options) {
         this.array = [];
         this.options = options || {};
-        /* 
-            options.value : 
-            optional propertyname for object values
-            - in value mode the value of an element is the element itself
-            - in object mode the value of an object is a named property
-            e.g. if "value" is given then this["value"] is the value of the element
-        */
-        this.valueMode = (typeof this.options.value !== "string");
-        this.objectMode = !this.valueMode;
-        if (this.objectMode) {
-            let propertyName = this.options.value;
-            this.value = function (obj) {return obj[propertyName]};
-            this.cmp = function (a, b) {return a[propertyName]-b[propertyName];};
-        } else {
-            this.value = function (x) {return x;};
-            this.cmp = function (a, b) {return a-b;};
-        }    
+        this.cmp = function (a, b) {return a-b;};
     };
 
 
@@ -176,7 +166,7 @@ define (['../util/interval'], function (Interval) {
         let value_currentElement;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
-    		value_currentElement = this.value(this.array[currentIndex]);
+    		value_currentElement = this.array[currentIndex];
             if (value_currentElement < value_searchElement) {
                 minIndex = currentIndex + 1;
             } else if (value_currentElement > value_searchElement) {
@@ -211,35 +201,27 @@ define (['../util/interval'], function (Interval) {
     BinarySearch.prototype.isFound = function(index, x) {
         if (index > 0) {
             return true;
-        } else {
-            // optimization - avoids calling this this.value in valueMode
-            if (self.valueMode) {
-                if (index == 0 && this.array.length > 0 && this.array[0] == x) {
-                    return true;
-                }
-            } else {
-                if (index == 0 && this.array.length > 0 && this.value(this.array[0]) == x) {
-                    return true;
-                }
-            }
+        } 
+        if (index == 0 && this.array.length > 0 && this.array[0] == x) {
+            return true;
         }
         return false;
     };
 
-
     /*
         returns index of value or -1
     */
-    BinarySearch.prototype.indexOfByValue = function (x) {
+    BinarySearch.prototype.indexOf = function (x) {
         var index = this.binaryIndexOf(x);
         return (this.isFound(index, x)) ? index : -1;
     };
-    BinarySearch.prototype.indexOfByValues = function (values) {
+
+    BinarySearch.prototype.indexOfElements = function (elements) {
         let x, index;
         let indexes = [];
-        for (let i=0; i<values.length; i++) {
-            x = values[i];
-            index = this.indexOfByValue(x);
+        for (let i=0; i<elements.length; i++) {
+            x = elements[i];
+            index = this.indexOf(x);
             if (index > -1) {
                 indexes.push(index);
             }
@@ -250,34 +232,13 @@ define (['../util/interval'], function (Interval) {
     /*
         element exists with value
     */
-    BinarySearch.prototype.hasByValue = function (x) {
+    BinarySearch.prototype.has = function (x) {
         return (this.indexOfByValue(x) > -1) ? true : false; 
     };
 
-    /*
-        get objects with same value
-    */
-    BinarySearch.prototype.getByValues = function (values) {
-        if (this.array.length == 0) {
-            return [];
-        }
-        let x, index;
-        let res = [];
-        for (let i=0; i<values.length; i++) {
-            x = values[i];
-            index = this.indexOfByValue(x);
-            if (index > -1) {
-                res.push(this.array[index]);
-            }
-        }
-        return res;
-    };
-
-    BinarySearch.prototype.getByIndex = function (index) {
+    BinarySearch.prototype.get = function (index) {
         return this.array[index];
     };
-
-
 
     /*
         utility function for protecting against duplicates
@@ -292,187 +253,99 @@ define (['../util/interval'], function (Interval) {
         be insert ordered.
     */
     BinarySearch.prototype._unique = function (A) {
-        if (this.objectMode) {
-            let m = new Map(A.map(function (i) {
-                return [this.value(i), i];
-            }, this));
-            return [...m.values()];
-        } else {
-            return [...new Set(A)];
-        }
+        return [...new Set(A)];
     };
 
 
     /*
+        REMOVE
+        Removes all elements with given values
+        search for each one and splice remove them individually
+        (reverse order)
+
+        INSERT
+        binarysearch and splice
         insert - binarysearch and splice
 
         WARNING - there should be no need to insert elements that are already
-        present in the array. This function therefore assumes that this is 
-        managed externally and that the element batch presented includes no 
-        elements that are already in the array.
-
-        Presence of such elements raises exception.
+        present in the array. This function drops such duplicates
     */
-    BinarySearch.prototype._insert_searchsplice = function (elements) {
-        let element, x, index;
-        let len = elements.length;
-        let value = this.value;
+    BinarySearch.prototype._update_splice = function (to_remove, to_insert, options) {
+
+        // REMOVE
+        if (this.array.length > 0) {    
+            let indexes = this.indexOfElements(to_remove);
+            /* 
+                sort indexes to make sure we are removing elements
+                in backwards order
+                optimization
+                - if elements were sorted in the first place this should not be necessary
+            */
+            indexes.sort(function(a,b){return a-b;});
+            for (let i=indexes.length-1; i > -1; i--) {
+                this.array.splice(indexes[i], 1);
+            }
+        }
+
+        // INSERT
+        let x, index;
+        let len = to_insert.length;
         for (let i=0; i<len; i++) {
-            element = elements[i];
-            x = value(element);
-            index = this.binaryIndexOfByValue(x);
+            x = to_insert[i];
+            index = this.binaryIndexOf(x);
             if (!this.isFound(index)) {
                 // insert at correct place
-                this.array.splice(Math.abs(index), 0, element);
-            } else {
-                throw new Error("insert element that is already present", element);
+                this.array.splice(Math.abs(index), 0, x);
             }
         }
     };
 
+
     /*
+        remove - flag - sort to end and remove
+
+        Removes all elements with given values
+        - visit all elements - set their value to Infinite
+        - sort O(N) - native
+        - splice off Infinity values at end
+
         insert - concat and sort
 
-        WARNING - there should be no need to insert elements that are already
-        present in the array. This function therefore assumes that this is 
-        managed externally and that the element batch presented includes no 
-        elements that are already in the array.
-
-        Duplicate protection ensures that such repeated elements do not lead
-        to duplicate elements in the array, however, it does not guarantee that
-        the new element replaces the old.  
+        by doing both remove and insert in one operation,
+        sorting can be done only once.
     */
-    BinarySearch.prototype._insert_concatsort = function (elements, options) {
-        // options
-        options = options || {};
-        options.presorted = options.presorted || false;
+    BinarySearch.prototype._update_sort = function (to_remove, to_insert, options) {
+
+        // REMOVE
+        if (this.array.length > 0) {        
+            // visit all elements and set their value to Infinite
+            let indexes = this.indexOfElements(to_remove);
+            for (let i=0; i<indexes.length;i++) {
+                this.array[indexes[i]] = Infinity;
+            }
+        }
+        // INSERT
         // concat
-        this.array = this.array.concat(elements)
+        this.array = this.array.concat(to_insert);
         // sort
         this.array.sort(this.cmp);
+        // remove Infinity values at the end
+        let index = this.array.indexOf(Infinity);
+        this.array.splice(index, this.array.length);
         // remove duplicates
         this.array = this._unique(this.array);
     };
 
 
-
-
-
     /*
-        Removes all elements with given values
-        search for each one and splice remove them individually
-        (reverse order)
-
-        Approprieate for small size batches.
-    */
-    BinarySearch.prototype._remove_searchsplice = function (values) {
-        if (this.array.length == 0) {
-            return [];
-        }
-        let indexes = this.indexOfByValues(values);
-        indexes.sort(function(a,b){return a-b;});
-        let removed = [];
-        for (let i=indexes.length-1; i > -1; i--) {
-            let index = indexes[i];
-            removed.push(...this.array.splice(index, 1));
-        }
-        return removed.reverse();
-    };
-
-    /*
-        Removes all elements with given values
-        - visit all elements - set their value to Infinite
-        - sort O(N) - native
-        - splice off end
-
-        Appropriate when removing a medium size batch?
-    */
-
-    BinarySearch.prototype._remove_sortsplice = function (values) {
-        // visit all elements
-        let indexes = this.indexOfByValues(values);
-        let removed = [];
-        let index;
-        let obj;
-        if (this.objectMode) {            
-            let propertyName = this.options.value;
-            for (let i=0; i<indexes.length;i++) {
-                index = indexes[i];
-                obj = this.array[index];
-                // switch values
-                obj.__oldvalue = obj.value;
-                obj.value = Infinity;
-                removed.push(obj);
-            }
-        } else {
-            for (let i=0; i<indexes.length;i++) {
-                index = indexes[i];
-                obj = {__oldvalue:this.array[index]};
-                this.array[index] = Infinity;
-                removed.push(obj);
-            }
-        }
-        // sort
-        this.array.sort(this.cmp);
-        // find index of first element with Infinity value
-        if (this.objectMode) {
-            index = this.array.findIndex(function (o) {return o.value == Infinity});
-        } else {
-            index = this.array.indexOf(Infinity);
-        } 
-        // splice
-        this.array.splice(index, this.array.length);
-        // switch values back
-        if (this.objectMode) {
-            return removed.map(function (obj) {
-                obj.value = obj.__oldvalue;
-                delete obj.__oldvalue;
-                return obj;
-            });
-        } else {
-            return removed.map(function (obj) {
-                return obj.__oldvalue;
-            });
-        }
-    };
-
-
-    BinarySearch.prototype.removeByValues = function (values) {
-        return this._remove_sortsplice(values);
-        //return this._remove_searchsplice(values);
-    };
-
-
-    /*
-        insert 
-        - internally selects the best method - searchsplice or concatsort
-        - selection based on relative sizes of existing elements and new elements
-    */
-    
-    /*
-    BinarySearch.prototype.insert = function (elements) {
-        if (elements.length == 0) {
-            return;
-        }
-        let len_ds = this.array.length;
-        let batch_limit = get_batch_limit(len_ds);
-        if (this.array.length == 0) {
-            this._insert_concatsort(elements);
-        } else if (elements.length < batch_limit && this.array.length > DATASET_LIMIT) {
-            this._insert_searchsplice(elements)
-        } else {
-            this._insert_concatsort(elements);
-        }
-    };
-    */
-
-
-    /*
-        Update BinarySearch by items
+        Update - removing and inserting elements in one operation
 
         a single element should only be present once in the list, thus avoiding 
         multiple operations to one element. This is presumed solved externally. 
-        - also objects should not be members of both lists.
+        - also objects must not be members of both lists.
+
+        - internally selects the best method - searchsplice or concatsort
+        - selection based on relative sizes of existing elements and new elements
 
     */
     BinarySearch.prototype.update = function (to_remove, to_insert, options) {
@@ -489,59 +362,22 @@ define (['../util/interval'], function (Interval) {
         }
     };
 
-    BinarySearch.prototype._update_splice = function (to_remove, to_insert, options) {
-        console.log("update splice");
-    };
 
-    BinarySearch.prototype._update_sort = function (to_remove, to_insert, options) {
-        console.log("update sort");
-    };
+    /*
+        utility methods for doing pure insert or remove opeations
+    */
 
     BinarySearch.prototype.insert = function (to_insert, options) {
-        this._update([], to_insert, options);
+        this.update([], to_insert, options);
     };
     
     BinarySearch.prototype.remove = function (to_remove, options) {
-        this._update(to_remove, [], options);
+        this.update(to_remove, [], options);
     };
-
-
 
     /*
-        utility function to allow functions that are defined for values
-        to be called with objects.
-        - in valueMode this makes no differnce
+        Accessors
     */
-    BinarySearch.prototype._callByObjects = function(func, args) {
-        if (this.valueMode) {
-            return func.call(this, args);
-        } else {
-            let values = args.map(function (arg) {
-                return this.value(arg);
-            }, this);    
-            return func.call(this, values);
-        } 
-    };
-
-
-    /*
-        utility wrappers for accessing elements
-        using objects as parameters as opposed to their values
-    */
-    BinarySearch.prototype.get = function (objects) {
-        return this._callByObjects(this.getByValues, objects);
-    };
-    BinarySearch.prototype.remove = function (objects) {
-        return this._callByObjects(this.removeByValues, objects);
-    };
-    BinarySearch.prototype.indexOf = function (object) {
-        return this._callByObjects(this.indexOfByValue, [object]);
-    };
-    BinarySearch.prototype.has = function (object) {
-        return this._callByObjects(this.hasByValue, [object]);
-    };
-
-
 
     BinarySearch.prototype.getMinimum = function () {
         return (this.array.length > 0) ? this.array[0] : undefined;
@@ -550,6 +386,11 @@ define (['../util/interval'], function (Interval) {
     BinarySearch.prototype.getMaximum = function () {
         return (this.array.length > 0) ? this.array[this.array.length - 1] : undefined;
     };
+
+
+    /*
+        Internal search functions
+    */
 
     /* 
        Find index of largest value less than x
