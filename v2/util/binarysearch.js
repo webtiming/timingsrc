@@ -49,27 +49,14 @@ define (['../util/interval'], function (Interval) {
     const DATASET_LIMIT = 500;
 
     /*
-        magic table to set appropriate batch limit where
-        batch must be smaller than this for for searchsplice to be considered
+        simple rule by measurement
+        splice is better for batchlength <= 100 for both insert and remove
     */
-    var get_batch_limit = function (arrayLength) {
-        if (arrayLength < 50) return 5;
-        if (arrayLength < 500) return 10;
-        if (arrayLength < 5000) return 30;
-        if (arrayLength < 50000) return 40;
-        return 50;
-    };
-
     var resolve_approach = function (arrayLength, batchLength) {
         if (arrayLength == 0) {
             return "sort";
         }
-        let batchLimit = get_batch_limit(arrayLength);
-        if (batchLength < batchLimit && arrayLength > DATASET_LIMIT) {
-            return "splice";
-        } else {
-            return "sort";
-        }
+        return (batchLength <= 100) ? "splice" : "sort"; 
     };
 
     /*
@@ -147,29 +134,30 @@ define (['../util/interval'], function (Interval) {
 
     */
 
+    var cmp = function (a, b) {return a-b;};
+    
+
     var BinarySearch = function (options) {
         this.array = [];
         this.options = options || {};
-        this.cmp = function (a, b) {return a-b;};
     };
-
 
     /**
      * Binary search on sorted array
      * @param {*} searchElement The item to search for within the array.
      * @return {Number} The index of the element which defaults to -1 when not found.
      */
-    BinarySearch.prototype.binaryIndexOf = function (value_searchElement) {
+    BinarySearch.prototype.binaryIndexOf = function (searchElement) {
         let minIndex = 0;
         let maxIndex = this.array.length - 1;
         let currentIndex;
-        let value_currentElement;
+        let currentElement;
         while (minIndex <= maxIndex) {
     		currentIndex = (minIndex + maxIndex) / 2 | 0;
-    		value_currentElement = this.array[currentIndex];
-            if (value_currentElement < value_searchElement) {
+    		currentElement = this.array[currentIndex];
+            if (currentElement < searchElement) {
                 minIndex = currentIndex + 1;
-            } else if (value_currentElement > value_searchElement) {
+            } else if (currentElement > searchElement) {
                 maxIndex = currentIndex - 1;
             } else {
                 // found
@@ -293,7 +281,7 @@ define (['../util/interval'], function (Interval) {
         for (let i=0; i<len; i++) {
             x = to_insert[i];
             index = this.binaryIndexOf(x);
-            if (!this.isFound(index)) {
+            if (!this.isFound(index, x)) {
                 // insert at correct place
                 this.array.splice(Math.abs(index), 0, x);
             }
@@ -328,7 +316,7 @@ define (['../util/interval'], function (Interval) {
         // concat
         this.array = this.array.concat(to_insert);
         // sort
-        this.array.sort(this.cmp);
+        this.array.sort(cmp);
         // remove Infinity values at the end
         let index = this.array.indexOf(Infinity);
         this.array.splice(index, this.array.length);
@@ -514,6 +502,10 @@ define (['../util/interval'], function (Interval) {
 
     BinarySearch.prototype.items = function () {
         return sliceIterator(this.array, 0, this.array.length);
+    };
+
+    BinarySearch.prototype.clear = function () {
+        this.array = [];
     };
 
     return BinarySearch;

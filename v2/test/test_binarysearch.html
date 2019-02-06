@@ -11,24 +11,8 @@
     <script type="text/javascript" src="../../lib/require.js"></script>
     <!--  main -->
     <script text="javascript">
-
+      var pub;
       require(['util/binarysearch', 'util/interval'], function (BinarySearch, Interval) {
-
-
-        var makeBatch = function (size, random, scale) {
-          let batch = [];
-          random = random || false;
-          scale = scale || 1;
-          for (let i=0; i<size; i++) {
-            if (random) {
-              low = Math.random()*scale;
-            } else {
-              low = i;
-            }
-            batch.push(low);
-          }
-          return batch;
-        };
 
         var timeit = function (func, name) {
           let t0 = performance.now();
@@ -38,54 +22,156 @@
           return result;
         };
 
-        var binary1 = function (batch1, batch2) {
+        var make_presorted_ints = function (size) {          
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers;
+        };
+
+        var make_random_ints = function (size, scale) {
+          return Array.from({length: size}, () => Math.floor(Math.random() * scale));
+        };
+
+        var make_random_floats = function (size, scale) {
+          return Array.from({length: size}, () => Math.random() * scale);
+        };
+
+
+        // TEST UPDATE SLICE VS UPDATE SORT
+
+        var test_insert_slice = function (batch_init, batch_insert) {
           let b = new BinarySearch();
-          b.insert(batch1);
+          b.insert(batch_init);
           timeit(function () {
-            b._update_splice([], batch2);
-          }, "binarysearch insert " + batch1.length + " " + batch2.length);
-
+            b._update_splice([], batch_insert);
+          }, "insert slice " + batch_init.length + " " + batch_insert.length);
         };
 
-        var binary2 = function (batch1, batch2) {
+        var test_remove_slice = function (batch_init, batch_remove) {
           let b = new BinarySearch();
-          b.insert(batch1)
+          b.insert(batch_init);
           timeit(function () {
-            b._update_sort([], batch2);
-          }, "appendsort insert " + batch1.length + " " + batch2.length);
+            b._update_splice(batch_remove, []);
+          }, "remove slice " + batch_init.length + " " + batch_remove.length);
         };
 
-        var binary3 = function (batch1, batch2) {
+        var test_insert_sort = function (batch_init, batch_insert) {
           let b = new BinarySearch();
+          b.insert(batch_init);
           timeit(function () {
-            b.insert(batch1);
-          }, "insert first batch " + batch1.length);
-          timeit(function () {
-            b.insert(batch2);
-          }, "insert second batch " + batch1.length + " " + batch2.length);
+            b._update_sort([], batch_insert);
+          }, "insert sort " + batch_init.length + " " + batch_insert.length);
         };
 
-        var timeitmakebatch = function (size) {
-          let result;
+        var test_remove_sort = function (batch_init, batch_remove) {
+          let b = new BinarySearch();
+          b.insert(batch_init);
           timeit(function () {
-            result = makeBatch(size);
-          }, "batch " + size);
-          return result;
+            b._update_sort(batch_remove, []);
+          }, "remove sort " + batch_init.length + " " + batch_remove.length);
         };
 
-        var test_batch_insert = function () {
-          let DATASIZE = 50000;
-          let BATCHSIZE = 10;
-
-          let batch1 = timeitmakebatch(DATASIZE);
-          binary1(batch1, makeBatch(BATCHSIZE, true, DATASIZE));
-          
-          let batch2 = timeitmakebatch(DATASIZE);
-          binary2(batch2, makeBatch(BATCHSIZE, true, DATASIZE));
-       
-          let batch3 = timeitmakebatch(DATASIZE);
-          binary3(batch3, makeBatch(BATCHSIZE, true, DATASIZE));
+        var test_insert_chosen = function (batch_init, batch_insert) {
+          let b = new BinarySearch();
+          b.insert(batch_init);
+          timeit(function () {
+            b.update([], batch_insert);
+          }, "insert chosen " + batch_init.length + " " + batch_insert.length);
         };
+
+        var test_remove_chosen = function (batch_init, batch_remove) {
+          let b = new BinarySearch();
+          b.insert(batch_init);
+          timeit(function () {
+            b.update(batch_remove, []);
+          }, "remove chosen " + batch_init.length + " " + batch_remove.length);
+        };
+
+
+        var test_update_compare_sort_slice = function () {
+          var datasize = 50000;
+          var batchsize = 1000;
+
+          let batch_init = make_presorted_ints(datasize);
+          // insert new batch of equal size datasize
+          let batch_insert = make_random_floats(batchsize, datasize);
+          // remove batch of equal size
+          let batch_remove = make_random_ints(batchsize, datasize);
+
+          /*
+          test_insert_slice(batch_init, batch_insert);
+          test_insert_sort(batch_init, batch_insert);
+          test_insert_chosen(batch_init, batch_insert);
+          */
+
+          test_remove_slice(batch_init, batch_remove);
+          test_remove_sort(batch_init, batch_remove);
+          //test_remove_chosen(batch_init, batch_remove);
+
+        };
+
+        var make_stats = function () {
+          let range = [1,5,10,50,100,500,1000,5000,10000,50000,100000, 500000, 1000000];
+          let stats = [];
+
+          let datasize, batchsize;
+          for (let i=0; i<range.length;i++) {
+            for (let j=0; j<range.length;j++) {
+              datasize = range[i];
+              batchsize = range[j];
+              
+              let batch_init = make_presorted_ints(datasize);
+              let batch_insert = make_random_floats(batchsize, datasize);
+              let batch_remove = make_random_ints(batchsize, datasize);
+              let stat_item = {datasize:datasize, batchsize:batchsize};
+
+              // insert - sort
+              let b = new BinarySearch();
+              b.insert(batch_init);
+              let ts0 = performance.now();
+              b._update_sort([], batch_insert);
+              stat_item['insert-sort'] = performance.now() - ts0;
+
+              // insert - splice
+              if (batchsize < 1000) {
+                b.clear();
+                b.insert(batch_init);
+                ts0 = performance.now();
+                b._update_splice([], batch_insert);
+                stat_item['insert-splice'] = performance.now() - ts0;
+              }
+
+              if (batchsize <= datasize) {
+                // remove - sort
+                b.clear();
+                b.insert(batch_init);
+                ts0 = performance.now();
+                b._update_sort(batch_remove, []);
+                stat_item['remove-sort'] = performance.now() - ts0;
+
+                // remove - splice
+                if (batchsize < 1000) {                
+                  b.clear();
+                  b.insert(batch_init);
+                  ts0 = performance.now();
+                  b._update_splice(batch_remove, []);
+                  stat_item['remove-splice'] = performance.now() - ts0;
+                }
+              }
+
+              stats.push(stat_item);
+              console.log([datasize, batchsize]);
+              //console.log(stat_item);
+            }
+          }
+          pub = stats
+          console.log(JSON.stringify(stats, 0, 2));
+
+        };
+
+
 
         var test_big_batch = function () {
           let DATASIZE = 500000;
@@ -183,14 +269,13 @@
         var test_remove = function () {
           let DATASIZE = 500000;
           
-          let batch = makeBatch(DATASIZE);
+          let batch = make_presorted_ints(DATASIZE);
           let b = new BinarySearch();
           b.insert(batch);
           timeit(function () {
             b._update_splice(batch, []);
           }, "remove all sortsplice ", DATASIZE);
           console.log(b.array.length);
-
 
           b.insert(batch);
 
@@ -206,7 +291,7 @@
           let DATASIZE = 500000;
 
           // create batch from range [0,1,2,3,...]
-          let batch1 = makeBatch(DATASIZE).map(x=>{return {value:x};})
+          let batch1 = make_presorted_ints(DATASIZE);
           let b = new BinarySearch({value:"value"});
           
           // initialise
@@ -215,24 +300,19 @@
           }, "initialise presorted integers " + DATASIZE);
 
           // insert
-          let batch2 = makeBatch(DATASIZE, true, DATASIZE).map(x=>{return {value:x};})
+          let batch2 = make_random_floats(DATASIZE);
           timeit(function () {
             b.insert(batch2);
           }, "insert random floats " + DATASIZE);
-
-
-
         };
 
-
-
         var run = function () {
-          //test_batch_insert();
+          //test_update_compare_sort_slice();
           //test_lookup();
           //test_remove_one();
           //test_remove();
-          //test_big_batch();
           test_main();
+          //make_stats();
         };
 
         if (document.readyState === "complete") run();
