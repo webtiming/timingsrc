@@ -4,10 +4,40 @@ define (['../util/binarysearch'],
 	'use strict';
 
 	/*
-		this implements a collection for efficient lookup of cues on a timeline
+		this implements a colloection for efficient lookup of cues on a timeline
 		- cues are singular, meaning that they are tied to a single value, not an interval
+		- cues may also be non-singulare, meaning that they are bound to
+		  two values, low and high.
 		- cues are indexed both by key and by value
 	*/
+
+	// Operation Types
+	var OpType = Object.freeze({
+		ADD: "add",
+		UPDATE: "update",
+		REPEAT: "repeat", // update - interval not changed, but data may be
+		REMOVE: "remove"
+	});
+
+	/*
+		describe the type of operation that has occured,
+		given that oldCue has been replaced with newCue.
+	*/
+	var getOpType = function (newCue, oldCue) {
+		if (newCue && oldCue) {
+			if (newCue.interval.equals(oldCue.interval)) {
+				return OpType.REPEAT;
+			} else {
+				return OpType.UPDATE;
+			}
+		} else if (newCue) {
+			return OpType.ADD;
+		} else if (oldCue) {
+			return OpType.REMOVE;
+		}
+	};
+
+
 
 	var SingularCues = function () {
 
@@ -43,7 +73,27 @@ define (['../util/binarysearch'],
 		this.item_manager = new ItemManager();
 	};
 
-	SingularCues.prototype.addCues = function(cues) {
+	/*
+		update takes a list of cues
+		
+		cue = {
+			key:key,
+			interval: {
+				low:low,
+				high:high,
+				lowInclude:lowInclude,
+				highInclude:highInclude,
+			},
+			data: data
+		}
+
+		if cues do not have an interval property, this means to
+		delete the cue.
+
+		cue = {key:key}
+
+	*/
+	SingularCues.prototype.update = function(cues) {
      	if (cues.length == 0) { return [];}
 	
     	let cue, old_cue;
@@ -95,6 +145,14 @@ define (['../util/binarysearch'],
 	};
 
 
+
+
+
+
+
+
+
+
 	/*
 		Items Manager manages event items from cue processing.
 		If multiple operations in a batch apply to the same 
@@ -127,6 +185,7 @@ define (['../util/binarysearch'],
 		let res = [];
 		for (let item of this.items.values()) {
 			if (item.new || item.old) {
+				item.type = getOpType(item.new, item.old);
 				res.push(item);
 			}
 		}
@@ -136,14 +195,17 @@ define (['../util/binarysearch'],
 
 
 	/*
-		NodeManager processes translates cue operations
+		NodeManager processes and translates cue operations
 		into a minimum set of operations on the point index.
 
-		To do this, it needs to build up a representation of
-		the total difference that the batch of cue operations
-		amounts to. This is expressed as two batch operations,
-		a set of values to be deleted, and a set of values to
-		be inserted.
+		To do this, it records point that are created and
+		points which are modified.
+		
+		The total difference that the batch of cue operations
+		amounts to is expressed as one list of values to be 
+		deleted, and and one to be inserted. The update operation
+		of the binary index will process both in one atomic
+		operation.
 
 		On submit both the nodemap and the index will brought
 		up to speed
@@ -153,11 +215,11 @@ define (['../util/binarysearch'],
 		this.nodemap = nodemap;
 		this.index = index;
 		/* 
-			created includes nodes that were not in nodemap 
+			created : includes nodes that were not in nodemap 
 			before this batch was processed
-			dirty includes nodes that were in nodemap
+			dirty : includes nodes that were in nodemap
 			before this batch was processed, and that
-			have been modified in some way. 
+			have been become empty at least at one point during processing. 
 		*/
 		this.created = new Map(); // value -> node
 		this.dirty = new Map(); // value -> node
@@ -179,9 +241,12 @@ define (['../util/binarysearch'],
 				if (op == "add") {
 					this.addCueToNode(node, cue);
 				} else {
-					this.removeCueFromNode(node, cue);
+					let empty = this.removeCueFromNode(node, cue);
+					if (empty) {
+						this.dirty.set(value, node);
+					}
 				}
-				this.dirty.set(value, node);
+				
 			}	
 		} else {
 			// node found in created - update
@@ -189,8 +254,9 @@ define (['../util/binarysearch'],
 				this.addCueToNode(node, cue);
 			} else {
 				this.removeCueFromNode(node, cue);
+				// created nodes do not enter the set of dirty nodes
 			}
-			// created nodes do not enter the set of dirty nodes
+			
 		}
 	};
 
@@ -247,6 +313,7 @@ define (['../util/binarysearch'],
 		if (idx > -1) {
 			node.cues.splice(idx, 1);
 		}
+		return node.cues.length == 0;
 	};
 
 	// module definition

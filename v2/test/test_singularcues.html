@@ -82,7 +82,7 @@
           let cues = make_singular_cues(10, 10);
           console.log(cues.map(x=>x.key));
           let sc = new SingularCues();
-          let items = sc.addCues(cues);
+          let items = sc.update(cues);
           console.log(items);
           console.log("keymap ", sc.keymap.size);
           console.log("array ", sc.index.array.length);
@@ -90,7 +90,7 @@
           console.log("remove")
           let cues2 = make_remove_cues(10, 10);
           console.log(cues2.map(x=>x.key));
-          items = sc.addCues(cues2);
+          items = sc.update(cues2);
           console.log(items);
           console.log("keymap ", sc.keymap.size);
           console.log("array ", sc.index.array.length);
@@ -101,17 +101,39 @@
           let cues = make_singular_cues(size, size/2);
           let sc = new SingularCues();
           timeit(function () {
-            sc.addCues(cues);
+            sc.update(cues);
           }, "add bigbatch " + size);
 
           // add more
           cues = make_singular_cues(size, size/2);
           timeit(function () {
-            sc.addCues(cues);
+            sc.update(cues);
           }, "add bigbatch " + size);
 
         };
 
+
+        var test_optypes = function () {
+          let sc = new SingularCues();
+          let cue, item;
+
+          cue = {key: "one", interval: new Interval(1,2) , data:"one"};
+          item = sc.update([cue])[0];
+          console.log(item);
+
+          cue = {key: "one", interval: new Interval(1,3) , data:"one"};
+          item = sc.update([cue])[0];
+          console.log(item);
+
+          cue = {key: "one", interval: new Interval(1,3) , data:"two"};
+          item = sc.update([cue])[0];
+          console.log(item);
+
+          cue = {key: "one"};
+          item = sc.update([cue])[0];
+          console.log(item);
+
+        };
 
 
         var test_main = function () {
@@ -125,21 +147,21 @@
           
           // initialise
           timeit(function () {
-            sc.addCues(batch_1);
+            sc.update(batch_1);
           }, "initialise presorted ints " + DATASIZE);
 
           // insert
           let numbers_2 = make_random_ints(DATASIZE, DATASIZE);
           let batch_2 = make_cues_from_numbers(numbers_2);
           timeit(function () {
-            sc.addCues(batch_2);
+            sc.update(batch_2);
           }, "insert random ints " + DATASIZE);
 
           // remove
           let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
           let batch_3 = make_cues_from_numbers(numbers_3, "remove");
           timeit(function () {
-            sc.addCues(batch_3);
+            sc.update(batch_3);
           }, "remove random ints " + DATASIZE);
 
 
@@ -151,7 +173,8 @@
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          test_main();
+          //test_main();
+          test_optypes();
         };
 
         if (document.readyState === "complete") run();
