@@ -122,24 +122,62 @@
           console.log(item);
           console.log(sc.index.array);
           console.log(...sc.keymap.values());
+          console.log(sc.nodemap.size);
  
           cue = {key: "one", interval: new Interval(2) , data:"one"};
           item = sc.update([cue])[0];
           console.log(item);
           console.log(sc.index.array);
           console.log(...sc.keymap.values());
-       
+          console.log(sc.nodemap.size);
+
           cue = {key: "one", interval: new Interval(2) , data:"two"};
           item = sc.update([cue])[0];
           console.log(item);
           console.log(sc.index.array);
           console.log(...sc.keymap.values());
+          console.log(sc.nodemap.size);
           
           cue = {key: "one"};
           item = sc.update([cue])[0];
           console.log(item);
           console.log(sc.index.array);
           console.log(...sc.keymap.values());
+          console.log(sc.nodemap.size);
+        };
+
+
+        var test_batch_collapsing = function () {
+          let sc = new SingularCues();
+          let cue, item;
+
+          cue_1 = {key: "one", interval: new Interval(1) , data:"one"};
+          item = sc.update([cue_1])[0];
+          console.log(item);
+
+          let cues = [
+            {key: "two", interval: new Interval(1) , data:"one"},
+            {key: "two"},
+            {key: "two", interval: new Interval(2) , data:"one"},
+          ]
+          items = sc.update(cues);
+          items.forEach(x=>{console.log(x)});
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
+          console.log(sc.nodemap.size);
+
+
+          // check that old value is defined by cue_1
+          cues = [
+            {key: "one", interval: new Interval(3) , data:"one"},
+            {key: "one"},
+            {key: "one", interval: new Interval(4) , data:"one"},
+          ]
+          items = sc.update(cues);
+          items.forEach(x=>{console.log(x)});
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
+          console.log(sc.nodemap.size);
 
         };
 
@@ -182,7 +220,8 @@
           //test_basic();
           //test_bigbatch(100000);
           //test_main();
-          test_optypes();
+          // test_optypes();
+          test_batch_collapsing();
         };
 
         if (document.readyState === "complete") run();

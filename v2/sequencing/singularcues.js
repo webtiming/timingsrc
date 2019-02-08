@@ -232,12 +232,12 @@ define (['../util/binarysearch'],
 			// node not found in created
 			node = this.nodemap.get(value);
 			if (node == undefined) {
-				// node not found in keymap
+				// node not found in nodemap
 				// create new node
 				node = (op == "add") ? {cues:[cue]} : {cues:[]};
 				this.created.set(value, node);
 			} else {
-				// node found in keymap - update
+				// node found in nodemap - update
 				if (op == "add") {
 					this.addCueToNode(node, cue);
 				} else {
@@ -253,10 +253,8 @@ define (['../util/binarysearch'],
 			if (op == "add") {
 				this.addCueToNode(node, cue);
 			} else {
-				this.removeCueFromNode(node, cue);
-				// created nodes do not enter the set of dirty nodes
+				this.removeCueFromNode(node, cue);			
 			}
-			
 		}
 	};
 
@@ -271,22 +269,20 @@ define (['../util/binarysearch'],
 		- points to insert - created and non-empty
 	*/
 	NodeManager.prototype.submit = function () {
-		// update nodemap
+		// update nodemap and index
 		let value, node;
-		for ([value, node] of this.created.entries()) {
-			this.nodemap.set(value, node);
-		}
-		// update index
 		let to_remove = [];
 		let to_insert = [];
 		for ([value, node] of this.created.entries()) {
 			if (node.cues.length > 0) {
 				to_insert.push(value);
+				this.nodemap.set(value, node);
 			} 
 		}
 		for ([value, node] of this.dirty.entries()) {
 			if (node.cues.length == 0) {
 				to_remove.push(value);
+				this.nodemap.delete(value);
 			}
 		}
 		this.index.update(to_remove, to_insert);
