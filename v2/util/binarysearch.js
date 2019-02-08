@@ -303,13 +303,13 @@ define (['../util/interval'], function (Interval) {
         sorting can be done only once.
     */
     BinarySearch.prototype._update_sort = function (to_remove, to_insert, options) {
-
         // REMOVE
-        if (this.array.length > 0) {        
-            // visit all elements and set their value to Infinite
+        if (this.array.length > 0 && to_remove.length > 0) {        
+            // visit all elements and set their value to undefined
+            // undefined values will be sorted to the end of the array
             let indexes = this.indexOfElements(to_remove);
             for (let i=0; i<indexes.length;i++) {
-                this.array[indexes[i]] = Infinity;
+                this.array[indexes[i]] = undefined;
             }
         }
         // INSERT
@@ -317,9 +317,13 @@ define (['../util/interval'], function (Interval) {
         this.array = this.array.concat(to_insert);
         // sort
         this.array.sort(cmp);
-        // remove Infinity values at the end
-        let index = this.array.indexOf(Infinity);
-        this.array.splice(index, this.array.length);
+        // remove undefined values at the end if any
+        if (to_remove.length > 0) {
+            let index = this.array.indexOf(undefined);
+            if (index > -1) {
+                this.array.splice(index, this.array.length-index);
+            }
+        }
         // remove duplicates
         this.array = this._unique(this.array);
     };
@@ -341,6 +345,7 @@ define (['../util/interval'], function (Interval) {
         if (size == 0) {
             return;
         }
+
         // regular case
         let approach = resolve_approach(this.array.length, size);
         if (approach == "splice") {

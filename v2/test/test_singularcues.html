@@ -117,21 +117,29 @@
           let sc = new SingularCues();
           let cue, item;
 
-          cue = {key: "one", interval: new Interval(1,2) , data:"one"};
+          cue = {key: "one", interval: new Interval(1) , data:"one"};
           item = sc.update([cue])[0];
           console.log(item);
-
-          cue = {key: "one", interval: new Interval(1,3) , data:"one"};
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
+ 
+          cue = {key: "one", interval: new Interval(2) , data:"one"};
           item = sc.update([cue])[0];
           console.log(item);
-
-          cue = {key: "one", interval: new Interval(1,3) , data:"two"};
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
+       
+          cue = {key: "one", interval: new Interval(2) , data:"two"};
           item = sc.update([cue])[0];
           console.log(item);
-
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
+          
           cue = {key: "one"};
           item = sc.update([cue])[0];
           console.log(item);
+          console.log(sc.index.array);
+          console.log(...sc.keymap.values());
 
         };
 
