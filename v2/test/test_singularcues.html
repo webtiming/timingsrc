@@ -85,7 +85,7 @@
           let items = sc.update(cues);
           console.log(items);
           console.log("keymap ", sc.keymap.size);
-          console.log("array ", sc.index.array.length);
+          console.log("array ", sc.pointindex.array.length);
 
           console.log("remove")
           let cues2 = make_remove_cues(10, 10);
@@ -93,7 +93,7 @@
           items = sc.update(cues2);
           console.log(items);
           console.log("keymap ", sc.keymap.size);
-          console.log("array ", sc.index.array.length);
+          console.log("array ", sc.pointindex.array.length);
         };
 
         var test_bigbatch = function (size) {
@@ -113,38 +113,7 @@
         };
 
 
-        var test_optypes = function () {
-          let sc = new SingularCues();
-          let cue, item;
-
-          cue = {key: "one", interval: new Interval(1) , data:"one"};
-          item = sc.update([cue])[0];
-          console.log(item);
-          console.log(sc.index.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
- 
-          cue = {key: "one", interval: new Interval(2) , data:"one"};
-          item = sc.update([cue])[0];
-          console.log(item);
-          console.log(sc.index.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
-
-          cue = {key: "one", interval: new Interval(2) , data:"two"};
-          item = sc.update([cue])[0];
-          console.log(item);
-          console.log(sc.index.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
-          
-          cue = {key: "one"};
-          item = sc.update([cue])[0];
-          console.log(item);
-          console.log(sc.index.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
-        };
+        
 
 
         var test_batch_collapsing = function () {
@@ -162,9 +131,9 @@
           ]
           items = sc.update(cues);
           items.forEach(x=>{console.log(x)});
-          console.log(sc.index.array);
+          console.log(sc.pointindex.array);
           console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
+          console.log(sc.pointmap.size);
 
 
           // check that old value is defined by cue_1
@@ -175,9 +144,9 @@
           ]
           items = sc.update(cues);
           items.forEach(x=>{console.log(x)});
-          console.log(sc.index.array);
+          console.log(sc.pointindex.array);
           console.log(...sc.keymap.values());
-          console.log(sc.nodemap.size);
+          console.log(sc.pointmap.size);
 
         };
 
@@ -247,7 +216,7 @@
           //test_basic();
           //test_bigbatch(100000);
           //test_main();
-          // test_optypes();
+
           //test_batch_collapsing();
           test_getPointsCoveredByInterval();
         };

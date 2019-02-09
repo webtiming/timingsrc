@@ -67,8 +67,35 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		}
     });
 
-    // OPTYPES - defined in axis
-    var OpType = axis.OpType;
+
+	// Modification Types
+	var OpType = Object.freeze({
+		INIT: "init", // used only by sequencer
+		NONE : "none",
+		ADD: "add",
+		UPDATE: "update",
+		REPEAT: "repeat", // update - interval not changed
+		REMOVE: "remove"
+	});
+
+	/*
+		describe the type of modification that has occured,
+		given that oldCue has been replaced with newCue.
+		newCue and oldCue may be undefined.
+	*/
+	var getOpType = function (newCue, oldCue) {
+		if (newCue && oldCue) {
+			if (newCue.interval.equals(oldCue.interval)) {
+				return OpType.REPEAT;
+			} else {
+				return OpType.UPDATE;
+			}
+		} else if (newCue) {
+			return OpType.ADD;
+		} else if (oldCue) {
+			return OpType.REMOVE;
+		}
+	};
 
 
 
