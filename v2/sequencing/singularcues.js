@@ -48,9 +48,8 @@ define (['../util/binarysearch'],
 		/*
 		nodemap maintains the associations between points on the timeline
 		and cues that reference such points. A single point value may be 
-		referenced by multiple cues, so one point maps to a list of cues.
-		a node object holds the list of cues
-		node = {cues:[]}
+		referenced by multiple cues, so one point value maps to a list of cues.
+		node = [cue,...]
 		*/ 
 		this.nodemap = new Map(); 
 
@@ -148,6 +147,56 @@ define (['../util/binarysearch'],
 
 
 
+	/*
+		Find all interval endpoints within given interval 
+	*/
+	SingularCues.prototype.getPointsCoveredByInterval = function (interval) {
+		let pointIterator = this.index.lookup(interval)[Symbol.iterator]();
+		let cueIterator = [].values();
+		let self = this;
+		let pointItem;
+		let next = function () {
+			let cueItem = cueIterator.next();
+			if (cueItem.done) {
+				// fetch new cues from pointIterable
+				pointItem = pointIterator.next();
+				if (pointItem.done) {
+					// both exhausted
+					return {done: true};
+				} else {
+					// more cues
+					cueIterator = self.nodemap.get(pointItem.value).values();
+					cueItem = cueIterator.next();
+					// newly fetched cueIterator should never be empty
+					if (cueItem.done) {
+						throw new Error("empty node in nodemap");
+					}	
+				}
+			} 
+			return {
+				done:false,
+				value: {
+					point:pointItem.value, 
+					cue: cueItem.value
+				}
+			}
+		};
+		// return iterable
+		return {
+			next: next,
+			[Symbol.iterator]: function () {return this;}
+		};
+	};
+
+
+	SingularCues.prototype.getCuesCoveringInterval = function (interval) {
+
+	};
+
+
+
+
+
 
 
 
@@ -234,7 +283,7 @@ define (['../util/binarysearch'],
 			if (node == undefined) {
 				// node not found in nodemap
 				// create new node
-				node = (op == "add") ? {cues:[cue]} : {cues:[]};
+				node = (op == "add") ? [cue] : [];
 				this.created.set(value, node);
 			} else {
 				// node found in nodemap - update
@@ -274,13 +323,13 @@ define (['../util/binarysearch'],
 		let to_remove = [];
 		let to_insert = [];
 		for ([value, node] of this.created.entries()) {
-			if (node.cues.length > 0) {
+			if (node.length > 0) {
 				to_insert.push(value);
 				this.nodemap.set(value, node);
 			} 
 		}
 		for ([value, node] of this.dirty.entries()) {
-			if (node.cues.length == 0) {
+			if (node.length == 0) {
 				to_remove.push(value);
 				this.nodemap.delete(value);
 			}
@@ -293,23 +342,23 @@ define (['../util/binarysearch'],
 
 	NodeManager.prototype.addCueToNode = function (node, cue) {
 		// cue equality defined by key property
-		let idx = node.cues.findIndex(function (_cue) { 
+		let idx = node.findIndex(function (_cue) { 
 			return _cue.key == cue.key;
 		});
 		if (idx == -1) {
-			node.cues.push(cue);
+			node.push(cue);
 		}		
 	};
 
 	NodeManager.prototype.removeCueFromNode = function (node, cue) {
 		// cue equality defined by key property 
-		let idx = node.cues.findIndex(function (_cue) { 
+		let idx = node.findIndex(function (_cue) { 
 			return _cue.key == cue.key;
 		});
 		if (idx > -1) {
-			node.cues.splice(idx, 1);
+			node.splice(idx, 1);
 		}
-		return node.cues.length == 0;
+		return node.length == 0;
 	};
 
 	// module definition

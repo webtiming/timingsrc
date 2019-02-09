@@ -182,6 +182,33 @@
         };
 
 
+        var test_getPointsCoveredByInterval = function () {
+          let sc = new SingularCues();
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i)});
+          }
+          for (let i=0; i<100; i++) {
+            cues.push({key: "jalla" + i.toString(), interval: new Interval(i)});
+          }
+          cues.reverse();
+          sc.update(cues);
+
+          
+          let pointIterable = sc.getPointsCoveredByInterval(new Interval(4, 18));
+
+            
+          for (let p of pointIterable) {
+            console.log(p);
+          }
+          
+
+
+        };
+
+
+
         var test_main = function () {
           let DATASIZE = 500;
           let sc = new SingularCues();
@@ -221,7 +248,8 @@
           //test_bigbatch(100000);
           //test_main();
           // test_optypes();
-          test_batch_collapsing();
+          //test_batch_collapsing();
+          test_getPointsCoveredByInterval();
         };
 
         if (document.readyState === "complete") run();
