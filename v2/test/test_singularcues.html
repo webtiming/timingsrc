@@ -84,16 +84,16 @@
           let sc = new SingularCues();
           let items = sc.update(cues);
           console.log(items);
-          console.log("keymap ", sc.keymap.size);
-          console.log("array ", sc.pointindex.array.length);
+          console.log("keyMap ", sc.keyMap.size);
+          console.log("array ", sc.pointIndex.array.length);
 
           console.log("remove")
           let cues2 = make_remove_cues(10, 10);
           console.log(cues2.map(x=>x.key));
           items = sc.update(cues2);
           console.log(items);
-          console.log("keymap ", sc.keymap.size);
-          console.log("array ", sc.pointindex.array.length);
+          console.log("keyMap ", sc.keyMap.size);
+          console.log("array ", sc.pointIndex.array.length);
         };
 
         var test_bigbatch = function (size) {
@@ -131,9 +131,9 @@
           ]
           items = sc.update(cues);
           items.forEach(x=>{console.log(x)});
-          console.log(sc.pointindex.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.pointmap.size);
+          console.log(sc.pointIndex.array);
+          console.log(...sc.keyMap.values());
+          console.log(sc.pointMap.size);
 
 
           // check that old value is defined by cue_1
@@ -144,9 +144,9 @@
           ]
           items = sc.update(cues);
           items.forEach(x=>{console.log(x)});
-          console.log(sc.pointindex.array);
-          console.log(...sc.keymap.values());
-          console.log(sc.pointmap.size);
+          console.log(sc.pointIndex.array);
+          console.log(...sc.keyMap.values());
+          console.log(sc.pointMap.size);
 
         };
 
