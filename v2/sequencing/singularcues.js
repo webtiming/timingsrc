@@ -1,5 +1,5 @@
-define (['../util/binarysearch'], 
-	function (BinarySearch) {
+define (['../util/binarysearch', '../util/interval'], 
+	function (BinarySearch, Interval) {
 
 	'use strict';
 
@@ -19,7 +19,7 @@ define (['../util/binarysearch'],
 		});
 		if (idx == -1) {
 			arr.push(cue);
-		}		
+		}
 		return arr.length;
 	};
 
@@ -38,23 +38,60 @@ define (['../util/binarysearch'],
 	};
 
 	/*
-		make iterable for pointMap
+		make iterable for cue points, from an iterator for
+		point values
 	
-		pointIterable is an iterable of points
-		pointMapIterable will iterate the points and find
-		the associated cues from pointMap
+		pointIterable is an iterable of point values, typically
+		from pointIndex.
+		
+		cuePointIterable will iterate the point values and find
+		the associated cue from pointMap
 
-		pointMapIterable returns values {point: point, cue:cue}
-		where cue is associated with point
+		pointIterable returns cue points of the following
+		structure 
+		{point: point, cue:cue}
+		where cue is associated with the point value
+
+		interval defines the interval of interest
+		subtle point
+		if interval is [4,6>, special care must be taken for 
+		endpoint values 4 and 6. Though cues are associated with
+		their entpoints, they do not always include their endpoints.
+
+		So, if endpoint 4 is associated with a cue with interval [0,4>,
+		then the cue is not actually overlapping the given interval.
+		If this is the case, the cuepoint is dropped. 
+
+		Only cuepoints which are overlapping the given interval will be returned.  
 	*/
-	var makePointMapIterable = function (pointMap, pointIterable) {
+	var makeCuePointIterable = function (pointMap, pointIterable, interval) {
 		let pointIterator = pointIterable[Symbol.iterator]();
 		let cueIterator = [].values();
 		let pointItem;
-		let next = function () {
+		let nextCue = function () {
 			let cueItem = cueIterator.next();
-			if (cueItem.done) {
-				// fetch new cues from pointIterable
+			// while is needed in case we have to drop some nonoverlapping cues
+			while (!cueItem.done) {
+				/*
+					if current point happens to be one of the endpoints of 
+					the given interval, check that the cue interval overlaps
+				*/
+				let cue = cueItem.value;
+				let point = pointItem.value;
+				if (point == interval.low || point == interval.high) {
+					if (!cue.interval.overlapsInterval(interval)) {
+						cueItem = cueIterator.next();
+						continue;		
+					}
+				}
+				return cueItem;
+			}
+			return {done:true};
+		};
+		let next = function () {
+			let cueItem = nextCue();
+			while (cueItem.done) {
+				// fetch cues for next point in pointIterable
 				pointItem = pointIterator.next();
 				if (pointItem.done) {
 					// both exhausted
@@ -62,20 +99,60 @@ define (['../util/binarysearch'],
 				} else {
 					// more cues
 					cueIterator = pointMap.get(pointItem.value).values();
-					cueItem = cueIterator.next();
-					// newly fetched cueIterator should never be empty
-					if (cueItem.done) {
-						throw new Error("no cues in pointMap for point ", pointItem.value);
-					}	
+					cueItem = nextCue();
 				}
-			} 
+			}
+			// cueItem ok
 			return {
 				done:false,
 				value: {
 					point:pointItem.value, 
 					cue: cueItem.value
 				}
+			};				
+		};
+		// return iterable
+		return {
+			next: next,
+			[Symbol.iterator]: function () {return this;}
+		};
+	};
+
+	/*
+
+		make iterable for cue points, from an iterator for
+		point values
+
+		pointIterable is an iterable of point values, typically
+		from pointIndex.
+
+		cueIterable will iterate the point values and find
+		the associated cue from pointMap. Each cue will only
+		be reported once, even if they are referenced by multiple
+		points (both enpoint of a cue within set).
+		
+		pointIterable returns cue objects. Any specific order of cues
+		is not defined.
+	*/
+
+	var makeCueIterable = function (pointMap, pointIterable, interval) {
+		let cuePointIterable = makeCuePointIterable(pointMap, pointIterable, interval);
+		let cuePointIterator = cuePointIterable[Symbol.iterator]();
+		let keys = new Set();
+		let item, cue; 
+		let next = function () {
+			item = cuePointIterator.next();
+			// need a while loop to iterate past cue duplicates
+			while (!item.done) {
+				cue = item.value.cue;
+				if (!keys.has(cue.key)) {
+					keys.add(cue.key);
+					return {done:false, value: cue};				
+				}
+				item = cuePointIterator.next();					
 			}
+			return {done:true};
+			
 		};
 		// return iterable
 		return {
@@ -154,7 +231,7 @@ define (['../util/binarysearch'],
         	for (let i=0; i<cues.length; i++) {
         		cue = cues[i];
         		this.keyMap.set(cue.key, cue);
-        		cueBatch.processCue("add", cue.interval.low, cue);
+        		cueBatch.processCue("add", cue);
 				eventBatch.processEvent({new:cue});
         	}
         } else {
@@ -167,21 +244,21 @@ define (['../util/binarysearch'],
 					if (cue.interval) {
 						// replace cue
 						this.keyMap.set(cue.key, cue);
-						cueBatch.processCue("remove", old_cue.interval.low, old_cue);
-						cueBatch.processCue("add", cue.interval.low, cue);
+						cueBatch.processCue("remove", old_cue);
+						cueBatch.processCue("add", cue);
 						eventBatch.processEvent({new:cue, old:old_cue});
 					} else {
 						// delete cue
 						// cues without interval signify deletion 
 						this.keyMap.delete(old_cue.key);
-						cueBatch.processCue("remove", old_cue.interval.low, old_cue);
+						cueBatch.processCue("remove", old_cue);
 						eventBatch.processEvent({old:old_cue});
 					}
 				} else {
 					if (cue.interval) {
 						// new cue
 						this.keyMap.set(cue.key, cue);
-						cueBatch.processCue("add", cue.interval.low, cue);
+						cueBatch.processCue("add", cue);
 						eventBatch.processEvent({new:cue});
 					} else {
 						// attempt to dele cue that does not exist
@@ -207,19 +284,60 @@ define (['../util/binarysearch'],
 
 	*/
 
-
-
 	/*
 		Find all interval endpoints within given interval 
 	*/
-	Axis.prototype.getPointsCoveredByInterval = function (interval) {
+	Axis.prototype.getCuePointsCoveredByInterval = function (interval) {
 		let pointIterable = this.pointIndex.lookup(interval);
-		return makePointMapIterable(this.pointMap, pointIterable);
+		return makeCuePointIterable(this.pointMap, pointIterable, interval);
 	};
 
+	/*
+		Find all cues covering interval.
+	*/
+	Axis.prototype.getCuesOverlappingInterval = function (interval) {
+		let pointIterable = this.pointIndex.lookup(interval);
+		let cueIterable =  makeCueIterable(this.pointMap, pointIterable, interval);
 
-	Axis.prototype.getCuesCoveringInterval = function (interval) {
+		/*
+			todo - missing cues that are covering interval, with
+			with both endpoints outside interval
+			
+			e.g. if interval is <4,6> - [4,6] will be detected 
+			because it has shared endpoints and overlaps.
+			However, [2,8] will not be detected.
+		*/
 
+		// add keys of all intervals that have endpoints on both sides of interval
+		var leftInterval = new Interval(-Infinity, interval.low);
+		var rightInterval = new Interval(interval.high, Infinity);
+		/* 
+			optimization - could choose the interval with the least points
+			instead of just choosing left
+			optimization - would be good to have all singular intervals isolated
+		*/
+		let leftCuePointIterable = this.getCuePointsCoveredByInterval(leftInterval);
+
+		/*
+			need two more iterables
+			- filter out those that are not covering (condition)
+			- chain two interables
+		*/
+
+
+		/*
+		this._index.lookup(leftInterval).forEach(function(point) {
+			this._reverse.getItemsByKey(point).forEach(function (item) {
+				var _interval = this._map[item.value];
+				if (rightInterval.coversPoint(_interval.high)) {
+					res[item.value] = undefined;
+				}
+			}, this);
+		
+		}, this);
+		*/
+
+		return cueIterable;
 	};
 
 
@@ -277,33 +395,42 @@ define (['../util/binarysearch'],
 		"add" means point to be added to point
 		"remove" means cue to be removed from point
 	*/
-	CueBatch.prototype.processCue = function (op, point, cue) {
-		let cues = this.created.get(point);
-		if (cues == undefined) {
-			// point not found in created
-			cues = this.pointMap.get(point);
+	CueBatch.prototype.processCue = function (op, cue) {
+		let points, point, cues;
+		if (cue.singular) {
+			points = [cue.interval.low]
+		} else {
+			points = [cue.interval.low, cue.interval.high];
+		}
+		for (let i=0; i<points.length; i++) {
+			point = points[i];
+			cues = this.created.get(point);
 			if (cues == undefined) {
-				// point not found in pointMap
-				// register in created
-				cues = (op == "add") ? [cue] : [];
-				this.created.set(point, cues);
+				// point not found in created
+				cues = this.pointMap.get(point);
+				if (cues == undefined) {
+					// point not found in pointMap
+					// register in created
+					cues = (op == "add") ? [cue] : [];
+					this.created.set(point, cues);
+				} else {
+					// cues found in pointMap - update
+					if (op == "add") {
+						addCueToArray(cues, cue);
+					} else {
+						let empty = removeCueFromArray(cues, cue);
+						if (empty) {
+							this.dirty.set(point, cues);
+						}
+					}
+				}	
 			} else {
-				// cues found in pointMap - update
+				// point found in created - update
 				if (op == "add") {
 					addCueToArray(cues, cue);
 				} else {
-					let empty = removeCueFromArray(cues, cue);
-					if (empty) {
-						this.dirty.set(point, cues);
-					}
+					removeCueFromArray(cues, cue);			
 				}
-			}	
-		} else {
-			// point found in created - update
-			if (op == "add") {
-				addCueToArray(cues, cue);
-			} else {
-				removeCueFromArray(cues, cue);			
 			}
 		}
 	};

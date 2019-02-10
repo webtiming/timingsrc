@@ -151,7 +151,7 @@
         };
 
 
-        var test_getPointsCoveredByInterval = function () {
+        var test_getCuePointsCoveredByInterval = function () {
           let sc = new SingularCues();
 
           let cues = [];
@@ -164,16 +164,38 @@
           cues.reverse();
           sc.update(cues);
 
-          
-          let pointIterable = sc.getPointsCoveredByInterval(new Interval(4, 18));
+          let interval = new Interval(4,18);
+          let pointIterable = sc.getCuePointsCoveredByInterval(interval);
 
-            
           for (let p of pointIterable) {
             console.log(p);
           }
-          
+        };
 
 
+        var test_getCuesOverlappingInterval = function () {
+          let sc = new SingularCues();
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+          for (let i=0; i<100; i++) {
+            cues.push({key: "jalla" + i.toString(), interval: new Interval(i, i+1)});
+          }
+          cues.reverse();
+          sc.update(cues);
+
+          let interval = new Interval(3.9, 18, true, true);
+          sc.update([{
+            key: "overlapping",
+            interval: new Interval(1, 20)
+          }]);
+          let cueIterable = sc.getCuesOverlappingInterval(interval);
+            
+          for (let cue of cueIterable) {
+            console.log(cue);
+          }
         };
 
 
@@ -218,7 +240,8 @@
           //test_main();
 
           //test_batch_collapsing();
-          test_getPointsCoveredByInterval();
+          //test_getCuePointsCoveredByInterval();
+          test_getCuesOverlappingInterval();
         };
 
         if (document.readyState === "complete") run();
