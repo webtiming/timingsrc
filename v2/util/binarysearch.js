@@ -19,7 +19,7 @@
 */
 
 
-define (['../util/interval'], function (Interval) {
+define (['./interval', './iterable'], function (Interval, iterable) {
 
     'use strict';
 
@@ -28,8 +28,6 @@ define (['../util/interval'], function (Interval) {
     	var N = parseFloat(n);
         return (n==N && !isNaN(N));
     };
-
-
 
 
     /* 
@@ -59,48 +57,6 @@ define (['../util/interval'], function (Interval) {
         return (batchLength <= 100) ? "splice" : "sort"; 
     };
 
-    /*
-        empty iterator
-    */
-    var emptyIterator = function () {
-        let it = {};
-        it[Symbol.iterator] = function () {
-            return {
-                next() {
-                    return {done:true};
-                }
-            };
-        };
-        return it;
-    };
-
-
-    /*
-        iterator for array slice
-    */
-    var sliceIterator = function (array, start, stop) {
-        let slice = {
-            array: array,
-            start: start,
-            stop: stop
-        };
-        slice[Symbol.iterator] = function () {
-            return {
-                array: this.array,
-                current: this.start,
-                stop: this.stop,
-                next() {
-                    if (this.current < this.stop) {
-                        return { done: false, value: this.array[this.current++]};
-                    } else {
-                        return { done: true };
-                    }
-                }
-            };
-        };
-        return slice;
-    };
-
 
     var BinarySearchError = function (message) {
         this.name = "BinarySearchError";
@@ -118,10 +74,10 @@ define (['../util/interval'], function (Interval) {
 
     Public API
     - update (remove_elements, insert_elements)
-    - lookup (interval) - returns iterator for all elements for element  
+    - lookup (interval) - returns iterable for all elements for element  
     - has (element)     - returns true if element exists with value == element, else false
     - get (element)     - returns element with value if exists, else undefined
-    - items ()          - returns iterator for all elements
+    - items ()          - returns iterable for all elements
     - indexOf(element)  - returns index of element
     - indexOfElements(elements)
     - getByIndex(index) - returns element given index
@@ -489,9 +445,9 @@ define (['../util/interval'], function (Interval) {
         if (interval.singular) {
             let index = this.indexOf(interval.low);
             if (index > -1) {
-                return sliceIterator(this.array, index, index+1);
+                return iterable.arrayIterable(this.array, index, index+1);
             } else {
-                return emptyIterator();
+                return iterable.emptyIterable();
             }
         }
 
@@ -503,7 +459,7 @@ define (['../util/interval'], function (Interval) {
     		start_index = this.gtIndexOf(interval.low);
         }
         if (start_index === -1) {
-    		return emptyIterator();
+    		return iterable.emptyIterable();
         }
         if (interval.highInclude) {
     		end_index = this.leIndexOf(interval.high);
@@ -511,14 +467,14 @@ define (['../util/interval'], function (Interval) {
     		end_index = this.ltIndexOf(interval.high);
         }
         if (end_index === -1) { // not reachable - I think
-    		return emptyIterator();
+    		return iterable.emptyIterable();
         }
-        return sliceIterator(this.array, start_index, end_index +1);
+        return iterable.arrayIterable(this.array, start_index, end_index +1);
     };
 
 
     BinarySearch.prototype.items = function () {
-        return sliceIterator(this.array, 0, this.array.length);
+        return iterable.arrayIterable(this.array, 0, this.array.length);
     };
 
     BinarySearch.prototype.clear = function () {

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../', 
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+      var pub;
+      require(['util/iterable'], function (iterable) {
+
+        var test_array = function () {
+          let a = [1,2,3,4,5,6,7,8,9];
+
+          console.log("array");
+          let it = iterable.arrayIterable(a);
+          for (let value of it) {
+            console.log(value);
+          }
+          console.log("slice");
+          it = iterable.arrayIterable(a, -2, 2);
+           for (let value of it) {
+            console.log(value);
+          }
+        };
+
+
+        var test_map = function () {
+          let a = [1,2,3,4,5,6,7,8,9];
+
+          let it = iterable.mapIterable(a.values(), function (value) {
+            return "*" + value.toString() + "*";
+          });
+
+          for (let value of it) {
+            console.log(value);
+          }
+        };
+
+
+        var test_filter = function () {
+          let a = [1,2,3,4,5,6,7,8,9];
+          // filter iterable to get odd numbers
+          let it = iterable.filterIterable(a.values(), function (value) {
+            return value % 2 == 1;
+          });
+
+          for (let value of it) {
+            console.log(value);
+          }
+
+        };
+
+
+        var run = function () {
+          // test_filter();
+          // test_map();
+          test_array();
+        };
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>    
+  </head>
+  <body>
+    <h1>Test Iterable</h1>
+  </body>
+</html>
