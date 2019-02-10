@@ -6,13 +6,11 @@ define(function () {
 	/* 
 		empty iterable
 	*/ 
-	var emptyIterable = function () {
+	var empty = function () {
 		// return iterable
-		return {
-			next: function () {return {done:true};},
-			[Symbol.iterator]: function () {return this;}
-		};
+		return [].values();
 	};
+	
 
 	/*
 		make iterable for array or slice of array
@@ -21,7 +19,7 @@ define(function () {
 		want to expose the array object itself, one
 		may instead expose its contents through an iterable
 	*/
-	var arrayIterable = function (array, start, stop) {
+	var slice = function (array, start, stop) {
 		start = (start == undefined) ? 0 : start;
 		stop = (stop == undefined) ? array.length : stop;
 		// check start and stop values
@@ -47,14 +45,41 @@ define(function () {
 	/*
 		chain multiple iterable into one iterable
 	*/
-	var chainIterable = function (iterables) {
+	var chain = function (...iterables) {
+		// get iterators
+		const iterators = iterables.map(function (iterable) {
+			return iterable[Symbol.iterator]();
+		});
+		let i = 0;
+		const next = function () {
+			let item = iterators[i].next();
+			while (item.done) {
+				// current iterator exhausted
+				// go to next iterator if any
+				if (i < iterators.length-1) {
+					i++;
+					item = iterators[i].next();
 
+					continue;
+				} else {
+					// all iterators exhausted
+					return {done:true};
+				}
+			}
+			// item ready
+			return item;
+		};
+		// return iterable
+		return {
+			next: next,
+			[Symbol.iterator]: function () {return this;}
+		};
 	};
 
 	/*
 		map iterable
 	*/
-	var mapIterable = function (iterable, mapFunc) {
+	var map = function (iterable, mapFunc) {
 		let it = iterable[Symbol.iterator]();
 		let next = function () {
 			let item = it.next();
@@ -73,7 +98,7 @@ define(function () {
 	/*
 		filter iterable
 	*/
-	var filterIterable = function (iterable, predFunc) {
+	var filter = function (iterable, predFunc) {
 		let it = iterable[Symbol.iterator]();
 		let next = function () {
 			let item = it.next();
@@ -93,13 +118,111 @@ define(function () {
 	};
 
 
+	/*
+		unique iterable
+	*/
+	var unique = function (iterable, valueFunc) {
+		if (valueFunc == undefined) {
+			valueFunc = function (value) {return value;};
+		}
+		let s = new Set();
+		let it = iterable[Symbol.iterator]();
+		let next = function () {
+			let item = it.next();
+			while (!item.done) {
+				let value = valueFunc(item.value);
+				if (!s.has(value)) {
+					s.add(value);
+					return item;
+				}
+				item = it.next();
+			}
+			return {done:true};
+		}
+		// return iterable
+		return {
+			next: next,
+			[Symbol.iterator]: function () {return this;}
+		};		
+	};
+
+
+	/*
+		concatMap
+		mapFunc returns an iterable
+	*/
+	var concatMap = function (iterable, mapFunc) {
+		let mainIterator = iterable[Symbol.iterator]();
+		let subIterator = [].values();
+		let mainItem, subItem;
+		let next = function () {
+			subItem = subIterator.next();
+			while (subItem.done) {
+				// move main iterator
+				mainItem = mainIterator.next();
+				if (mainItem.done) {
+					// main iterator exhausted
+					return {done:true};
+				} else {
+					// fetch new subIterator
+					subIterator = mapFunc(mainItem.value)[Symbol.iterator]();
+					subItem = subIterator.next();
+					// continue while loop to check subItem
+				}
+			}
+			// sub item ok
+			return subItem;
+		};
+		// return iterable
+		return {
+			next: next,
+			[Symbol.iterator]: function () {return this;}
+		};	
+	};
+
+
+	var Iter = function (iterable) {
+		this.iterable = iterable;
+		this.iterator = iterable[Symbol.iterator]();
+		this[Symbol.iterator] = function () {
+			return this;
+		}
+	};
+
+	Iter.prototype.next = function () {
+		return this.iterator.next();
+	};
+
+	Iter.prototype.concatMap = function (mapFunc) {
+		return new Iter(concatMap(this.iterable, mapFunc));
+	};
+
+	Iter.prototype.unique = function (valueFunc) {
+		return new Iter(unique(this.iterable, valueFunc));
+	};
+
+	Iter.prototype.filter = function (predFunc) {
+		return new Iter(filter(this.iterable, predFunc));
+	};
+
+	Iter.prototype.map = function (mapFunc) {
+		return new Iter(map(this.iterable, mapFunc));
+	};
+
+
+	var I = function (iterable) {
+		return new Iter(iterable);
+	};
 
 
 	return {
-		emptyIterable: emptyIterable,
-		arrayIterable: arrayIterable,
-		filterIterable: filterIterable,
-		chainIterable: chainIterable,
-		mapIterable: mapIterable
+		empty: empty,
+		slice: slice,
+		filter: filter,
+		chain: chain,
+		map: map,
+		unique: unique,
+		concatMap: concatMap,
+		I: I
 	};
 });

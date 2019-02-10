@@ -53,16 +53,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 		where cue is associated with the point value
 
 		interval defines the interval of interest
+		
 		subtle point
 		if interval is [4,6>, special care must be taken for 
 		endpoint values 4 and 6. Though cues are associated with
-		their entpoints, they do not always include their endpoints.
+		their endpoints, they do not always include their endpoints.
 
 		So, if endpoint 4 is associated with a cue with interval [0,4>,
-		then the cue is not actually overlapping the given interval.
-		If this is the case, the cuepoint is dropped. 
-
-		Only cuepoints which are overlapping the given interval will be returned.  
+		then the cue endpoint 4 is not covered by the <interval> and will
+		be dropped. 
 	*/
 	var makeCuePointIterable = function (pointMap, pointIterable, interval) {
 		let pointIterator = pointIterable[Symbol.iterator]();
@@ -74,7 +73,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 			while (!cueItem.done) {
 				/*
 					if current point happens to be one of the endpoints of 
-					the given interval, check that the cue interval overlaps
+					the given interval, check that the cue interval endpoint is covered 
+					by interval
 				*/
 				let cue = cueItem.value;
 				let point = pointItem.value;
@@ -310,10 +310,21 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 			because it has shared endpoints and overlaps.
 			However, [2,8] will not be detected.
 		*/
+		
+		/*
+			define left and right intervals that cover the rest of the axis
+			- if the leftmost endpoint (low) of <interval> is included (lowIncluded),
+			it should not be included as the rightmost endpoint (high) of leftinterval,
+			and visa versa.
+			- the same consideration applies to the rightmost endpoint of <interval>			
+		*/
+		let highIncludeOfLeftInterval = !interval.lowInclude;
+		let lowIncludeOfRightInterval = !interval.highInclude;
+		var leftInterval = new Interval(-Infinity, interval.low, true, highIncludeOfLeftInterval);
+		var rightInterval = new Interval(interval.high, Infinity, lowIncludeOfRightInterval, true);
+		
 
-		// add keys of all intervals that have endpoints on both sides of interval
-		var leftInterval = new Interval(-Infinity, interval.low);
-		var rightInterval = new Interval(interval.high, Infinity);
+
 		/* 
 			optimization - could choose the interval with the least points
 			instead of just choosing left

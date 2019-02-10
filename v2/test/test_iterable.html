@@ -18,22 +18,21 @@
           let a = [1,2,3,4,5,6,7,8,9];
 
           console.log("array");
-          let it = iterable.arrayIterable(a);
+          let it = iterable.slice(a);
           for (let value of it) {
             console.log(value);
           }
           console.log("slice");
-          it = iterable.arrayIterable(a, -2, 2);
+          it = iterable.slice(a, -2, 2);
            for (let value of it) {
             console.log(value);
           }
         };
 
-
         var test_map = function () {
           let a = [1,2,3,4,5,6,7,8,9];
 
-          let it = iterable.mapIterable(a.values(), function (value) {
+          let it = iterable.map(a.values(), function (value) {
             return "*" + value.toString() + "*";
           });
 
@@ -42,12 +41,48 @@
           }
         };
 
-
         var test_filter = function () {
           let a = [1,2,3,4,5,6,7,8,9];
           // filter iterable to get odd numbers
-          let it = iterable.filterIterable(a.values(), function (value) {
+          let it = iterable.filter(a.values(), function (value) {
             return value % 2 == 1;
+          });
+
+          for (let value of it) {
+            console.log(value);
+          }
+        };
+
+        var test_chain = function () {
+          let a = [1,2,3,4,5,6,7,8,9];
+          let b = iterable.empty();
+          let c = [10,11,12,13,14,15,16,17,18,19];
+
+          let it = iterable.chain(a, b, c);
+
+          for (let value of it) {
+            console.log(value);
+          }
+        };
+
+
+        var test_unique = function () {
+          let a = [1,2,3,4,5,6,7,2,8,9];
+          let it = iterable.unique(a.values());
+          for (let value of it) {
+            console.log(value);
+          }
+        };
+
+
+        var test_concatMap = function () {
+          let a = [1,2,3,4,5];
+          let b = [6,7,2,8,9];
+          let c = iterable.empty();
+          let d = [10,11,12,13,14,15,16,17,18,19];
+
+          let it = iterable.concatMap([a,b,c,d], function(iterable) {
+            return iterable;
           });
 
           for (let value of it) {
@@ -56,11 +91,31 @@
 
         };
 
+        var test_iter = function () {
+          const I = iterable.I;
+          let it = I([1,2,3]).
+            concatMap(x => [x, x, x+1]).
+            unique().
+            filter(x => x%2 == 1).
+            map(function (x) {
+              return {value:x};
+            });
+
+          for (let value of it) {
+            console.log(value);
+          }
+        };
+
+
 
         var run = function () {
-          // test_filter();
-          // test_map();
-          test_array();
+          //test_filter();
+          //test_map();
+          //test_array();
+          //test_chain();
+          //test_unique();
+          //test_concatMap();
+          test_iter();
         };
 
         if (document.readyState === "complete") run();

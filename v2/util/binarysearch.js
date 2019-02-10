@@ -445,9 +445,9 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         if (interval.singular) {
             let index = this.indexOf(interval.low);
             if (index > -1) {
-                return iterable.arrayIterable(this.array, index, index+1);
+                return iterable.slice(this.array, index, index+1);
             } else {
-                return iterable.emptyIterable();
+                return iterable.empty();
             }
         }
 
@@ -459,7 +459,7 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     		start_index = this.gtIndexOf(interval.low);
         }
         if (start_index === -1) {
-    		return iterable.emptyIterable();
+    		return iterable.empty();
         }
         if (interval.highInclude) {
     		end_index = this.leIndexOf(interval.high);
@@ -467,14 +467,14 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     		end_index = this.ltIndexOf(interval.high);
         }
         if (end_index === -1) { // not reachable - I think
-    		return iterable.emptyIterable();
+    		return iterable.empty();
         }
-        return iterable.arrayIterable(this.array, start_index, end_index +1);
+        return iterable.slice(this.array, start_index, end_index +1);
     };
 
 
     BinarySearch.prototype.items = function () {
-        return iterable.arrayIterable(this.array, 0, this.array.length);
+        return iterable.slice(this.array, 0, this.array.length);
     };
 
     BinarySearch.prototype.clear = function () {
