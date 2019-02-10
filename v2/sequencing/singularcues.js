@@ -1,5 +1,5 @@
-define (['../util/binarysearch', '../util/interval'], 
-	function (BinarySearch, Interval) {
+define (['../util/binarysearch', '../util/interval', '../util/eventify', '../util/iterable'], 
+	function (BinarySearch, Interval, eventify, iterable) {
 
 	'use strict';
 
@@ -195,10 +195,19 @@ define (['../util/binarysearch', '../util/interval'],
 			operations (i.e. each invocations of addCues). In order to do this 
 			all cue operations are processed to calculate a single batch 
 			of deletes and a single batch of inserts which then will be applied to 
-			the pointIndex in one atomic operation. 
+			the pointIndex in one atomic operation.
+
+			[1.2, 3, 4, 8.1, ....]
 		*/
 		this.pointIndex = new BinarySearch();
+
+
+		// Change event
+		eventify.eventifyInstance(this, {init:false});
+		this.eventifyDefineEvent("change", {init:false});
 	};
+	eventify.eventifyPrototype(Axis.prototype);
+
 
 	/*
 		UPDATE
@@ -220,26 +229,19 @@ define (['../util/binarysearch', '../util/interval'],
 
 	*/
 	Axis.prototype.update = function(cues) {
-     	if (cues.length == 0) { return [];}
-	
 		let cueBatch = new CueBatch(this.pointMap, this.pointIndex);
 		let eventBatch = new EventBatch();
 
-    	let cue, old_cue;
         if (this.keyMap.size == 0) {
-        	// initialization - first invocation of addCues
-        	for (let i=0; i<cues.length; i++) {
-        		cue = cues[i];
+        	// initialization - first invocation of update
+        	for (let cue of cues) {
         		this.keyMap.set(cue.key, cue);
         		cueBatch.processCue("add", cue);
 				eventBatch.processEvent({new:cue});
         	}
         } else {
-        	// iterate keys in keyMap
-        	for (let i=0; i<cues.length; i++) {
-				// check for cues to be replaced
-				cue = cues[i];
-				old_cue = this.keyMap.get(cue.key);
+        	for (let cue of cues) {
+				let old_cue = this.keyMap.get(cue.key);
 				if (old_cue) {
 					if (cue.interval) {
 						// replace cue
@@ -275,7 +277,8 @@ define (['../util/binarysearch', '../util/interval'],
 			finalizing eventBatch returns a list of events
         */
         cueBatch.done();
-		return eventBatch.done();
+		let e = eventBatch.done();
+		this.eventifyTriggerEvent("change", e);
 	};
 
 

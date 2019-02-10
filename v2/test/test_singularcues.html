@@ -12,7 +12,7 @@
     <!--  main -->
     <script text="javascript">
 
-      require(['sequencing/singularcues', 'util/interval', 'util/cue'], function (SingularCues, Interval, Cue) {
+      require(['sequencing/singularcues', 'util/interval', 'util/cue'], function (Axis, Interval, Cue) {
 
         var timeit = function (func, name) {
           let t0 = performance.now();
@@ -81,7 +81,7 @@
           console.log("insert");
           let cues = make_singular_cues(10, 10);
           console.log(cues.map(x=>x.key));
-          let sc = new SingularCues();
+          let sc = new Axis();
           let items = sc.update(cues);
           console.log(items);
           console.log("keyMap ", sc.keyMap.size);
@@ -99,7 +99,7 @@
         var test_bigbatch = function (size) {
           //let cues = make_singular_cues_sorted_unique(size);
           let cues = make_singular_cues(size, size/2);
-          let sc = new SingularCues();
+          let sc = new Axis();
           timeit(function () {
             sc.update(cues);
           }, "add bigbatch " + size);
@@ -117,7 +117,7 @@
 
 
         var test_batch_collapsing = function () {
-          let sc = new SingularCues();
+          let sc = new Axis();
           let cue, item;
 
           cue_1 = {key: "one", interval: new Interval(1) , data:"one"};
@@ -152,7 +152,7 @@
 
 
         var test_getCuePointsCoveredByInterval = function () {
-          let sc = new SingularCues();
+          let sc = new Axis();
 
           let cues = [];
           for (let i=0; i<100; i++) {
@@ -174,7 +174,7 @@
 
 
         var test_getCuesOverlappingInterval = function () {
-          let sc = new SingularCues();
+          let sc = new Axis();
 
           let cues = [];
           for (let i=0; i<100; i++) {
@@ -202,7 +202,7 @@
 
         var test_main = function () {
           let DATASIZE = 500;
-          let sc = new SingularCues();
+          let sc = new Axis();
 
 
           // create batch from presorted numbers
@@ -232,6 +232,35 @@
         };
 
 
+        var test_event = function () {
+          let ax = new Axis();
+
+          
+          // change event for the entire batch
+          ax.on("change", function (e) {
+            console.log("onchange ", e);
+          });
+          
+
+          // events event for the entire batch
+          ax.on("events", function (eItemList) {
+            console.log("onevents ", eItemList.length);
+            for (let eItem of eItemList) {
+              console.log(eItem);
+            }
+          });
+
+          // update
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+
+          ax.update(cues)
+
+        };
+
+
 
 
         var run = function () {
@@ -241,7 +270,8 @@
 
           //test_batch_collapsing();
           //test_getCuePointsCoveredByInterval();
-          test_getCuesOverlappingInterval();
+          //test_getCuesOverlappingInterval();
+          test_event();
         };
 
         if (document.readyState === "complete") run();
