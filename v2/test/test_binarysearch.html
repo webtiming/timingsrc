@@ -236,6 +236,17 @@
               console.log(p);
             }
           });
+
+          // test with singular interval
+          console.log("lookup singular 4 (existing)");
+          for (let p of b.lookup(new Interval(4))) {
+            console.log(p);
+          }
+
+          console.log("lookup singular 28 (non-existing)");
+          for (let p of b.lookup(new Interval(28))) {
+            console.log(p);
+          }
         };
 
 
@@ -308,10 +319,10 @@
 
         var run = function () {
           //test_update_compare_sort_slice();
-          //test_lookup();
+          test_lookup();
           //test_remove_one();
           //test_remove();
-          test_main();
+          //test_main();
           //make_stats();
         };
 

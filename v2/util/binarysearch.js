@@ -484,6 +484,18 @@ define (['../util/interval'], function (Interval) {
     		interval = new Interval(-Infinity, Infinity, true, true);
     	if (interval instanceof Interval === false) 
             throw new BinarySearchError("lookup requires Interval argument");
+
+        // interval represents a single point
+        if (interval.singular) {
+            let index = this.indexOf(interval.low);
+            if (index > -1) {
+                return sliceIterator(this.array, index, index+1);
+            } else {
+                return emptyIterator();
+            }
+        }
+
+        // regular non-singular interval
         var start_index = -1, end_index = -1;
         if (interval.lowInclude) {
     		start_index = this.geIndexOf(interval.low);
