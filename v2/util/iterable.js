@@ -125,7 +125,7 @@ define(function () {
 		if (valueFunc == undefined) {
 			valueFunc = function (value) {return value;};
 		}
-		let s = new Set();
+		const s = new Set();
 		let it = iterable[Symbol.iterator]();
 		let next = function () {
 			let item = it.next();
@@ -183,10 +183,18 @@ define(function () {
 
 	var Iter = function (iterable) {
 		this.iterable = iterable;
+		/*
+			for conveinience
+		 	make Iter objects into real iterables
+		 	by exposing the iterable it wraps
+		 	so that we dont have to access the
+		 	wrapped iterable
+		*/
 		this.iterator = iterable[Symbol.iterator]();
 		this[Symbol.iterator] = function () {
 			return this;
 		}
+		
 	};
 
 	Iter.prototype.next = function () {

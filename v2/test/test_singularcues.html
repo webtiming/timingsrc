@@ -164,7 +164,7 @@
           cues.reverse();
           sc.update(cues);
 
-          let interval = new Interval(4,18);
+          let interval = new Interval(3.9,18);
           let pointIterable = sc.getCuePointsCoveredByInterval(interval);
 
           for (let p of pointIterable) {
@@ -180,13 +180,15 @@
           for (let i=0; i<100; i++) {
             cues.push({key: i.toString(), interval: new Interval(i, i+1)});
           }
+          /*
           for (let i=0; i<100; i++) {
             cues.push({key: "jalla" + i.toString(), interval: new Interval(i, i+1)});
           }
+          */
           cues.reverse();
           sc.update(cues);
 
-          let interval = new Interval(3.9, 18, true, true);
+          let interval = new Interval(4, 18, true, true);
           sc.update([{
             key: "overlapping",
             interval: new Interval(1, 20)

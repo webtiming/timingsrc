@@ -3,11 +3,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 
 	'use strict';
 
-
 	/*
 		UTILITY
 	*/
-
+	const I = iterable.I;
 
 	/*
 		Add cue to array
@@ -38,127 +37,118 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 	};
 
 	/*
-		make iterable for cue points, from an iterator for
-		point values
-	
-		pointIterable is an iterable of point values, typically
-		from pointIndex.
-		
-		cuePointIterable will iterate the point values and find
-		the associated cue from pointMap
-
-		pointIterable returns cue points of the following
-		structure 
-		{point: point, cue:cue}
-		where cue is associated with the point value
-
-		interval defines the interval of interest
-		
-		subtle point
-		if interval is [4,6>, special care must be taken for 
-		endpoint values 4 and 6. Though cues are associated with
-		their endpoints, they do not always include their endpoints.
-
-		So, if endpoint 4 is associated with a cue with interval [0,4>,
-		then the cue endpoint 4 is not covered by the <interval> and will
-		be dropped. 
+		returns true if interval_A and interval_B
+		- are back-to-back on the timeline, with a shared endpoint
+		- overlaps exclusively on that endpoint
+		  no overlap: ><, >[, ]< 
+		  overlap: ][
+		- else return false 
 	*/
-	var makeCuePointIterable = function (pointMap, pointIterable, interval) {
-		let pointIterator = pointIterable[Symbol.iterator]();
-		let cueIterator = [].values();
-		let pointItem;
-		let nextCue = function () {
-			let cueItem = cueIterator.next();
-			// while is needed in case we have to drop some nonoverlapping cues
-			while (!cueItem.done) {
-				/*
-					if current point happens to be one of the endpoints of 
-					the given interval, check that the cue interval endpoint is covered 
-					by interval
-				*/
-				let cue = cueItem.value;
-				let point = pointItem.value;
-				if (point == interval.low || point == interval.high) {
-					if (!cue.interval.overlapsInterval(interval)) {
-						cueItem = cueIterator.next();
-						continue;		
-					}
-				}
-				return cueItem;
+	var exclusiveEndpointOverlap = function (interval_A, interval_B) {
+		// consider A,B
+		if (interval_A.high == interval_B.low) {
+			if (interval_A.highInclude && interval_B.lowInclude) {
+				return true;
 			}
-			return {done:true};
-		};
-		let next = function () {
-			let cueItem = nextCue();
-			while (cueItem.done) {
-				// fetch cues for next point in pointIterable
-				pointItem = pointIterator.next();
-				if (pointItem.done) {
-					// both exhausted
-					return {done: true};
-				} else {
-					// more cues
-					cueIterator = pointMap.get(pointItem.value).values();
-					cueItem = nextCue();
+		} else {
+			// consider B,A
+			if (interval_B.high == interval_A.low) {
+				if (interval_B.highInclude && interval_A.lowInclude) {
+					return true;
 				}
 			}
-			// cueItem ok
-			return {
-				done:false,
-				value: {
-					point:pointItem.value, 
-					cue: cueItem.value
-				}
-			};				
-		};
-		// return iterable
-		return {
-			next: next,
-			[Symbol.iterator]: function () {return this;}
-		};
+		}
+		return false;
+	};
+
+
+	/*
+		cueIterable
+
+		make iterable for cue points by iterating and interval
+		in pointIndex
+
+		cueIterable will iterate the point values and find
+		the associated cue from pointMap. 
+
+		Each cue will only be reported once, even if they are 
+		referenced by multiple points (both endpoint of a cue within set).
+		
+		Any specific order of cues is not defined.
+	*/
+
+	var cueIterable = function(pointIndex, pointMap, interval) {
+		return I(pointIndex.lookup(interval)).
+			concatMap(function (point) {
+				// fetch iterable for cues for point
+				return I(pointMap.get(point)).
+					filter(function(cue){
+						/*
+							cues sharing only the endpoints of interval
+							(cue.interval and interval are back-to-back)
+							must be checked specifically to see if they 
+							really overlap at the endpoint
+							no overlap: ><, >[ or ]<
+							overlap: ][     
+						*/
+						if (point == interval.low || point == interval.high) {
+							return exclusiveEndpointOverlap(interval, cue.interval);
+						}
+						return true;
+					});
+			}).unique(function(cue) {
+				return cue.key;
+			});;
 	};
 
 	/*
+		cuepointIterable
 
-		make iterable for cue points, from an iterator for
-		point values
-
-		pointIterable is an iterable of point values, typically
-		from pointIndex.
-
+		returns iterable for cuepoints, based on iteration of 
+		points within and interval in pointIndex.
+	
 		cueIterable will iterate the point values and find
-		the associated cue from pointMap. Each cue will only
-		be reported once, even if they are referenced by multiple
-		points (both enpoint of a cue within set).
+		the associated cue from pointMap. 
 		
-		pointIterable returns cue objects. Any specific order of cues
-		is not defined.
+		cuepointIterable returns cuepoints of the following
+		structure 
+		{point: point, cue:cue}
+		where cue is associated with the point value 
+		(at least one cue endpoint will be equal to point)
+
+		the order is defined by point values (ascending).
+		each point value is reported once, yet one cue
+		may be reference by 1 or 2 points. 
+
+		interval defines the interval of interest
+		
 	*/
 
-	var makeCueIterable = function (pointMap, pointIterable, interval) {
-		let cuePointIterable = makeCuePointIterable(pointMap, pointIterable, interval);
-		let cuePointIterator = cuePointIterable[Symbol.iterator]();
-		let keys = new Set();
-		let item, cue; 
-		let next = function () {
-			item = cuePointIterator.next();
-			// need a while loop to iterate past cue duplicates
-			while (!item.done) {
-				cue = item.value.cue;
-				if (!keys.has(cue.key)) {
-					keys.add(cue.key);
-					return {done:false, value: cue};				
-				}
-				item = cuePointIterator.next();					
-			}
-			return {done:true};
-			
-		};
-		// return iterable
-		return {
-			next: next,
-			[Symbol.iterator]: function () {return this;}
-		};
+	var cuepointIterable = function(pointIndex, pointMap, interval) {
+		return I(pointIndex.lookup(interval)).
+			concatMap(function (point) {
+				// fetch iterable for cues for point
+				return I(pointMap.get(point)).
+					filter(function(cue){
+						/*
+							cues sharing only the endpoints of interval
+							(cue.interval and interval are back-to-back)
+							must be checked specifically to see if they 
+							really overlap at the endpoint
+							no overlap: ><, >[ or ]<
+							overlap: ][     
+						*/
+						if (point == interval.low || point == interval.high) {
+							return exclusiveEndpointOverlap(interval, cue.interval);
+						}
+						return true;
+					}).map(function(cue) {
+						/* 
+							collect both point and cue in object
+						*/
+						return {point:point, cue:cue};
+					});
+			});
 	};
 
 
@@ -291,72 +281,55 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 		Find all interval endpoints within given interval 
 	*/
 	Axis.prototype.getCuePointsCoveredByInterval = function (interval) {
-		let pointIterable = this.pointIndex.lookup(interval);
-		return makeCuePointIterable(this.pointMap, pointIterable, interval);
+		return cuepointIterable(this.pointIndex, this.pointMap, interval);
 	};
 
+
 	/*
-		Find all cues covering interval.
+		Find all cues overlapping interval.
+		
+		This task can be split in two parts
+		- 1) INSIDE: find all cues that have at least one endpoint covered by interval
+		- 2) OUTSIDE: find all cues that have one endpoint on each side of interval
+
 	*/
 	Axis.prototype.getCuesOverlappingInterval = function (interval) {
-		let pointIterable = this.pointIndex.lookup(interval);
-		let cueIterable =  makeCueIterable(this.pointMap, pointIterable, interval);
+		/* 
+			1) all cues with at least one endpoint coverd by interval 
+		*/
+		let it_inside = cueIterable(this.pointIndex, this.pointMap, interval);
 
 		/*
-			todo - missing cues that are covering interval, with
-			with both endpoints outside interval
-			
-			e.g. if interval is <4,6> - [4,6] will be detected 
-			because it has shared endpoints and overlaps.
-			However, [2,8] will not be detected.
-		*/
-		
-		/*
-			define left and right intervals that cover the rest of the axis
-			- if the leftmost endpoint (low) of <interval> is included (lowIncluded),
-			it should not be included as the rightmost endpoint (high) of leftinterval,
-			and visa versa.
-			- the same consideration applies to the rightmost endpoint of <interval>			
+			2)
+
+			define left and right intervals that cover the rest of the dimension
+			into infinity.
+			Endpoints must not overlap with endpoints of <interval>
+			- if interval.lowInclude, then leftInterval.highInclude must be false,
+			  and vice versa. 
+			- the same consideration applies to interval.highInclude			
 		*/
 		let highIncludeOfLeftInterval = !interval.lowInclude;
 		let lowIncludeOfRightInterval = !interval.highInclude;
 		var leftInterval = new Interval(-Infinity, interval.low, true, highIncludeOfLeftInterval);
 		var rightInterval = new Interval(interval.high, Infinity, lowIncludeOfRightInterval, true);
 		
-
-
 		/* 
-			optimization - could choose the interval with the least points
-			instead of just choosing left
-			optimization - would be good to have all singular intervals isolated
+			iterate leftInterval to find cues that have endpoints covered by rightInterval
+
+			possible optimization - choose the interval with the least points
+			instead of just choosing left.
+			optimization - this seek operation would be more effective if
+			singular cues were isolated in a different index. Similarly, one
+			could split the set of cues by the length of their intervals.
 		*/
-		let leftCuePointIterable = this.getCuePointsCoveredByInterval(leftInterval);
+		let it_outside = cueIterable(this.pointIndex, this.pointMap, leftInterval)
+			.filter(function (cue) {
+				return rightInterval.coversPoint(cue.interval.high);
+			});
 
-		/*
-			need two more iterables
-			- filter out those that are not covering (condition)
-			- chain two interables
-		*/
-
-
-		/*
-		this._index.lookup(leftInterval).forEach(function(point) {
-			this._reverse.getItemsByKey(point).forEach(function (item) {
-				var _interval = this._map[item.value];
-				if (rightInterval.coversPoint(_interval.high)) {
-					res[item.value] = undefined;
-				}
-			}, this);
-		
-		}, this);
-		*/
-
-		return cueIterable;
+		return iterable.chain(it_inside, it_outside);
 	};
-
-
-
-	
 
 
 	/* 
