@@ -11,43 +11,277 @@
     <script type="text/javascript" src="../../lib/require.js"></script>
     <!--  main -->
     <script text="javascript">
-      var to, s, createCue, updateCue, removeCue, repeatCue;
 
-      require(['timingsrc'], function (timingsrc) {
+      require(['sequencing/axis', 'util/interval', 'util/cue'], function (Axis, Interval, Cue) {
 
-        // Timing Object
-        to = new timingsrc.TimingObject({range:[0,3600]});
+        var timeit = function (func, name) {
+          let t0 = performance.now();
+          let result = func();
+          let t1 = performance.now();
+          console.log(name, t1-t0);
+          return result;
+        };
 
-        // Sequencer
-        s = new timingsrc.Sequencer(to);
+        var make_presorted_ints = function (size) {          
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers;
+        };
 
-        var Interval = timingsrc.Interval;
+
+        var make_random_ints = function (size, scale) {
+          return Array.from({length: size}, () => Math.floor(Math.random() * scale));
+        };
+
+        var make_random_floats = function (size, scale) {
+          return Array.from({length: size}, () => Math.random() * scale);
+        };
+
+
+        var make_singular_cues = function (size, scale) {
+          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
+          return numbers.map(function (n) {
+            return {key: "key " + n.toString(), interval: {low:n}, data: "data_" + n}; 
+          });
+        };
+
+        var make_remove_cues = function (size, scale) {
+          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
+          return numbers.map(function (n) {
+            return {key: "key " + n.toString()};
+          });
+        };
+
+        var make_singular_cues_sorted_unique = function (size) {
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers.map(function (n) {
+            return {key: n.toString(), interval: {low:n}, data: "data_" + n};
+          });
+        };
+
+        var make_cues_from_numbers = function (numbers, op) {
+          op = op || "add";
+          return numbers.map(function (n) {
+            if (op == "remove") {
+              return {key: n.toString()};
+            } else {
+              return {key: n.toString(), interval: {low:n}, data: "data_" + n};
+            }
+          });
+        };
+
+
+
+        var test_basic = function () {
+          console.log("insert");
+          let cues = make_singular_cues(10, 10);
+          console.log(cues.map(x=>x.key));
+          let sc = new Axis();
+          let items = sc.update(cues);
+          console.log(items);
+          console.log("keyMap ", sc.keyMap.size);
+          console.log("array ", sc.pointIndex.array.length);
+
+          console.log("remove")
+          let cues2 = make_remove_cues(10, 10);
+          console.log(cues2.map(x=>x.key));
+          items = sc.update(cues2);
+          console.log(items);
+          console.log("keyMap ", sc.keyMap.size);
+          console.log("array ", sc.pointIndex.array.length);
+        };
+
+        var test_bigbatch = function (size) {
+          //let cues = make_singular_cues_sorted_unique(size);
+          let cues = make_singular_cues(size, size/2);
+          let sc = new Axis();
+          timeit(function () {
+            sc.update(cues);
+          }, "add bigbatch " + size);
+
+          // add more
+          cues = make_singular_cues(size, size/2);
+          timeit(function () {
+            sc.update(cues);
+          }, "add bigbatch " + size);
+
+        };
+
+
+        
+
+
+        var test_batch_collapsing = function () {
+          let sc = new Axis();
+          let cue, item;
+
+          cue_1 = {key: "one", interval: new Interval(1) , data:"one"};
+          item = sc.update([cue_1])[0];
+          console.log(item);
+
+          let cues = [
+            {key: "two", interval: new Interval(1) , data:"one"},
+            {key: "two"},
+            {key: "two", interval: new Interval(2) , data:"one"},
+          ]
+          items = sc.update(cues);
+          items.forEach(x=>{console.log(x)});
+          console.log(sc.pointIndex.array);
+          console.log(...sc.keyMap.values());
+          console.log(sc.pointMap.size);
+
+
+          // check that old value is defined by cue_1
+          cues = [
+            {key: "one", interval: new Interval(3) , data:"one"},
+            {key: "one"},
+            {key: "one", interval: new Interval(4) , data:"one"},
+          ]
+          items = sc.update(cues);
+          items.forEach(x=>{console.log(x)});
+          console.log(sc.pointIndex.array);
+          console.log(...sc.keyMap.values());
+          console.log(sc.pointMap.size);
+
+        };
+
+
+        var test_getCuePointsCoveredByInterval = function () {
+          let sc = new Axis();
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i)});
+          }
+          for (let i=0; i<100; i++) {
+            cues.push({key: "jalla" + i.toString(), interval: new Interval(i)});
+          }
+          cues.reverse();
+          sc.update(cues);
+
+          let interval = new Interval(3.9,18);
+          let pointIterable = sc.getCuePointsCoveredByInterval(interval);
+
+          for (let p of pointIterable) {
+            console.log(p);
+          }
+        };
+
+
+        var test_getCuesOverlappingInterval = function () {
+          let sc = new Axis();
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+          /*
+          for (let i=0; i<100; i++) {
+            cues.push({key: "jalla" + i.toString(), interval: new Interval(i, i+1)});
+          }
+          */
+          cues.reverse();
+          sc.update(cues);
+
+          let interval = new Interval(4, 18, true, true);
+          sc.update([{
+            key: "overlapping",
+            interval: new Interval(1, 20)
+          }]);
+          let cueIterable = sc.getCuesOverlappingInterval(interval);
+            
+          for (let cue of cueIterable) {
+            console.log(cue);
+          }
+        };
+
+
+
+        var test_main = function () {
+          let DATASIZE = 500;
+          let sc = new Axis();
+
+
+          // create batch from presorted numbers
+          let numbers_1 = make_presorted_ints(DATASIZE);
+          let batch_1 = make_cues_from_numbers(numbers_1);
+          
+          // initialise
+          timeit(function () {
+            sc.update(batch_1);
+          }, "initialise presorted ints " + DATASIZE);
+
+          // insert
+          let numbers_2 = make_random_ints(DATASIZE, DATASIZE);
+          let batch_2 = make_cues_from_numbers(numbers_2);
+          timeit(function () {
+            sc.update(batch_2);
+          }, "insert random ints " + DATASIZE);
+
+          // remove
+          let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
+          let batch_3 = make_cues_from_numbers(numbers_3, "remove");
+          timeit(function () {
+            sc.update(batch_3);
+          }, "remove random ints " + DATASIZE);
+
+
+        };
+
+
+        var test_event = function () {
+          let ax = new Axis();
+
+          
+          // change event for the entire batch
+          ax.on("change", function (e) {
+            console.log("onchange ", e);
+          });
+          
+
+          // events event for the entire batch
+          ax.on("events", function (eItemList) {
+            console.log("onevents ", eItemList.length);
+            for (let eItem of eItemList) {
+              console.log(eItem);
+            }
+          });
+
+          // update
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+
+          ax.update(cues)
+
+        };
+
+
+
 
         var run = function () {
+          //test_basic();
+          //test_bigbatch(100000);
+          //test_main();
 
-          // load a bunch of cues
-          console.log("start load");
-          var t0 = performance.now()
-          for (var i=0; i<100000; i++) {
-             s.addCue(i.toString(), new Interval(i), "data");
-          }
-          console.log("end load", performance.now()-t0)
+          //test_batch_collapsing();
+          //test_getCuePointsCoveredByInterval();
+          test_getCuesOverlappingInterval();
+          //test_event();
         };
+
         if (document.readyState === "complete") run();
         else window.onload = run;
       });
     </script>    
   </head>
   <body>
-    <h1>Test Sequencer</h1>
-    <p>
-      <div id="value"></div>
-    </p>
-    <p>
-      <button id="play">Play</button>
-      <button id="pause">Pause</button>
-      <button id="reset">Reset</button>
-      <button id="backwards">Backwards</button>
-    </p>
+    <h1>Test Singular Cues</h1>
   </body>
 </html>
