@@ -152,6 +152,30 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 	};
 
 
+	// concatMap
+	var concatMap = function (array, projectionFunctionThatReturnsArray, ctx) {
+		var results = [];
+		array.forEach(function (item) {
+			results.push.apply(results, projectionFunctionThatReturnsArray.call(ctx, item));
+		}, ctx);
+		return results;
+	};
+	var cuepointArray = function (pointIndex, pointMap, interval) {
+		let points = pointIndex.lookupArray(interval);
+		return concatMap(points, function (point) {
+			return pointMap.get(point).
+				filter(function (cue) {
+					if (point == interval.low || point == interval.high) {
+						return exclusiveEndpointOverlap(interval, cue.interval);
+					}
+					return true;
+				}).
+				map(function (cue) {
+					return {point:point, cue:cue};
+				})
+		});
+	};
+
 
 	/*
 		this implements Axis, a datastructure for efficient lookup of cues on a timeline
@@ -197,6 +221,19 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 		this.eventifyDefineEvent("change", {init:false});
 	};
 	eventify.eventifyPrototype(Axis.prototype);
+
+
+	Axis.prototype.clear = function () {
+		this.pointMap = new Map();
+		this.pointIndex = new BinarySearch();
+		// create change events for all cues
+		let e = [];
+		for (let cue of this.keyMap.values()) {
+			e.push({'old': cue});
+		}
+		this.keyMap = new Map();
+		this.eventifyTriggerEvent("change", e);
+	};
 
 
 	/*
@@ -283,7 +320,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 	Axis.prototype.getCuePointsCoveredByInterval = function (interval) {
 		return cuepointIterable(this.pointIndex, this.pointMap, interval);
 	};
-
+	Axis.prototype.getCuePointsCoveredByIntervalArray = function (interval) {
+		return cuepointArray(this.pointIndex, this.pointMap, interval);
+	};
 
 	/*
 		Find all cues overlapping interval.
@@ -295,7 +334,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 	*/
 	Axis.prototype.getCuesOverlappingInterval = function (interval) {
 		/* 
-			1) all cues with at least one endpoint coverd by interval 
+			1) all cues with at least one endpoint covered by interval 
 		*/
 		let it_inside = cueIterable(this.pointIndex, this.pointMap, interval);
 
@@ -319,7 +358,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify', '../uti
 
 			possible optimization - choose the interval with the least points
 			instead of just choosing left.
-			optimization - this seek operation would be more effective if
+			possible optimization - this seek operation would be more effective if
 			singular cues were isolated in a different index. Similarly, one
 			could split the set of cues by the length of their intervals.
 		*/

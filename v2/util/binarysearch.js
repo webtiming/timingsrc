@@ -472,6 +472,43 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         return iterable.slice(this.array, start_index, end_index +1);
     };
 
+    BinarySearch.prototype.lookupArray = function (interval) {
+        if (interval === undefined) 
+            interval = new Interval(-Infinity, Infinity, true, true);
+        if (interval instanceof Interval === false) 
+            throw new BinarySearchError("lookup requires Interval argument");
+
+        // interval represents a single point
+        if (interval.singular) {
+            let index = this.indexOf(interval.low);
+            if (index > -1) {
+                return this.array.slice(index, index + 1);
+            } else {
+                return [];
+            }
+        }
+
+        // regular non-singular interval
+        var start_index = -1, end_index = -1;
+        if (interval.lowInclude) {
+            start_index = this.geIndexOf(interval.low);
+        } else {
+            start_index = this.gtIndexOf(interval.low);
+        }
+        if (start_index === -1) {
+            return [];
+        }
+        if (interval.highInclude) {
+            end_index = this.leIndexOf(interval.high);
+        } else {
+            end_index = this.ltIndexOf(interval.high);
+        }
+        if (end_index === -1) { // not reachable - I think
+            return [];
+        }
+        return this.array.slice(start_index, end_index + 1);
+    };
+
 
     BinarySearch.prototype.items = function () {
         return iterable.slice(this.array, 0, this.array.length);

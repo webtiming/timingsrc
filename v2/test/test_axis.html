@@ -22,28 +22,45 @@
           return result;
         };
 
-        var make_presorted_ints = function (size) {          
+        var make_sorted_ints = function (size, options) {
+          options = options || {};
+          offset = options['offset'] || 0;
           let numbers = [];
           for (let i=0; i<size; i++) {
-            numbers.push(i);
+            numbers.push(Math.floor(i+offset));
           }
           return numbers;
         };
 
-
-        var make_random_ints = function (size, scale) {
-          return Array.from({length: size}, () => Math.floor(Math.random() * scale));
+        var make_sorted_floats = function (size, options) {
+          options = options || {};
+          offset = options['offset'] || 0;
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i+offset);
+          }
+          return numbers;
         };
 
-        var make_random_floats = function (size, scale) {
-          return Array.from({length: size}, () => Math.random() * scale);
+        var make_random_ints = function (size, options) {
+          options = options || {};
+          scale = options['scale'] || 1;
+          offset = options['offset'] || 0;
+          return Array.from({length: size}, () => Math.floor(Math.random() * scale + offset));
+        };
+
+        var make_random_floats = function (size, options) {
+          options = options || {};
+          scale = options['scale'] || 1;
+          offset = options['offset'] || 0;
+          return Array.from({length: size}, () => Math.random() * scale + offset);
         };
 
 
         var make_singular_cues = function (size, scale) {
           let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
           return numbers.map(function (n) {
-            return {key: "key " + n.toString(), interval: {low:n}, data: "data_" + n}; 
+            return {key: "key " + n.toString(), interval: new Interval(n), data: "data_" + n}; 
           });
         };
 
@@ -60,17 +77,18 @@
             numbers.push(i);
           }
           return numbers.map(function (n) {
-            return {key: n.toString(), interval: {low:n}, data: "data_" + n};
+            return {key: n.toString(), interval: new Interval(n, n+1), data: "data_" + n};
           });
         };
 
-        var make_cues_from_numbers = function (numbers, op) {
-          op = op || "add";
+        var make_cues_from_numbers = function (numbers, options) {
+          options = options || {};
+          let op = options['op'] || "add";
           return numbers.map(function (n) {
             if (op == "remove") {
               return {key: n.toString()};
             } else {
-              return {key: n.toString(), interval: {low:n}, data: "data_" + n};
+              return {key: n.toString(), interval: new Interval(n, n+1), data: "data_" + n};
             }
           });
         };
@@ -202,36 +220,7 @@
 
 
 
-        var test_main = function () {
-          let DATASIZE = 500;
-          let sc = new Axis();
 
-
-          // create batch from presorted numbers
-          let numbers_1 = make_presorted_ints(DATASIZE);
-          let batch_1 = make_cues_from_numbers(numbers_1);
-          
-          // initialise
-          timeit(function () {
-            sc.update(batch_1);
-          }, "initialise presorted ints " + DATASIZE);
-
-          // insert
-          let numbers_2 = make_random_ints(DATASIZE, DATASIZE);
-          let batch_2 = make_cues_from_numbers(numbers_2);
-          timeit(function () {
-            sc.update(batch_2);
-          }, "insert random ints " + DATASIZE);
-
-          // remove
-          let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
-          let batch_3 = make_cues_from_numbers(numbers_3, "remove");
-          timeit(function () {
-            sc.update(batch_3);
-          }, "remove random ints " + DATASIZE);
-
-
-        };
 
 
         var test_event = function () {
@@ -263,16 +252,98 @@
         };
 
 
+        var test_main = function () {
+          let DATASIZE = 50000;
+          let ax = new Axis();
+          console.log(ax.keyMap.size);
+
+          // initialise
+          let numbers_1 = make_sorted_floats(DATASIZE);
+          let batch_1 = make_cues_from_numbers(numbers_1);
+          timeit(function () {
+            ax.update(batch_1);
+          }, "initialise sorted cues " + DATASIZE);
+          console.log(ax.keyMap.size);
+
+          // insert after initialise
+          let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
+          let batch_2 = make_cues_from_numbers(numbers_2);
+          timeit(function () {
+            ax.update(batch_2);
+          }, "insert more sorted cues " + DATASIZE);
+          console.log(ax.keyMap.size);
+
+          ax.clear();
+          console.log(ax.keyMap.size);
+
+          // initialise
+          let numbers_3 = make_random_floats(DATASIZE, {scale:DATASIZE});
+          let batch_3 = make_cues_from_numbers(numbers_3);
+          timeit(function () {
+            ax.update(batch_3);
+          }, "initialise random cues " + DATASIZE);
+          console.log(ax.keyMap.size);
+
+          // insert after initialise
+          let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
+          let batch_4 = make_cues_from_numbers(numbers_4);
+          timeit(function () {
+            ax.update(batch_4);
+          }, "insert more random cues " + DATASIZE);
+          console.log(ax.keyMap.size);
+
+          // lookup
+          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
+          let iterable, arr;
+          
+          timeit(function () {
+            iterable = ax.getCuePointsCoveredByInterval(interval);
+          }, "lookup cuepoints " + interval.toString());
+          arr = timeit(function () {
+            return Array.from(iterable);
+          }, "iterable to array ");
+          console.log(arr.length);
+
+          timeit(function () {
+            arr = ax.getCuePointsCoveredByIntervalArray(interval);
+          }, "lookup cuepoints " + interval.toString());
+          console.log(arr.length);
+
+
+          timeit(function () {
+            iterable = ax.getCuesOverlappingInterval(interval);
+          }, "lookup cues " + interval.toString());
+          arr = timeit(function () {
+            return Array.from(iterable);
+          }, "iterable to array ");
+          console.log(arr.length);
+
+
+
+
+
+
+          /*
+          // remove
+          let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
+          let batch_3 = make_cues_from_numbers(numbers_3, "remove");
+          timeit(function () {
+            sc.update(batch_3);
+          }, "remove random ints " + DATASIZE);
+          */
+
+        };
+
 
 
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          //test_main();
+          test_main();
 
           //test_batch_collapsing();
           //test_getCuePointsCoveredByInterval();
-          test_getCuesOverlappingInterval();
+          //test_getCuesOverlappingInterval();
           //test_event();
         };
 
