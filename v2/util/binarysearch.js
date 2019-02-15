@@ -31,22 +31,10 @@ define (['./interval', './iterable'], function (Interval, iterable) {
 
 
     /* 
-        batch inserts have two strategies
-        1) CONCATSORT - concat arrays and sort
-        2) SEARCHSPLICE - binary search to the right location and splice the array
+        batch inserts and removes have two strategies
+        1) change-sort
+        2) splice 
     
-        Searchsplice is preferable only when very small batches (<40) are inserted into
-        an array. For small arrays (<100) concatsort is still preferable, even for small batches.  
-    */
-
-
-    /*
-        dataset limit
-        dataset must be larger than this for searchsplice to be considered
-    */
-    const DATASET_LIMIT = 500;
-
-    /*
         simple rule by measurement
         splice is better for batchlength <= 100 for both insert and remove
     */
@@ -74,10 +62,10 @@ define (['./interval', './iterable'], function (Interval, iterable) {
 
     Public API
     - update (remove_elements, insert_elements)
-    - lookup (interval) - returns iterable for all elements for element  
+    - lookup (interval) - returns list for all elements  
     - has (element)     - returns true if element exists with value == element, else false
     - get (element)     - returns element with value if exists, else undefined
-    - items ()          - returns iterable for all elements
+    - values ()         - returns iterable for all elements
     - indexOf(element)  - returns index of element
     - indexOfElements(elements)
     - getByIndex(index) - returns element given index
@@ -435,44 +423,10 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         }
     };
 
+    /*
+        lookup by interval
+    */
     BinarySearch.prototype.lookup = function (interval) {
-    	if (interval === undefined) 
-    		interval = new Interval(-Infinity, Infinity, true, true);
-    	if (interval instanceof Interval === false) 
-            throw new BinarySearchError("lookup requires Interval argument");
-
-        // interval represents a single point
-        if (interval.singular) {
-            let index = this.indexOf(interval.low);
-            if (index > -1) {
-                return iterable.slice(this.array, index, index+1);
-            } else {
-                return iterable.empty();
-            }
-        }
-
-        // regular non-singular interval
-        var start_index = -1, end_index = -1;
-        if (interval.lowInclude) {
-    		start_index = this.geIndexOf(interval.low);
-        } else {
-    		start_index = this.gtIndexOf(interval.low);
-        }
-        if (start_index === -1) {
-    		return iterable.empty();
-        }
-        if (interval.highInclude) {
-    		end_index = this.leIndexOf(interval.high);
-        } else {
-    		end_index = this.ltIndexOf(interval.high);
-        }
-        if (end_index === -1) { // not reachable - I think
-    		return iterable.empty();
-        }
-        return iterable.slice(this.array, start_index, end_index +1);
-    };
-
-    BinarySearch.prototype.lookupArray = function (interval) {
         if (interval === undefined) 
             interval = new Interval(-Infinity, Infinity, true, true);
         if (interval instanceof Interval === false) 
@@ -510,7 +464,7 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     };
 
 
-    BinarySearch.prototype.items = function () {
+    BinarySearch.prototype.values = function () {
         return iterable.slice(this.array, 0, this.array.length);
     };
 
