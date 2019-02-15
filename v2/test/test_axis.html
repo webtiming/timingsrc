@@ -14,12 +14,10 @@
 
       require(['sequencing/axis', 'util/interval', 'util/cue'], function (Axis, Interval, Cue) {
 
-        var timeit = function (func, name) {
+        var timeit = function (func) {
           let t0 = performance.now();
           let result = func();
-          let t1 = performance.now();
-          console.log(name, t1-t0);
-          return result;
+          return [result, performance.now()-t0];
         };
 
         var make_sorted_ints = function (size, options) {
@@ -118,9 +116,10 @@
           //let cues = make_singular_cues_sorted_unique(size);
           let cues = make_singular_cues(size, size/2);
           let sc = new Axis();
-          timeit(function () {
+          let [res, t] = timeit(function () {
             sc.update(cues);
-          }, "add bigbatch " + size);
+          });
+          console.log("add bigbatch " + size + " " + t);
 
           // add more
           cues = make_singular_cues(size, size/2);
@@ -253,84 +252,75 @@
 
 
         var test_main = function () {
-          let DATASIZE = 50000;
+          let DATASIZE = 100000;
           let ax = new Axis();
-          console.log(ax.keyMap.size);
 
           // initialise
           let numbers_1 = make_sorted_floats(DATASIZE);
           let batch_1 = make_cues_from_numbers(numbers_1);
-          timeit(function () {
-            ax.update(batch_1);
-          }, "initialise sorted cues " + DATASIZE);
-          console.log(ax.keyMap.size);
+          let [res, t] = timeit(function () {
+            return ax.update(batch_1);
+          });
+          console.log("initialise batch_1 sorted cues ", res.length, " ", t);
 
           // insert after initialise
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
           let batch_2 = make_cues_from_numbers(numbers_2);
-          timeit(function () {
-            ax.update(batch_2);
-          }, "insert more sorted cues " + DATASIZE);
-          console.log(ax.keyMap.size);
+          [res, t] = timeit(function () {
+            return ax.update(batch_2);
+          });
+          console.log("insert batch_2 sorted cues ", res.length, " ", t);
 
-          ax.clear();
-          console.log(ax.keyMap.size);
+          [res, t] = timeit(function () {
+            return ax.clear();
+          })
+          console.log("remove all cues", res.length, " ", t);
 
           // initialise
           let numbers_3 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_3 = make_cues_from_numbers(numbers_3);
-          timeit(function () {
-            ax.update(batch_3);
-          }, "initialise random cues " + DATASIZE);
-          console.log(ax.keyMap.size);
+          [res, t] = timeit(function () {
+            return ax.update(batch_3);
+          });
+          console.log("initialise batch_3 random cues ", res.length, " ", t);
 
           // insert after initialise
           let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_4 = make_cues_from_numbers(numbers_4);
-          timeit(function () {
-            ax.update(batch_4);
-          }, "insert more random cues " + DATASIZE);
-          console.log(ax.keyMap.size);
+          [res, t] = timeit(function () {
+            return ax.update(batch_4);
+          });
+          console.log("insert batch_4 random cues ", res.length, " ", t);
 
           // lookup
           let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
           let iterable, arr;
           
-          timeit(function () {
-            iterable = ax.getCuePointsCoveredByInterval(interval);
-          }, "lookup cuepoints " + interval.toString());
-          arr = timeit(function () {
-            return Array.from(iterable);
-          }, "iterable to array ");
-          console.log(arr.length);
+          [res, t] = timeit(function () {
+            return ax.getCuePointsByInterval(interval);
+          });
+          console.log("lookup cuepoints ", interval.toString(), " ", res.length, " ", t);
 
-          timeit(function () {
-            arr = ax.getCuePointsCoveredByIntervalArray(interval);
-          }, "lookup cuepoints " + interval.toString());
-          console.log(arr.length);
+          [res, t] = timeit(function () {
+            return ax.getCuesOverlappingInterval(interval);
+          });
+          console.log("lookup cues ", interval.toString(), " ", res.length, " ", t);
 
+          // remove cues in interval
+          [res, t] = timeit(function () {
+            return ax.removeCuesByInterval(interval);
+          });
+          console.log("remove cues ", interval.toString(), " ", res.length, " ", t);
 
-          timeit(function () {
-            iterable = ax.getCuesOverlappingInterval(interval);
-          }, "lookup cues " + interval.toString());
-          arr = timeit(function () {
-            return Array.from(iterable);
-          }, "iterable to array ");
-          console.log(arr.length);
-
-
-
-
-
-
-          /*
           // remove
-          let numbers_3 = make_random_ints(DATASIZE, DATASIZE);
-          let batch_3 = make_cues_from_numbers(numbers_3, "remove");
-          timeit(function () {
-            sc.update(batch_3);
-          }, "remove random ints " + DATASIZE);
-          */
+          let batch_5 = make_cues_from_numbers(numbers_4, {'op':"remove"});
+          [res, t] = timeit(function () {
+            return ax.update(batch_5);
+          });
+          console.log("remove batch_4 random cues ", res.length, " ", t);
+
+ 
+
 
         };
 
@@ -339,11 +329,11 @@
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          //test_main();
+          test_main();
 
           //test_batch_collapsing();
           //test_getCuePointsByInterval();
-          test_getCuesOverlappingInterval();
+          //test_getCuesOverlappingInterval();
           //test_event();
         };
 

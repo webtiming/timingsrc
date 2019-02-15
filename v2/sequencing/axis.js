@@ -158,6 +158,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 		this.keyMap = new Map();
 		this.eventifyTriggerEvent("change", e);
+		return e;
 	};
 
 
@@ -231,6 +232,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         cueBatch.done();
 		let e = eventBatch.done();
 		this.eventifyTriggerEvent("change", e);
+		return e;
 	};
 
 
@@ -332,6 +334,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		});;
 	};
 
+	/*
+		Similar to getCuesByInterval, but removing cues.
+	*/
+	Axis.prototype.removeCuesByInterval = function (interval) {
+		let removeCues = this.getCuesByInterval(interval).
+			map(function (cue) {
+				// make remove operations
+				return {key:cue.key};
+			});
+		return this.update(removeCues);
+	};
 
 	/*
 		Find all cues overlapping interval.
@@ -378,6 +391,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		return cues_inside.concat(cues_outside);
 	};
+
+
+
+	/*
+		Similar to getCuesOverlappingInterval, but removing cues.
+	*/
+	Axis.prototype.removeCuesOverlappingInterval = function (interval) {
+		let removeCues = this.getCuesOverlappingInterval(interval).
+			map(function (cue) {
+				// make remove operations
+				delete cue.interval;
+			});
+		return this.update(removeCues);
+	};
+
+
 
 
 	/* 
