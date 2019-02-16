@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxis'], 
-	function (motionutils, eventify, Interval, axis)  {
+define(['../util/motionutils', '../util/eventify', '../util/interval', './axis'], 
+	function (motionutils, eventify, Interval, Axis)  {
 
 	'use strict';
 
@@ -97,6 +97,42 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 		}
 	};
 
+
+	// POINT TYPES
+    var PointType = Object.freeze({
+		LOW: "low",
+		SINGULAR: "singular",
+		HIGH: "high",
+		INSIDE: "inside",
+		OUTSIDE: "outside",
+		toInteger: function (s) {
+		    if (s === PointType.LOW) return -1;
+		    if (s === PointType.HIGH) return 1;
+		    if (s === PointType.INSIDE) return 2;
+		    if (s === PointType.OUTSIDE) return 3;
+		    if (s === PointType.SINGULAR) return 0;
+		    throw new AxisError("illegal string value for point type");
+		},
+		fromInteger: function (i) {
+			if (i === -1) return PointType.LOW;
+			else if (i === 0) return PointType.SINGULAR;
+			else if (i === 1) return PointType.HIGH;
+			else if (i === 2) return PointType.INSIDE;
+			else if (i === 3) return PointType.OUTSIDE;
+			throw new AxisError("illegal integer value for point type");
+		}
+    });
+
+    /*
+		get point type of point with respect to interval
+    */
+	var getPointType = function (point, interval) {
+		if (interval.singular && point === interval.low) return PointType.SINGULAR;
+	    if (point === interval.low) return PointType.LOW;
+	    if (point === interval.high) return PointType.HIGH;
+	    if (interval.low < point && point < interval.high) return PointType.INSIDE;
+	    else return PointType.OUTSIDE;
+	};
 
 
 	/*
@@ -311,7 +347,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 			
 	var SequencerEArgs = function (sequencer, key, interval, data, directionInt, point, ts, dueTs, op, verb) {
 		var directionType = DirectionType.fromInteger(directionInt);
-		var pointType = sequencer._axis.getPointType(point, interval);
+		var pointType = getPointType(point, interval);
 		this.src = sequencer;
 		this.key = key;
 		this.interval = interval;
@@ -370,7 +406,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 			throw new Error("Contructor function called without new operation");
 		}
 		this._to = timingObject;
-		this._axis = _axis || new axis.Axis();
+		this._axis = _axis || new Axis();
 		this._schedule = null;
 		this._timeout = null; // timeout
 		this._currentTimeoutPoint = null; // point associated with current timeout
@@ -527,23 +563,23 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 		    var points = this._axis.lookupByInterval(new Interval(nowPos, nowPos, true, true));
 		    points.forEach(function (pointInfo) {
 		    	// singularities
-				if (pointInfo.pointType === axis.PointType.SINGULAR) {
+				if (pointInfo.pointType === PointType.SINGULAR) {
 				    exitKeys.push(pointInfo.key);
 				} else {
 					// closed interval?
 					var interval = pointInfo.interval;
 					var closed = false;
-					if (pointInfo.pointType === axis.PointType.LOW && interval.lowInclude) {
+					if (pointInfo.pointType === PointType.LOW && interval.lowInclude) {
 						closed = true;
-					} else if (pointInfo.pointType === axis.PointType.HIGH && interval.highInclude) {
+					} else if (pointInfo.pointType === PointType.HIGH && interval.highInclude) {
 						closed = true;
 					}
 					// exiting or entering interval?
 					var direction = DirectionType.fromInteger(motionutils.calculateDirection(initVector, now));
 					var entering = true;						
-					if (pointInfo.pointType === axis.PointType.LOW && direction === DirectionType.BACKWARDS)
+					if (pointInfo.pointType === PointType.LOW && direction === DirectionType.BACKWARDS)
 						entering = false;
-					if (pointInfo.pointType === axis.PointType.HIGH && direction === DirectionType.FORWARDS)
+					if (pointInfo.pointType === PointType.HIGH && direction === DirectionType.FORWARDS)
 						entering = false;
 					// exiting closed interval
 					if (!entering && closed) {
@@ -618,9 +654,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 	  relevant for the current position of the timing object.
 	 */
 
+	/*
 	Sequencer.prototype.updateAll = function(argList) {
 		this._axis.updateAll(argList);
 	};
+	*/
 
 	// remove duplicates - keeps the ordering and keeps the last duplicate
 	var removeDuplicates = function (opList) {
@@ -643,6 +681,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 
 
 	Sequencer.prototype._onAxisChange = function (origOpList) {
+		console.log("onaxischange");
 		var self = this;
 
 		// sequencer becomes ready when first onTimingChange and then onAxisChange has fired.
@@ -824,8 +863,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 				    	if (rangeInterval.coversPoint(interval.high)) {
 				    		item.point = interval.high;
 				    	}
-				    	item.pointType = this._axis.getPointType(item.point, item.interval);
-                        if (item.pointType !== axis.PointType.OUTSIDE) {
+				    	item.pointType = getPointType(item.point, item.interval);
+                        if (item.pointType !== PointType.OUTSIDE) {
                             reloadPoints.push(item);
                         }
 				    }
@@ -1075,7 +1114,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 			   drop all interval events that have zero velocity
 			   at the time it is supposed to fire
 			*/
-			if (task.pointType === axis.PointType.LOW || task.pointType === axis.PointType.HIGH) {
+			if (task.pointType === PointType.LOW || task.pointType === PointType.HIGH) {
 			    var v = motionutils.calculateVector(initVector, tStart + d);
 			    if (v.velocity === 0){
 			    	console.log("drop - touch endpoint during acceleration");
@@ -1104,8 +1143,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 			} else {
 				// figure out if it is enter or exit 
 				var directionType = DirectionType.fromInteger(directionInt);
-				var pointType = this._axis.getPointType(e.task.point, e.task.interval);
-				var pointInt = axis.PointType.toInteger(pointType);
+				var pointType = getPointType(e.task.point, e.task.interval);
+				var pointInt = PointType.toInteger(pointType);
 				var verbInt = pointInt * directionInt * -1;
 				var verbType = VerbType.fromInteger(verbInt);
 		    	eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt,  e.task.point, ts, e.ts, OpType.NONE, verbType));
@@ -1223,7 +1262,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 				dueTs = eArg.dueTs;
 			}
 			// push on stack
-			if (eArg.pointType === axis.PointType.SINGULAR) {
+			if (eArg.pointType === PointType.SINGULAR) {
 				if (eArg.type === VerbType.ENTER) {
 					// enter singular
 					s["b"].push(eArg);
@@ -1238,9 +1277,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 					through endpoint (low or high) and this endpoint is CLOSED ] as opposed to OPEN >
 				*/
 				var closed = false;
-				if ((eArg.pointType === axis.PointType.LOW) && eArg.interval.lowInclude) {
+				if ((eArg.pointType === PointType.LOW) && eArg.interval.lowInclude) {
 					closed = true;
-				} else if ((eArg.pointType === axis.PointType.HIGH) && eArg.interval.highInclude) {
+				} else if ((eArg.pointType === PointType.HIGH) && eArg.interval.highInclude) {
 					closed = true;
 				}
 				if (eArg.type === VerbType.ENTER) {
@@ -1265,18 +1304,17 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 
 	
 
-	// TODO : force SequencerCue object on input?
 	Sequencer.prototype.addCue = function (key, interval, data) {
-		return this.updateAll([{key:key, interval:interval, data: data}]);
+		return this._axis.addCue(key, interval, data)
 	};
 
-	Sequencer.prototype.removeCue = function (key, removedData) {
-		return this.updateAll([{key:key, interval:undefined, data:removedData}]);
+	Sequencer.prototype.removeCue = function (key) {
+		return this._axis.removeCue(key);
 	};
 
 	// true if cues exists with given key
 	Sequencer.prototype.hasCue = function (key) {
-		return this._axis.hasKey(key);
+		return this._axis.has(key);
 	};
 
 	// Get all keys
@@ -1375,9 +1413,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './oldaxi
 
 	// Module Definition
 	return {
-		Interval : Interval,
 		DefaultSequencer : Sequencer,
-		Axis : axis.Axis,
 		SequencerError : SequencerError
 	};
 

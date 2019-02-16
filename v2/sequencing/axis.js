@@ -115,7 +115,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			efficient lookup of cues by key	
 			key -> cue
 		*/
-		this.keyMap = new Map();
+		this._keyMap = new Map();
 
 		/*
 			pointMap maintains the associations between values (points on 
@@ -124,7 +124,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	
 			value -> [cue, ....]
 		*/ 
-		this.pointMap = new Map(); 
+		this._pointMap = new Map(); 
 
 		/*
 			pointIndex maintains a sorted list of numbers for efficient lookup.
@@ -138,8 +138,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 			[1.2, 3, 4, 8.1, ....]
 		*/
-		this.pointIndex = new BinarySearch();
+		this._pointIndex = new BinarySearch();
 
+
+		// buffer for addCue, removeCue requests
+		this._updateBuffer = [];
 
 		// Change event
 		eventify.eventifyInstance(this, {init:false});
@@ -148,26 +151,29 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	eventify.eventifyPrototype(Axis.prototype);
 
 
+	/*
+		Clear the entire contents of axis
+	*/
 	Axis.prototype.clear = function () {
-		this.pointMap = new Map();
-		this.pointIndex = new BinarySearch();
+		this._pointMap = new Map();
+		this._pointIndex = new BinarySearch();
 		// create change events for all cues
 		let e = [];
-		for (let cue of this.keyMap.values()) {
+		for (let cue of this._keyMap.values()) {
 			e.push({'old': cue});
 		}
-		this.keyMap = new Map();
+		this._keyMap = new Map();
 		this.eventifyTriggerEvent("change", e);
 		return e;
 	};
 
 
 	/*
-		UPDATE
+		INTERNAL UPDATE
 
 		- does it all : add, modify, delete
 
-		update takes a list of cues
+		takes a list of cues
 		
 		cue = {
 			key:key,
@@ -181,38 +187,41 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		cue = {key:key}
 
 	*/
-	Axis.prototype.update = function(cues) {
-		let cueBatch = new CueBatch(this.pointMap, this.pointIndex);
+	Axis.prototype._update = function(cues) {
+		let cueBatch = new CueBatch(this._pointMap, this._pointIndex);
 		let eventBatch = new EventBatch();
-
-        if (this.keyMap.size == 0) {
+		let len = cues.length;
+		let cue;
+        if (this._keyMap.size == 0) {
         	// initialization - first invocation of update
-        	for (let cue of cues) {
-        		this.keyMap.set(cue.key, cue);
+        	for (let i=0; i<len; i++) {
+        		cue = cues[i];
+        		this._keyMap.set(cue.key, cue);
         		cueBatch.processCue("add", cue);
 				eventBatch.processEvent({new:cue});
         	}
         } else {
-        	for (let cue of cues) {
-				let old_cue = this.keyMap.get(cue.key);
+        	for (let i=0; i<len; i++) {
+        		cue = cues[i];
+				let old_cue = this._keyMap.get(cue.key);
 				if (old_cue) {
 					if (cue.interval) {
 						// replace cue
-						this.keyMap.set(cue.key, cue);
+						this._keyMap.set(cue.key, cue);
 						cueBatch.processCue("remove", old_cue);
 						cueBatch.processCue("add", cue);
 						eventBatch.processEvent({new:cue, old:old_cue});
 					} else {
 						// delete cue
 						// cues without interval signify deletion 
-						this.keyMap.delete(old_cue.key);
+						this._keyMap.delete(old_cue.key);
 						cueBatch.processCue("remove", old_cue);
 						eventBatch.processEvent({old:old_cue});
 					}
 				} else {
 					if (cue.interval) {
 						// new cue
-						this.keyMap.set(cue.key, cue);
+						this._keyMap.set(cue.key, cue);
 						cueBatch.processCue("add", cue);
 						eventBatch.processEvent({new:cue});
 					} else {
@@ -233,6 +242,53 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		let e = eventBatch.done();
 		this.eventifyTriggerEvent("change", e);
 		return e;
+	};
+
+
+	/*
+		update adds a batch of cues to the update buffer
+		the batch will be delivered to _update in the 
+		next microtask.
+
+		This allows repeated calls to update to be
+		collected in one batch.
+	*/
+
+	Axis.prototype.update = function (cues) {
+		this._updateBuffer.push(cues);
+		if (this._updateBuffer.length === cues.length) {
+			/*
+				updateBuffer just became non-empty
+				initiate triggering of real update
+			*/
+			var self = this;
+			Promise.resolve().then(function () {
+				let batch = [].concat(...self._updateBuffer);
+				self._update(batch);
+				// empty updateBuffer
+				self._updateBuffer = [];			
+			});
+		}
+	};
+
+	/*
+		addCue and removeCue are convenience functions
+		for requesting cue operations to the axis.
+
+		They may be invoked multiple times in say a for-loop,
+		but all cues will still be delivered in one batch to 
+		the internal update operation.
+		Processing happens on the next microtasks, so one cannot 
+		expect to see the effect of these operations directly 
+		after the function call.
+	*/
+
+	Axis.prototype.addCue = function(key, interval, data) {
+		this.update({key:key, interval:interval, data:data});
+	};
+
+	Axis.prototype.removeCue = function(key) {
+		this.update({key:key})
 	};
 
 
@@ -265,10 +321,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 
 	Axis.prototype.getCuePointsByInterval = function (interval) {
-		let points = this.pointIndex.lookup(interval);
+		let points = this._pointIndex.lookup(interval);
 		return concatMap(points, function (point) {
 			// fetch list of cues for point
-			return this.pointMap.get(point).
+			return this._pointMap.get(point).
 				filter(function (cue) {
 
 					/*
@@ -310,10 +366,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		side of the interval).
 	*/
 	Axis.prototype.getCuesByInterval = function(interval) {
-		let points = this.pointIndex.lookup(interval);
+		let points = this._pointIndex.lookup(interval);
 		let cues = concatMap(points, function (point) {
 			// fetch list of cues for point
-			return this.pointMap.get(point).
+			return this._pointMap.get(point).
 				filter(function(cue){
 					/*
 						cues sharing only the endpoints of interval
@@ -407,6 +463,21 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
+	/*
+		Accessors
+	*/
+
+	Axis.prototype.has = function (key) {
+		return this._keyMap.has(key);
+	};
+
+	Axis.prototype.keys = function () {
+		return this._keyMap.keys();
+	};
+
+	Axis.prototype.cues = function () {
+		return this._keyMap.values();
+	};
 
 
 	/* 
@@ -447,10 +518,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 
 	var CueBatch = function (pointMap, pointIndex) {
-		this.pointMap = pointMap;
-		this.pointIndex = pointIndex;
-		this.created = new Map(); // value -> [cue, ...]
-		this.dirty = new Map(); // value -> [cue, ...]
+		this._pointMap = pointMap;
+		this._pointIndex = pointIndex;
+		this._created = new Map(); // value -> [cue, ...]
+		this._dirty = new Map(); // value -> [cue, ...]
 	};
 
 	/*
@@ -468,15 +539,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 		for (let i=0; i<points.length; i++) {
 			point = points[i];
-			cues = this.created.get(point);
+			cues = this._created.get(point);
 			if (cues == undefined) {
 				// point not found in created
-				cues = this.pointMap.get(point);
+				cues = this._pointMap.get(point);
 				if (cues == undefined) {
 					// point not found in pointMap
 					// register in created
 					cues = (op == "add") ? [cue] : [];
-					this.created.set(point, cues);
+					this._created.set(point, cues);
 				} else {
 					// cues found in pointMap - update
 					if (op == "add") {
@@ -484,7 +555,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					} else {
 						let empty = removeCueFromArray(cues, cue);
 						if (empty) {
-							this.dirty.set(point, cues);
+							this._dirty.set(point, cues);
 						}
 					}
 				}	
@@ -515,22 +586,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		// update pointMap and pointIndex
 		let to_remove = [];
 		let to_insert = [];
-		for (let [point, cues] of this.created.entries()) {
+		for (let [point, cues] of this._created.entries()) {
 			if (cues.length > 0) {
 				to_insert.push(point);
-				this.pointMap.set(point, cues);
+				this._pointMap.set(point, cues);
 			} 
 		}
-		for (let [point, cues] of this.dirty.entries()) {
+		for (let [point, cues] of this._dirty.entries()) {
 			if (cues.length == 0) {
 				to_remove.push(point);
-				this.pointMap.delete(point);
+				this._pointMap.delete(point);
 			}
 		}
-		this.pointIndex.update(to_remove, to_insert);
+		this._pointIndex.update(to_remove, to_insert);
 		// cleanup
-		this.created.clear();
-		this.dirty.clear();
+		this._created.clear();
+		this._dirty.clear();
 	};
 
 
@@ -553,7 +624,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 
 	var EventBatch = function () {
-		this.events = new Map();
+		this._events = new Map();
 	};
 
 	/*
@@ -561,9 +632,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	EventBatch.prototype.processEvent = function (item) {
 		let key = (item.new) ? item.new.key : item.old.key;
-		let oldItem = this.events.get(key);
+		let oldItem = this._events.get(key);
 		if (oldItem == undefined) {
-			this.events.set(key, item);
+			this._events.set(key, item);
 		} else {
 			// update new item
 			if (item.new) {
@@ -577,12 +648,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	EventBatch.prototype.done = function () {
 		let res = [];
-		for (let item of this.events.values()) {
+		for (let item of this._events.values()) {
 			if (item.new || item.old) {
 				res.push(item);
 			}
 		}
-		this.events.clear();
+		this._events.clear();
 		return res;
 	};
 

@@ -18,7 +18,7 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./newaxis', './sequencer', './windowsequencer', './timingcallbacks', './timinginteger', './activecue'], 
+define(['./axis', './sequencer', './windowsequencer', './timingcallbacks', './timinginteger', './activecue'], 
 	function (axis, seq, WindowSequencer, timingcallbacks, TimingInteger, ActiveCue) {		
 		'use strict';
 

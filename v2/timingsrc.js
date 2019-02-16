@@ -31,10 +31,6 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync', '.
 		TimingInteger : sequencing.TimingInteger,
 		ActiveCue : sequencing.ActiveCue,
 
-		// util
-		Cue : util.Cue,
-		BinarySearch : util.BinarySearch,
-
 		// MediaSync
 		MediaSync: mediasync.MediaSync,
     	mediaNeedKick : mediasync.needKick

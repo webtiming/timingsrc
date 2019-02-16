@@ -98,7 +98,7 @@
           let cues = make_singular_cues(10, 10);
           console.log(cues.map(x=>x.key));
           let sc = new Axis();
-          let items = sc.update(cues);
+          let items = sc._update(cues);
           console.log(items);
           console.log("keyMap ", sc.keyMap.size);
           console.log("array ", sc.pointIndex.array.length);
@@ -106,7 +106,7 @@
           console.log("remove")
           let cues2 = make_remove_cues(10, 10);
           console.log(cues2.map(x=>x.key));
-          items = sc.update(cues2);
+          items = sc._update(cues2);
           console.log(items);
           console.log("keyMap ", sc.keyMap.size);
           console.log("array ", sc.pointIndex.array.length);
@@ -117,14 +117,14 @@
           let cues = make_singular_cues(size, size/2);
           let sc = new Axis();
           let [res, t] = timeit(function () {
-            sc.update(cues);
+            sc._update(cues);
           });
           console.log("add bigbatch " + size + " " + t);
 
           // add more
           cues = make_singular_cues(size, size/2);
           timeit(function () {
-            sc.update(cues);
+            sc._update(cues);
           }, "add bigbatch " + size);
 
         };
@@ -138,7 +138,7 @@
           let cue, item;
 
           cue_1 = {key: "one", interval: new Interval(1) , data:"one"};
-          item = sc.update([cue_1])[0];
+          item = sc._update([cue_1])[0];
           console.log(item);
 
           let cues = [
@@ -146,7 +146,7 @@
             {key: "two"},
             {key: "two", interval: new Interval(2) , data:"one"},
           ]
-          items = sc.update(cues);
+          items = sc._update(cues);
           items.forEach(x=>{console.log(x)});
           console.log(sc.pointIndex.array);
           console.log(...sc.keyMap.values());
@@ -159,7 +159,7 @@
             {key: "one"},
             {key: "one", interval: new Interval(4) , data:"one"},
           ]
-          items = sc.update(cues);
+          items = sc._update(cues);
           items.forEach(x=>{console.log(x)});
           console.log(sc.pointIndex.array);
           console.log(...sc.keyMap.values());
@@ -203,10 +203,10 @@
           }
           */
 
-          sc.update(cues);
+          sc._update(cues);
 
           let interval = new Interval(4, 18, true, true);
-          sc.update([{
+          sc._update([{
             key: "overlapping",
             interval: new Interval(1, 20)
           }]);
@@ -246,7 +246,7 @@
             cues.push({key: i.toString(), interval: new Interval(i, i+1)});
           }
 
-          ax.update(cues)
+          ax._update(cues)
 
         };
 
@@ -259,7 +259,7 @@
           let numbers_1 = make_sorted_floats(DATASIZE);
           let batch_1 = make_cues_from_numbers(numbers_1);
           let [res, t] = timeit(function () {
-            return ax.update(batch_1);
+            return ax._update(batch_1);
           });
           console.log("initialise batch_1 sorted cues ", res.length, " ", t);
 
@@ -267,7 +267,7 @@
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
           let batch_2 = make_cues_from_numbers(numbers_2);
           [res, t] = timeit(function () {
-            return ax.update(batch_2);
+            return ax._update(batch_2);
           });
           console.log("insert batch_2 sorted cues ", res.length, " ", t);
 
@@ -280,7 +280,7 @@
           let numbers_3 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_3 = make_cues_from_numbers(numbers_3);
           [res, t] = timeit(function () {
-            return ax.update(batch_3);
+            return ax._update(batch_3);
           });
           console.log("initialise batch_3 random cues ", res.length, " ", t);
 
@@ -288,7 +288,7 @@
           let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_4 = make_cues_from_numbers(numbers_4);
           [res, t] = timeit(function () {
-            return ax.update(batch_4);
+            return ax._update(batch_4);
           });
           console.log("insert batch_4 random cues ", res.length, " ", t);
 
@@ -315,7 +315,7 @@
           // remove
           let batch_5 = make_cues_from_numbers(numbers_4, {'op':"remove"});
           [res, t] = timeit(function () {
-            return ax.update(batch_5);
+            return ax._update(batch_5);
           });
           console.log("remove batch_4 random cues ", res.length, " ", t);
 
@@ -329,11 +329,11 @@
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          test_main();
+          //test_main();
 
           //test_batch_collapsing();
           //test_getCuePointsByInterval();
-          //test_getCuesOverlappingInterval();
+          test_getCuesOverlappingInterval();
           //test_event();
         };
 
