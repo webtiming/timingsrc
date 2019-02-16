@@ -136,6 +136,17 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 
 	/*
+		get the difference between two maps
+		(key,value) pairs in a but not in b
+	*/
+	let map_difference = function (a, b) {
+		return new Map([...a].filter(function ([key, value]) {
+			return !b.has(key)
+		}));
+	};
+
+
+	/*
 
       SCHEDULE
 
@@ -405,32 +416,44 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		if (!(this instanceof Sequencer)) {
 			throw new Error("Contructor function called without new operation");
 		}
+
+		// core resources
 		this._to = timingObject;
 		this._axis = _axis || new Axis();
+
+		// timeout stuff
 		this._schedule = null;
 		this._timeout = null; // timeout
 		this._currentTimeoutPoint = null; // point associated with current timeout
-		this._activeKeys = {}; // (key -> undefined)
 
-		this._first = false;
+		// ready
 		this._ready = new eventify.EventBoolean(false, {init:true});
 
-		// set up eventing stuff
+		// active cues
+		this._activeCues = new Map(); // (key -> cue)
+
+		// event stuff
 		eventify.eventifyInstance(this);
 		this.eventifyDefineEvent("change", {init:true}); // define enter event (supporting init-event)
 		this.eventifyDefineEvent("remove");
 
 		// wrap prototype handlers and store ref on instance
-		this._wrappedOnTimingChange = function () {this._onTimingChange();};
-		this._wrappedOnAxisChange = function (eItemList) {
-			var eArgList = eItemList.map(function (eItem) {
-				return eItem.e;
-			});
-			this._onAxisChange(eArgList);
+		this._wrappedOnTimingChange = function (eArg) {
+			console.log("ontimingchange");
+			this._onTimingChange();
+			// ready after processing the first onTimingChange
+			if (this._ready.value == false) {
+				this._ready.value = true;
+			}
+		};
+		this._wrappedOnAxisChange = function (eArg) {
+			console.log("onaxischange ");
+			this._onAxisChange();
 		};
 
-		// initialise
+		// connect to timing object and axis
 		this._to.on("change", this._wrappedOnTimingChange, this);
+		this._axis.on("change", this._wrappedOnAxisChange, this);
 	};
 	eventify.eventifyPrototype(Sequencer.prototype);
 
@@ -506,129 +529,49 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	*/
 
-	Sequencer.prototype._onTimingChange = function (event) {
+	Sequencer.prototype._onTimingChange = function () {
 	    var now = this._to.clock.now();
-	    var initVector = this._to.vector;		
-		if (this._first === false) {
-			// Initial update from timing object starts the sequencer
+	 
+	    // advance schedule
+		if (this._schedule == undefined) {
 			this._schedule = new Schedule(now);
-			// Register handler on axis
-			this._axis.on("events", this._wrappedOnAxisChange, this);
-			// ensure that sequencer execution starts with initial events from axis
-			this._first = true;
-			// Kick off main loop
-    		this._load(now);
-    		this._main(now);
-			return;
-		} else if (this._ready.value === false) {
-			return;
 		} else {
-	    	// set time (a little) back for live (delayed) updates ?
-	    	// since timingobjects may switch source there is no longer 
-	    	// a way to distinguish a live update from one originating
-	    	// from timingobject switching source  
-	    	// Empty schedule
-	    	this._schedule.advance(now);
-	    }
-
-	    /*
-	      Re-evaluate non-singularities
-	      This is strictly not necessary after vector changes that
-          preserve position. However, for simplicity we
-	      re-evaluate intervals whenever vector changes.
-	    */
-	    var nowVector = motionutils.calculateVector(initVector, now);
-
-	    var newKeys = this._axis.lookupKeysByPoint(nowVector.position);
-
-	    // exitKeys are in activeKeys - but not in newKeys
-	    var exitKeys = Object.keys(this._activeKeys).filter(function(key) {
-	    	return !newKeys.hasOwnProperty(key);
-	    });
-	    // enterKeys are in newKeys - but not in activeKeys
-	    var enterKeys = Object.keys(newKeys).filter(function(key) {
-	    	return !this._activeKeys.hasOwnProperty(key); 
-	    }, this);
-
-	    /*
-			Corner Case: Exiting Singularities
-			and
-			Exiting closed intervals ]
-			and 
-			Entering open intervals <
-	    */
-	    var _isMoving = isMoving(initVector);
-	    if (_isMoving) {
-	    	var nowPos = nowVector.position;
-		    var points = this._axis.lookupByInterval(new Interval(nowPos, nowPos, true, true));
-		    points.forEach(function (pointInfo) {
-		    	// singularities
-				if (pointInfo.pointType === PointType.SINGULAR) {
-				    exitKeys.push(pointInfo.key);
-				} else {
-					// closed interval?
-					var interval = pointInfo.interval;
-					var closed = false;
-					if (pointInfo.pointType === PointType.LOW && interval.lowInclude) {
-						closed = true;
-					} else if (pointInfo.pointType === PointType.HIGH && interval.highInclude) {
-						closed = true;
-					}
-					// exiting or entering interval?
-					var direction = DirectionType.fromInteger(motionutils.calculateDirection(initVector, now));
-					var entering = true;						
-					if (pointInfo.pointType === PointType.LOW && direction === DirectionType.BACKWARDS)
-						entering = false;
-					if (pointInfo.pointType === PointType.HIGH && direction === DirectionType.FORWARDS)
-						entering = false;
-					// exiting closed interval
-					if (!entering && closed) {
-						exitKeys.push(pointInfo.key);
-					}
-					// entering open interval
-					if (entering && !closed) {
-						enterKeys.push(pointInfo.key);
-					}
-				}
-		    }, this);
-	    }
-
-	  
-	    /* 
-	    	Note : is it possible that a key for singularity
-	    	may be in both enterKeys and exitKeys? 
-	    	- only in the corner case of movement and evaluation at eaxctly the point
-	    	where the singularity lies - have duplicate protection elsewhere - ignore
-		*/
-	   
-	    var exitItems = exitKeys.map(function (key) {
-	    	return this._axis.getItem(key);
-	    }, this);
-	    var enterItems = enterKeys.map(function (key) {
-	    	return this._axis.getItem(key);
-	    }, this);
-	    // Trigger interval events
-
-	    var eList = this._processIntervalEvents(now, exitItems, enterItems, []);
-	    this.eventifyTriggerEvents(eList);
-
-	    /*
-	      	Rollback falsely reported events
-	      	Non-singular Intervals entered/left wrongly before update was sorted out above.
-	      	- So far we do not roll back events. 
-	    */
-
-        /* 
-        	Re-creating events lost due to network latency in timing object changes. 
-        	This is achieved by advancing and loading from <now> which is derived 
-        	from update vector rather than an actual timestamp. 
-        */
-
-        // Kick off main loop
-    	this._load(now);
-    	this._main(now);
+			this._schedule.advance(now);
+		}
+	
+		this._reevaluate(now);
 	};
 
+	Sequencer.prototype._onAxisChange = function () {
+		var self = this;
+		var now = this._to.clock.now();
+		this._reevaluate(now);
+	};
+
+	/*
+		Reevaluate active cues on a given point in time
+	*/
+	Sequencer.prototype._reevaluate = function (now) {
+
+		var initVector = this._to.vector;
+		var nowVector = motionutils.calculateVector(initVector, now);
+		let pos = new Interval(nowVector.position);
+
+		let activeCues = this._axis.getCuesOverlappingInterval(pos);
+		let exitCues = map_difference(this._activeCues, activeCues);
+		let enterCues = map_difference(activeCues, this._activeCues);
+
+		if (enterCues.size > 0) {
+			console.log("enter ", [...enterCues.keys()]);
+		}
+		if (exitCues.size > 0) {
+			console.log("exit ", [...exitCues.keys()]);
+		}
+		
+		// update active cues
+		this._activeCues = activeCues;  
+		
+	};
 
 
 	/*
@@ -680,211 +623,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 
-	Sequencer.prototype._onAxisChange = function (origOpList) {
-		console.log("onaxischange");
-		var self = this;
 
-		// sequencer becomes ready when first onTimingChange and then onAxisChange has fired.
-		if (this._ready.value === false) {
-			this._ready.value = true;
-		}
-
-		// filter out NOOPS (i.e. remove operations that removed nothing)
-		origOpList = origOpList.filter(function (op) {
-			return (op.type !== OpType.NONE);
-		});
-	
-		// remove duplicate operations (save last one)
-		origOpList = removeDuplicates(origOpList);
-
-	    var now = this._to.clock.now();
-	    var nowVector = motionutils.calculateVector(this._to.vector, now);
-	    var nowPos = nowVector.position;
-
-	    // EXIT and ENTER Intervals
-	    var enterItems = []; // {key:key, interval:interval}
-	    var exitItems = []; // {key:key, interval:interval}
-	    var isActive, shouldBeActive;
-
-		// filter out REPEATs to get only operations where interval changed
-		var opList = origOpList.filter(function (op) {
-			return (op.type !== OpType.REPEAT);
-		});
-
-		var i, e, key, interval, data, opType;	
-
-	    opList.forEach(function (op) {
-	    	interval = op.interval;
-	    	key = op.key;
-	    	data = op.data;
-		    /*
-		      	Re-evaluate active intervals. Immediate action is required only if 
-			    a interval was active, but no longer is -- or the opposite.
-
-				Singularity intervals may not be ignored here - as a singluarity 
-				might have been an active interval and just now collapsed
-				into a singularity
-		    */
-		    isActive = this.isActive(key);
-		    shouldBeActive = false;
-		    if (op.type === OpType.ADD || op.type === OpType.UPDATE) {
-		    	if (interval.coversPoint(nowPos)) {
-					shouldBeActive = true;
-		    	}
-		    }
-
-		    // forward opType information about what operation triggered the event
-		    if (isActive && !shouldBeActive) {
-				exitItems.push({key:key, interval:interval, data: data, opType:op.type});
-			} else if (!isActive && shouldBeActive) {
-				enterItems.push({key:key, interval:interval, data: data, opType:op.type});
-		    }
-	    }, this);
-
-		/* 
-			change events
-			generate change events for currently active cues, which did change, 
-			but remained active - thus no enter/exit events will be emitted).
-		
-			these are items that are active, but not in exitItems list.
-			(origOpList includes REPEAT operations (change in non-temporal sense)
-		*/
-		var exitKeys = exitItems.map(function (item) {return item.key;});
-		var changeItems = origOpList.
-			filter (function (op) {
-				return (this.isActive(op.key) && exitKeys.indexOf(op.key) === -1);
-			}, this).
-			map (function (op) {
-				return {key: op.key, interval: op.interval, data: op.data};
-			}, this);
-
-
-		/* 
-			special case 
-			- no changes to axis - no need to touch the SCHEDULE
-		*/
-		if (opList.length === 0) {
-			if (changeItems.length > 0) {			
-				// enterItems and exitItems are empty
-				var eList = self._processIntervalEvents(now, [], [], changeItems);
-				self.eventifyTriggerEvents(eList);
-				// no need to call main - will be called by scheduled timeout
-			}			
-			return;
-		}
-
-		/*
-			special case
-			- not moving - no need to touch the SCHEDULE
-		*/
-		var _isMoving = isMoving(nowVector);
-		if (!_isMoving) {
-			var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-			self.eventifyTriggerEvents(eList);
-			// not moving should imply that SCHEDULE be empty
-			// no need to call main - will be called by scheduled timeout
-			return;
-		}
-
-
-		/*
-			filter cue operation relevant to (remainder of) current scheduler window
-			purpose - detect common condition that cue operation is irrelevant for SCHEDULE
-			no need to touch SCHEDULE.
-			- cue endpoint included in scheduler, but needs to be excluded due to cue operation
-			- cue endpoint not in scheduler, but needs to be included due to cue operation
-		*/
-		// TODO (optimization)
-
-		/* 
-			special case 
-			- no cue operation relevant to (remainder of) current scheduler window - no need to touch SCHEDULE
-		*/
-		// TODO (optimization)
-
-
-		// INVALIDATE events in the SCHEDULE
-		/*
-	      Re-evaluate the near future. The SCHEDULE may include
-	      tasks that refer to these keys. These may have to
-	      change as a result of cue intervals changing. 
-
-	      Basic solution (assumes that this cue operation is relevant for SCHEDULE)
-	      - invalidate all tasks in the schedule
-	      - invalidate even if the timing object is not moving
-			if timing object is not moving, the schedule may not have been advanced in a while
-			simply advance it - to empty it - as an effective way of invalidation
-		*/
-
-		// TODO - simplify the following based on above filtering of relevant cue operatiosn
-
-		if (!_isMoving) {
-			// not moving - not sure this is necessary (unreachable?)
-			this._schedule.advance(now);
-		} else {
-			// moving - invalidate all scheduled events relating to the same op keys. 
-			opList.forEach(function (op) {
-				this._schedule.invalidate(op.key);
-			}, this);
-
-			// RELOAD events into the SCHEDULE
-			var point, reloadPoints = [];
-			opList.forEach(function (op) {
-				interval = op.interval;
-	    		key = op.key;
-	    		data = op.data;
-
-	    		// Nothing to reload for remove events
-		    	if (op.type === OpType.REMOVE) {
-					return;
-		    	}
-
-				/* 
-			       Corner Case: If the new interval is singularity, and if it
-			       happens to be exactly at <nowPos>, then it needs to be
-			       fired. 
-			    */
-
-			    // Reload only required if the msv is moving
-				if (_isMoving) {
-					/*
-				      Load interval endpoints into schedule			      
-				      The interval has one or two endpoints that might or might not be
-				      relevant for the remainder of the current time-interval of the schedule.
-				      Check relevance, i.t. that points are within the
-				      position range of the schedule.
-				    */
-					var item = {key: key, interval: interval, data: data}; 
-				    var rangeInterval = this._schedule.getPosInterval();
-				    if (rangeInterval !== null) {
-				    	if (rangeInterval.coversPoint(interval.low)) {
-				    		item.point = interval.low;
-				    	} 
-				    	if (rangeInterval.coversPoint(interval.high)) {
-				    		item.point = interval.high;
-				    	}
-				    	item.pointType = getPointType(item.point, item.interval);
-                        if (item.pointType !== PointType.OUTSIDE) {
-                            reloadPoints.push(item);
-                        }
-				    }
-				}
-			}, this);
-
-
-		   	// reload relevant points
-		    if (reloadPoints.length > 0) {
-				this._load(now, reloadPoints);
-		    }
-		}
-		
-		// notify interval events and change events
-		var eList = self._processIntervalEvents(now, exitItems, enterItems, changeItems);
-		self.eventifyTriggerEvents(eList);
-		// kick off main loop (should only be required if moving?)
-		// TODO - should only be necessary if the SCHEDULE is touched - to cause a new timeout to be set.
-		self._main(now);
-	};
 
 
 	/*

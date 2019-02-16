@@ -151,6 +151,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	eventify.eventifyPrototype(Axis.prototype);
 
 
+
 	/*
 		Clear the entire contents of axis
 	*/
@@ -256,7 +257,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	Axis.prototype.update = function (cues) {
 		this._updateBuffer.push(cues);
-		if (this._updateBuffer.length === cues.length) {
+		if (this._updateBuffer.length === 1) {
 			/*
 				updateBuffer just became non-empty
 				initiate triggering of real update
@@ -356,8 +357,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		getCuesByInterval will iterate the pointIndex and find
 		the associated cue from pointMap. 
 
-		Each cue will only be reported once, even if they are 
-		referenced by multiple points (both endpoint of a cue within set).
+		Cues may be reported more than once
 		
 		Any specific order of cues is not defined.
 
@@ -365,9 +365,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		It does not return cues that cover the interval (i.e. one endpoint at each
 		side of the interval).
 	*/
-	Axis.prototype.getCuesByInterval = function(interval) {
+	Axis.prototype._getCuesByInterval = function(interval) {
 		let points = this._pointIndex.lookup(interval);
-		let cues = concatMap(points, function (point) {
+		return concatMap(points, function (point) {
 			// fetch list of cues for point
 			return this._pointMap.get(point).
 				filter(function(cue){
@@ -385,16 +385,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					return true;
 				});
 		}, this);
-		return unique(cues, function(cue) {
-			return cue.key;
-		});;
+		
+
+
+		
 	};
 
 	/*
 		Similar to getCuesByInterval, but removing cues.
 	*/
 	Axis.prototype.removeCuesByInterval = function (interval) {
-		let removeCues = this.getCuesByInterval(interval).
+		let removeCues = this._getCuesByInterval(interval).
 			map(function (cue) {
 				// make remove operations
 				return {key:cue.key};
@@ -408,13 +409,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		This task can be split in two parts
 		- 1) INSIDE: find all cues that have at least one endpoint covered by interval
 		- 2) OUTSIDE: find all cues that have one endpoint on each side of interval
+		
+		Returns Map() key -> cue
 
 	*/
 	Axis.prototype.getCuesOverlappingInterval = function (interval) {
 		/* 
 			1) all cues with at least one endpoint covered by interval 
 		*/
-		const cues_inside = this.getCuesByInterval(interval);
+		const cues_inside = this._getCuesByInterval(interval);
 
 		/*
 			2)
@@ -440,12 +443,23 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			singular cues were isolated in a different index. Similarly, one
 			could split the set of cues by the length of their intervals.
 		*/
-		const cues_outside = this.getCuesByInterval(leftInterval)
+		const cues_outside = this._getCuesByInterval(leftInterval)
 			.filter(function (cue) {
 				return rightInterval.coversPoint(cue.interval.high);
 			});
 
-		return cues_inside.concat(cues_outside);
+		// Avoid duplicates by putting all cues into a Map
+		const cueMap = new Map();
+		let cue;
+		for (let i=0; i<cues_inside.length; i++) {
+			cue = cues_inside[i]
+			cueMap.set(cue.key, cue);
+		}
+		for (let i=0; i<cues_outside.length; i++) {
+			cue = cues_outside[i]
+			cueMap.set(cue.key, cue);
+		}
+		return cueMap;
 	};
 
 
