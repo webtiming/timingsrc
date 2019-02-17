@@ -447,8 +447,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			}
 		};
 		this._wrappedOnAxisChange = function (eArg) {
-			console.log("onaxischange ");
-			this._onAxisChange();
+			if (this._ready.value == true) {			
+				console.log("onaxischange ");
+				this._onAxisChange();
+			}
 		};
 
 		// connect to timing object and axis
