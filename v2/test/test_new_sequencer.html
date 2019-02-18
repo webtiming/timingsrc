@@ -35,16 +35,12 @@
               s.addCue("four", new Interval(4.0, 5.0), "four.data");
             }, 100);
             */
-            s.addCue("zero", new Interval(0.0, 1.0), "zero.data");
-            
-            
-       
-            /*
+            s.addCue("zero", new Interval(0.0, 1.0), "zero.data");            
             s.addCue("one", new Interval(1.0, 2.0), "one.data");
             s.addCue("two", new Interval(2.0, 3.0), "two.data");
             s.addCue("three", new Interval(3.0, 4.0), "three.data");
             s.addCue("four", new Interval(4.0, 5.0), "four.data");
-
+            /*
             // add batch with duplicates
             s.ready.then(function () {
               s.addCue("five", new Interval(4.4, 5.5), "five.data");
@@ -61,8 +57,8 @@
             */
 
 
-            //s.on("enter", function (e) {console.log(e.toString())});
-            //s.on("exit", function (e) {console.log(e.toString())});
+            s.on("change", function (e) {console.log(e)});
+            s.on("remove", function (e) {console.log(e)});
         
             var jumpRunBtn = document.getElementById("jumprun");
             jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
@@ -72,6 +68,7 @@
             resetBtn.onclick = function () {to.update({position:0.0, velocity: 0.0});};
             document.getElementById("play").onclick = function () {to.update({velocity:1.0});};
             document.getElementById("backwards").onclick = function () {to.update({velocity: -1.0});};
+            document.getElementById("goto3").onclick = function () {to.update({position: 3.0});};
 
             var value = document.getElementById("value");
             to.on("timeupdate", function () {
@@ -115,6 +112,7 @@
       <button id="pause">Pause</button>
       <button id="reset">Reset</button>
       <button id="backwards">Backwards</button>
+      <button id="goto3">goto3</button>
     </p>
     <p>
       <button onclick="javascript:createCue()">Create Cue</button>

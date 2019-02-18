@@ -136,14 +136,27 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 
 	/*
-		get the difference between two maps
-		(key,value) pairs in a but not in b
+		get the difference of two Maps
+		key in a but not in b
 	*/
-	let map_difference = function (a, b) {
+	const map_difference = function (a, b) {
 		return new Map([...a].filter(function ([key, value]) {
 			return !b.has(key)
 		}));
 	};
+
+
+	/*
+		get the intersection of two Maps
+		key in a and b
+	*/
+	const map_intersect = function (a, b) {
+		[a, b] = (a.size <= b.size) ? [a,b] : [b,a];
+		return new Map([...a].filter(function ([key, value]) {
+			return b.has(key)
+		}));
+	};
+
 
 
 	/*
@@ -449,7 +462,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		this._wrappedOnAxisChange = function (eArg) {
 			if (this._ready.value == true) {			
 				console.log("onaxischange ");
-				this._onAxisChange();
+				this._onAxisChange(eArg);
 			}
 		};
 
@@ -532,47 +545,170 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 
 	Sequencer.prototype._onTimingChange = function () {
-	    var now = this._to.clock.now();
-	 
+	    let nowVector = this._to.query();
 	    // advance schedule
 		if (this._schedule == undefined) {
-			this._schedule = new Schedule(now);
+			this._schedule = new Schedule(nowVector.timestamp);
 		} else {
-			this._schedule.advance(now);
+			this._schedule.advance(nowVector.timestamp);
 		}
-	
-		this._reevaluate(now);
+		this._reevaluate(nowVector);
 	};
 
-	Sequencer.prototype._onAxisChange = function () {
-		var self = this;
-		var now = this._to.clock.now();
-		this._reevaluate(now);
+	Sequencer.prototype._onAxisChange = function (eventMap) {
+		const nowVector = this._to.query();
+		/*
+			changeCues are those cues from axis that 
+			were modified (i.e. replaced).
+			eventMap is change event arg from Axis : key -> {new:cue, old:cue} 
+		*/
+		const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
+			return eItem.new && eItem.old;
+		}));
+		this._reevaluate(nowVector, modifiedCues);
 	};
 
 	/*
 		Reevaluate active cues on a given point in time
+		modifiedCues are given from onAxisChange
+
+		could have used modifiedCues from axis change to change activeCues 
+		instead, simply reevaluate active cues with axis. This is likely 
+		more effective for large batches.
+
 	*/
-	Sequencer.prototype._reevaluate = function (now) {
+	Sequencer.prototype._reevaluate = function (nowVector, modifiedCues) {
+		/*
+			find new active cues
+		*/
+		const currentPosition = new Interval(nowVector.position);
+		const activeCues = this._axis.getCuesOverlappingInterval(currentPosition);
+		/*
+			find exit cues
+			were in old active cues - but not in new
+		*/
+		const exitCues = map_difference(this._activeCues, activeCues);
+		/* 
+			find enter cues
+			were not in old active cues - but are in new
+		*/
+		const enterCues = map_difference(activeCues, this._activeCues);
+		/* 
+			find change cues
+			those cues that were modified and also remain within the set of active cues
+		*/		
+		const changeCues = (modifiedCues) ? map_intersect(modifiedCues, activeCues) : new Map();
 
-		var initVector = this._to.vector;
-		var nowVector = motionutils.calculateVector(initVector, now);
-		let pos = new Interval(nowVector.position);
 
-		let activeCues = this._axis.getCuesOverlappingInterval(pos);
-		let exitCues = map_difference(this._activeCues, activeCues);
-		let enterCues = map_difference(activeCues, this._activeCues);
-
-		if (enterCues.size > 0) {
-			console.log("enter ", [...enterCues.keys()]);
-		}
-		if (exitCues.size > 0) {
-			console.log("exit ", [...exitCues.keys()]);
-		}
-		
 		// update active cues
 		this._activeCues = activeCues;  
+	
+		// make events
+		const directionInt = motionutils.calculateDirection(nowVector, nowVector.timestamp);
+		const eList = [];
+		let eInfo;
+		for (let [key, cue] of exitCues) {
+			let opType = (modifiedCues) ? OpType.REMOVE : OpType.NONE;
+			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.EXIT));	
+		}
+		for (let [key, cue] of enterCues) {
+			let opType = (modifiedCues) ? OpType.ADD : OpType.NONE;
+			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.ENTER));	
+		}
+		for (let [key, cue] of changeCues) {
+			let opType = (modifiedCues) ? OpType.UPDATE : OpType.NONE;
+			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.UPDATE));	
+		}
+
+		// make sure events are correctly ordered
+		// eList = this._reorderEventList(eList, directionInt);
+
+		this.eventifyTriggerEvents(eList);
+	};
+
+	var makeEventItem = function (nowVector, cue, directionInt, opType, verb, dueTs) {
+		let type = (verb === VerbType.EXIT) ? "remove" : "change";
+		return {
+			type: type,
+			e: {			
+				key: cue. key,
+				interval: cue.interval,
+				data: cue.data,
+				type: type,				
+				point: nowVector.position,
+				pointType: getPointType(nowVector.position, cue.interval),
+				dueTs: dueTs || nowVector.timestamp,
+				directionType: DirectionType.fromInteger(directionInt),
+				cause: seqOpType(opType),
+				enter: (verb === VerbType.ENTER),
+				exit: (verb === VerbType.EXIT)			
+			}
+		};
+	}
+
+
 		
+		
+
+
+	// Process interval events orignating from axis change, timing object change or active keys
+	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
+	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
+			return [];
+	    }
+	    var nowVector = motionutils.calculateVector(this._to.vector, now);
+		var directionInt = motionutils.calculateDirection(nowVector, now);
+		var ts = this._to.clock.now(); 
+	    var eArgList = [];
+    	var opType;
+    	// trigger events
+    	exitItems.forEach(function (item){
+    		opType = item.opType || OpType.NONE;
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.EXIT));
+		}, this); 
+		enterItems.forEach(function (item){
+			opType = item.opType || OpType.NONE;
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.ENTER));
+		}, this);
+		changeItems.forEach(function (item) {
+			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
+		}, this);
+		return this._makeEvents(now, eArgList, directionInt);
+	};
+
+
+	/*
+		make events ensures consistency of active keys as changes
+		to active keys are driven by actual notifications
+	*/
+
+	Sequencer.prototype._makeEvents = function (now, eArgList, directionInt) {
+		if (eArgList.length === 0) {
+			return [];
+		}
+		// manage active keys
+		var index, eventList = [];
+		eArgList.forEach(function (eArg) {
+			// exit interval - remove keys 
+		    if (eArg.exit) {
+				if (this._activeKeys.hasOwnProperty(eArg.key)) {
+					delete this._activeKeys[eArg.key];
+				}
+		    }
+		    // enter interval - add key
+		    if (eArg.enter) {
+		    	if (!this._activeKeys.hasOwnProperty(eArg.key)) {
+		    		this._activeKeys[eArg.key] = undefined;
+		    	}
+		    }
+		    eventList.push(eArg);
+		}, this);
+		// make sure events are correctly ordered
+		eventList = this._reorderEventList(eventList, directionInt);
+		// finalise events
+		return eventList.map(function (eArg) {
+			return {type: eArg.type, e: eArg};
+		});	    	    
 	};
 
 
@@ -894,30 +1030,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	    return this._makeEvents(now, eArgList, directionInt);
 	};
 
-	// Process interval events orignating from axis change, timing object change or active keys
-	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
-	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
-			return [];
-	    }
-	    var nowVector = motionutils.calculateVector(this._to.vector, now);
-		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._to.clock.now(); 
-	    var eArgList = [];
-    	var opType;
-    	// trigger events
-    	exitItems.forEach(function (item){
-    		opType = item.opType || OpType.NONE;
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.EXIT));
-		}, this); 
-		enterItems.forEach(function (item){
-			opType = item.opType || OpType.NONE;
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.ENTER));
-		}, this);
-		changeItems.forEach(function (item) {
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
-		}, this);
-		return this._makeEvents(now, eArgList, directionInt);
-	};
+	
 
 
 	Sequencer.prototype._processInitialEvents = function () {
@@ -937,39 +1050,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 	
-	/*
-		make events ensures consistency of active keys as changes
-		to active keys are driven by actual notifications
-	*/
 
-	Sequencer.prototype._makeEvents = function (now, eArgList, directionInt) {
-		if (eArgList.length === 0) {
-			return [];
-		}
-		// manage active keys
-		var index, eventList = [];
-		eArgList.forEach(function (eArg) {
-			// exit interval - remove keys 
-		    if (eArg.exit) {
-				if (this._activeKeys.hasOwnProperty(eArg.key)) {
-					delete this._activeKeys[eArg.key];
-				}
-		    }
-		    // enter interval - add key
-		    if (eArg.enter) {
-		    	if (!this._activeKeys.hasOwnProperty(eArg.key)) {
-		    		this._activeKeys[eArg.key] = undefined;
-		    	}
-		    }
-		    eventList.push(eArg);
-		}, this);
-		// make sure events are correctly ordered
-		eventList = this._reorderEventList(eventList, directionInt);
-		// finalise events
-		return eventList.map(function (eArg) {
-			return {type: eArg.type, e: eArg};
-		});	    	    
-	};
 
 	/*
 		Event list is sorted by time. 

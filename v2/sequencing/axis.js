@@ -659,15 +659,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/*
 		returns event list for entire batch
+		only those that are changes
 	*/
 	EventBatch.prototype.done = function () {
-		let res = [];
-		for (let item of this._events.values()) {
-			if (item.new || item.old) {
-				res.push(item);
-			}
-		}
-		this._events.clear();
+		let res = this._events;
+		this._events = new Map();
 		return res;
 	};
 
