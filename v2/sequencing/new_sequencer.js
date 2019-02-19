@@ -25,6 +25,28 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	// UTILITY
 
+	/*
+		get the difference of two Maps
+		key in a but not in b
+	*/
+	const map_difference = function (a, b) {
+		return new Map([...a].filter(function ([key, value]) {
+			return !b.has(key)
+		}));
+	};
+
+
+	/*
+		get the intersection of two Maps
+		key in a and b
+	*/
+	const map_intersect = function (a, b) {
+		[a, b] = (a.size <= b.size) ? [a,b] : [b,a];
+		return new Map([...a].filter(function ([key, value]) {
+			return b.has(key)
+		}));
+	};
+
 	var isMoving = function (vector) {
 		return (vector.velocity !== 0.0 || vector.acceleration !== 0.0);
 	};
@@ -97,6 +119,19 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		}
 	};
 
+	/*
+		what the different opTypes mean in the context of the 
+		sequencer
+	*/
+	var seqOpType = function (op) {
+		if (op === OpType.INIT) return "init";
+		if (op === OpType.NONE) return "motion";
+		if (op === OpType.ADD) return "add";
+		if (op === OpType.UPDATE || op === OpType.REPEAT) return "update";
+		if (op === OpType.REMOVE) return "remove";
+		return "";
+	};
+
 
 	// POINT TYPES
     var PointType = Object.freeze({
@@ -136,25 +171,43 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 
 	/*
-		get the difference of two Maps
-		key in a but not in b
+		Sequencer Error
 	*/
-	const map_difference = function (a, b) {
-		return new Map([...a].filter(function ([key, value]) {
-			return !b.has(key)
-		}));
+	var SequencerError = function (message) {
+		this.name = "SequencerError";
+		this.message = (message || "");
 	};
+	SequencerError.prototype = Error.prototype;
 
 
 	/*
-		get the intersection of two Maps
-		key in a and b
+		Sequencer EArg
 	*/
-	const map_intersect = function (a, b) {
-		[a, b] = (a.size <= b.size) ? [a,b] : [b,a];
-		return new Map([...a].filter(function ([key, value]) {
-			return b.has(key)
-		}));
+	var SequencerEArg = function (nowVector, cue, directionInt, opType, verb, dueTs) {
+		this.cue = cue;
+		this.point = nowVector.position;
+		this.pointType = getPointType(nowVector.position, cue.interval);
+		this.dueTs = dueTs || nowVector.timestamp;
+		this.directionType = DirectionType.fromInteger(directionInt);
+		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
+		this.cause = seqOpType(opType);
+		this.enter = (verb === VerbType.ENTER);
+		this.exit = (verb === VerbType.EXIT);
+	};
+
+	SequencerEArg.prototype.toString = function () {
+		var s = "[" +  this.point.toFixed(2) + "]";
+        s += " " + this.cue.key;
+        s += " " + this.cue.interval.toString();
+        s += " " + this.type;
+        var verb = "none";
+        if (this.enter) verb = "enter";
+        else if (this.exit) verb = "exit";
+        s += " (" + this.cause + "," + verb + ")";
+        s += " " + this.directionType;
+        s += " " + this.pointType;
+        if (this.cue.data) s += " " + JSON.stringify(this.cue.data);
+        return s;
 	};
 
 
@@ -346,80 +399,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 
-	/*
-		Sequencer Error
-	*/
-	var SequencerError = function (message) {
-		this.name = "SequencerError";
-		this.message = (message || "");
-	};
-	SequencerError.prototype = Error.prototype;
-
-
-	/*
-		Sequencer EArgs
-	*/
-
-	var seqOpType = function (op) {
-		if (op === OpType.INIT) return "init";
-		if (op === OpType.NONE) return "motion";
-		if (op === OpType.ADD) return "add";
-		if (op === OpType.UPDATE || op === OpType.REPEAT) return "update";
-		if (op === OpType.REMOVE) return "remove";
-		return "";
-	};
-			
-	var SequencerEArgs = function (sequencer, key, interval, data, directionInt, point, ts, dueTs, op, verb) {
-		var directionType = DirectionType.fromInteger(directionInt);
-		var pointType = getPointType(point, interval);
-		this.src = sequencer;
-		this.key = key;
-		this.interval = interval;
-		this.data = data;
-		this.point = point;
-		this.pointType = pointType;
-		this.dueTs = dueTs;
-		this.delay = ts - dueTs;
-		this.directionType = directionType;
-		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
-		this.cause = seqOpType(op);
-		this.enter = (verb === VerbType.ENTER);
-		this.exit = (verb === VerbType.EXIT);
-	};
-
-	SequencerEArgs.prototype.toString = function () {
-		var s = "[" +  this.point.toFixed(2) + "]";
-        s += " " + this.key;
-        s += " " + this.interval.toString();
-        s += " " + this.type;
-        var verb = "none";
-        if (this.enter) verb = "enter";
-        else if (this.exit) verb = "exit";
-        s += " (" + this.cause + "," + verb + ")";
-        s += " " + this.directionType;
-        s += " " + this.pointType;
-        s += " delay:" + this.delay.toFixed(4);
-        if (this.data) s += " " + JSON.stringify(this.data);
-        return s;
-	};
-
-
-	/*
-		SequencerCue
-	*/
-	var SequencerCue = function (item) {
-		this.key = item.key;
-		this.interval = item.interval;
-		this.data = item.data;
-	};
-
-	SequencerCue.prototype.toString = function () {
-		var s = this.key + " " + this.interval.toString();
-		if (this.data) s += " " + JSON.stringify(this.data);
-		return s;
-	};
-
-
+	
 	/*
 	
 		SEQUENCER
@@ -545,18 +525,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 
 	Sequencer.prototype._onTimingChange = function () {
-	    let nowVector = this._to.query();
-	    // advance schedule
-		if (this._schedule == undefined) {
-			this._schedule = new Schedule(nowVector.timestamp);
-		} else {
-			this._schedule.advance(nowVector.timestamp);
-		}
-		this._reevaluate(nowVector);
+		this._reevaluate();
 	};
 
 	Sequencer.prototype._onAxisChange = function (eventMap) {
-		const nowVector = this._to.query();
 		/*
 			changeCues are those cues from axis that 
 			were modified (i.e. replaced).
@@ -565,7 +537,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
 			return eItem.new && eItem.old;
 		}));
-		this._reevaluate(nowVector, modifiedCues);
+		this._reevaluate(modifiedCues);
 	};
 
 	/*
@@ -577,7 +549,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		more effective for large batches.
 
 	*/
-	Sequencer.prototype._reevaluate = function (nowVector, modifiedCues) {
+	Sequencer.prototype._reevaluate = function (modifiedCues) {
+	    let nowVector = this._to.query();
 		/*
 			find new active cues
 		*/
@@ -605,111 +578,98 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	
 		// make events
 		const directionInt = motionutils.calculateDirection(nowVector, nowVector.timestamp);
-		const eList = [];
-		let eInfo;
-		for (let [key, cue] of exitCues) {
-			let opType = (modifiedCues) ? OpType.REMOVE : OpType.NONE;
-			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.EXIT));	
-		}
-		for (let [key, cue] of enterCues) {
-			let opType = (modifiedCues) ? OpType.ADD : OpType.NONE;
-			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.ENTER));	
-		}
-		for (let [key, cue] of changeCues) {
-			let opType = (modifiedCues) ? OpType.UPDATE : OpType.NONE;
-			eList.push(makeEventItem(nowVector, cue, directionInt, opType, VerbType.UPDATE));	
-		}
+		
+
+		let eList = this._makeEvents(nowVector, exitCues, enterCues, changeCues);
+
+		/*
+			TODO - if moving, add leave events from singular cues
+		*/
 
 		// make sure events are correctly ordered
 		// eList = this._reorderEventList(eList, directionInt);
 
-		this.eventifyTriggerEvents(eList);
-	};
 
-	var makeEventItem = function (nowVector, cue, directionInt, opType, verb, dueTs) {
-		let type = (verb === VerbType.EXIT) ? "remove" : "change";
-		return {
-			type: type,
-			e: {			
-				key: cue. key,
-				interval: cue.interval,
-				data: cue.data,
-				type: type,				
-				point: nowVector.position,
-				pointType: getPointType(nowVector.position, cue.interval),
-				dueTs: dueTs || nowVector.timestamp,
-				directionType: DirectionType.fromInteger(directionInt),
-				cause: seqOpType(opType),
-				enter: (verb === VerbType.ENTER),
-				exit: (verb === VerbType.EXIT)			
-			}
+		this.eventifyTriggerEvents(eList.map(function (eArg) {
+			return {type: eArg.type, e: eArg};
+		}));
+
+	    // clear schedule
+		if (this._schedule == undefined) {
+			this._schedule = new Schedule(nowVector.timestamp);
+		} else {
+			this._schedule.advance(nowVector.timestamp);
+		}
+
+		// kick off main loop
+		if (isMoving(nowVector)) {
+			this._load(nowVector);
+    		this._main(nowVector);
 		};
-	}
-
-
-		
-		
-
-
-	// Process interval events orignating from axis change, timing object change or active keys
-	Sequencer.prototype._processIntervalEvents = function (now, exitItems, enterItems, changeItems) {
-	    if (exitItems.length + enterItems.length + changeItems.length === 0) {
-			return [];
-	    }
-	    var nowVector = motionutils.calculateVector(this._to.vector, now);
-		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._to.clock.now(); 
-	    var eArgList = [];
-    	var opType;
-    	// trigger events
-    	exitItems.forEach(function (item){
-    		opType = item.opType || OpType.NONE;
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.EXIT));
-		}, this); 
-		enterItems.forEach(function (item){
-			opType = item.opType || OpType.NONE;
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, opType, VerbType.ENTER));
-		}, this);
-		changeItems.forEach(function (item) {
-			eArgList.push(new SequencerEArgs(this, item.key, item.interval, item.data, directionInt, nowVector.position, ts, now, OpType.UPDATE, VerbType.NONE));
-		}, this);
-		return this._makeEvents(now, eArgList, directionInt);
 	};
 
 
 	/*
-		make events ensures consistency of active keys as changes
-		to active keys are driven by actual notifications
+		Make events from 
+
 	*/
 
-	Sequencer.prototype._makeEvents = function (now, eArgList, directionInt) {
-		if (eArgList.length === 0) {
-			return [];
+	Sequencer.prototype._makeEvents = function (nowVector, exitCues, enterCues, changeCues) {
+		const directionInt = motionutils.calculateDirection(nowVector, nowVector.timestamp);
+		const eList = [];
+		let opType;
+		for (let [key, cue] of exitCues) {
+			opType = (modifiedCues) ? OpType.REMOVE : OpType.NONE;
+			eList.push(new SequencerEArg(nowVector, cue, directionInt, opType, VerbType.EXIT));	
 		}
-		// manage active keys
-		var index, eventList = [];
-		eArgList.forEach(function (eArg) {
-			// exit interval - remove keys 
-		    if (eArg.exit) {
-				if (this._activeKeys.hasOwnProperty(eArg.key)) {
-					delete this._activeKeys[eArg.key];
-				}
-		    }
-		    // enter interval - add key
-		    if (eArg.enter) {
-		    	if (!this._activeKeys.hasOwnProperty(eArg.key)) {
-		    		this._activeKeys[eArg.key] = undefined;
-		    	}
-		    }
-		    eventList.push(eArg);
-		}, this);
-		// make sure events are correctly ordered
-		eventList = this._reorderEventList(eventList, directionInt);
-		// finalise events
-		return eventList.map(function (eArg) {
-			return {type: eArg.type, e: eArg};
-		});	    	    
+		for (let [key, cue] of enterCues) {
+			opType = (modifiedCues) ? OpType.ADD : OpType.NONE;
+			eList.push(new SequencerEArg(nowVector, cue, directionInt, opType, VerbType.ENTER));	
+		}
+		for (let [key, cue] of changeCues) {
+			opType = (modifiedCues) ? OpType.UPDATE : OpType.NONE;
+			eList.push(new SequencerEArg(nowVector, cue, directionInt, opType, VerbType.UPDATE))	
+		}
+		return eList.map(function (eArg) {
+			return {type: eArg.type, e:eArg};
+		});
 	};
+
+
+	/*
+		Make events from schedule task list
+	*/
+	Sequencer.prototype._makeScheduleEvents = function (nowVector, taskList) {
+   		const directionInt = motionutils.calculateDirection(nowVector, nowVector.timestamp);
+   		const eList = [];
+   		let task;
+   		for (let i=0; i<taskList.length; i++) {
+   			task = taskList[i];
+   			if (task.interval.singular) {
+				// make two events for singular
+				eList.push(new SequencerEArg(nowVector, task.cue, directionInt, task.point, OpType.NONE, VerbType.ENTER, task.ts));
+				eList.push(new SequencerEArg(nowVector, task.cue, directionInt, task.point, OpType.NONE, VerbType.EXIT, task.ts));
+			} else {
+				// figure out if it is enter or exit 
+				const directionType = DirectionType.fromInteger(directionInt);
+				const pointType = getPointType(e.task.point, e.task.interval);
+				const pointInt = PointType.toInteger(pointType);
+				const verbInt = pointInt * directionInt * -1;
+				const verbType = VerbType.fromInteger(verbInt);
+		    	eList.push(new SequencerEArgs(nowVector, task.cue, directionInt,  task.point, OpType.NONE, verbType, tasks.ts));
+			}
+   		}
+   		return eList.map(function (eArg) {
+			return {type: eArg.type, e:eArg};
+		});
+	};
+
+
+		
+		
+
+
+	
 
 
 	/*
@@ -768,31 +728,34 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         Sequencer core loop, loops via the timeout mechanism as long
         as the timing object is moving.
 	*/
-	Sequencer.prototype._main = function (now, isTimeout) {
-		//console.log("main start", (isTimeout === true));
+	Sequencer.prototype._main = function (nowVector, isTimeout) {
+		console.log("main start", (isTimeout === true));
+		nowVector = nowVector || this._to.query();
 		/*
 		this._schedule.queue.forEach(function (item) {
 			console.log(item.ts, item.task.key);
 		});
 		*/
 		var eList;
-	    now = now || this._to.clock.now();
-	    // process tasks (empty due tasks from schedule)
-        eList = this._processScheduleEvents(now, this._schedule.pop(now));   
+	    let now = nowVector.timestamp;
+	    // process tasks (empty due tasks from schedule if any)
+	    let tasks = this._schedule.pop(now);
+	    console.log(tasks);
+        eList = this._processScheduleEvents(nowVector, tasks);   
         this.eventifyTriggerEvents(eList);
         // advance schedule window
-        var _isMoving = isMoving(this._to.vector);
+        var _isMoving = isMoving(nowVector);
         if (_isMoving && this._schedule.isExpired(now)) {		
 			now = this._schedule.getTimeInterval().high;
             this._schedule.advance(now);
-            this._load(now);
+            this._load(nowVector);
             /*
             this._schedule.queue.forEach(function (item) {
 				console.log(item.ts, item.task.key);
 			});
 			*/
             // process tasks again
-            eList = this._processScheduleEvents(now, this._schedule.pop(now));
+            eList = this._processScheduleEvents(nowVector, this._schedule.pop(now));
 	    	this.eventifyTriggerEvents(eList);
 	    }
         // adjust timeout if moving
@@ -859,13 +822,16 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	   load only makes sense when timing object is moving
 	*/
 
-	Sequencer.prototype._load = function (now, givenPoints) {
-		var initVector = this._to.vector;
-	    if (!isMoving(initVector)) {
+	Sequencer.prototype._load = function (nowVector, givenPoints) {
+		if (!isMoving(nowVector)) {
 			return;
 	    }
 
+	    console.log("load");
 
+		let now = nowVector.timestamp;
+		let initVector = this._to.vector;
+	   
 	    /* 
 	       MOVING
 	       Load events from time interval
@@ -891,7 +857,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			this._schedule.setPosInterval(posInterval);
 
 			// 2) find all points in this interval
-			points = this._axis.lookupByInterval(posInterval);
+			points = this._axis.getCuePointsByInterval(posInterval);
 
 			//console.log("load", timeInterval.toString(), posInterval.toString());
 
@@ -942,6 +908,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	    	var d = e[0];
 			var task = e[1];
+			task.pointType = getPointType(task.point, task.cue.interval);
 			var push = true;
 
 			/*
@@ -1006,30 +973,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 
-	// Process point events originating from the schedule
-	Sequencer.prototype._processScheduleEvents = function (now, eventList) {
-	   	var eArg, eArgList = [];	   		
-	   	var nowVector = motionutils.calculateVector(this._to.vector, now);
-   		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._to.clock.now();
-	    eventList.forEach(function (e) {
-			if (e.task.interval.singular) {
-				// make two events for singular
-				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.ENTER));
-				eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt, e.task.point, ts, e.ts, OpType.NONE, VerbType.EXIT));
-			} else {
-				// figure out if it is enter or exit 
-				var directionType = DirectionType.fromInteger(directionInt);
-				var pointType = getPointType(e.task.point, e.task.interval);
-				var pointInt = PointType.toInteger(pointType);
-				var verbInt = pointInt * directionInt * -1;
-				var verbType = VerbType.fromInteger(verbInt);
-		    	eArgList.push(new SequencerEArgs(this, e.task.key, e.task.interval, e.task.data, directionInt,  e.task.point, ts, e.ts, OpType.NONE, verbType));
-			}			
-	    }, this);
-	    return this._makeEvents(now, eArgList, directionInt);
-	};
-
+	
 	
 
 
