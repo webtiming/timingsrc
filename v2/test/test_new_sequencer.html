@@ -57,8 +57,14 @@
             */
 
 
-            s.on("change", function (e) {console.log(e.toString())});
-            s.on("remove", function (e) {console.log(e.toString())});
+            s.on("change", function (e) {
+              console.log(e.toString())
+              console.log([...s._activeCues.keys()])
+            });
+            s.on("remove", function (e) {
+              console.log(e.toString())
+              console.log([...s._activeCues.keys()])
+            });
         
             var jumpRunBtn = document.getElementById("jumprun");
             jumpRunBtn.onclick = function () {to.update({position:3.0, velocity:1.0});};
