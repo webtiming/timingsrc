@@ -35,35 +35,21 @@
               s.addCue("four", new Interval(4.0, 5.0), "four.data");
             }, 100);
             */
-            s.addCue("zero", new Interval(0.0, 1.0), "zero.data");            
+            s.addCue("minus", new Interval(-1.0, 0.0, true, true), "minus.data");
+            s.addCue("zero", new Interval(0.0, 1.0), "zero.data");
+            s.addCue("singular", new Interval(0.0), "singular.data");
             s.addCue("one", new Interval(1.0, 2.0), "one.data");
             s.addCue("two", new Interval(2.0, 3.0), "two.data");
             s.addCue("three", new Interval(3.0, 4.0), "three.data");
-            s.addCue("four", new Interval(4.0, 5.0), "four.data");
-            /*
-            // add batch with duplicates
-            s.ready.then(function () {
-              s.addCue("five", new Interval(4.4, 5.5), "five.data");
-              s.removeCue("five");
-              s.addCue("five", new Interval(4.4, 5.6), "five.data");
+            s.addCue("four", new Interval(4.0, 5.0), "four.data");          
 
-              s.on("events", function (eList) {
-                eList.forEach(function (item) {
-                    console.log(item.e.toString());
-                });
-              });
-            });
-
-            */
             s.ready.then(function() {
-              s.on("change", function (e) {
-                console.log(e.toString())
-                console.log([...s._activeCues.keys()])
-              });
-              s.on("remove", function (e) {
-                console.log(e.toString())
-                console.log([...s._activeCues.keys()])
-              });              
+              s.on("events", function(eList) {
+                for (let eItem of eList.values()) {
+                  console.log(eItem.e.toString());
+                }
+                console.log([...s.getActiveKeys()])
+              });             
             });
 
 

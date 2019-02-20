@@ -385,16 +385,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					return true;
 				});
 		}, this);
-		
-
-
-		
 	};
+
 
 	/*
 		Similar to getCuesByInterval, but removing cues.
 	*/
-	Axis.prototype.removeCuesByInterval = function (interval) {
+	Axis.prototype._removeCuesByInterval = function (interval) {
 		let removeCues = this._getCuesByInterval(interval).
 			map(function (cue) {
 				// make remove operations
@@ -463,7 +460,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
-
 	/*
 		Similar to getCuesOverlappingInterval, but removing cues.
 	*/
@@ -483,6 +479,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	Axis.prototype.has = function (key) {
 		return this._keyMap.has(key);
+	};
+
+	Axis.prototype.get = function (key) {
+		return this._keyMap.get(key);
 	};
 
 	Axis.prototype.keys = function () {
