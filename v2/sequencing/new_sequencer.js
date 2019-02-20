@@ -428,10 +428,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 	eventify.eventifyPrototype(Sequencer.prototype);
 
-	// making Interval constructor available on all sequencer instances
-	Object.defineProperty(Sequencer.prototype, "Interval", {
-		get : function () {return Interval;}
-	});
+
 
 	Sequencer.prototype.isReady = function () {
 		return this._ready.value;
@@ -462,7 +459,18 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 	Sequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
-			return (this._ready.value) ? this._processInitialEvents() : [];
+			if (this._ready.value == false) {
+				return [];
+			} else {
+				// prepare initial events based on active cues
+				const nowVector = this._to.query();
+				const directionInt = motionutils.calculateDirection(this._to.vector, nowVector.timestamp);
+				const eArgList = [];
+				for (let cue of this._activeCues.values()) {
+					eArgList.push(new SequencerEArg(nowVector.timestamp, nowVector.position, cue, directionInt, Cause.INIT, VerbType.ENTER));	
+				}
+				return eArgList;
+			}
 		}
 		return [];
 	};
@@ -505,15 +513,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 	Sequencer.prototype._onAxisChange = function (eventMap) {
-		/*
-			changeCues are those cues from axis that 
-			were modified (i.e. replaced).
-			eventMap is change event arg from Axis : key -> {new:cue, old:cue} 
-		*/
-		const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
-			return eItem.new && eItem.old;
-		}));
-		this._reevaluate(Cause.CUECHANGE, modifiedCues);
+		this._reevaluate(Cause.CUECHANGE, eventMap);
 	};
 
 	/*
@@ -524,8 +524,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		instead, simply reevaluate active cues with axis. This is likely 
 		more effective for large batches.
 
+		Possible optimization
+
+
 	*/
-	Sequencer.prototype._reevaluate = function (cause, modifiedCues) {
+	Sequencer.prototype._reevaluate = function (cause, eventMap) {
 	    const nowVector = this._to.query();
 	    const now = nowVector.timestamp;
 		/*
@@ -546,9 +549,14 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		/* 
 			find change cues
 			those cues that were modified and also remain within the set of active cues
-		*/		
-		const changeCues = (modifiedCues) ? map_intersect(modifiedCues, activeCues) : new Map();
-
+		*/
+		let changeCues = new Map();
+		if (eventMap) {		
+			const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
+				return eItem.new && eItem.old;
+			}));
+			changeCues = map_intersect(modifiedCues, activeCues);
+		}
 
 		// update active cues
 		this._activeCues = activeCues;  
@@ -588,41 +596,42 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 
 	/*
-		Make events from 
-
+		Make events triggered by changes, either timing object changes or cue changes
 	*/
 	Sequencer.prototype._makeChangeEvents = function (now, point, cause, exitCues, enterCues, changeCues) {
 		const directionInt = motionutils.calculateDirection(this._to.vector, now);
-		const eList = [];
+		const eArgList = [];
 		for (let cue of exitCues.values()) {
-			eList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.EXIT));	
+			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.EXIT));	
 		}
 		for (let cue of enterCues.values()) {
-			eList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.ENTER));	
+			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.ENTER));	
 		}
+
 		for (let cue of changeCues.values()) {
-			eList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.UPDATE))	
+			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.UPDATE))	
 		}
-		return eList.map(function (eArg) {
+		return eArgList.map(function (eArg) {
 			return {type: eArg.type, e:eArg};
 		});
 	};
 
 
 	/*
-		Make events from schedule task list
+		Make events during playback, from schedule task list
 	*/
 	Sequencer.prototype._makePlaybackEvents = function (now, scheduleEntries) {
    		const directionInt = motionutils.calculateDirection(this._to.vector, now);
-   		const eList = [];
+   		const eArgList = [];
    		let entry, task;
    		for (let i=0; i<scheduleEntries.length; i++) {
    			entry = scheduleEntries[i];
    			task = entry.task;
    			if (task.cue.interval.singular) {
 				// make two events for singular
-				eList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.ENTER, entry.ts));
-				eList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, entry.ts));
+				eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.ENTER, entry.ts));
+				eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, entry.ts));
+				// no need to update active Cues
 			} else {
 				// figure out if it is enter or exit 
 				const directionType = DirectionType.fromInteger(directionInt);
@@ -630,7 +639,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				const pointInt = PointType.toInteger(pointType);
 				const verbInt = pointInt * directionInt * -1;
 				const verbType = VerbType.fromInteger(verbInt);
-		    	eList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, verbType, entry.ts));
+		    	eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, verbType, entry.ts));
 		    	// update activeCues
 		    	if (verbType == VerbType.ENTER) {
 		    		this._activeCues.set(task.cue.key, task.cue);
@@ -639,11 +648,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		    	}
 			}
    		}
-
-   		// Remove from activeCues
-
-
-
    		return eList.map(function (eArg) {
 			return {type: eArg.type, e:eArg};
 		});
@@ -652,10 +656,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 		
 		
-
-
-	
-
 
 	/*
 	  UPDATE
@@ -950,21 +950,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	
 
 
-	Sequencer.prototype._processInitialEvents = function () {
-		// called by makeInitEvents - return event list based on activeKeys
-		var item, eArg;
-		var now = this._to.clock.now();
-		var nowVector = motionutils.calculateVector(this._to.vector, now);
-		var directionInt = motionutils.calculateDirection(nowVector, now);
-		var ts = this._to.clock.now();
-		return Object.keys(this._activeKeys).map(function (key) {
-			item = this._axis.getItem(key);
-			eArg = new SequencerEArgs(this, key, item.interval, item.data, directionInt,  nowVector.position, ts, now, OpType.INIT, VerbType.ENTER);
-			return eArg;
-		}, this).sort(function(a, b) {
-			return a.interval.low-b.interval.low;
-		});
-	};
+
 
 	
 
