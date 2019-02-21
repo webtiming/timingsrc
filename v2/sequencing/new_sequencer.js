@@ -410,7 +410,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 		// wrap prototype handlers and store ref on instance
 		this._wrappedOnTimingChange = function (eArg) {
-			console.log("ontimingchange");
 			this._onTimingChange();
 			// ready after processing the first onTimingChange
 			if (this._ready.value == false) {
@@ -418,8 +417,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			}
 		};
 		this._wrappedOnAxisChange = function (eArg) {
-			if (this._ready.value == true) {			
-				console.log("onaxischange ");
+			if (this._ready.value == true) {
 				this._onAxisChange(eArg);
 			}
 		};
@@ -598,7 +596,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			means that cues that are tied to endpoint 0 will be detected by code above. So one really needs to be precise to a large 
 			number of decimal places for a cueendpoint to match the position exactly.
 
-			TODO : check <P, P+delta] for backwards direction
 	    */
 	    const directionInt = motionutils.calculateDirection(nowVector, now);
 
@@ -666,7 +663,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 	Sequencer.prototype._makeChangeEvents = function (now, point, cause, exitCues, enterCues, changeCues) {
 		const directionInt = motionutils.calculateDirection(this._to.vector, now);
-		const eArgList = [];
+		let eArgList = [];
 		for (let cue of exitCues.values()) {
 			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.EXIT));	
 		}
@@ -677,6 +674,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		for (let cue of changeCues.values()) {
 			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.UPDATE))	
 		}
+		// make sure events are correctly ordered
+		eArgList = this._reorderEventList(eArgList, directionInt);
 		return eArgList.map(function (eArg) {
 			return {type: eArg.type, e:eArg};
 		});
@@ -688,7 +687,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 	Sequencer.prototype._makePlaybackEvents = function (now, scheduleEntries) {
    		const directionInt = motionutils.calculateDirection(this._to.vector, now);
-   		const eArgList = [];
+   		let eArgList = [];
    		let entry, task;
    		for (let i=0; i<scheduleEntries.length; i++) {
    			entry = scheduleEntries[i];
@@ -714,65 +713,12 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		    	}
 			}
    		}
+		// make sure events are correctly ordered
+		eArgList = this._reorderEventList(eArgList, directionInt);		
    		return eArgList.map(function (eArg) {
 			return {type: eArg.type, e:eArg};
 		});
 	};
-
-
-		
-		
-
-	/*
-	  UPDATE
-
-	  Updates the axis. Updates have further effect
-	  if they relate to intervals within the immediate future.  
-	  This roughly corresponds to the covering
-	  time-interval and covering position-interval.
-
-		- EVENTS (i.e. singular intervals)
-	  
-	  Relevant events for the sequencer are those that apply to the immediate future
-	  i.e. the Schedule.
-
-	  - removed events may have to be invalidated if they were due in immediate future
-	  - new events may be added to the schedule if due in immedate future
-
-	  - INTERVALS
-	  Relevant interval changes trigger exit or enter events,
-	  and since their relevance is continuous they will be delayed
-	  no matter how late they are, as long as the interval update is
-	  relevant for the current position of the timing object.
-	 */
-
-	/*
-	Sequencer.prototype.updateAll = function(argList) {
-		this._axis.updateAll(argList);
-	};
-	*/
-
-	// remove duplicates - keeps the ordering and keeps the last duplicate
-	var removeDuplicates = function (opList) {
-		if (opList.length < 2) {
-			return opList;
-		}
-		var res = [], op, map = {}; // op.key -> opList index
-		for (var i=0; i<opList.length; i++) {
-			op = opList[i];
-			map[op.key] = i;
-		}
-		for (var i=0; i<opList.length; i++) {
-			op = opList[i];
-			if (map[op.key] === i) {
-				res.push(op);
-			}
-		}
-		return res;
-	};
-
-
-
 
 
 	/*
@@ -780,7 +726,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         as the timing object is moving.
 	*/
 	Sequencer.prototype._main = function (now, isTimeout) {
-		console.log("main start", (isTimeout === true));
 		now = now || this._to.query().timestamp;
 
     	// empty remaining due tasks, if any
@@ -833,7 +778,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				var secDelay = this._schedule.getDelayNextTs(secAnchor); // seconds
 				this._currentTimeoutPoint = nextTimeoutPoint;
 				var self = this;
-				//console.log("main done - set timeout", this._schedule.queue.length);
 				this._timeout = this._to.clock.setTimeout(function () {
 					self._clearTimeout();
 					self._main(undefined, true);
@@ -867,9 +811,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	*/
 
 	Sequencer.prototype._load = function (now, givenPoints) {
-
-	    console.log("load");
-		const initVector = this._to.vector;
 	   
 	    /* 
 	       MOVING
@@ -881,50 +822,32 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	    var tDelta = timeInterval.length;
 	    // range
 		var range = this._to.range;
-	    var vectorStart = motionutils.calculateVector(initVector, tStart);
+	    var vectorStart = motionutils.calculateVector(this._to.vector, tStart);
 	    var points = givenPoints;
-	    var points2;
-	    var eventList2;
+	
 	    // Calculate points if not provided
 	    if (!points) {
+
 			// 1) find the interval covered by the movement of timing object during the time delta
 			var posRange = motionutils.calculateInterval(vectorStart, tDelta);
 			var pStart = Math.round10(Math.max(posRange[0], range[0]), -10);
 			var pEnd = Math.round10(Math.min(posRange[1], range[1]), -10);
-			var posInterval = new Interval(pStart, pEnd, false, true);
 
+			/*
+				posInterval always <,]
+			*/
+			const posInterval = new Interval(pStart, pEnd, false, true);
 			this._schedule.setPosInterval(posInterval);
 
 			// 2) find all points in this interval
 			points = this._axis.getCuePointsByInterval(posInterval);
-
-			//console.log("load", timeInterval.toString(), posInterval.toString());
-
 	    }
-
-	    /*
-	      Note : 1) and 2) could be replaced by simply fetching
-	      all points of the axis. However, in order to avoid
-	      calculating time intercepts for a lot of irrelevant points, we
-	      use step 1) and 2) to reduce the point set.
-	    */
 	    
 	    // create ordered list of all events for time interval t_delta 
 	    var eventList = motionutils.calculateSolutionsInInterval(vectorStart, tDelta, points);
-	    /*
-	    console.log("ORIG EVENTLIST");
-	    eventList.forEach(function (item) {
-	    		var p0 = vectorStart.timestamp + item[0];
-				var p1 = Math.round10(p0, -10);
-				console.log("inside", p1, item[1]);
-	    });
-	    */
-
-	    // report bug?
 	    if (points.length !== eventList.length) {
 	    	console.log("warning : mismatch points and events", points.length, eventList.length);
 	    }
-
 
 	    /* 
 	       SUBTLE 1 : adjust for range restrictions within
@@ -947,7 +870,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	    	var d = e[0];
 			var task = e[1];
-			task.pointType = getPointType(task.point, task.cue.interval);
+			const pointType = getPointType(task.point, task.cue.interval);
 			var push = true;
 
 			/*
@@ -964,7 +887,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			/* 
 			   drop events exactly at the start of the time covering
 			   interval.
-			   likely obsolete since we are fetching points <low, high] 
+			   likely obsolete since we are fetching points [low, high] 
 			*/
 			if (d === 0) {
 				console.log("drop - exactly at start of time covering");
@@ -997,8 +920,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			   drop all interval events that have zero velocity
 			   at the time it is supposed to fire
 			*/
-			if (task.pointType === PointType.LOW || task.pointType === PointType.HIGH) {
-			    var v = motionutils.calculateVector(initVector, tStart + d);
+			if (pointType === PointType.LOW || pointType === PointType.HIGH) {
+			    var v = motionutils.calculateVector(this._to.vector, tStart + d);
 			    if (v.velocity === 0){
 			    	console.log("drop - touch endpoint during acceleration");
 					push = false;
@@ -1010,15 +933,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			} 
 	    }, this); 
 	};
-
-
-	
-	
-
-
-
-
-	
 
 
 	/*
@@ -1037,8 +951,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		// stack events per point
 		var point, dueTs, newList = [];
 		var s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
+		console.log(eArgList);
 		eArgList.sort(function (a, b) {
-			return a.interval.low - b.interval.low;
+			return a.cue.interval.low - b.cue.interval.low;
 		}).forEach(function(eArg) {
 			// new point - pop from stack
 			if (eArg.point !== point || eArg.dueTs !== dueTs) {
@@ -1068,9 +983,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 					through endpoint (low or high) and this endpoint is CLOSED ] as opposed to OPEN >
 				*/
 				var closed = false;
-				if ((eArg.pointType === PointType.LOW) && eArg.interval.lowInclude) {
+				if ((eArg.pointType === PointType.LOW) && eArg.cue.interval.lowInclude) {
 					closed = true;
-				} else if ((eArg.pointType === PointType.HIGH) && eArg.interval.highInclude) {
+				} else if ((eArg.pointType === PointType.HIGH) && eArg.cue.interval.highInclude) {
 					closed = true;
 				}
 				if (eArg.type === VerbType.ENTER) {
