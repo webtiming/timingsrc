@@ -37,6 +37,41 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	
 	'use strict';
 
+
+
+	/*
+		get the difference of two Maps
+		key in a but not in b
+	*/
+	const map_difference = function (a, b) {
+		if (a.size == 0) {
+			return new Map();
+		} else if (b.size == 0) {
+			return a;
+		} else {		
+			return new Map([...a].filter(function ([key, value]) {
+				return !b.has(key)
+			}));
+		}
+	};
+
+	/*
+		get the intersection of two Maps
+		key in a and b
+	*/
+	const map_intersect = function (a, b) {
+		[a, b] = (a.size <= b.size) ? [a,b] : [b,a];
+		if (a.size == 0) {
+			// No intersect
+			return new Map();
+		}
+		return new Map([...a].filter(function ([key, value]) {
+			return b.has(key)
+		}));
+	};
+
+
+
 	var Sequencer = seq.DefaultSequencer;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
@@ -56,8 +91,8 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		// true if re_evalute has been requested but not performed yet
 		this._pending_reevaluate = false;
 
-		// active keys
-		this._activeKeys = {}; // key -> undefined
+		// active cues
+		this._activeCues = new Map(); // key -> cue
 
 		// Define Events API
 		// event type "events" defined by default
@@ -69,12 +104,9 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		var self = this;
 
 		// Store references to handler on instance
-		this._onAxisChange = function (eItemList) {
-			var eArgList = eItemList.map(function (eItem) {
-				return eItem.e;
-			});
+		this._onAxisChange = function (eventMap) {
 			// console.log("on Axis Change");
-			self._reevaluate(eArgList);
+			self._reevaluate(eventMap);
 		};
 		this._onToAChange = function () {
 			// console.log("on ToA Change");
@@ -103,6 +135,7 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 			// by implication - both timing objects are ready too
 			self._axis.on("events", self._onAxisChange, self);
 			self._ready.value = true;
+			self._request_reevaluate();
 		});
 		
 	};
@@ -199,18 +232,17 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	WindowSequencer.prototype.eventifyMakeInitEvents = function (type) {
 		if (type === "change") {
 			// make event items from active keys
-		    return Object.keys(this._activeKeys).map(function (key) {
-		    	var item = this._axis.getItem(key);
-		    	return {
-	    			key : key, 
-	    			interval : item.interval,
-	    			data : item.data,
+			let eArgList = []
+			for (let cue of this._activeCues.values()) {
+				eArgList.push({
+					cue: cue,
 	    			type : "change",
 	    			cause: "init",
 	    			enter : true,
 	    			exit : false
-	    		};
-		    }, this);
+				});
+			}
+			return eArgList;
 		}
 		return [];
 	};
@@ -285,95 +317,86 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		in order to bring the WindowSequencer to the correct state.
 	*/
 
-
-
-
-	WindowSequencer.prototype._reevaluate = function (axisOpList) {
+	WindowSequencer.prototype._reevaluate = function (eventMap) {
 		if (this._ready.value === false) {
 			return [];
 		}
-		var activeInterval = this._getActiveInterval();
 
-		// find keys of all cues, where cue interval is partially or fully covered by searchInterval
-		var newKeys = this._axis.lookupKeysByInterval(activeInterval);
-		
-	    // exitKeys are in activeKeys - but not in newKeys
-	    var exitKeys = Object.keys(this._activeKeys).filter(function(key) {
-	    	return !newKeys.hasOwnProperty(key);
-	    });
-	   
-	    // enterKeys are in newKeys - but not in activeKeys
-	    var enterKeys = Object.keys(newKeys).filter(function(key) {
-	    	return !this._activeKeys.hasOwnProperty(key); 
-	    }, this);
+		const activeInterval = this._getActiveInterval();
 
-	    /* 
-	    	changeKeys
-	    	change keys are elements that remain in activeKeys,
-	    	but were reported as changed by the axis 
-	    */
-	    var changeKeys = [];
-	    if (axisOpList) {
-		    axisOpList.forEach(function (op) {
-		    	if (this._activeKeys.hasOwnProperty(op.key) && newKeys.hasOwnProperty(op.key)) {
-		    		changeKeys.push(op.key);
-		    	}
-		    }, this);
-		}    
+		/*
+			find new active cues
+		*/
+		const activeCues = this._axis.getCuesOverlappingInterval(activeInterval);
 
-		// update active keys
-	    this._activeKeys = newKeys;
+		/*
+			find exit cues
+			were in old active cues - but not in new
+		*/
+		let exitCues = map_difference(this._activeCues, activeCues);
+		/* 
+			find enter cues
+			were not in old active cues - but are in new
+		*/
+		let enterCues = map_difference(activeCues, this._activeCues);
+
+		/* 
+			find change cues
+			those cues that were modified and also remain within the set of active cues
+		*/
+		let changeCues = new Map();
+		if (eventMap) {		
+			const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
+				return eItem.new && eItem.old;
+			}));
+			changeCues = map_intersect(modifiedCues, activeCues);
+		}
+
+		// update active cues
+		this._activeCues = activeCues; 
+
 
 	    // make event items from enter/exit keys
-	    var item, eList = [];
-	    exitKeys.forEach(function (key) {
-	    	item = this._getItem(axisOpList, key);
-	    	eList.push({
-	    		type: "remove", 
+	    const eList = [];
+	    const cause = (eventMap) ? "cue-change" : "playback";
+		for (let cue of exitCues.values()) {
+			eList.push({
+				type: "remove", 
 	    		e: {
-	    			key : key, 
-	    			interval : item.interval,
+	    			cue: cue,
 	    			type : "remove",
-	    			data : item.data,
-	    			cause : item.type,
+	    			cause : cause,
 	    			enter: false,
 	    			exit : true
 	    		}
-	    	});
-	    }, this);
-	    enterKeys.forEach(function (key) {
-	    	item = this._getItem(axisOpList, key);
-	    	eList.push({
+			});	
+		}
+		for (let cue of enterCues.values()) {
+			eList.push({
 	    		type: "change", 
 	    		e: {
-	    			key:key, 
-	    			interval: item.interval,
+	    			cue: cue,
 	    			type: "change",
-	    			data: item.data,
-	    			cause : item.type,
+	    			cause : cause,
 	    			enter : true,
 	    			exit : false
 	    		}
 	    	});
-	    }, this);
-	    changeKeys.forEach(function (key) {
-	    	item = this._getItem(axisOpList, key);
-	    	eList.push({
+		}
+		for (let cue of changeCues.values()) {
+			eList.push({
 	    		type: "change", 
 	    		e: {
-	    			key:key, 
-	    			interval: item.interval,
+	    			cue: cue,
 	    			type: "change",
-	    			data: item.data,
-	    			cause : item.type,
+	    			cause : cause,
 	    			enter : false,
 	    			exit : false
 	    		}
 	    	});
-	    }, this);
-	    this.eventifyTriggerEvents(eList);
- 
-	  
+		}
+
+	    this.eventifyTriggerEvents(eList);	  
 	};
 
 	/*
