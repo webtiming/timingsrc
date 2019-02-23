@@ -9,46 +9,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	/*
-		concatMap - since flatMap isnt fully supported yet
-	*/
-	var concatMap = function (array, projectionFunctionThatReturnsArray, ctx) {
-		var results = [];
-		array.forEach(function (item) {
-			results.push.apply(results, projectionFunctionThatReturnsArray.call(ctx, item));
-		}, ctx);
-		return results;
-	};
-
-
-	/*
-		unique - since Array doesnt have that
-	*/
-	var unique = function (array, valueFunc) {
-		const s = new Set();
-		let results = [];
-		let value;
-		if (valueFunc == undefined) {
-			for (let i=0; i<array.length; i++) {
-				value = array[i];
-				if (!s.has(value)){
-					s.add(value);
-					results.push(value);
-				}
-			}
-		} else {
-			for (let i=0; i<array.length; i++) {
-				value = valueFunc(array[i]);
-				if (!s.has(value)){
-					s.add(value);
-					results.push(array[i]);
-				}
-			}
-		}
-		return results;
-	};
-
-
-	/*
 		Add cue to array
 	*/
 	var addCueToArray = function (arr, cue) {
@@ -158,14 +118,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	Axis.prototype.clear = function () {
 		this._pointMap = new Map();
 		this._pointIndex = new BinarySearch();
+		let keyMap = this._keyMap;
+		this._keyMap = new Map();
 		// create change events for all cues
 		let e = [];
-		for (let cue of this._keyMap.values()) {
+		for (let cue of keyMap.values()) {
 			e.push({'old': cue});
 		}
-		this._keyMap = new Map();
 		this.eventifyTriggerEvent("change", e);
-		return e;
+		return keyMap;
 	};
 
 
@@ -298,107 +259,77 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	*/
 
+
+	/*
+		_getCuesByInterval
+
+		internal utility function to find cues from endpoints in interval
+
+		getCuesByInterval will find points in interval in pointIndex and 
+		find the associated cues from pointMap. 
+
+		Cues may be reported more than once
+		Any specific order of cues is not defined.
+
+		(at least one cue endpoint will be equal to point)
+
+		Note: This function returns only cues with endpoints covered by the interval.
+		It does not return cues that cover the interval (i.e. one endpoint at each
+		side of the interval).
+
+		options cuepoint signals to include both the cue and its point
+		{point:point, cue:cue}
+
+		the order is defined by point values (ascending), whether points are included or not.
+		each point value is reported once, yet one cue
+		may be reference by 1 or 2 points. 
+	*/
+	Axis.prototype._getCuesByInterval = function(interval, options={}) {
+		let cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false; 
+		let points = this._pointIndex.lookup(interval);
+		let res = [];
+		let len = points.length;
+		for (let i=0; i<len; i++) {
+			let point = points[i];
+			let cues = this._pointMap.get(point);
+			for (let j=0; j<cues.length; j++) {
+				let cue = cues[j];
+				/*
+					cues sharing only the endpoints of interval
+					(cue.interval and interval are back-to-back)
+					must be checked specifically to see if they 
+					really overlap at the endpoint
+					no overlap: ><, >[ or ]<
+					overlap: ][     
+				*/
+				let overlap = true;
+				if (point == interval.low || point == interval.high) {
+					overlap = exclusiveEndpointOverlap(interval, cue.interval);
+				}
+				if (overlap) {
+					let item = (cuepoint) ? {point:point, cue:cue} : cue;
+					res.push(item);
+				}
+			}
+		}
+		return res;
+	};
+
+
 	/*
 		getCuePointsByInterval
 
 		returns list of cuepoints, based on list of 
 		points within given interval in pointIndex.
 	
-		getCuePoints will iterate the point values and find
-		the associated list of cues from pointMap. 
-		
-		getCuePoints returns cuepoints of the following
-		structure 
-		{point: point, cue:cue}
-		where cue is associated with the point value 
-		(at least one cue endpoint will be equal to point)
-
-		the order is defined by point values (ascending).
-		each point value is reported once, yet one cue
-		may be reference by 1 or 2 points. 
-
-		interval defines the interval of interest
-		
+		{point: point, cue:cue}		
 	*/
 
 	Axis.prototype.getCuePointsByInterval = function (interval) {
-		let points = this._pointIndex.lookup(interval);
-		return concatMap(points, function (point) {
-			// fetch list of cues for point
-			return this._pointMap.get(point).
-				filter(function (cue) {
-
-					/*
-						cues sharing only the endpoints of interval
-						(cue.interval and interval are back-to-back)
-						must be checked specifically to see if they 
-						really overlap at the endpoint
-						no overlap: ><, >[ or ]<
-						overlap: ][     
-					*/
-					if (point == interval.low || point == interval.high) {
-						return exclusiveEndpointOverlap(interval, cue.interval);
-					}
-					return true;
-				}).
-				map(function (cue) {
-					return {point:point, cue:cue};
-				});
-		}, this);
+		return this._getCuesByInterval(interval, {cuepoint:true});
 	};
 
 
-
-	/*
-		getCuesByInterval
-
-		find cues associated with points in interval
-
-		getCuesByInterval will iterate the pointIndex and find
-		the associated cue from pointMap. 
-
-		Cues may be reported more than once
-		
-		Any specific order of cues is not defined.
-
-		Note: This function returns only cues with endpoints covered by interval.
-		It does not return cues that cover the interval (i.e. one endpoint at each
-		side of the interval).
-	*/
-	Axis.prototype._getCuesByInterval = function(interval) {
-		let points = this._pointIndex.lookup(interval);
-		return concatMap(points, function (point) {
-			// fetch list of cues for point
-			return this._pointMap.get(point).
-				filter(function(cue){
-					/*
-						cues sharing only the endpoints of interval
-						(cue.interval and interval are back-to-back)
-						must be checked specifically to see if they 
-						really overlap at the endpoint
-						no overlap: ><, >[ or ]<
-						overlap: ][     
-					*/
-					if (point == interval.low || point == interval.high) {
-						return exclusiveEndpointOverlap(interval, cue.interval);
-					}
-					return true;
-				});
-		}, this);
-	};
-
-
-	/*
-		Similar to getCuesByInterval, but removing cues.
-	*/
-	Axis.prototype._removeCuesByInterval = function (interval) {
-		let removeCues = this._getCuesByInterval(interval).
-			map(function (cue) {
-				// make remove operations
-				return {key:cue.key};
-			});
-		return this.update(removeCues);
-	};
 
 	/*
 		Find all cues overlapping interval.
@@ -410,7 +341,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		Returns Map() key -> cue
 
 	*/
-	Axis.prototype.getCuesOverlappingInterval = function (interval) {
+	Axis.prototype.getCuesByInterval = function (interval) {
 		/* 
 			1) all cues with at least one endpoint covered by interval 
 		*/
@@ -463,13 +394,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	/*
 		Similar to getCuesOverlappingInterval, but removing cues.
 	*/
-	Axis.prototype.removeCuesOverlappingInterval = function (interval) {
-		let removeCues = this.getCuesOverlappingInterval(interval).
-			map(function (cue) {
-				// make remove operations
-				delete cue.interval;
-			});
-		return this.update(removeCues);
+	Axis.prototype.removeCuesByInterval = function (interval) {
+		let cueMap = this.getCuesByInterval(interval);
+		let removeCueMap = new Map([...cueMap].map(function([key, cue]) {
+			return [key, {key: cue.key}];
+		}));
+		this.update(removeCueMap.values());
+		return removeCueMap;
 	};
 
 

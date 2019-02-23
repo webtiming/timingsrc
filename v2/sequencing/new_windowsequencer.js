@@ -291,7 +291,7 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		/*
 			find new active cues
 		*/
-		const activeCues = this._axis.getCuesOverlappingInterval(activeInterval);
+		const activeCues = this._axis.getCuesByInterval(activeInterval);
 
 		/*
 			find exit cues
@@ -420,11 +420,11 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	};
 
 	WindowSequencer.prototype.getCuesByInterval = function (interval) {
-		return this._axis.getCuesOverlappingInterval(interval);
+		return this._axis.getCuesByInterval(interval);
 	};
 
 	WindowSequencer.prototype.removeCuesByInterval = function (interval) {
-		return this._axis.removeCuesOverlappingInterval(interval);
+		return this._axis.removeCuesByInterval(interval);
 	};
 
 

@@ -531,7 +531,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		it may be quicker adjust activeCues by iterating eventMap and
 		considering if each cue interval is covering the timing object position.
 
-		For larger event batch, calls to getCuesOverlappingInterval will
+		For larger event batch, calls to getCuesByInterval will
 		be quicker.
 
 	*/
@@ -542,7 +542,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		/*
 			find new active cues
 		*/
-		const activeCues = this._axis.getCuesOverlappingInterval(new Interval(pos));
+		const activeCues = this._axis.getCuesByInterval(new Interval(pos));
 		/*
 			find exit cues
 			were in old active cues - but not in new
@@ -1066,11 +1066,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 	Sequencer.prototype.getCuesByInterval = function (interval) {
-		return this._axis.getCuesOverlappingInterval(interval);
+		return this._axis.getCuesByInterval(interval);
 	};
 
 	Sequencer.prototype.removeCuesByInterval = function (interval) {
-		return this._axis.removeCuesOverlappingInterval(interval);
+		return this._axis.removeCuesByInterval(interval);
 	};
 
 

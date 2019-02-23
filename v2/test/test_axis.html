@@ -190,7 +190,7 @@
         };
 
 
-        var test_getCuesOverlappingInterval = function () {
+        var test_getCuesByInterval = function () {
           let sc = new Axis();
 
           let cues = [];
@@ -210,7 +210,7 @@
             key: "overlapping",
             interval: new Interval(1, 20)
           }]);
-          let cueIterable = sc.getCuesOverlappingInterval(interval);
+          let cueIterable = sc.getCuesByInterval(interval);
             
           for (let cue of cueIterable) {
             console.log(cue);
@@ -261,7 +261,7 @@
           let [res, t] = timeit(function () {
             return ax._update(batch_1);
           });
-          console.log("initialise batch_1 sorted cues ", res.length, " ", t);
+          console.log("initialise batch_1 sorted cues ", res.size, " ", t);
 
           // insert after initialise
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
@@ -269,12 +269,12 @@
           [res, t] = timeit(function () {
             return ax._update(batch_2);
           });
-          console.log("insert batch_2 sorted cues ", res.length, " ", t);
+          console.log("insert batch_2 sorted cues ", res.size, " ", t);
 
           [res, t] = timeit(function () {
             return ax.clear();
           })
-          console.log("remove all cues", res.length, " ", t);
+          console.log("remove all cues", res.size, " ", t);
 
           // initialise
           let numbers_3 = make_random_floats(DATASIZE, {scale:DATASIZE});
@@ -282,7 +282,7 @@
           [res, t] = timeit(function () {
             return ax._update(batch_3);
           });
-          console.log("initialise batch_3 random cues ", res.length, " ", t);
+          console.log("initialise batch_3 random cues ", res.size, " ", t);
 
           // insert after initialise
           let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
@@ -290,7 +290,7 @@
           [res, t] = timeit(function () {
             return ax._update(batch_4);
           });
-          console.log("insert batch_4 random cues ", res.length, " ", t);
+          console.log("insert batch_4 random cues ", res.size, " ", t);
 
           // lookup
           let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
@@ -302,22 +302,40 @@
           console.log("lookup cuepoints ", interval.toString(), " ", res.length, " ", t);
 
           [res, t] = timeit(function () {
-            return ax.getCuesOverlappingInterval(interval);
+            return ax._getCuesByInterval(interval);
+          })
+          console.log("lookup cues within interval ", interval.toString(), " ", res.length, " ", t);
+
+
+          [res, t] = timeit(function () {
+            return ax.getCuesByInterval(interval);
           });
-          console.log("lookup cues ", interval.toString(), " ", res.length, " ", t);
+          console.log("lookup all cues of interval ", interval.toString(), " ", res.size, " ", t);
+
+          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 100);
+          [res, t] = timeit(function () {
+            return ax._getCuesByInterval(smallInterval);
+          })
+          console.log("lookup cues within small interval ", smallInterval.toString(), " ", res.length, " ", t);
+
+          [res, t] = timeit(function () {
+            return ax.getCuesByInterval(smallInterval);
+          });
+          console.log("lookup all cues of small interval ", smallInterval.toString(), " ", res.size, " ", t);
+
 
           // remove cues in interval
           [res, t] = timeit(function () {
             return ax.removeCuesByInterval(interval);
           });
-          console.log("remove cues ", interval.toString(), " ", res.length, " ", t);
+          console.log("remove cues ", interval.toString(), " ", res.size, " ", t);
 
           // remove
           let batch_5 = make_cues_from_numbers(numbers_4, {'op':"remove"});
           [res, t] = timeit(function () {
             return ax._update(batch_5);
           });
-          console.log("remove batch_4 random cues ", res.length, " ", t);
+          console.log("remove batch_4 random cues ", res.size, " ", t);
 
  
 
@@ -329,11 +347,11 @@
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          //test_main();
+          test_main();
 
           //test_batch_collapsing();
           //test_getCuePointsByInterval();
-          test_getCuesOverlappingInterval();
+          //test_getCuesByInterval();
           //test_event();
         };
 
