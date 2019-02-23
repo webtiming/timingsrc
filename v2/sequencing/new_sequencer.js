@@ -1065,11 +1065,11 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		return this._axis.cues();	
 	};
 
-	Sequencer.prototype.getCuesOverlappingInterval = function (interval) {
+	Sequencer.prototype.getCuesByInterval = function (interval) {
 		return this._axis.getCuesOverlappingInterval(interval);
 	};
 
-	Sequencer.prototype.removeCuesOverlappingInterval = function (interval) {
+	Sequencer.prototype.removeCuesByInterval = function (interval) {
 		return this._axis.removeCuesOverlappingInterval(interval);
 	};
 
