@@ -92,24 +92,25 @@
         };
 
 
-
         var test_basic = function () {
-          console.log("insert");
           let cues = make_singular_cues(10, 10);
-          console.log(cues.map(x=>x.key));
-          let sc = new Axis();
-          let items = sc._update(cues);
-          console.log(items);
-          console.log("keyMap ", sc.keyMap.size);
-          console.log("array ", sc.pointIndex.array.length);
+          console.log("insert keys", cues.map(x=>x.key));
+          let ax = new Axis();
+          let batchMap = ax._update(cues);
+          console.log(batchMap);
+          console.log("keyMap", ax._keyMap.size);
+          console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
+          console.log("index", ax._cueBuckets.get(0)._pointIndex.array.length);
 
-          console.log("remove")
+          
           let cues2 = make_remove_cues(10, 10);
-          console.log(cues2.map(x=>x.key));
-          items = sc._update(cues2);
-          console.log(items);
-          console.log("keyMap ", sc.keyMap.size);
-          console.log("array ", sc.pointIndex.array.length);
+          console.log("remove keys", cues2.map(x=>x.key));
+          batchMap = ax._update(cues2);
+          console.log(batchMap);
+          console.log("keyMap", ax._keyMap.size);
+          console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
+          console.log("index", ax._cueBuckets.get(0)._pointIndex.array.length);
+
         };
 
         var test_bigbatch = function (size) {
@@ -191,34 +192,29 @@
 
 
         var test_getCuesByInterval = function () {
-          let sc = new Axis();
+          let ax = new Axis();
 
           let cues = [];
           for (let i=0; i<100; i++) {
             cues.push({key: i.toString(), interval: new Interval(i, i+1)});
           }
-          /*
-          for (let i=0; i<100; i++) {
-            cues.push({key: "jalla" + i.toString(), interval: new Interval(i, i+1)});
-          }
-          */
 
-          sc._update(cues);
+          // add some singletons
+          cues.push({key: "single", interval: new Interval(11.5)});
 
-          let interval = new Interval(4, 18, true, true);
-          sc._update([{
+          ax._update(cues);
+
+          let interval = new Interval(4, 18, false, false);
+          ax._update([{
             key: "overlapping",
-            interval: new Interval(1, 20)
+            interval: new Interval(4, 18, true, true)
           }]);
-          let cueIterable = sc.getCuesByInterval(interval);
+          let cueMap = ax.getCuesByInterval(interval);
             
-          for (let cue of cueIterable) {
+          for (let cue of cueMap.values()) {
             console.log(cue);
           }
         };
-
-
-
 
 
 
@@ -252,7 +248,7 @@
 
 
         var test_main = function () {
-          let DATASIZE = 100000;
+          let DATASIZE = 500000;
           let ax = new Axis();
 
           // initialise
@@ -302,22 +298,11 @@
           console.log("lookup cuepoints ", interval.toString(), " ", res.length, " ", t);
 
           [res, t] = timeit(function () {
-            return ax._getCuesByInterval(interval);
-          })
-          console.log("lookup cues within interval ", interval.toString(), " ", res.length, " ", t);
-
-
-          [res, t] = timeit(function () {
             return ax.getCuesByInterval(interval);
           });
           console.log("lookup all cues of interval ", interval.toString(), " ", res.size, " ", t);
 
-          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 100);
-          [res, t] = timeit(function () {
-            return ax._getCuesByInterval(smallInterval);
-          })
-          console.log("lookup cues within small interval ", smallInterval.toString(), " ", res.length, " ", t);
-
+          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 10);
           [res, t] = timeit(function () {
             return ax.getCuesByInterval(smallInterval);
           });

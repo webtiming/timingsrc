@@ -7,16 +7,36 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		UTILITY
 	*/
 
+
+	/* 
+		concat two arrays without creating a copy
+		push elements from the shortes into the longest
+		return the longest
+	*/
+	const mergeArrays = function(arr1, arr2) {
+		const [shortest, longest] = (arr1.length <= arr2.length) ? [arr1, arr2] : [arr2, arr1];
+		let len = shortest.length;
+		for (let i=0; i<len; i++) {
+			longest.push(shortest[i]);
+		}
+		return longest;
+	};
+
+
 	/*
 		Add cue to array
 	*/
 	var addCueToArray = function (arr, cue) {
 		// cue equality defined by key property
-		let idx = arr.findIndex(function (_cue) { 
-			return _cue.key == cue.key;
-		});
-		if (idx == -1) {
+		if (arr.length == 0) {
 			arr.push(cue);
+		} else {		
+			let idx = arr.findIndex(function (_cue) { 
+				return _cue.key == cue.key;
+			});
+			if (idx == -1) {
+				arr.push(cue);
+			}
 		}
 		return arr.length;
 	};
@@ -26,13 +46,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	var removeCueFromArray = function (arr, cue) {
 		// cue equality defined by key property 
-		let idx = arr.findIndex(function (_cue) { 
-			return _cue.key == cue.key;
-		});
-		if (idx > -1) {
-			arr.splice(idx, 1);
+		if (arr.length == 0) {
+			return true;
+		} else {		
+			let idx = arr.findIndex(function (_cue) { 
+				return _cue.key == cue.key;
+			});
+			if (idx > -1) {
+				arr.splice(idx, 1);
+			}
+			return arr.length == 0;
 		}
-		return arr.length == 0;
 	};
 
 	/*
@@ -61,71 +85,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
-	/*
-		EVENT MAP
-
-		EventMap is generated during batch processing, 
-		representing the effects of the entire cue batch, 
-		thus making cue batch processing into an atomic operation.
-
-		eItem : {new: new_cue, old: old_cue}
-
-		- If operation applies to cue that already exists, the old cue
-		  will be included. 
-
-		- If multiple operations in a batch apply to the same 
-		cue, items will effectively be collapsed into one operation. 
 	
-		- If a value was available before cue processing started,
-		this will be reported as old value (if this cue has been modified
-		in any way, even if the cue has been modified multiple times. 
-		The last cue modification on a given key defines the new
-		cue. 
-
-		- If a cue is both added and removed in the same batch,
-		it will not be included in items.
-	*/
-
-	var EventMap = function () {
-		this._events = new Map();
-	};
-
-	/*
-		process a single event (relating to a cue operation)
-	*/
-	EventMap.prototype.add = function (item) {
-		let key = (item.new) ? item.new.key : item.old.key;
-		let currentItem = this._events.get(key);
-		if (currentItem == undefined) {
-			// first occurrence of given key
-			// add, replace, or delete
-			this._events.set(key, item);
-		} else {			
-			// non-first occurrence of given key
-			// overwrite new - preserve old
-			currentItem.new = item.new;
-			/*
-				currentItem may have both
-				new and old undefined.
-				This can only happen if an element
-				was first added end then removed in
-				the same batch.
-				This is a noop and may safely be removed.
-			*/
-			if (currentItem.new == undefined && currentItem.old == undefined) {
-				this._events.delete(key);
-			}
-		}
-	};
-
-	/*
-		returns event list for entire batch
-		only those that are changes
-	*/
-	EventMap.prototype.done = function () {
-		return this._events;
-	};
-
 
 
     /*
@@ -278,14 +238,30 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		remove_cue = {key:key}
 
+
+		batchMap key -> {new: new_cue, old: old_cue}
+
+		BatchMap is generated during batch processing, 
+		representing the effects of the entire cue batch, 
+		thus making cue batch processing into an atomic operation.
+
+		- If operation applies to cue that already exists, the old cue
+		  will be included. 
+
+		- If multiple operations in a batch apply to the same 
+		cue, items will effectively be collapsed into one operation. 
+	
+		- If a cue was available before cue processing started,
+		this will be reported as old value (if this cue has been modified
+		in any way), even if the cue has been modified multiple times
+		during the batch. The last cue modification on a given key defines the new
+		cue. 
+
+		- If a cue is both added and removed in the same batch,
+		it will not be included in items.
 	*/
-	const cue_ok = function (cue) {
-		if (cue == undefined) return false;
-		if (cue.key == undefined) return false;
-		return true;
-	};
 
-
+	
 	Axis.prototype._update = function(cues) {
 
 		/*
@@ -294,23 +270,27 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- collapse if same cue is mentioned multiple times
 		*/
 		let batchMap = new Map(); // key -> {new:new_cue, old:old_cue}
+		let len = cues.length;
+		let init = this._keyMap.size == 0;
 		for (let i=0; i<len; i++) {
     		let cue = cues[i];
-    		let key = cue.key;
-    		let remove = (cue.interval == undefined);
     		// check cue
-    		if (!cue_ok(cue)) {continue;}
+    		if (cue == undefined || cue.key == undefined) {
+    			throw new Error("illegal cue", cue);
+    		}
     		// check if cue has already been seen in this batch
-    		let currentItem = batchMap.has(key);
+    		let currentItem = batchMap.get(cue.key);
     		if (currentItem == undefined) {
     			// cue has not been seen before - fetch from keymap
-    			currentItem = {new:cue, old:this._keyMap.get(key)};
+    			let old_cue = (init) ? undefined : this._keyMap.get(cue.key);
+    			currentItem = {old:old_cue};
     		}
     		// update currentItem.new - preserve currentItem.old
     		if (cue.interval != undefined) {
     			// add or modify
     			currentItem.new = cue;
     		} else {
+    			// delete
     			currentItem.new = undefined;
     			/*
     				delete operations on cues that did not exist before
@@ -318,12 +298,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     				clean up by removing item in batchMap
 				*/
 				if (currentItem.new == undefined && currentItem.old == undefined) {
-					batchMap.delete(key);
+					batchMap.delete(cue.key);
 					continue;
 				}
     		}
     		// update eventMap
-    		batchMap.set(key, currentItem);
+    		batchMap.set(cue.key, currentItem);
 		}
 
 
@@ -346,16 +326,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			if (item.new) {
 				this._keyMap.set(item.new.key, item.new);
 			} else {
-				this._keyMap.delete(item.new.key);
+				this._keyMap.delete(item.old.key);
 			}
 			// update cue buckets
 			if (item.old) {
 				let cueBucketId = getCueBucketId(item.old.interval.length);
-				this._cueBuckets[cueBucketId].updateCue("remove", item.old);
+				this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
 			}
 			if (item.new) {
-				let cueBucketId = getCueBucketId(eItem.new.interval.length);
-				this._cueBuckets[cueBucketId].updateCue("add", item.new);
+				let cueBucketId = getCueBucketId(item.new.interval.length);
+				let cueBucket = this._cueBuckets.get(cueBucketId);
+				cueBucket.processCue("add", item.new);
 			}
 		}
 		// flush all buckets so updates take effect
@@ -372,10 +353,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		for (let cueBucket of this._cueBuckets.values()) {
 			let cues = cueBucket.lookup(lookupMethod, interval);
 			if (cues.length > 0) {
-				res.push(...cues);
+				res.push(cues);
 			}
 		}
-		return res;
+		return [].concat(...res);
 	};
 
 	/*
@@ -388,7 +369,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- [{point: point, cue:cue}]		
 	*/
 	Axis.prototype.getCuePointsByInterval = function (interval) {
-		return this._lookupCues(Lookupmethods.CUEPOINTS, interval);
+		return this._lookupCues(LookupMethod.CUEPOINTS, interval);
 	};
 
 	/*
@@ -401,22 +382,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	*/
 	Axis.prototype.getCuesByInterval = function (interval) {
-		let cues = this._lookupCues(Lookupmethods.CUES, interval);
+		let cues = this._lookupCues(LookupMethod.CUES, interval);
 		// Avoid duplicates by putting all cues into a Map
 		return new Map(cues.map(function (cue){
 			return [cue.key, cue];
-		}))
+		}));
 	};
 
 	/*
 		Similar to getCuesByInterval, but removing cues.
 	*/
 	Axis.prototype.removeCuesByInterval = function (interval) {
-		let cues = this._lookupCues(Lookupmethods.CUES, interval);
+		let cues = this._lookupCues(LookupMethod.CUES, interval);
 		let removeCues = cues.map(function (cue) {
 			return {key:cue.key};
 		});
-		return this.update(removeCues);
+		return this._update(removeCues);
 	};
 
 
@@ -449,7 +430,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	var CueBucket = function (maxLength) {
-		this.maxLength = maxLength;
+		
+		// max length of cues in this bucket
+		this._maxLength = maxLength;
 
 		/*
 			pointMap maintains the associations between values (points on 
@@ -475,63 +458,60 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		*/
 		this._pointIndex = new BinarySearch();
 
-
+		// bookeeping during batch processing
 		this._created = new Map(); // value -> [cue, ...]
 		this._dirty = new Map(); // value -> [cue, ...]
-
 	};
 
-	/*
-		operation add or remove for given cue
-		
-		preprocessing in _update guarantees that this method will only be
-		invoked once per cue.key
-
-		"add" means point to be added to point
-		"remove" means cue to be removed from point
-
-		process buffers operations  pointMap and index so that 
-		all operations may be applied in one batch. This happens in flush 
-
-	*/
 
 	/* 
 
 		CUE BATCH PROCESSING
 
-		Axis update() processes a batch of cues, and needs to 
-		translates cue operations into a minimum set of 
+		Needs to translates cue operations into a minimum set of 
 		operations on the pointIndex.
 
-		To do this, we need to records points that are created and
+		To do this, we need to record points that are created and
 		points which are modified.
 		
 		The total difference that the batch of cue operations
 		amounts to is expressed as one list of values to be 
-		deleted, and and one to be inserted. The update operation
-		of the pointIndex will process both in one atomic
-		operation.
+		deleted, and and one list of values to be inserted. 
+		The update operation of the pointIndex will process both 
+		in one atomic operation.
 
-		On submit both the pointMap and the pointIndex will brought
+		On flush both the pointMap and the pointIndex will brought
 		up to speed
 
 		created and dirty are used for bookeeping during 
 		processing of a cue batch. They are needed to 
 		create the correct diff operation to be applied on pointIndex.
 
-		created : includes nodes that were not in pointMap 
+		created : includes values that were not in pointMap 
 		before current batch was processed
 
-		dirty : includes nodes that were in pointMap
+		dirty : includes values that were in pointMap
 		before curent batch was processed, and that
 		have been become empty at least at one point during cue 
 		processing. 
 
 		created and dirty are used as temporary alternatives to pointMap.
-		after the cue processing, poinmap will updated based on the
-		contents of these to  
-	*/
+		after the cue processing, pointmap will updated based on the
+		contents of these two.
 
+		operation add or remove for given cue
+		
+		this method may be invoked at most two times for the same key.
+		- first "remove" on the old cue
+		- second "add" on the new cue 
+
+
+		"add" means point to be added to point
+		"remove" means cue to be removed from point
+
+		process buffers operations for pointMap and index so that 
+		all operations may be applied in one batch. This happens in flush 
+	*/
 
 	CueBucket.prototype.processCue = function (op, cue) {
 
@@ -549,12 +529,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				// point not found in created
 				cues = this._pointMap.get(point);
 				if (cues == undefined) {
-					// point not found in pointMap
-					// register in created
+					// point not found in pointMap either
+					// register in created - [] means delete
 					cues = (op == "add") ? [cue] : [];
 					this._created.set(point, cues);
 				} else {
 					// cues found in pointMap - update
+					// this updates the cues list directly in pointMap
 					if (op == "add") {
 						addCueToArray(cues, cue);
 					} else {
@@ -612,9 +593,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		lookup dispatches to given lookupMethod.
 	*/
 	CueBucket.prototype.lookup = function (lookupMethod, interval) {
-		if (lookupMethod == Lookupmethods.CUEPOINTS) {
-			return this._getCuesFromInterval(interval, {'cuepoints': true});
-		} else if (lookupMethod == Lookupmethods.CUES){
+		if (this._pointIndex.length == 0) {
+			return [];
+		}
+		if (lookupMethod == LookupMethod.CUEPOINTS) {
+			return this._getCuesFromInterval(interval, {cuepoint: true});
+		} else if (lookupMethod == LookupMethod.CUES){
 			return this._getCuesByInterval(interval);
 		} else {
 			throw new Error("lookupmethod not supported", lookupMethod);
@@ -680,11 +664,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
-
-
-
-
-
 	/*
 		Find all cues overlapping interval.
 		
@@ -705,17 +684,35 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		/*
 			2)
 
-			define left and right intervals that cover the rest of the dimension
-			into infinity.
+			define left and right intervals that cover areas on the timeline to
+			the left and right of search interval. 
+			These intervals are limited by the interval maxLength of cues in this bucket,
+			so that:
+			 - left interval [interval.high-maxLengt, interval.low]
+			 - right interval [interval.high, interval.low+maxlength]
+
+			Only need to search one of them. Preferably the one with the fewest cues.
+			However, doing two searches is likely more expensive than choosing the longest,
+			so no point really.
+
+			Choice - always search left.
+
+			If interval.length > maxLength, then there can be no overlapping intervals in this bucket
+
 			Endpoints must not overlap with endpoints of <interval>
 			- if interval.lowInclude, then leftInterval.highInclude must be false,
 			  and vice versa. 
 			- the same consideration applies to interval.highInclude			
 		*/
+		if (interval.length > this._maxLength) {
+			return cues_inside;
+		}
+
 		const highIncludeOfLeftInterval = !interval.lowInclude;
-		const lowIncludeOfRightInterval = !interval.highInclude;
-		const leftInterval = new Interval(-Infinity, interval.low, true, highIncludeOfLeftInterval);
-		const rightInterval = new Interval(interval.high, Infinity, lowIncludeOfRightInterval, true);
+		const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
+
+		const lowIncludeOfRightInterval = !interval.highInclude;		
+		const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
 		
 		/* 
 			iterate leftInterval to find cues that have endpoints covered by rightInterval
@@ -728,10 +725,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		*/
 		const cues_outside = this._getCuesFromInterval(leftInterval)
 			.filter(function (cue) {
+				// fast test
+				if (interval.high < cue.interval.low) {
+					return true;
+				}
+				// more expensive test that will pick up cornercase
+				// where [a,b] will actually be an outside covering interval for <a,b>
 				return rightInterval.coversPoint(cue.interval.high);
 			});
 
-		return cues_inside.push(...cues_outside);	
+		return mergeArrays(cues_inside, cues_outside);
 	};
 
 

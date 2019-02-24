@@ -472,6 +472,12 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         this.array = [];
     };
 
+    Object.defineProperty(BinarySearch.prototype, "length", {
+        get: function () {
+            return this.array.length;
+        }
+    });
+
     return BinarySearch;
 });
 
