@@ -98,18 +98,18 @@
           let ax = new Axis();
           let batchMap = ax._update(cues);
           console.log(batchMap);
-          console.log("keyMap", ax._keyMap.size);
+          console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
-          console.log("index", ax._cueBuckets.get(0)._pointIndex.array.length);
+          console.log("pointIndex", ax._cueBuckets.get(0)._pointIndex.array.length);
 
           
           let cues2 = make_remove_cues(10, 10);
           console.log("remove keys", cues2.map(x=>x.key));
           batchMap = ax._update(cues2);
           console.log(batchMap);
-          console.log("keyMap", ax._keyMap.size);
+          console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
-          console.log("index", ax._cueBuckets.get(0)._pointIndex.array.length);
+          console.log("pointIndex", ax._cueBuckets.get(0)._pointIndex.array.length);
 
         };
 
@@ -150,7 +150,7 @@
           items = sc._update(cues);
           items.forEach(x=>{console.log(x)});
           console.log(sc.pointIndex.array);
-          console.log(...sc.keyMap.values());
+          console.log(...sc.cueMap.values());
           console.log(sc.pointMap.size);
 
 
@@ -163,7 +163,7 @@
           items = sc._update(cues);
           items.forEach(x=>{console.log(x)});
           console.log(sc.pointIndex.array);
-          console.log(...sc.keyMap.values());
+          console.log(...sc.cueMap.values());
           console.log(sc.pointMap.size);
 
         };
@@ -248,7 +248,7 @@
 
 
         var test_main = function () {
-          let DATASIZE = 500000;
+          let DATASIZE = 100000;
           let ax = new Axis();
 
           // initialise
@@ -257,7 +257,7 @@
           let [res, t] = timeit(function () {
             return ax._update(batch_1);
           });
-          console.log("initialise batch_1 sorted cues ", res.size, " ", t);
+          console.log("initialise batch sorted cues ", res.size, " ", t);
 
           // insert after initialise
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
@@ -265,7 +265,29 @@
           [res, t] = timeit(function () {
             return ax._update(batch_2);
           });
-          console.log("insert batch_2 sorted cues ", res.size, " ", t);
+          console.log("insert batch sorted cues ", res.size, " ", t);
+
+          [res, t] = timeit(function () {
+            return ax.clear();
+          })
+          console.log("remove all cues", res.size, " ", t);
+
+
+          // initialise
+          let numbers_11 = make_sorted_floats(DATASIZE);
+          let batch_11 = make_cues_from_numbers(numbers_11);
+          [res, t] = timeit(function () {
+            return ax._update(batch_11);
+          });
+          console.log("initialise batch sorted cues ", res.size, " ", t);
+
+          // insert after initialise
+          let numbers_22 = make_random_floats(10, {scale:DATASIZE});
+          let batch_22 = make_cues_from_numbers(numbers_22);
+          [res, t] = timeit(function () {
+            return ax._update(batch_22);
+          });
+          console.log("insert small batch random cues ", res.size, " ", t);
 
           [res, t] = timeit(function () {
             return ax.clear();
@@ -278,7 +300,7 @@
           [res, t] = timeit(function () {
             return ax._update(batch_3);
           });
-          console.log("initialise batch_3 random cues ", res.size, " ", t);
+          console.log("initialise batch random cues ", res.size, " ", t);
 
           // insert after initialise
           let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
@@ -287,6 +309,10 @@
             return ax._update(batch_4);
           });
           console.log("insert batch_4 random cues ", res.size, " ", t);
+
+          console.log("cueMap", ax._cueMap.size);
+          console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
 
           // lookup
           let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
@@ -322,7 +348,9 @@
           });
           console.log("remove batch_4 random cues ", res.size, " ", t);
 
- 
+          console.log("cueMap", ax._cueMap.size);
+          console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
 
 
         };

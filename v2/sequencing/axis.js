@@ -124,7 +124,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			efficient lookup of cues by key	
 			key -> cue
 		*/
-		this._keyMap = new Map();
+		this._cueMap = new Map();
 
 		/*
 			Initialise set of CueBuckets
@@ -155,16 +155,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		for (let cueBucket of this._cueBuckets.values()) {
 			cueBucket.clear();
 		}
-		// clear keyMap
-		let keyMap = this._keyMap;
-		this._keyMap = new Map();
+		// clear cueMap
+		let cueMap = this._cueMap;
+		this._cueMap = new Map();
 		// create change events for all cues
 		let e = [];
-		for (let cue of keyMap.values()) {
+		for (let cue of cueMap.values()) {
 			e.push({'old': cue});
 		}
 		this.eventifyTriggerEvent("change", e);
-		return keyMap;
+		return cueMap;
 	};
 
 
@@ -187,13 +187,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			*/
 			var self = this;
 			Promise.resolve().then(function () {
-				let batch = [].concat(...self._updateBuffer);
-				self._update(batch);
+				self._update([].concat(...self._updateBuffer));
 				// empty updateBuffer
 				self._updateBuffer = [];			
 			});
 		}
 	};
+
 
 	/*
 		ADD CUE / REMOVE CUE
@@ -233,15 +233,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 
 		if cues do not have an interval property, this means to
-		delete the cue. if not the cue is added - or modified if 
+		delete the cue. If not, the cue is added - or modified if 
 		a cue with the same key already exists
 
 		remove_cue = {key:key}
 
-
 		batchMap key -> {new: new_cue, old: old_cue}
 
-		BatchMap is generated during batch processing, 
+		BatchMap is generated during initial batch processing, 
 		representing the effects of the entire cue batch, 
 		thus making cue batch processing into an atomic operation.
 
@@ -266,46 +265,29 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		/*
 			process cue batch to make batchMap 
-			- distinguish add from modify by including old values from keymap
+			- distinguish add from modify by including old values from cueMap
 			- collapse if same cue is mentioned multiple times
 		*/
 		let batchMap = new Map(); // key -> {new:new_cue, old:old_cue}
 		let len = cues.length;
-		let init = this._keyMap.size == 0;
+		let init = this._cueMap.size == 0;
 		for (let i=0; i<len; i++) {
     		let cue = cues[i];
     		// check cue
     		if (cue == undefined || cue.key == undefined) {
     			throw new Error("illegal cue", cue);
     		}
-    		// check if cue has already been seen in this batch
-    		let currentItem = batchMap.get(cue.key);
-    		if (currentItem == undefined) {
-    			// cue has not been seen before - fetch from keymap
-    			let old_cue = (init) ? undefined : this._keyMap.get(cue.key);
-    			currentItem = {old:old_cue};
-    		}
-    		// update currentItem.new - preserve currentItem.old
-    		if (cue.interval != undefined) {
-    			// add or modify
-    			currentItem.new = cue;
-    		} else {
-    			// delete
-    			currentItem.new = undefined;
-    			/*
-    				delete operations on cues that did not exist before
-    				the batch started causes all previous operations to be dropped
-    				clean up by removing item in batchMap
-				*/
-				if (currentItem.new == undefined && currentItem.old == undefined) {
-					batchMap.delete(cue.key);
-					continue;
-				}
-    		}
-    		// update eventMap
-    		batchMap.set(cue.key, currentItem);
+    		// update batchMap
+    		let old_cue = (init) ? undefined : this._cueMap.get(cue.key);
+    		let new_cue = (cue.interval == undefined ) ? undefined : cue;
+    		if (new_cue == undefined && old_cue == undefined) {
+	    		// attempt at remove cue which did not exist before update
+    			// noop - remove from batchMap
+    			batchMap.delete(cue.key);
+  			} else {
+	    		batchMap.set(cue.key, {new:new_cue, old:old_cue});
+  			}
 		}
-
 
         /*
 			cue processing based on batchMap
@@ -322,12 +304,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	Axis.prototype._processCues = function (batchMap) {
 		for (let item of batchMap.values()) {
-			// update keyMap
-			if (item.new) {
-				this._keyMap.set(item.new.key, item.new);
-			} else {
-				this._keyMap.delete(item.old.key);
-			}
 			// update cue buckets
 			if (item.old) {
 				let cueBucketId = getCueBucketId(item.old.interval.length);
@@ -337,6 +313,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				let cueBucketId = getCueBucketId(item.new.interval.length);
 				let cueBucket = this._cueBuckets.get(cueBucketId);
 				cueBucket.processCue("add", item.new);
+			}
+			// update cueMap
+			if (item.new) {
+				this._cueMap.set(item.new.key, item.new);
+			} else {
+				this._cueMap.delete(item.old.key);
 			}
 		}
 		// flush all buckets so updates take effect
@@ -406,19 +388,19 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 
 	Axis.prototype.has = function (key) {
-		return this._keyMap.has(key);
+		return this._cueMap.has(key);
 	};
 
 	Axis.prototype.get = function (key) {
-		return this._keyMap.get(key);
+		return this._cueMap.get(key);
 	};
 
 	Axis.prototype.keys = function () {
-		return this._keyMap.keys();
+		return this._cueMap.keys();
 	};
 
 	Axis.prototype.cues = function () {
-		return this._keyMap.values();
+		return this._cueMap.values();
 	};
 
 
@@ -459,8 +441,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		this._pointIndex = new BinarySearch();
 
 		// bookeeping during batch processing
-		this._created = new Map(); // value -> [cue, ...]
-		this._dirty = new Map(); // value -> [cue, ...]
+		this._created = new Set(); // point
+		this._dirty = new Set(); // point
 	};
 
 
@@ -516,41 +498,28 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	CueBucket.prototype.processCue = function (op, cue) {
 
 		let points, point, cues;
-
 		if (cue.singular) {
 			points = [cue.interval.low]
 		} else {
 			points = [cue.interval.low, cue.interval.high];
 		}
+
+		let init = (this._pointMap.size == 0);
+
 		for (let i=0; i<points.length; i++) {
 			point = points[i];
-			cues = this._created.get(point);
-			if (cues == undefined) {
-				// point not found in created
-				cues = this._pointMap.get(point);
-				if (cues == undefined) {
-					// point not found in pointMap either
-					// register in created - [] means delete
-					cues = (op == "add") ? [cue] : [];
-					this._created.set(point, cues);
-				} else {
-					// cues found in pointMap - update
-					// this updates the cues list directly in pointMap
-					if (op == "add") {
-						addCueToArray(cues, cue);
-					} else {
-						let empty = removeCueFromArray(cues, cue);
-						if (empty) {
-							this._dirty.set(point, cues);
-						}
-					}
-				}	
+			cues = (init) ? undefined : this._pointMap.get(point);
+			if (cues == undefined) {	
+				cues = [];
+				this._pointMap.set(point, cues);
+				this._created.add(point);
+			}
+			if (op == "add") {
+				addCueToArray(cues, cue);
 			} else {
-				// point found in created - update
-				if (op == "add") {
-					addCueToArray(cues, cue);
-				} else {
-					removeCueFromArray(cues, cue);			
+				let empty = removeCueFromArray(cues, cue);
+				if (empty) {
+					this._dirty.add(point);
 				}
 			}
 		}
@@ -568,16 +537,23 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		- points to insert - created and non-empty
 	*/
 	CueBucket.prototype.flush = function () {
-		// update pointMap and pointIndex
+		if (this._created.size == 0 && this._dirty.size == 0) {
+			return;
+		}
+
+		// update pointIndex
 		let to_remove = [];
 		let to_insert = [];
-		for (let [point, cues] of this._created.entries()) {
+		for (let point of this._created.values()) {
+			let cues = this._pointMap.get(point);
 			if (cues.length > 0) {
 				to_insert.push(point);
-				this._pointMap.set(point, cues);
-			} 
+			} else {
+				this._pointMap.delete(point);
+			}
 		}
-		for (let [point, cues] of this._dirty.entries()) {
+		for (let point of this._dirty.values()) {
+			let cues = this._pointMap.get(point);
 			if (cues.length == 0) {
 				to_remove.push(point);
 				this._pointMap.delete(point);
