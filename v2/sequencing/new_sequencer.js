@@ -159,35 +159,22 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	/*
 		Sequencer EArg
 	*/
-	var SequencerEArg = function (now, point, cue, directionInt, cause, verb, dueTs) {
-		this.cue = cue;
-		this.point = point;
-		this.pointType = getPointType(point, cue.interval);
-		this.dueTs = dueTs || now;
-		this.delay = now - this.dueTs;
-		this.directionType = DirectionType.fromInteger(directionInt);
-		this.type = (verb === VerbType.EXIT) ? "remove" : "change";
-		this.cause = cause;
-		this.enter = (verb === VerbType.ENTER);
-		this.exit = (verb === VerbType.EXIT);
+	var makeEArg = function (now, point, cue, directionInt, cause, verb, dueTs) {
+		return {
+			key: cue.key,
+			interval: cue.interval,
+			data: cue.data,
+			point: point,
+			pointType: getPointType(point, cue.interval),
+			dueTs: dueTs || now,
+			delay: now - dueTs,
+			directionType : DirectionType.fromInteger(directionInt),
+			type: (verb === VerbType.EXIT) ? "remove" : "change",
+			cause: cause,
+			enter: (verb === VerbType.ENTER),
+			exit: (verb === VerbType.EXIT)
+		};
 	};
-
-	SequencerEArg.prototype.toString = function () {
-		var s = "[" +  this.point.toFixed(2) + "]";
-        s += " " + this.cue.key;
-        s += " " + this.cue.interval.toString();
-        s += " " + this.type;
-        var verb = "none";
-        if (this.enter) verb = "enter";
-        else if (this.exit) verb = "exit";
-        s += " (" + this.cause + "," + verb + ")";
-        s += " " + this.directionType;
-        s += " " + this.pointType;
-        s += " delay:" + this.delay.toFixed(4);
-        if (this.cue.data) s += " " + JSON.stringify(this.cue.data);
-        return s;
-	};
-
 
 
 	/*
@@ -467,7 +454,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				const directionInt = motionutils.calculateDirection(this._to.vector, nowVector.timestamp);
 				const eArgList = [];
 				for (let cue of this._activeCues.values()) {
-					eArgList.push(new SequencerEArg(nowVector.timestamp, nowVector.position, cue, directionInt, Cause.INIT, VerbType.ENTER));	
+					eArgList.push(makeEArg(nowVector.timestamp, nowVector.position, cue, directionInt, Cause.INIT, VerbType.ENTER));	
 				}
 				return eArgList;
 			}
@@ -633,7 +620,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			const _now = this._to.clock.now();
 			const eList = [];
 			for (let cue of exitCues.values()) {
-				let eArg = new SequencerEArg(_now, pos, cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, now);
+				let eArg = makeEArg(_now, pos, cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, now);
 				eList.push({type: eArg.type, e:eArg});
 				this._activeCues.delete(cue.key);
 			}
@@ -665,14 +652,14 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		const directionInt = motionutils.calculateDirection(this._to.vector, now);
 		let eArgList = [];
 		for (let cue of exitCues.values()) {
-			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.EXIT));	
+			eArgList.push(makeEArg(now, point, cue, directionInt, cause, VerbType.EXIT));	
 		}
 		for (let cue of enterCues.values()) {
-			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.ENTER));	
+			eArgList.push(makeEArg(now, point, cue, directionInt, cause, VerbType.ENTER));	
 		}
 
 		for (let cue of changeCues.values()) {
-			eArgList.push(new SequencerEArg(now, point, cue, directionInt, cause, VerbType.UPDATE))	
+			eArgList.push(makeEArg(now, point, cue, directionInt, cause, VerbType.UPDATE))	
 		}
 		// make sure events are correctly ordered
 		eArgList = this._reorderEventList(eArgList, directionInt);
@@ -694,8 +681,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
    			task = entry.task;
    			if (task.cue.interval.singular) {
 				// make two events for singular
-				eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.ENTER, entry.ts));
-				eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, entry.ts));
+				eArgList.push(makeEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.ENTER, entry.ts));
+				eArgList.push(makeEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, VerbType.EXIT, entry.ts));
 				// no need to update active Cues
 			} else {
 				// figure out if it is enter or exit 
@@ -704,7 +691,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 				const pointInt = PointType.toInteger(pointType);
 				const verbInt = pointInt * directionInt * -1;
 				const verbType = VerbType.fromInteger(verbInt);
-		    	eArgList.push(new SequencerEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, verbType, entry.ts));
+		    	eArgList.push(makeEArg(now, task.point, task.cue, directionInt, Cause.PLAYBACK, verbType, entry.ts));
 		    	// update activeCues
 		    	if (verbType == VerbType.ENTER) {
 		    		this._activeCues.set(task.cue.key, task.cue);
@@ -953,7 +940,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		var s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
 		console.log(eArgList);
 		eArgList.sort(function (a, b) {
-			return a.cue.interval.low - b.cue.interval.low;
+			return a.interval.low - b.interval.low;
 		}).forEach(function(eArg) {
 			// new point - pop from stack
 			if (eArg.point !== point || eArg.dueTs !== dueTs) {
@@ -983,9 +970,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 					through endpoint (low or high) and this endpoint is CLOSED ] as opposed to OPEN >
 				*/
 				var closed = false;
-				if ((eArg.pointType === PointType.LOW) && eArg.cue.interval.lowInclude) {
+				if ((eArg.pointType === PointType.LOW) && eArg.interval.lowInclude) {
 					closed = true;
-				} else if ((eArg.pointType === PointType.HIGH) && eArg.cue.interval.highInclude) {
+				} else if ((eArg.pointType === PointType.HIGH) && eArg.interval.highInclude) {
 					closed = true;
 				}
 				if (eArg.type === VerbType.ENTER) {
@@ -1084,11 +1071,25 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	    }
 	};
 
-	// Module Definition
-	return {
-		DefaultSequencer : Sequencer,
-		SequencerError : SequencerError
+	var eventToString = function (e) {
+		var s = "[" +  e.point.toFixed(2) + "]";
+        s += " " + e.key;
+        s += " " + e.interval.toString();
+        s += " " + e.type;
+        var verb = "none";
+        if (e.enter) verb = "enter";
+        else if (e.exit) verb = "exit";
+        s += " (" + e.cause + "," + verb + ")";
+        s += " " + e.directionType;
+        s += " " + e.pointType;
+        s += " delay:" + e.delay.toFixed(4);
+        if (e.data) s += " " + JSON.stringify(e.data);
+        return s;
 	};
+	Sequencer.eventToString = eventToString;
+
+	// Module Definition
+	return Sequencer;
 
 });
 

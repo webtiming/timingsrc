@@ -79,7 +79,7 @@
 */
 
 define(['../util/eventify', '../util/motionutils', '../util/interval', './axis', './new_sequencer'], 
-	function (eventify, motionutils, Interval, Axis, seq) {
+	function (eventify, motionutils, Interval, Axis, Sequencer) {
 	
 	'use strict';
 
@@ -117,8 +117,14 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	};
 
 
+    // Event cause
+    const Cause = Object.freeze({
+    	INIT: "init",
+    	TIMINGCHANGE: "timing-change",
+    	CUECHANGE: "cue-change",
+    	PLAYBACK: "playback"
+    });
 
-	var Sequencer = seq.DefaultSequencer;
 
 	var WindowSequencer = function (timingObjectA, timingObjectB, _axis) {
 		if (!(this instanceof WindowSequencer)) {
@@ -235,7 +241,7 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 				eArgList.push({
 					cue: cue,
 	    			type : "change",
-	    			cause: "init",
+	    			cause: Cause.INIT,
 	    			enter : true,
 	    			exit : false
 				});
@@ -291,7 +297,7 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		/*
 			find new active cues
 		*/
-		this._activeCues = this._axis.getCuesByInterval(activeInterval);
+		const activeCues = this._axis.getCuesByInterval(activeInterval);
 
 		/*
 			find exit cues
@@ -322,12 +328,14 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 
 	    // make event items from enter/exit keys
 	    const eList = [];
-	    const cause = (eventMap) ? "cue-change" : "playback";
+	    const cause = (eventMap) ? Cause.CUECHANGE : Cause.PLAYBACK;
 		for (let cue of exitCues.values()) {
 			eList.push({
 				type: "remove", 
 	    		e: {
-	    			cue: cue,
+	    			key: cue.key,
+	    			interval: cue.interval,
+	    			data: cue.data,
 	    			type : "remove",
 	    			cause : cause,
 	    			enter: false,
@@ -339,7 +347,9 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 			eList.push({
 	    		type: "change", 
 	    		e: {
-	    			cue: cue,
+	    			key: cue.key,
+	    			interval: cue.interval,
+	    			data: cue.data,
 	    			type: "change",
 	    			cause : cause,
 	    			enter : true,
@@ -352,6 +362,9 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	    		type: "change", 
 	    		e: {
 	    			cue: cue,
+	    			key: cue.key,
+	    			interval: cue.interval,
+	    			data: cue.data,
 	    			type: "change",
 	    			cause : cause,
 	    			enter : false,

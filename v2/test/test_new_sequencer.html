@@ -14,10 +14,9 @@
       var to, s, createCue, updateCue, removeCue, repeatCue;
 
       require(['timingobject/timingobject', 'sequencing/new_sequencer', 'util/interval' ], 
-        function (timingobject, sequencer, Interval) {
+        function (timingobject, Sequencer, Interval) {
         
         let TimingObject = timingobject.TimingObject;
-        let Sequencer = sequencer.DefaultSequencer;
 
         // Timing Object
         to = new TimingObject({range:[0,20]});
@@ -46,7 +45,7 @@
             s.ready.then(function() {
               s.on("events", function(eList) {
                 for (let eItem of eList.values()) {
-                  console.log(eItem.e.toString());
+                  console.log(Sequencer.eventToString(eItem.e));
                 }
                 console.log([...s.getActiveKeys()])
               });             

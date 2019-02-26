@@ -85,12 +85,12 @@
           document.getElementById("data").innerHTML = html;     
           s.on("change", function (e) {
             console.log(e)
-            var el =  document.getElementById(e.cue.key);
+            var el =  document.getElementById(e.key);
             el.classList.add("active");
           });
           s.on("remove", function (e) {
             console.log(e);
-            var el = document.getElementById(e.cue.key);
+            var el = document.getElementById(e.key);
             el.classList.remove("active");
           });
 
