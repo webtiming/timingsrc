@@ -1,352 +1,733 @@
-/*
-	Copyright 2015 Norut Northern Research Institute
-	Author : Ingar Mæhlum Arntzen
-
-  This file is part of the Timingsrc module.
-
-  Timingsrc is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  Timingsrc is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public License
-  along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
-define (['../util/interval', './sortedarraybinary', './multimap', '../util/eventify'], 
-	function (Interval, SortedArrayBinary, MultiMap, eventify) {
+define (['../util/binarysearch', '../util/interval', '../util/eventify'], 
+	function (BinarySearch, Interval, eventify) {
 
 	'use strict';
 
-	var AxisError = function (message) {
-		this.name = "AxisError";
-		this.message = (message || "");
-	};
-	AxisError.prototype = Error.prototype;
-
-
-	// Operation Types
-	var OpType = Object.freeze({
-		INIT: "init", // used only by sequencer
-		NONE : "none",
-		ADD: "add",
-		UPDATE: "update",
-		REPEAT: "repeat", // update - interval not changed
-		REMOVE: "remove"
-	});
-
-	// POINT TYPES
-    var PointType = Object.freeze({
-		LOW: "low",
-		SINGULAR: "singular",
-		HIGH: "high",
-		INSIDE: "inside",
-		OUTSIDE: "outside",
-		toInteger: function (s) {
-		    if (s === PointType.LOW) return -1;
-		    if (s === PointType.HIGH) return 1;
-		    if (s === PointType.INSIDE) return 2;
-		    if (s === PointType.OUTSIDE) return 3;
-		    if (s === PointType.SINGULAR) return 0;
-		    throw new AxisError("illegal string value for point type");
-		},
-		fromInteger: function (i) {
-			if (i === -1) return PointType.LOW;
-			else if (i === 0) return PointType.SINGULAR;
-			else if (i === 1) return PointType.HIGH;
-			else if (i === 2) return PointType.INSIDE;
-			else if (i === 3) return PointType.OUTSIDE;
-			throw new AxisError("illegal integer value for point type");
-		}
-    });
-
-
 	/*
-		AXIS
-
-		Manages a collection of Intervals.
-		Each interval is identified by a key, and may be inserted or removed using the key, just like a map/dictionary.
-		Interval objects represents an interval on the Axis or real floating point numbers.
-
-		In addition to key access, the Axis provides efficient access to Intervals by search.
-		- lookupByInterval (searchInterval) returns all Intervals whose endpoints are covered by given search Interval
-		- lookupByPoint (x) returns all Intervals in the collection that covers given point.
+		UTILITY
 	*/
 
-	var Axis = function () {
-		// Mapping key to Intervals
-		this._map = {}; // key -> Interval(point,point)
-		// Revers-mapping Interval points to Interval keys
-		this._reverse = new MultiMap(); // point -> [key, ...]
-		// Index for searching Intervals effectively by endpoints - used by lookupByInterval
-		this._index = new SortedArrayBinary(); // [point, point, ...]
-		// No index provided for lookupByPoint
 
-		// Caching data for each key
-		this._cache = {}; // key -> data
-
-		// Events
-		eventify.eventifyInstance(this);
-		this.eventifyDefineEvent("change", {init:true});
-	};
-	eventify.eventifyPrototype(Axis.prototype);
-
-	Axis.prototype.eventifyMakeInitEvents = function (type) {
-        if (type === "change") {
-            return this.items().map(function(item) {
-                item.type = "add";
-                return item;
-            });
-            return  [];
-        }
-        return [];
-    };
-
-	// internal helper function to clean up map, index, reverse and cache during (key,interval) removal
-	Axis.prototype._remove = function (key) {
-		if (this._map.hasOwnProperty(key)) {
-			var interval = this._map[key];
-			// map
-			delete this._map[key];
-			// reverse
-			this._reverse.remove(interval.low, key);
-			this._reverse.remove(interval.high, key);
-			// index remove from index if reverse is empty after remove
-			if (!this._reverse.hasKey(interval.low)) {
-				this._index.remove(interval.low);
-			}
-			if (!this._reverse.hasKey(interval.high)) {
-				this._index.remove(interval.high);
-			}
-			// cache
-			var data;
-			if (this._cache.hasOwnProperty(key)) {
-				data = this._cache[key];
-				delete this._cache[key];
-			}
-			// return old
-			return { type: OpType.REMOVE, key: key, interval: interval, data: data};		
-		} else {
-			return {type: OpType.NONE, key: key, interval: undefined, data: undefined};
+	/* 
+		concat two arrays without creating a copy
+		push elements from the shortes into the longest
+		return the longest
+	*/
+	const mergeArrays = function(arr1, arr2) {
+		const [shortest, longest] = (arr1.length <= arr2.length) ? [arr1, arr2] : [arr2, arr1];
+		let len = shortest.length;
+		for (let i=0; i<len; i++) {
+			longest.push(shortest[i]);
 		}
-	};
-
-	// internal helper function to insert (key, interval, data) into map, index, reverse and cache
-	Axis.prototype._insert = function (key, interval, data) {
-		var res = {key: key, interval: interval, data: data};
-		if (this._map.hasOwnProperty(key)) {
-			// UPDATE
-			res.old_interval = this._map[key];
-			res.old_data = this._cache[key];
-			// clear old values
-			this._remove(key);
-			/*
-			indicate if interval was changed or remained the same
-			UPDATE means that interval was updated - affecting the sequencer
-			REPEAT means that interval was not changed but repeated. 
-			This is typically the case if data was modified without affecting the timing aspects
-			*/
-			if (interval.equals(res.old_interval)) {
-				res.type = OpType.REPEAT;
-			} else {
-				res.type = OpType.UPDATE;
-			}
-		} else {
-			res.type = OpType.ADD;
-		}
-		// map
-		this._map[key] = interval;
-		// index add to index if reverse is empty before insert
-		if (!this._reverse.hasKey(interval.low)) {
-			this._index.insert(interval.low);
-		}
-		if (!this._reverse.hasKey(interval.high)) {
-			this._index.insert(interval.high);
-		}
-		// reverse index
-		this._reverse.insert(interval.low, key);
-		this._reverse.insert(interval.high, key);
-		// cache
-		this._cache[key] = data;
-
-		return res;		
+		return longest;
 	};
 
 
 	/*
-		UPDATEALL
-		- process a batch of operations
-		- adds, updates or removes args [{key:key, interval:interval},] 
+		Add cue to array
 	*/
-	Axis.prototype.updateAll = function (args) {
-		var e, eList = [], key, interval, data;
-		args.forEach(function(arg){
-			key = arg.key;
-			interval = arg.interval;
-			data = arg.data;
-			if (typeof key !== 'string') throw new AxisError("key is " + typeof key + " - must be string");
-			if (interval === undefined) {
-				e = this._remove(key);
-			} else {
-				if (interval instanceof Interval === false) throw new AxisError("parameter must be instanceof Interval");
-				e = this._insert(key, interval, data);
+	var addCueToArray = function (arr, cue) {
+		// cue equality defined by key property
+		if (arr.length == 0) {
+			arr.push(cue);
+		} else {		
+			let idx = arr.findIndex(function (_cue) { 
+				return _cue.key == cue.key;
+			});
+			if (idx == -1) {
+				arr.push(cue);
 			}
-			this.eventifyTriggerEvent("change", e);
-			eList.push(e);
-		}, this);
-		// return elist
-		return eList;	
+		}
+		return arr.length;
 	};
+
+	/*
+		Remove cue from array
+	*/
+	var removeCueFromArray = function (arr, cue) {
+		// cue equality defined by key property 
+		if (arr.length == 0) {
+			return true;
+		} else {		
+			let idx = arr.findIndex(function (_cue) { 
+				return _cue.key == cue.key;
+			});
+			if (idx > -1) {
+				arr.splice(idx, 1);
+			}
+			return arr.length == 0;
+		}
+	};
+
+	/*
+		returns true if interval_A and interval_B
+		- are back-to-back on the timeline, with a shared endpoint
+		- overlaps exclusively on that endpoint
+		  no overlap: ><, >[, ]< 
+		  overlap: ][
+		- else return false 
+	*/
+	var exclusiveEndpointOverlap = function (interval_A, interval_B) {
+		// consider A,B
+		if (interval_A.high == interval_B.low) {
+			if (interval_A.highInclude && interval_B.lowInclude) {
+				return true;
+			}
+		} else {
+			// consider B,A
+			if (interval_B.high == interval_A.low) {
+				if (interval_B.highInclude && interval_A.lowInclude) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
+
 	
-
-	// shorthand for update single (key, interval) pair
-	Axis.prototype.update = function (key, interval, data) {
-		return this.updateAll([{key:key, interval:interval, data:data}]);
-	};
 
 
     /*
-		AXIS SEARCH
+		Setup for cue buckets.
     */
+    const CueBucketIds = [0,10,100,1000,10000,100000, Infinity];
+    var getCueBucketId = function (length) {
+    	for (let i=0; i<CueBucketIds.length; i++) {
+    		if (length <= CueBucketIds[i]) {
+    			return CueBucketIds[i];
+    		}
+    	}
+    };
+
+
+    /*
+		Lookupmethods
+    */
+    const LookupMethod = Object.freeze({
+    	CUES: "cues",
+    	CUEPOINTS: "cuepoints"
+    });
+
+	
+	/*
+		this implements Axis, a datastructure for efficient lookup of cues on a timeline
+		- cues may be tied to one or two points on the timeline, this
+		is expressed by an Interval.
+		- cues are indexed both by key and by cuepoint values
+		- cues are maintained in buckets, based on their interval length, for efficient lookup
+	*/
+
+	var Axis = function () {
+
+		/*
+			efficient lookup of cues by key	
+			key -> cue
+		*/
+		this._cueMap = new Map();
+
+		/*
+			Initialise set of CueBuckets
+			Each CueBucket is responsible for cues of a certain length
+		*/
+		this._cueBuckets = new Map();  // CueBucketId -> CueBucket
+		for (let i=0; i<CueBucketIds.length; i++) {
+			let cueBucketId = CueBucketIds[i];
+			this._cueBuckets.set(cueBucketId, new CueBucket(cueBucketId));
+		}
+
+		// buffer for addCue, removeCue requests
+		this._updateBuffer = [];
+
+		// Change event
+		eventify.eventifyInstance(this, {init:false});
+		this.eventifyDefineEvent("change", {init:false});
+	};
+	eventify.eventifyPrototype(Axis.prototype);
+
 
 
 	/*
-		Find keys for intervals that cover x.
-		Simply scan all intervals in collection - no index provided.
-		x undefined means all keys in collection
+		CLEAR
+	*/
+	Axis.prototype.clear = function () {
+		// clear cue Buckets
+		for (let cueBucket of this._cueBuckets.values()) {
+			cueBucket.clear();
+		}
+		// clear cueMap
+		let cueMap = this._cueMap;
+		this._cueMap = new Map();
+		// create change events for all cues
+		let e = [];
+		for (let cue of cueMap.values()) {
+			e.push({'old': cue});
+		}
+		this.eventifyTriggerEvent("change", e);
+		return cueMap;
+	};
 
-		returns map {key -> undefined}
+
+
+	/*
+		UPDATE
+
+		update adds a batch of cues to the update buffer
+		the batch will be delivered to _update in later microtask.
+
+		This allows repeated calls to update to be
+		collected into one batch.
+	*/
+	Axis.prototype.update = function (cues) {
+		this._updateBuffer.push(cues);
+		if (this._updateBuffer.length === 1) {
+			/*
+				updateBuffer just became non-empty
+				initiate triggering of real update
+			*/
+			var self = this;
+			Promise.resolve().then(function () {
+				self._update([].concat(...self._updateBuffer));
+				// empty updateBuffer
+				self._updateBuffer = [];			
+			});
+		}
+	};
+
+
+	/*
+		ADD CUE / REMOVE CUE
+
+		addCue and removeCue are convenience functions
+		for requesting cue operations to the axis.
+
+		They may be invoked multiple times in say a for-loop,
+		but all cues will still be delivered in one batch to 
+		the internal update operation.
+
+		Actual cue processing happens on the later microtasks, 
+		so one cannot expect to see the effect of these operations 
+		directly after the function call.
 	*/
 
-	Axis.prototype.lookupKeysByPoint = function (x) {
-		var interval, res = {};
-		if (x === undefined) {
-			Object.keys(this._map).forEach(function (key) {
-				res[key] = undefined;
-			});
+	Axis.prototype.addCue = function(key, interval, data) {
+		this.update([{key:key, interval:interval, data:data}]);
+	};
+
+	Axis.prototype.removeCue = function(key) {
+		this.update([{key:key}]);
+	};
+
+
+	/*
+		INTERNAL UPDATE
+
+		- add, modify or delete cues
+
+		takes a list of cues
+		
+		cue = {
+			key:key,
+			interval: Interval,
+			data: data
+		}
+
+		if cues do not have an interval property, this means to
+		delete the cue. If not, the cue is added - or modified if 
+		a cue with the same key already exists
+
+		remove_cue = {key:key}
+
+		batchMap key -> {new: new_cue, old: old_cue}
+
+		BatchMap is generated during initial batch processing, 
+		representing the effects of the entire cue batch, 
+		thus making cue batch processing into an atomic operation.
+
+		- If operation applies to cue that already exists, the old cue
+		  will be included. 
+
+		- If multiple operations in a batch apply to the same 
+		cue, items will effectively be collapsed into one operation. 
+	
+		- If a cue was available before cue processing started,
+		this will be reported as old value (if this cue has been modified
+		in any way), even if the cue has been modified multiple times
+		during the batch. The last cue modification on a given key defines the new
+		cue. 
+
+		- If a cue is both added and removed in the same batch,
+		it will not be included in items.
+	*/
+
+	
+	Axis.prototype._update = function(cues) {
+
+		/*
+			process cue batch to make batchMap 
+			- distinguish add from modify by including old values from cueMap
+			- collapse if same cue is mentioned multiple times
+		*/
+		let batchMap = new Map(); // key -> {new:new_cue, old:old_cue}
+		let len = cues.length;
+		let init = this._cueMap.size == 0;
+		for (let i=0; i<len; i++) {
+    		let cue = cues[i];
+    		// check cue
+    		if (cue == undefined || cue.key == undefined) {
+    			throw new Error("illegal cue", cue);
+    		}
+    		// update batchMap
+    		let old_cue = (init) ? undefined : this._cueMap.get(cue.key);
+    		let new_cue = (cue.interval == undefined ) ? undefined : cue;
+    		if (new_cue == undefined && old_cue == undefined) {
+	    		// attempt at remove cue which did not exist before update
+    			// noop - remove from batchMap
+    			batchMap.delete(cue.key);
+  			} else {
+	    		batchMap.set(cue.key, {new:new_cue, old:old_cue});
+  			}
+		}
+
+        /*
+			cue processing based on batchMap
+        */
+        this._processCues(batchMap);
+		this.eventifyTriggerEvent("change", batchMap);
+		return batchMap;
+	};
+
+
+	/*
+		internal function: process batchMap,
+		dispatch cue operations to appropriate cue bucket
+	*/
+	Axis.prototype._processCues = function (batchMap) {
+		for (let item of batchMap.values()) {
+			// update cue buckets
+			if (item.old) {
+				let cueBucketId = getCueBucketId(item.old.interval.length);
+				this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
+			}
+			if (item.new) {
+				let cueBucketId = getCueBucketId(item.new.interval.length);
+				let cueBucket = this._cueBuckets.get(cueBucketId);
+				cueBucket.processCue("add", item.new);
+			}
+			// update cueMap
+			if (item.new) {
+				this._cueMap.set(item.new.key, item.new);
+			} else {
+				this._cueMap.delete(item.old.key);
+			}
+		}
+		// flush all buckets so updates take effect
+		for (let cueBucket of this._cueBuckets.values()) {
+			cueBucket.flush();
+		}
+	};
+
+	/*
+		internal function: cue lookup across all buckets
+	*/
+	Axis.prototype._lookupCues = function (lookupMethod, interval) {
+		const res = [];
+		for (let cueBucket of this._cueBuckets.values()) {
+			let cues = cueBucket.lookup(lookupMethod, interval);
+			if (cues.length > 0) {
+				res.push(cues);
+			}
+		}
+		return [].concat(...res);
+	};
+
+	/*
+		getCuePointsByInterval
+
+		returns (point, cue) for all points covered by given interval
+
+		returns: 
+			- list of cuepoints, from cue endpoints within interval
+			- [{point: point, cue:cue}]		
+	*/
+	Axis.prototype.getCuePointsByInterval = function (interval) {
+		return this._lookupCues(LookupMethod.CUEPOINTS, interval);
+	};
+
+	/*
+		getCuesByInterval
+		
+		returns all cues that cover at least one point that is also covered by given interval  
+
+		returns:
+			- Map : key -> cue
+
+	*/
+	Axis.prototype.getCuesByInterval = function (interval) {
+		let cues = this._lookupCues(LookupMethod.CUES, interval);
+		// Avoid duplicates by putting all cues into a Map
+		return new Map(cues.map(function (cue){
+			return [cue.key, cue];
+		}));
+	};
+
+	/*
+		Similar to getCuesByInterval, but removing cues.
+	*/
+	Axis.prototype.removeCuesByInterval = function (interval) {
+		let cues = this._lookupCues(LookupMethod.CUES, interval);
+		let removeCues = cues.map(function (cue) {
+			return {key:cue.key};
+		});
+		return this._update(removeCues);
+	};
+
+
+	/*
+		Accessors
+	*/
+
+	Axis.prototype.has = function (key) {
+		return this._cueMap.has(key);
+	};
+
+	Axis.prototype.get = function (key) {
+		return this._cueMap.get(key);
+	};
+
+	Axis.prototype.keys = function () {
+		return this._cueMap.keys();
+	};
+
+	Axis.prototype.cues = function () {
+		return this._cueMap.values();
+	};
+
+
+
+
+	/*
+		CueBucket is a bucket of cues limited to specific length
+	*/
+
+
+	var CueBucket = function (maxLength) {
+		
+		// max length of cues in this bucket
+		this._maxLength = maxLength;
+
+		/*
+			pointMap maintains the associations between values (points on 
+			the timeline) and cues that reference such points. A single point value may be 
+			referenced by multiple cues, so one point value maps to a list of cues.
+	
+			value -> [cue, ....]
+		*/ 
+		this._pointMap = new Map();
+
+
+		/*
+			pointIndex maintains a sorted list of numbers for efficient lookup.
+			A large volume of insert and remove operations may be problematic
+			with respect to performance, so the implementation seeks to
+			do a single bulk update on this structure, for each batch of cue
+			operations (i.e. each invocations of addCues). In order to do this 
+			all cue operations are processed to calculate a single batch 
+			of deletes and a single batch of inserts which then will be applied to 
+			the pointIndex in one atomic operation.
+
+			[1.2, 3, 4, 8.1, ....]
+		*/
+		this._pointIndex = new BinarySearch();
+
+		// bookeeping during batch processing
+		this._created = new Set(); // point
+		this._dirty = new Set(); // point
+	};
+
+
+	/* 
+
+		CUE BATCH PROCESSING
+
+		Needs to translates cue operations into a minimum set of 
+		operations on the pointIndex.
+
+		To do this, we need to record points that are created and
+		points which are modified.
+		
+		The total difference that the batch of cue operations
+		amounts to is expressed as one list of values to be 
+		deleted, and and one list of values to be inserted. 
+		The update operation of the pointIndex will process both 
+		in one atomic operation.
+
+		On flush both the pointMap and the pointIndex will brought
+		up to speed
+
+		created and dirty are used for bookeeping during 
+		processing of a cue batch. They are needed to 
+		create the correct diff operation to be applied on pointIndex.
+
+		created : includes values that were not in pointMap 
+		before current batch was processed
+
+		dirty : includes values that were in pointMap
+		before curent batch was processed, and that
+		have been become empty at least at one point during cue 
+		processing. 
+
+		created and dirty are used as temporary alternatives to pointMap.
+		after the cue processing, pointmap will updated based on the
+		contents of these two.
+
+		operation add or remove for given cue
+		
+		this method may be invoked at most two times for the same key.
+		- first "remove" on the old cue
+		- second "add" on the new cue 
+
+
+		"add" means point to be added to point
+		"remove" means cue to be removed from point
+
+		process buffers operations for pointMap and index so that 
+		all operations may be applied in one batch. This happens in flush 
+	*/
+
+	CueBucket.prototype.processCue = function (op, cue) {
+
+		let points, point, cues;
+		if (cue.singular) {
+			points = [cue.interval.low]
 		} else {
-			Object.keys(this._map).forEach(function(key){
-				interval = this._map[key];
-				if (interval.coversPoint(x)) {
-					res[key] = undefined;
+			points = [cue.interval.low, cue.interval.high];
+		}
+
+		let init = (this._pointMap.size == 0);
+
+		for (let i=0; i<points.length; i++) {
+			point = points[i];
+			cues = (init) ? undefined : this._pointMap.get(point);
+			if (cues == undefined) {	
+				cues = [];
+				this._pointMap.set(point, cues);
+				this._created.add(point);
+			}
+			if (op == "add") {
+				addCueToArray(cues, cue);
+			} else {
+				let empty = removeCueFromArray(cues, cue);
+				if (empty) {
+					this._dirty.add(point);
 				}
-			}, this);		
+			}
+		}
+	};
+
+	/*
+		Batch processing is completed
+		Commit changes to pointIndex and pointMap.
+
+		pointMap
+		- update with contents of created
+
+		pointIndex
+		- points to delete - dirty and empty
+		- points to insert - created and non-empty
+	*/
+	CueBucket.prototype.flush = function () {
+		if (this._created.size == 0 && this._dirty.size == 0) {
+			return;
+		}
+
+		// update pointIndex
+		let to_remove = [];
+		let to_insert = [];
+		for (let point of this._created.values()) {
+			let cues = this._pointMap.get(point);
+			if (cues.length > 0) {
+				to_insert.push(point);
+			} else {
+				this._pointMap.delete(point);
+			}
+		}
+		for (let point of this._dirty.values()) {
+			let cues = this._pointMap.get(point);
+			if (cues.length == 0) {
+				to_remove.push(point);
+				this._pointMap.delete(point);
+			}
+		}
+		this._pointIndex.update(to_remove, to_insert);
+		// cleanup
+		this._created.clear();
+		this._dirty.clear();
+	};
+
+	/*
+		lookup dispatches to given lookupMethod.
+	*/
+	CueBucket.prototype.lookup = function (lookupMethod, interval) {
+		if (this._pointIndex.length == 0) {
+			return [];
+		}
+		if (lookupMethod == LookupMethod.CUEPOINTS) {
+			return this._getCuesFromInterval(interval, {cuepoint: true});
+		} else if (lookupMethod == LookupMethod.CUES){
+			return this._getCuesByInterval(interval);
+		} else {
+			throw new Error("lookupmethod not supported", lookupMethod);
+		}
+	};
+
+
+	/*
+		_getCuesFromInterval
+
+		internal utility function to find cues from endpoints in interval
+
+		getCuesByInterval will find points in interval in pointIndex and 
+		find the associated cues from pointMap. 
+
+		Cues may be reported more than once
+		Any specific order of cues is not defined.
+
+		(at least one cue endpoint will be equal to point)
+
+		Note: This function returns only cues with endpoints covered by the interval.
+		It does not return cues that cover the interval (i.e. one endpoint at each
+		side of the interval).
+
+		options cuepoint signals to include both the cue and its point
+		{point:point, cue:cue}
+
+		the order is defined by point values (ascending), whether points are included or not.
+		each point value is reported once, yet one cue
+		may be reference by 1 or 2 points.
+
+		returns list of cues, or list of cuepoints, based on options
+	*/
+	CueBucket.prototype._getCuesFromInterval = function(interval, options={}) {
+		let cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false; 
+		let points = this._pointIndex.lookup(interval);
+		let res = [];
+		let len = points.length;
+		for (let i=0; i<len; i++) {
+			let point = points[i];
+			let cues = this._pointMap.get(point);
+			for (let j=0; j<cues.length; j++) {
+				let cue = cues[j];
+				/*
+					cues sharing only the endpoints of interval
+					(cue.interval and interval are back-to-back)
+					must be checked specifically to see if they 
+					really overlap at the endpoint
+					no overlap: ><, >[ or ]<
+					overlap: ][     
+				*/
+				let overlap = true;
+				if (point == interval.low || point == interval.high) {
+					overlap = exclusiveEndpointOverlap(interval, cue.interval);
+				}
+				if (overlap) {
+					let item = (cuepoint) ? {point:point, cue:cue} : cue;
+					res.push(item);
+				}
+			}
 		}
 		return res;
 	};
 
+
 	/*
-		Find keys for all intervals that partially or fully covers search interval.
-		returns map {key -> undefined}
-		used only by window sequencer
-	*/
-	Axis.prototype.lookupKeysByInterval = function (interval) {
-		// [{key: key, point: point, interval:interval},]		
-		var res = {};
-
-		// find keys of all intervals that have endpoints within interval
-		this._index.lookup(interval).forEach(function (point) {
-			this._reverse.getItemsByKey(point).forEach(function (item) {
-				res[item.value] = undefined;
-			});
-		}, this);
-
-		// add keys of all intervals that have endpoints on both sides of interval
-		var leftInterval = new Interval(-Infinity, interval.low);
-		var rightInterval = new Interval(interval.high, Infinity);
-		this._index.lookup(leftInterval).forEach(function(point) {
-			this._reverse.getItemsByKey(point).forEach(function (item) {
-				var _interval = this._map[item.value];
-				if (rightInterval.coversPoint(_interval.high)) {
-					res[item.value] = undefined;
-				}
-			}, this);
+		Find all cues overlapping interval.
 		
-		}, this);
+		This task can be split in two parts
+		- 1) INSIDE: find all cues that have at least one endpoint covered by interval
+		- 2) OUTSIDE: find all cues that have one endpoint on each side of interval
+		
+		Returns list of cues
+	*/
 
-		return res;
+
+	CueBucket.prototype._getCuesByInterval = function (interval) {
+		/* 
+			1) all cues with at least one endpoint covered by interval 
+		*/
+		const cues_inside = this._getCuesFromInterval(interval);
+
+		/*
+			2)
+
+			define left and right intervals that cover areas on the timeline to
+			the left and right of search interval. 
+			These intervals are limited by the interval maxLength of cues in this bucket,
+			so that:
+			 - left interval [interval.high-maxLengt, interval.low]
+			 - right interval [interval.high, interval.low+maxlength]
+
+			Only need to search one of them. Preferably the one with the fewest cues.
+			However, doing two searches is likely more expensive than choosing the longest,
+			so no point really.
+
+			Choice - always search left.
+
+			If interval.length > maxLength, then there can be no overlapping intervals in this bucket
+
+			Endpoints must not overlap with endpoints of <interval>
+			- if interval.lowInclude, then leftInterval.highInclude must be false,
+			  and vice versa. 
+			- the same consideration applies to interval.highInclude			
+		*/
+		if (interval.length > this._maxLength) {
+			return cues_inside;
+		}
+
+		const highIncludeOfLeftInterval = !interval.lowInclude;
+		const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
+
+		const lowIncludeOfRightInterval = !interval.highInclude;		
+		const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
+		
+		/* 
+			iterate leftInterval to find cues that have endpoints covered by rightInterval
+
+			possible optimization - choose the interval with the least points
+			instead of just choosing left.
+			possible optimization - this seek operation would be more effective if
+			singular cues were isolated in a different index. Similarly, one
+			could split the set of cues by the length of their intervals.
+		*/
+		const cues_outside = this._getCuesFromInterval(leftInterval)
+			.filter(function (cue) {
+				// fast test
+				if (interval.high < cue.interval.low) {
+					return true;
+				}
+				// more expensive test that will pick up cornercase
+				// where [a,b] will actually be an outside covering interval for <a,b>
+				return rightInterval.coversPoint(cue.interval.high);
+			});
+
+		return mergeArrays(cues_inside, cues_outside);
 	};
 
 
 	/*
-		Find cues (key,interval, data) for intervals that cover x.
-		Simply scan all intervals in collection - no index provided.
-		x undefined means all (key, interval)
+		remove cues that are fully contained within interval
 	*/
-	Axis.prototype.lookupByPoint = function (x) {
-		var interval, res = [];
-		Object.keys(this._map).forEach(function(key){
-			interval = this._map[key];
-			if (x === undefined || interval.coversPoint(x)) {
-				res.push({key:key, interval: interval, data: this._cache[key]});
-			}
-		}, this);
-		return res;
+	CueBucket.prototype.removeByInterval = function (interval) {
+		
 	};
 
-	/*
-		Find all interval endpoints within given interval 
-	*/
-	Axis.prototype.lookupByInterval = function (interval) {
-		// [{key: key, point: point, interval:interval},]
-		var res = [], items, point;
-		this._index.lookup(interval).forEach(function (point) {
-			this._reverse.getItemsByKey(point).forEach(function (item) {
-				point = item.key;
-				interval = this._map[item.value];
-				res.push({
-					key: item.value,
-					interval: interval,
-					data: this._cache[item.value],
-					point: point,
-					pointType: this.getPointType(point, interval)
-				});
-			}, this);
-		}, this);
-		return res;
-	};
 
-	Axis.prototype.items = function () {return this.lookupByPoint();};
-	Axis.prototype.keys = function () {return Object.keys(this._map);};
+	CueBucket.prototype.clear = function () { 
+		this._pointMap = new Map();
+		this._pointIndex = new BinarySearch();
+	};		
 
-	Axis.prototype.getItem = function (key) {
-		if (this._map.hasOwnProperty(key)) {
-			return {
-				key: key, 
-				interval: this._map[key],
-				data: this._cache[key]
-			};
-		} 
-		return null;
-	};
-
-	Axis.prototype.getInterval = function (key) {
-		return (this._map.hasOwnProperty(key)) ? this._map[key] : null;
-	};
-
-	Axis.prototype.getPointType = function (point, interval) {
-		if (interval.singular && point === interval.low) return PointType.SINGULAR;
-	    if (point === interval.low) return PointType.LOW;
-	    if (point === interval.high) return PointType.HIGH;
-	    if (interval.low < point && point < interval.high) return PointType.INSIDE;
-	    else return PointType.OUTSIDE;
-	};
-
-	Axis.prototype.hasKey = function (key) {
-		return this._map.hasOwnProperty(key);
-	};
 
 	// module definition
-	return {
-		Axis: Axis,
-		OpType : OpType,
-		PointType: PointType
-	};
+	return Axis;
 });
-

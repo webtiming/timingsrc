@@ -178,7 +178,7 @@ define(function () {
 
 	*/
 
-	var eventifyInstance = function (object) {
+	var eventifyInstance = function (object, options) {
 		/*
 			Default event name "events" will fire a list of events
 		*/
@@ -186,9 +186,16 @@ define(function () {
 		object._callbacks = {}; // type -> HandlerMap
 		object._immediateCallbacks = [];
 		object._eBuffer = []; // buffering events before dispatch
+
+		options = options || {}
 		// special event "events"
+		// init flag for builtin event type "events"
+		// default true
+		if (options.init == undefined) {
+			options.init = true;
+		} 
 		object._callbacks["events"] = new HandlerMap();
-		object._callbacks["events"]._options = {init:true};
+		object._callbacks["events"]._options = {init:options.init};
 
 		return object;
 	};
@@ -352,7 +359,7 @@ define(function () {
 			- if handler specificed - trigger only on given handler (for internal use only)
 			- awareness of init-events	
 	    */
-	    _prototype._eventifyTriggerEvent = function (type, e, handlerID) {
+	    _prototype._eventifyTriggerEvent = function (type, e, handlerID) {	
 			var argList, e, eInfo = {};
 			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type); 
 			var handlerMap = this._callbacks[type];

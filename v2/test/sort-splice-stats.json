@@ -1,0 +1,1079 @@
+[
+  {
+    "datasize": 1,
+    "batchsize": 1,
+    "insert-sort": 0.03500000457279384,
+    "insert-splice": 0.29499999072868377,
+    "remove-sort": 0.025000001187436283,
+    "remove-splice": 0.010000003385357559
+  },
+  {
+    "datasize": 1,
+    "batchsize": 5,
+    "insert-sort": 0.1049999991664663,
+    "insert-splice": 0.04999998782295734
+  },
+  {
+    "datasize": 1,
+    "batchsize": 10,
+    "insert-sort": 0.03500000457279384,
+    "insert-splice": 0.029999995604157448
+  },
+  {
+    "datasize": 1,
+    "batchsize": 50,
+    "insert-sort": 0.07500000356230885,
+    "insert-splice": 0.1049999991664663
+  },
+  {
+    "datasize": 1,
+    "batchsize": 100,
+    "insert-sort": 0.12499999138526618,
+    "insert-splice": 0.21499999274965376
+  },
+  {
+    "datasize": 1,
+    "batchsize": 500,
+    "insert-sort": 0.7550000009359792,
+    "insert-splice": 1.5100000018719584
+  },
+  {
+    "datasize": 1,
+    "batchsize": 1000,
+    "insert-sort": 1.600000003236346
+  },
+  {
+    "datasize": 1,
+    "batchsize": 5000,
+    "insert-sort": 9.184999988065101
+  },
+  {
+    "datasize": 1,
+    "batchsize": 10000,
+    "insert-sort": 16.615000000456348
+  },
+  {
+    "datasize": 1,
+    "batchsize": 50000,
+    "insert-sort": 79.71000000543427
+  },
+  {
+    "datasize": 1,
+    "batchsize": 100000,
+    "insert-sort": 187.2049999947194
+  },
+  {
+    "datasize": 1,
+    "batchsize": 500000,
+    "insert-sort": 1002.4850000045262
+  },
+  {
+    "datasize": 1,
+    "batchsize": 1000000,
+    "insert-sort": 2287.140000000363
+  },
+  {
+    "datasize": 5,
+    "batchsize": 1,
+    "insert-sort": 0.15999999595806003,
+    "insert-splice": 0.020000006770715117,
+    "remove-sort": 0.07500000356230885,
+    "remove-splice": 0.014999997802078724
+  },
+  {
+    "datasize": 5,
+    "batchsize": 5,
+    "insert-sort": 0.03499999002087861,
+    "insert-splice": 0.020000006770715117,
+    "remove-sort": 0.015000012353993952,
+    "remove-splice": 0.060000005760230124
+  },
+  {
+    "datasize": 5,
+    "batchsize": 10,
+    "insert-sort": 0.010000003385357559,
+    "insert-splice": 0.01999999221879989
+  },
+  {
+    "datasize": 5,
+    "batchsize": 50,
+    "insert-sort": 0.03500000457279384,
+    "insert-splice": 0.08000001253094524
+  },
+  {
+    "datasize": 5,
+    "batchsize": 100,
+    "insert-sort": 0.07000000914558768,
+    "insert-splice": 0.14500001270789653
+  },
+  {
+    "datasize": 5,
+    "batchsize": 500,
+    "insert-sort": 0.37000000884290785,
+    "insert-splice": 1.2750000023515895
+  },
+  {
+    "datasize": 5,
+    "batchsize": 1000,
+    "insert-sort": 0.9949999948730692
+  },
+  {
+    "datasize": 5,
+    "batchsize": 5000,
+    "insert-sort": 4.549999997834675
+  },
+  {
+    "datasize": 5,
+    "batchsize": 10000,
+    "insert-sort": 11.700000002747402
+  },
+  {
+    "datasize": 5,
+    "batchsize": 50000,
+    "insert-sort": 65.3349999920465
+  },
+  {
+    "datasize": 5,
+    "batchsize": 100000,
+    "insert-sort": 184.76500001270324
+  },
+  {
+    "datasize": 5,
+    "batchsize": 500000,
+    "insert-sort": 1055.7600000029197
+  },
+  {
+    "datasize": 5,
+    "batchsize": 1000000,
+    "insert-sort": 2226.2449999980163
+  },
+  {
+    "datasize": 10,
+    "batchsize": 1,
+    "insert-sort": 0.014999997802078724,
+    "insert-splice": 0.01999999221879989,
+    "remove-sort": 0.01999999221879989,
+    "remove-splice": 0.004999994416721165
+  },
+  {
+    "datasize": 10,
+    "batchsize": 5,
+    "insert-sort": 0.020000006770715117,
+    "insert-splice": 0.014999997802078724,
+    "remove-sort": 0.010000003385357559,
+    "remove-splice": 0.004999994416721165
+  },
+  {
+    "datasize": 10,
+    "batchsize": 10,
+    "insert-sort": 0.025000001187436283,
+    "insert-splice": 0.014999997802078724,
+    "remove-sort": 0.750000006519258,
+    "remove-splice": 0.025000001187436283
+  },
+  {
+    "datasize": 10,
+    "batchsize": 50,
+    "insert-sort": 0.09500001033302397,
+    "insert-splice": 0.06500000017695129
+  },
+  {
+    "datasize": 10,
+    "batchsize": 100,
+    "insert-sort": 0.1049999991664663,
+    "insert-splice": 0.09499999578110874
+  },
+  {
+    "datasize": 10,
+    "batchsize": 500,
+    "insert-sort": 0.7799999875715002,
+    "insert-splice": 3.4499999892432243
+  },
+  {
+    "datasize": 10,
+    "batchsize": 1000,
+    "insert-sort": 0.7650000043213367
+  },
+  {
+    "datasize": 10,
+    "batchsize": 5000,
+    "insert-sort": 6.570000012288801
+  },
+  {
+    "datasize": 10,
+    "batchsize": 10000,
+    "insert-sort": 8.495000001857989
+  },
+  {
+    "datasize": 10,
+    "batchsize": 50000,
+    "insert-sort": 64.56499999330845
+  },
+  {
+    "datasize": 10,
+    "batchsize": 100000,
+    "insert-sort": 174.21499999181833
+  },
+  {
+    "datasize": 10,
+    "batchsize": 500000,
+    "insert-sort": 981.3900000008289
+  },
+  {
+    "datasize": 10,
+    "batchsize": 1000000,
+    "insert-sort": 2310.8999999967637
+  },
+  {
+    "datasize": 50,
+    "batchsize": 1,
+    "insert-sort": 0.029999995604157448,
+    "insert-splice": 0.010000003385357559,
+    "remove-sort": 0.020000006770715117,
+    "remove-splice": 0
+  },
+  {
+    "datasize": 50,
+    "batchsize": 5,
+    "insert-sort": 0.029999995604157448,
+    "insert-splice": 0.014999997802078724,
+    "remove-sort": 0.04499999340623617,
+    "remove-splice": 0.014999997802078724
+  },
+  {
+    "datasize": 50,
+    "batchsize": 10,
+    "insert-sort": 0.03999999898951501,
+    "insert-splice": 0.020000006770715117,
+    "remove-sort": 0.050000002374872565,
+    "remove-splice": 0.01999999221879989
+  },
+  {
+    "datasize": 50,
+    "batchsize": 50,
+    "insert-sort": 0.1049999991664663,
+    "insert-splice": 0.06999999459367245,
+    "remove-sort": 0.07500000356230885,
+    "remove-splice": 0.09000000136438757
+  },
+  {
+    "datasize": 50,
+    "batchsize": 100,
+    "insert-sort": 0.1649999903747812,
+    "insert-splice": 0.15999999595806003
+  },
+  {
+    "datasize": 50,
+    "batchsize": 500,
+    "insert-sort": 1.105000003008172,
+    "insert-splice": 1.9549999997252598
+  },
+  {
+    "datasize": 50,
+    "batchsize": 1000,
+    "insert-sort": 2.884999994421378
+  },
+  {
+    "datasize": 50,
+    "batchsize": 5000,
+    "insert-sort": 13.680000003660098
+  },
+  {
+    "datasize": 50,
+    "batchsize": 10000,
+    "insert-sort": 25.079999992158264
+  },
+  {
+    "datasize": 50,
+    "batchsize": 50000,
+    "insert-sort": 126.89499999396503
+  },
+  {
+    "datasize": 50,
+    "batchsize": 100000,
+    "insert-sort": 197.03999999910593
+  },
+  {
+    "datasize": 50,
+    "batchsize": 500000,
+    "insert-sort": 1006.8350000074133
+  },
+  {
+    "datasize": 50,
+    "batchsize": 1000000,
+    "insert-sort": 2323.0750000075204
+  },
+  {
+    "datasize": 100,
+    "batchsize": 1,
+    "insert-sort": 0.03500000457279384,
+    "insert-splice": 0.010000003385357559,
+    "remove-sort": 0.03999999898951501,
+    "remove-splice": 0.0050000089686363935
+  },
+  {
+    "datasize": 100,
+    "batchsize": 5,
+    "insert-sort": 0.04499999340623617,
+    "insert-splice": 0.00999998883344233,
+    "remove-sort": 0.03999999898951501,
+    "remove-splice": 0.010000003385357559
+  },
+  {
+    "datasize": 100,
+    "batchsize": 10,
+    "insert-sort": 0.050000002374872565,
+    "insert-splice": 0.020000006770715117,
+    "remove-sort": 0.06500000017695129,
+    "remove-splice": 0.025000001187436283
+  },
+  {
+    "datasize": 100,
+    "batchsize": 50,
+    "insert-sort": 0.11500000255182385,
+    "insert-splice": 0.07499998901039362,
+    "remove-sort": 0.20000000949949026,
+    "remove-splice": 0.060000005760230124
+  },
+  {
+    "datasize": 100,
+    "batchsize": 100,
+    "insert-sort": 0.1900000061141327,
+    "insert-splice": 0.16999999934341758,
+    "remove-sort": 0.11999999696854502,
+    "remove-splice": 0.31999999191612005
+  },
+  {
+    "datasize": 100,
+    "batchsize": 500,
+    "insert-sort": 6.439999997382984,
+    "insert-splice": 5.254999996395782
+  },
+  {
+    "datasize": 100,
+    "batchsize": 1000,
+    "insert-sort": 1.325000004726462
+  },
+  {
+    "datasize": 100,
+    "batchsize": 5000,
+    "insert-sort": 4.844999988563359
+  },
+  {
+    "datasize": 100,
+    "batchsize": 10000,
+    "insert-sort": 10.309999997843988
+  },
+  {
+    "datasize": 100,
+    "batchsize": 50000,
+    "insert-sort": 66.02999998722225
+  },
+  {
+    "datasize": 100,
+    "batchsize": 100000,
+    "insert-sort": 191.57999999879394
+  },
+  {
+    "datasize": 100,
+    "batchsize": 500000,
+    "insert-sort": 1034.620000005816
+  },
+  {
+    "datasize": 100,
+    "batchsize": 1000000,
+    "insert-sort": 2215.794999996433
+  },
+  {
+    "datasize": 500,
+    "batchsize": 1,
+    "insert-sort": 0.7449999975506216,
+    "insert-splice": 0.010000003385357559,
+    "remove-sort": 0.1049999991664663,
+    "remove-splice": 0.015000012353993952
+  },
+  {
+    "datasize": 500,
+    "batchsize": 5,
+    "insert-sort": 0.11999999696854502,
+    "insert-splice": 0.00999998883344233,
+    "remove-sort": 0.14999999257270247,
+    "remove-splice": 0.014999997802078724
+  },
+  {
+    "datasize": 500,
+    "batchsize": 10,
+    "insert-sort": 0.13000000035390258,
+    "insert-splice": 0.025000001187436283,
+    "remove-sort": 0.36499999987427145,
+    "remove-splice": 0.01999999221879989
+  },
+  {
+    "datasize": 500,
+    "batchsize": 50,
+    "insert-sort": 0.6449999928008765,
+    "insert-splice": 0.07499998901039362,
+    "remove-sort": 0.29999999969732016,
+    "remove-splice": 0.08499999239575118
+  },
+  {
+    "datasize": 500,
+    "batchsize": 100,
+    "insert-sort": 0.33000000985339284,
+    "insert-splice": 0.17499999376013875,
+    "remove-sort": 0.37000000884290785,
+    "remove-splice": 0.16999999934341758
+  },
+  {
+    "datasize": 500,
+    "batchsize": 500,
+    "insert-sort": 1.5899999998509884,
+    "insert-splice": 2.0400000066729262,
+    "remove-sort": 0.8999999990919605,
+    "remove-splice": 0.6600000051548705
+  },
+  {
+    "datasize": 500,
+    "batchsize": 1000,
+    "insert-sort": 2.770000006421469
+  },
+  {
+    "datasize": 500,
+    "batchsize": 5000,
+    "insert-sort": 15.02500000060536
+  },
+  {
+    "datasize": 500,
+    "batchsize": 10000,
+    "insert-sort": 28.149999998277053
+  },
+  {
+    "datasize": 500,
+    "batchsize": 50000,
+    "insert-sort": 68.3500000013737
+  },
+  {
+    "datasize": 500,
+    "batchsize": 100000,
+    "insert-sort": 194.3299999984447
+  },
+  {
+    "datasize": 500,
+    "batchsize": 500000,
+    "insert-sort": 1024.794999990263
+  },
+  {
+    "datasize": 500,
+    "batchsize": 1000000,
+    "insert-sort": 2270.439999992959
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 1,
+    "insert-sort": 0.2700000040931627,
+    "insert-splice": 0.004999994416721165,
+    "remove-sort": 0.15999999595806003,
+    "remove-splice": 0.010000003385357559
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 5,
+    "insert-sort": 0.2099999983329326,
+    "insert-splice": 0.014999997802078724,
+    "remove-sort": 0.20500000391621143,
+    "remove-splice": 0.014999997802078724
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 10,
+    "insert-sort": 0.2049999893642962,
+    "insert-splice": 0.030000010156072676,
+    "remove-sort": 0.28500000189524144,
+    "remove-splice": 0.01999999221879989
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 50,
+    "insert-sort": 0.38499999209307134,
+    "insert-splice": 0.09500001033302397,
+    "remove-sort": 0.46999999904073775,
+    "remove-splice": 0.10999999358318746
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 100,
+    "insert-sort": 0.4749999934574589,
+    "insert-splice": 0.22000000171829015,
+    "remove-sort": 0.6599999906029552,
+    "remove-splice": 0.21500000730156898
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 500,
+    "insert-sort": 0.9399999980814755,
+    "insert-splice": 0.34499999310355633,
+    "remove-sort": 1.1399999930290505,
+    "remove-splice": 0.7699999987380579
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 1000,
+    "insert-sort": 1.2100000021746382,
+    "remove-sort": 1.2900000001536682
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 5000,
+    "insert-sort": 6.780000010621734
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 10000,
+    "insert-sort": 9.390000006533228
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 50000,
+    "insert-sort": 64.78500000957865
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 100000,
+    "insert-sort": 193.810000011581
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 500000,
+    "insert-sort": 1013.3000000059837
+  },
+  {
+    "datasize": 1000,
+    "batchsize": 1000000,
+    "insert-sort": 2214.030000002822
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 1,
+    "insert-sort": 1.1300000041956082,
+    "insert-splice": 0.03500000457279384,
+    "remove-sort": 1.0349999938625842,
+    "remove-splice": 0.014999997802078724
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 5,
+    "insert-sort": 1.1950000043725595,
+    "insert-splice": 0.06500000017695129,
+    "remove-sort": 1.0949999996228144,
+    "remove-splice": 0.06500000017695129
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 10,
+    "insert-sort": 1.1599999997997656,
+    "insert-splice": 0.07999999797903001,
+    "remove-sort": 1.1100000119768083,
+    "remove-splice": 0.09500001033302397
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 50,
+    "insert-sort": 1.4599999994970858,
+    "insert-splice": 0.40499999886378646,
+    "remove-sort": 1.5149999962886795,
+    "remove-splice": 0.45000000682193786
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 100,
+    "insert-sort": 1.8899999995483086,
+    "insert-splice": 0.8850000012898818,
+    "remove-sort": 1.7150000057881698,
+    "remove-splice": 0.750000006519258
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 500,
+    "insert-sort": 2.2600000083912164,
+    "insert-splice": 5.720000001019798,
+    "remove-sort": 2.9550000035669655,
+    "remove-splice": 3.740000000107102
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 1000,
+    "insert-sort": 11.960000003455207,
+    "remove-sort": 2.390000008745119
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 5000,
+    "insert-sort": 15.984999990905635,
+    "remove-sort": 3.0200000037439167
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 10000,
+    "insert-sort": 10.249999992083758
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 50000,
+    "insert-sort": 62.525000001187436
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 100000,
+    "insert-sort": 189.17500000679865
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 500000,
+    "insert-sort": 988.6400000104913
+  },
+  {
+    "datasize": 5000,
+    "batchsize": 1000000,
+    "insert-sort": 2252.215000000433
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 1,
+    "insert-sort": 1.440000007278286,
+    "insert-splice": 0.050000002374872565,
+    "remove-sort": 1.8199999904027209,
+    "remove-splice": 0.025000001187436283
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 5,
+    "insert-sort": 1.8999999883817509,
+    "insert-splice": 0.14000000373926014,
+    "remove-sort": 2.139999996870756,
+    "remove-splice": 0.0850000069476664
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 10,
+    "insert-sort": 1.919999995152466,
+    "insert-splice": 0.8799999923212454,
+    "remove-sort": 1.620000010007061,
+    "remove-splice": 0.050000002374872565
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 50,
+    "insert-sort": 2.3450000007869676,
+    "insert-splice": 0.19499998597893864,
+    "remove-sort": 1.9100000063190237,
+    "remove-splice": 0.19999999494757503
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 100,
+    "insert-sort": 2.039999992121011,
+    "insert-splice": 0.23499999952036887,
+    "remove-sort": 1.959999994141981,
+    "remove-splice": 0.23999999393709004
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 500,
+    "insert-sort": 1.9150000007357448,
+    "insert-splice": 1.0550000006332994,
+    "remove-sort": 3.4900000027846545,
+    "remove-splice": 1.3699999981326982
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 1000,
+    "insert-sort": 2.9199999989941716,
+    "remove-sort": 3.9450000040233135
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 5000,
+    "insert-sort": 9.17999999364838,
+    "remove-sort": 8.195000002160668
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 10000,
+    "insert-sort": 16.199999998207204,
+    "remove-sort": 4.684999992605299
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 50000,
+    "insert-sort": 71.63500000024214
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 100000,
+    "insert-sort": 201.03999999992084
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 500000,
+    "insert-sort": 988.2099999958882
+  },
+  {
+    "datasize": 10000,
+    "batchsize": 1000000,
+    "insert-sort": 2364.950000002864
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 1,
+    "insert-sort": 9.554999996908009,
+    "insert-splice": 0.5650000093737617,
+    "remove-sort": 19.669999994221143,
+    "remove-splice": 0.025000001187436283
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 5,
+    "insert-sort": 9.414999993168749,
+    "insert-splice": 0.7049999985611066,
+    "remove-sort": 9.655000001657754,
+    "remove-splice": 0.06500000017695129
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 10,
+    "insert-sort": 7.305000006454065,
+    "insert-splice": 0.6500000017695129,
+    "remove-sort": 9.745000003022142,
+    "remove-splice": 0.3549999964889139
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 50,
+    "insert-sort": 12.570000006235205,
+    "insert-splice": 2.2049999970477074,
+    "remove-sort": 9.60000000486616,
+    "remove-splice": 0.5800000071758404
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 100,
+    "insert-sort": 7.519999999203719,
+    "insert-splice": 4.11000000895001,
+    "remove-sort": 8.34000000031665,
+    "remove-splice": 0.9049999935086817
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 500,
+    "insert-sort": 13.409999999566935,
+    "insert-splice": 24.104999989503995,
+    "remove-sort": 12.23500000196509,
+    "remove-splice": 6.070000003091991
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 1000,
+    "insert-sort": 8.795000001555309,
+    "remove-sort": 12.434999996912666
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 5000,
+    "insert-sort": 15.839999992749654,
+    "remove-sort": 22.345000004861504
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 10000,
+    "insert-sort": 21.099999998114072,
+    "remove-sort": 27.870000005350448
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 50000,
+    "insert-sort": 111.42000000108965,
+    "remove-sort": 30.11500000138767
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 100000,
+    "insert-sort": 214.44000001065433
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 500000,
+    "insert-sort": 1156.8249999982072
+  },
+  {
+    "datasize": 50000,
+    "batchsize": 1000000,
+    "insert-sort": 2461.0200000024633
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 1,
+    "insert-sort": 18.744999993941747,
+    "insert-splice": 0.7000000041443855,
+    "remove-sort": 19.45500000147149,
+    "remove-splice": 0.020000006770715117
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 5,
+    "insert-sort": 17.56500000192318,
+    "insert-splice": 0.9700000082375482,
+    "remove-sort": 16.765000007580966,
+    "remove-splice": 0.5099999980302528
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 10,
+    "insert-sort": 18.4949999966193,
+    "insert-splice": 1.3750000071013346,
+    "remove-sort": 17.87999999942258,
+    "remove-splice": 0.7799999875715002
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 50,
+    "insert-sort": 22.68999999796506,
+    "insert-splice": 4.990000001271255,
+    "remove-sort": 18.670000004931353,
+    "remove-splice": 4.2449999891687185
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 100,
+    "insert-sort": 19.354999996721745,
+    "insert-splice": 8.749999993597157,
+    "remove-sort": 19.400000004679896,
+    "remove-splice": 8.759999996982515
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 500,
+    "insert-sort": 20.83499998843763,
+    "insert-splice": 41.91500000888482,
+    "remove-sort": 24.7899999958463,
+    "remove-splice": 41.069999992032535
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 1000,
+    "insert-sort": 26.259999998728745,
+    "remove-sort": 27.3050000105286
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 5000,
+    "insert-sort": 27.870000005350448,
+    "remove-sort": 36.11000000091735
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 10000,
+    "insert-sort": 40.28000000107568,
+    "remove-sort": 42.189999992842786
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 50000,
+    "insert-sort": 125.83999999333173,
+    "remove-sort": 49.329999994370155
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 100000,
+    "insert-sort": 220.48499999800697,
+    "remove-sort": 57.29500000597909
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 500000,
+    "insert-sort": 1140.0350000039907
+  },
+  {
+    "datasize": 100000,
+    "batchsize": 1000000,
+    "insert-sort": 2453.509999992093
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 1,
+    "insert-sort": 101.56500000448432,
+    "insert-splice": 3.3100000000558794,
+    "remove-sort": 103.92500000307336,
+    "remove-splice": 20.51000000210479
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 5,
+    "insert-sort": 109.1149999992922,
+    "insert-splice": 4.569999990053475,
+    "remove-sort": 110.02500000176951,
+    "remove-splice": 3.125000002910383
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 10,
+    "insert-sort": 103.51000000082422,
+    "insert-splice": 6.829999998444691,
+    "remove-sort": 117.5199999997858,
+    "remove-splice": 4.224999996949919
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 50,
+    "insert-sort": 105.85000000719447,
+    "insert-splice": 22.240000005695038,
+    "remove-sort": 112.61999999987893,
+    "remove-splice": 20.66999999806285
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 100,
+    "insert-sort": 112.67999999108724,
+    "insert-splice": 45.66000000340864,
+    "remove-sort": 117.44999999064021,
+    "remove-splice": 40.25999999430496
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 500,
+    "insert-sort": 120.14500000805128,
+    "insert-splice": 219.25999999803025,
+    "remove-sort": 125.61000000278,
+    "remove-splice": 213.5500000003958
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 1000,
+    "insert-sort": 115.64499999803957,
+    "remove-sort": 133.8850000029197
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 5000,
+    "insert-sort": 127.20000000263099,
+    "remove-sort": 155.0100000022212
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 10000,
+    "insert-sort": 136.3450000062585,
+    "remove-sort": 181.21999999857508
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 50000,
+    "insert-sort": 265.76499998918734,
+    "remove-sort": 238.51000001013745
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 100000,
+    "insert-sort": 361.7099999974016,
+    "remove-sort": 274.8200000060024
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 500000,
+    "insert-sort": 1268.450000003213,
+    "remove-sort": 354.47500000009313
+  },
+  {
+    "datasize": 500000,
+    "batchsize": 1000000,
+    "insert-sort": 2588.7999999977183
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 1,
+    "insert-sort": 244.25000000337604,
+    "insert-splice": 6.204999997862615,
+    "remove-sort": 245.2449999982491,
+    "remove-splice": 0.5299999902490526
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 5,
+    "insert-sort": 252.29999999282882,
+    "insert-splice": 10.480000011739321,
+    "remove-sort": 242.46000000857748,
+    "remove-splice": 4.925000001094304
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 10,
+    "insert-sort": 243.32499998854473,
+    "insert-splice": 13.844999994034879,
+    "remove-sort": 256.1100000020815,
+    "remove-splice": 9.204999994835816
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 50,
+    "insert-sort": 244.78999999701045,
+    "insert-splice": 56.14000000059605,
+    "remove-sort": 260.45000000158325,
+    "remove-splice": 45.00499999267049
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 100,
+    "insert-sort": 247.0350000075996,
+    "insert-splice": 94.4549999985611,
+    "remove-sort": 262.3800000001211,
+    "remove-splice": 78.69000000937376
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 500,
+    "insert-sort": 248.05999999807682,
+    "insert-splice": 440.2550000086194,
+    "remove-sort": 275.3649999940535,
+    "remove-splice": 417.8350000001956
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 1000,
+    "insert-sort": 252.9600000125356,
+    "remove-sort": 282.09000000788365
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 5000,
+    "insert-sort": 261.3800000108313,
+    "remove-sort": 299.66499999864027
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 10000,
+    "insert-sort": 275.67000000271946,
+    "remove-sort": 336.7349999898579
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 50000,
+    "insert-sort": 474.4550000032177,
+    "remove-sort": 448.4800000063842
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 100000,
+    "insert-sort": 567.864999989979,
+    "remove-sort": 518.0700000055367
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 500000,
+    "insert-sort": 1495.1200000068638,
+    "remove-sort": 744.6499999932712
+  },
+  {
+    "datasize": 1000000,
+    "batchsize": 1000000,
+    "insert-sort": 2781.6750000056345,
+    "remove-sort": 802.3550000070827
+  }
+]
