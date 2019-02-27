@@ -714,6 +714,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
+	/*
+		remove cues that are fully contained within interval
+	*/
+	CueBucket.prototype.removeByInterval = function (interval) {
+		
+	};
+
+
 	CueBucket.prototype.clear = function () { 
 		this._pointMap = new Map();
 		this._pointIndex = new BinarySearch();

@@ -63,18 +63,14 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     Public API
     - update (remove_elements, insert_elements)
     - lookup (interval) - returns list for all elements  
+    - remove (interval) - removes elements within interval
     - has (element)     - returns true if element exists with value == element, else false
     - get (element)     - returns element with value if exists, else undefined
     - values ()         - returns iterable for all elements
     - indexOf(element)  - returns index of element
     - indexOfElements(elements)
-    - getByIndex(index) - returns element given index
+    - getByIndex(index) - returns element at given index
 
-    There are also convenience wrappers for accessing functionality using object values as parameters
-    - getByValues(values)
-    - hasByValue(value)
-    - removeByValues(values)
-    In value mode these function are equivalent to above functions.
 
     */
 
@@ -301,18 +297,6 @@ define (['./interval', './iterable'], function (Interval, iterable) {
 
 
     /*
-        utility methods for doing pure insert or remove opeations
-    */
-
-    BinarySearch.prototype.insert = function (to_insert, options) {
-        this.update([], to_insert, options);
-    };
-    
-    BinarySearch.prototype.remove = function (to_remove, options) {
-        this.update(to_remove, [], options);
-    };
-
-    /*
         Accessors
     */
 
@@ -424,9 +408,11 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     };
 
     /*
-        lookup by interval
+        lookup start and end indexes of elements within interval
+        for use with slice operation
+        returns undefined if no elements are found
     */
-    BinarySearch.prototype.lookup = function (interval) {
+    BinarySearch.prototype.lookupIndexes = function (interval) {
         if (interval === undefined) 
             interval = new Interval(-Infinity, Infinity, true, true);
         if (interval instanceof Interval === false) 
@@ -436,9 +422,9 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         if (interval.singular) {
             let index = this.indexOf(interval.low);
             if (index > -1) {
-                return this.array.slice(index, index + 1);
+                return [index, index + 1];
             } else {
-                return [];
+                return [undefined, undefined];
             }
         }
 
@@ -450,7 +436,7 @@ define (['./interval', './iterable'], function (Interval, iterable) {
             start_index = this.gtIndexOf(interval.low);
         }
         if (start_index === -1) {
-            return [];
+            return [undefined, undefined];
         }
         if (interval.highInclude) {
             end_index = this.leIndexOf(interval.high);
@@ -458,9 +444,26 @@ define (['./interval', './iterable'], function (Interval, iterable) {
             end_index = this.ltIndexOf(interval.high);
         }
         if (end_index === -1) { // not reachable - I think
-            return [];
+            return [undefined, undefined];
         }
-        return this.array.slice(start_index, end_index + 1);
+        return [start_index, end_index + 1];
+    };
+
+
+    /*
+        lookup by interval
+    */
+    BinarySearch.prototype.lookup = function (interval) {
+        let [start, end] = this.lookupIndexes(interval);
+        return (start != undefined) ? this.array.slice(start, end) : [];       
+    };
+
+    /*
+        remove by interval
+    */
+    BinarySearch.prototype.remove = function (interval) {
+        let [start, end] = this.lookupIndexes(interval);
+        return (start != undefined) ? this.array.splice(start, end-start) : [];     
     };
 
 
