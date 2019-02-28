@@ -529,7 +529,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		/*
 			find new active cues
 		*/
-		const activeCues = this._axis.getCuesByInterval(new Interval(pos));
+		const activeCues = new Map(this._axis.getCuesByInterval(new Interval(pos)).map(function(cue) {
+			return [cue.key, cue];
+		}));
 		/*
 			find exit cues
 			were in old active cues - but not in new
@@ -938,7 +940,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		// stack events per point
 		var point, dueTs, newList = [];
 		var s = {"a": [], "x": [], "b": [], "c": [], "y": [], "d": []};
-		console.log(eArgList);
 		eArgList.sort(function (a, b) {
 			return a.interval.low - b.interval.low;
 		}).forEach(function(eArg) {

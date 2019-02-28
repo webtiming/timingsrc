@@ -204,17 +204,34 @@
 
           ax._update(cues);
 
-          let interval = new Interval(4, 18, false, false);
+          let interval = new Interval(4.5, 17.5, false, false);
           ax._update([{
             key: "overlapping",
             interval: new Interval(4, 18, true, true)
           }]);
-          let cueMap = ax.getCuesByInterval(interval);
-            
-          for (let cue of cueMap.values()) {
+
+          console.log("inside");
+          cues = ax.getCuesByInterval(interval, "inside");
+          for (let cue of cues.values()) {
             console.log(cue);
           }
+
+          console.log("partial");
+          cues = ax.getCuesByInterval(interval, "partial");
+          for (let cue of cues.values()) {
+            console.log(cue);
+          }
+
+          console.log("overlap");
+          cues = ax.getCuesByInterval(interval, "overlap");
+          for (let cue of cues.values()) {
+            console.log(cue);
+          }
+
+
         };
+
+
 
 
 
@@ -248,7 +265,7 @@
 
 
         var test_main = function () {
-          let DATASIZE = 100000;
+          let DATASIZE = 1000;
           let ax = new Axis();
 
           // initialise
@@ -326,13 +343,13 @@
           [res, t] = timeit(function () {
             return ax.getCuesByInterval(interval);
           });
-          console.log("lookup all cues of interval ", interval.toString(), " ", res.size, " ", t);
+          console.log("lookup all cues of interval ", interval.toString(), " ", res.length, " ", t);
 
           let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 10);
           [res, t] = timeit(function () {
             return ax.getCuesByInterval(smallInterval);
           });
-          console.log("lookup all cues of small interval ", smallInterval.toString(), " ", res.size, " ", t);
+          console.log("lookup all cues of small interval ", smallInterval.toString(), " ", res.length, " ", t);
 
 
           // remove cues in interval

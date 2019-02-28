@@ -297,7 +297,9 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 		/*
 			find new active cues
 		*/
-		const activeCues = this._axis.getCuesByInterval(activeInterval);
+		const activeCues = new Map(this._axis.getCuesByInterval(activeInterval).map(function(cue) {
+			return [cue.key, cue];
+		}));
 
 		/*
 			find exit cues

@@ -10,7 +10,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/* 
 		concat two arrays without creating a copy
-		push elements from the shortes into the longest
+		push elements from the shortest into the longest
 		return the longest
 	*/
 	const mergeArrays = function(arr1, arr2) {
@@ -103,10 +103,19 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     /*
 		Lookupmethods
+
+		CUEPOINTS - look up all (point, cue) tuples in search interval
+
+		INSIDE  - look up all cues with both endpoints INSIDE the search interval
+		PARTIAL - look up all INSIDE cues, plus cues that PARTIALL overlap search interval, i.e. have only one endpoint INSIDE search interval
+		OVERLAP - look up all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval 
+
     */
     const LookupMethod = Object.freeze({
-    	CUES: "cues",
-    	CUEPOINTS: "cuepoints"
+    	CUEPOINTS: "cuepoints",
+    	INSIDE: "inside",
+    	PARTIAL: "partial",
+    	OVERLAP: "overlap"
     });
 
 	
@@ -330,10 +339,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	/*
 		internal function: cue lookup across all buckets
 	*/
-	Axis.prototype._lookupCues = function (lookupMethod, interval) {
+	Axis.prototype._lookupCues = function (interval, lookupMethod) {
 		const res = [];
 		for (let cueBucket of this._cueBuckets.values()) {
-			let cues = cueBucket.lookup(lookupMethod, interval);
+			let cues = cueBucket.lookup(interval, lookupMethod);
 			if (cues.length > 0) {
 				res.push(cues);
 			}
@@ -351,31 +360,24 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- [{point: point, cue:cue}]		
 	*/
 	Axis.prototype.getCuePointsByInterval = function (interval) {
-		return this._lookupCues(LookupMethod.CUEPOINTS, interval);
+		return this._lookupCues(interval, LookupMethod.CUEPOINTS);
 	};
 
 	/*
 		getCuesByInterval
 		
-		returns all cues that cover at least one point that is also covered by given interval  
-
-		returns:
-			- Map : key -> cue
+		lookupMethod - "inside" | "partial" | "overlap"
 
 	*/
-	Axis.prototype.getCuesByInterval = function (interval) {
-		let cues = this._lookupCues(LookupMethod.CUES, interval);
-		// Avoid duplicates by putting all cues into a Map
-		return new Map(cues.map(function (cue){
-			return [cue.key, cue];
-		}));
+	Axis.prototype.getCuesByInterval = function (interval, lookupMethod=LookupMethod.OVERLAP) {
+		return this._lookupCues(interval, lookupMethod);
 	};
 
 	/*
 		Similar to getCuesByInterval, but removing cues.
 	*/
-	Axis.prototype.removeCuesByInterval = function (interval) {
-		let cues = this._lookupCues(LookupMethod.CUES, interval);
+	Axis.prototype.removeCuesByInterval = function (interval, lookupMethod=LookupMethod.INSIDE) {
+		let cues = this._lookupCues(interval, lookupMethod);
 		let removeCues = cues.map(function (cue) {
 			return {key:cue.key};
 		});
@@ -567,17 +569,28 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/*
 		lookup dispatches to given lookupMethod.
+
+		CUEPOINTS - look up all (point, cue) tuples in search interval
+
+		INSIDE - look up all cues with both endpoints INSIDE the search interval
+		PARTIAL - look up all INSIDE cues, plus cues with one endpoint inside the search interval
+		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval 
+
 	*/
-	CueBucket.prototype.lookup = function (lookupMethod, interval) {
+	CueBucket.prototype.lookup = function (interval, lookupMethod) {
 		if (this._pointIndex.length == 0) {
 			return [];
 		}
 		if (lookupMethod == LookupMethod.CUEPOINTS) {
-			return this._getCuesFromInterval(interval, {cuepoint: true});
-		} else if (lookupMethod == LookupMethod.CUES){
-			return this._getCuesByInterval(interval);
+			return this.getCuePoints(interval);
+		} else if (lookupMethod == LookupMethod.INSIDE){
+			return this.getInsideCues(interval);
+		} else if (lookupMethod == LookupMethod.PARTIAL) {
+			return this.getPartialCues(interval);
+		} else if (lookupMethod == LookupMethod.OVERLAP) {
+			return this.getOverlapCues(interval);
 		} else {
-			throw new Error("lookupmethod not supported", lookupMethod);
+			throw new Error("lookupMethod not supported", lookupMethod);
 		}
 	};
 
@@ -599,8 +612,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		It does not return cues that cover the interval (i.e. one endpoint at each
 		side of the interval).
 
-		options cuepoint signals to include both the cue and its point
+		option cuepoint signals to include both the cue and its point
 		{point:point, cue:cue}
+		if not - a list of cues is returned
 
 		the order is defined by point values (ascending), whether points are included or not.
 		each point value is reported once, yet one cue
@@ -609,15 +623,29 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		returns list of cues, or list of cuepoints, based on options
 	*/
 	CueBucket.prototype._getCuesFromInterval = function(interval, options={}) {
-		let cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false; 
-		let points = this._pointIndex.lookup(interval);
-		let res = [];
-		let len = points.length;
+		const cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false;
+		const points = this._pointIndex.lookup(interval);
+		const res = [];
+		const len = points.length;
+		const cueSet = new Set();
 		for (let i=0; i<len; i++) {
 			let point = points[i];
 			let cues = this._pointMap.get(point);
 			for (let j=0; j<cues.length; j++) {
 				let cue = cues[j];
+
+				/*
+					avoid duplicate cues 
+					(not for cuepoints, where cues may be associated with two points)
+				*/
+				if (!cuepoint) {
+					if (cueSet.has(cue.key)) {
+						continue;
+					} else {
+						cueSet.add(cue.key);
+					}
+				}
+
 				/*
 					cues sharing only the endpoints of interval
 					(cue.interval and interval are back-to-back)
@@ -641,21 +669,39 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	/*
-		Find all cues overlapping interval.
-		
-		This task can be split in two parts
-		- 1) INSIDE: find all cues that have at least one endpoint covered by interval
-		- 2) OUTSIDE: find all cues that have one endpoint on each side of interval
-		
-		Returns list of cues
+		CUEPOINTS - look up all (point, cue) tuples in search interval
 	*/
+	CueBucket.prototype.getCuePoints = function (interval) {
+		return this._getCuesFromInterval(interval, {cuepoint:true});
+	};
 
 
-	CueBucket.prototype._getCuesByInterval = function (interval) {
+	/*
+		INSIDE - look up all cues with both endpoints INSIDE the search interval
+	*/
+	CueBucket.prototype.getInsideCues = function(interval) {
+		return this._getCuesFromInterval(interval, {cuepoint:false}).filter(function (cue) {
+			return interval.coversInterval(cue.interval);
+		});
+	};
+
+
+	/*
+		PARTIAL - look up all INSIDE cues, plus cues with one endpoint inside the search interval
+	*/
+	CueBucket.prototype.getPartialCues = function(interval) {
+		return this._getCuesFromInterval(interval, {cuepoint:false});
+	};
+
+
+	/*
+		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval
+	*/
+	CueBucket.prototype.getOverlapCues = function (interval) {
 		/* 
 			1) all cues with at least one endpoint covered by interval 
 		*/
-		const cues_inside = this._getCuesFromInterval(interval);
+		const cues_partial = this.getPartialCues(interval);
 
 		/*
 			2)
@@ -668,8 +714,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			 - right interval [interval.high, interval.low+maxlength]
 
 			Only need to search one of them. Preferably the one with the fewest cues.
-			However, doing two searches is likely more expensive than choosing the longest,
-			so no point really.
+			However, doing two searches to figure out which is shortest is quite possibly more expensive than choosing the longest,
+			so no point really
 
 			Choice - always search left.
 
@@ -681,7 +727,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- the same consideration applies to interval.highInclude			
 		*/
 		if (interval.length > this._maxLength) {
-			return cues_inside;
+			return cues_partial;
 		}
 
 		const highIncludeOfLeftInterval = !interval.lowInclude;
@@ -710,16 +756,20 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				return rightInterval.coversPoint(cue.interval.high);
 			});
 
-		return mergeArrays(cues_inside, cues_outside);
+		return mergeArrays(cues_partial, cues_outside);
 	};
 
 
 	/*
-		remove cues that are fully contained within interval
+		Possible optimization. Implement a removecues method that
+		exploits locality by removing an entire slice of pointIndex.
+		- this can safely be done for LookupMethod.OVERLAP and PARTIAL.
+		- however, for LookupMethod.INSIDE, which is likely the most useful
+		  only some of the points in pointIndex shall be removed
+		  solution could be to remove entire slice, construct a new slice 
+		  with those points that should not be deleted, and set it back in.
 	*/
-	CueBucket.prototype.removeByInterval = function (interval) {
-		
-	};
+
 
 
 	CueBucket.prototype.clear = function () { 
