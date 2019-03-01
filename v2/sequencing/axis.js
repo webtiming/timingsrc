@@ -622,12 +622,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			return this.lookupPartialCues(interval);
 		} else if (method == Method.LOOKUP_CUES && semantic == Semantic.OVERLAP) {
 			return this.lookupOverlapCues(interval);
-		} else if (method == Method.REMOVE_CUES && semantic == Semantic.INSIDE) {
-			return this.removeInsideCues(interval);
-		} else if (method == Method.REMOVE_CUES && semantic == Semantic.PARTIAL) {
-			return this.removePartialCues(interval);
-		} else if (method == Method.REMOVE_CUES && semantic == Semantic.OVERLAP) {
-			return this.removeOverlapCues(interval);
+		} else if (method == Method.REMOVE_CUES) {
+			return this.removeCues(interval, semantic);
 		} else {
 			throw new Error("method or semantic not supported " + method + " " + semantic);
 		}
@@ -802,38 +798,24 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	/*
-		Removing cues within a given interval
-		Make use of locality of points
+		REMOVE ALL CUES BY INTERVAL
+		
+		semantic "inside" | "partial" | "overlap" 
+
+		exploit locality of points - avoid using regular update mechanism for points within interval
 	*/
 
-	CueBucket.prototype.removeInsideCues = function (interval) {
-		console.log("removeInsideCues", this._maxLength);
-		const indexes = this._pointIndex.lookupIndexes(interval);
 
-
-		const cuepoints = this._lookupCuesFromInterval(interval, {cuepoint:true})
-		
-		// remove cues in pointMap
-		for (let i=0; i<cuepoints.length; i++) {
-			let cuepoint = cuepoints[i];
-			let cues = this._pointMap.get(point);
-			let empty = removeCueFromArray(cues, cuepoint.cue);
-			console.log(empty);
-		}
-
-
-		return [];
-	};
-
-	CueBucket.prototype.removePartialCues = function (interval) {
-		// console.log("removePartialCues", this._maxLength);
-		
+	CueBucket.prototype.removeCues = function (interval, semantic) {
 		/*
 			update pointMap
-			- remove cues of all points within interval
-			- remove cues of endpoints outside interval
+			- find cues
+			- delete entries for cue endpoints within interval
+			- remove cues for cue endpoints outside interval
+			- todo - distinguish endpoints inside and outside
 		*/
-		const cues = this.lookupPartialCues(interval);
+		const to_remove = [];
+		const cues = this.execute(Method.LOOKUP_CUES, interval, semantic);
 		let points, cue;
 		for (let i=0; i<cues.length; i++) {
 			cue = cues[i];
@@ -846,35 +828,42 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				let empty = removeCueFromArray(this._pointMap.get(point), cue);
 				if (empty) {
 					this._pointMap.delete(point);
+					to_remove.push(point);
 				}
 			}
 		}
 
 		/*
 			update pointIndex
-			- remove slice according to interval
-			- do not remove endpoints if they are still represented in pointMap 
-			(this may happen when outside cues (not to be deleted) share endpoint)
 
+
+			partial
+			- remove slice according to interval
+			- do not remove endpoints of search interval if they are still represented in pointMap 
+			(this may happen when outside cues (not to be deleted) share endpoint)
 		*/
-		const [start, end] = this._pointIndex.lookupIndexes(interval);
-		if (this._pointMap.get(interval.low) !== undefined) {
-			start += 1;
+
+		if (semantic == Semantic.PARTIAL) {		
+			const [start, end] = this._pointIndex.lookupIndexes(interval);
+			if (this._pointMap.get(interval.low) !== undefined) {
+				start += 1;
+			}
+			if (this._pointMap.get(interval.high) !== undefined) {
+				end -= 1;
+			}
+			if (end-start > 0) {
+				points = this._pointIndex.splice(start, end-start);
+			}
 		}
-		if (this._pointMap.get(interval.high) !== undefined) {
-			end -= 1;
-		}
-		if (end-start > 0) {
-			points = this._pointIndex.splice(start, end-start);
-		}
+
+		/* 
+			remove dangling points outside if they have become empty in pointMap
+			here we should have only those points that are actually outside
+		*/
+		this._pointIndex.update(to_remove, []);
+
 
 		return cues;
-	};
-
-	CueBucket.prototype.removeOverlapCues = function (interval) {
-		console.log("removeOverlapCues", this._maxLength);
-		const indexes = this._pointIndex.lookupIndexes(interval);
-		return [];
 	};
 
 
