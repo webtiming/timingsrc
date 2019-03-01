@@ -102,21 +102,38 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
     /*
-		Lookupmethods
+		Semantic
 
-		CUEPOINTS - look up all (point, cue) tuples in search interval
+		Specifies the semantic for cue operations
 
-		INSIDE  - look up all cues with both endpoints INSIDE the search interval
-		PARTIAL - look up all INSIDE cues, plus cues that PARTIALL overlap search interval, i.e. have only one endpoint INSIDE search interval
-		OVERLAP - look up all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval 
+		INSIDE  - all cues with both endpoints INSIDE the search interval
+		PARTIAL - all INSIDE cues, plus cues that PARTIALL overlap search interval, i.e. have only one endpoint INSIDE search interval
+		OVERLAP - all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval 
 
     */
-    const LookupMethod = Object.freeze({
-    	CUEPOINTS: "cuepoints",
+    const Semantic = Object.freeze({
     	INSIDE: "inside",
     	PARTIAL: "partial",
     	OVERLAP: "overlap"
     });
+
+
+    /*
+		Method
+
+		Specifies various methods on CueBuckets
+
+		LOOKUP_CUEPOINTS - look up all (point, cue) tuples in search interval
+		LOOKUP_CUES - lookup all cues in interval
+		REMOVE_CUES - remove all cues in interval 
+
+    */
+    const Method = Object.freeze({
+    	LOOKUP_CUES: "lookup-cues",
+    	LOOKUP_CUEPOINTS: "lookup-cuepoints",
+    	REMOVE_CUES: "remove-cues"
+    });
+
 
 	
 	/*
@@ -337,12 +354,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	/*
-		internal function: cue lookup across all buckets
+		internal function: execute method across all cue buckets
+		and aggregate results
 	*/
-	Axis.prototype._lookupCues = function (interval, lookupMethod) {
+	Axis.prototype._execute = function (method, interval, semantic) {
 		const res = [];
 		for (let cueBucket of this._cueBuckets.values()) {
-			let cues = cueBucket.lookup(interval, lookupMethod);
+			let cues = cueBucket.execute(method, interval, semantic);
 			if (cues.length > 0) {
 				res.push(cues);
 			}
@@ -360,24 +378,24 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- [{point: point, cue:cue}]		
 	*/
 	Axis.prototype.getCuePointsByInterval = function (interval) {
-		return this._lookupCues(interval, LookupMethod.CUEPOINTS);
+		return this._execute(Method.LOOKUP_CUEPOINTS, interval);
 	};
 
 	/*
 		getCuesByInterval
 		
-		lookupMethod - "inside" | "partial" | "overlap"
+		semantic - "inside" | "partial" | "overlap"
 
 	*/
-	Axis.prototype.getCuesByInterval = function (interval, lookupMethod=LookupMethod.OVERLAP) {
-		return this._lookupCues(interval, lookupMethod);
+	Axis.prototype.getCuesByInterval = function (interval, semantic=Semantic.OVERLAP) {
+		return this._execute(Method.LOOKUP_CUES, interval, semantic);
 	};
 
 	/*
 		Similar to getCuesByInterval, but removing cues.
 	*/
-	Axis.prototype.removeCuesByInterval = function (interval, lookupMethod=LookupMethod.INSIDE) {
-		let cues = this._lookupCues(interval, lookupMethod);
+	Axis.prototype.removeCuesByInterval = function (interval, semantic=Semantic.INSIDE) {
+		let cues = this._execute(Method.LOOKUP_CUES, interval, semantic);
 		let removeCues = cues.map(function (cue) {
 			return {key:cue.key};
 		});
@@ -568,7 +586,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	/*
-		lookup dispatches to given lookupMethod.
+		execute dispatches request to given method.
 
 		CUEPOINTS - look up all (point, cue) tuples in search interval
 
@@ -577,20 +595,26 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval 
 
 	*/
-	CueBucket.prototype.lookup = function (interval, lookupMethod) {
+	CueBucket.prototype.execute = function (method, interval, semantic) {
 		if (this._pointIndex.length == 0) {
 			return [];
 		}
-		if (lookupMethod == LookupMethod.CUEPOINTS) {
-			return this.getCuePoints(interval);
-		} else if (lookupMethod == LookupMethod.INSIDE){
-			return this.getInsideCues(interval);
-		} else if (lookupMethod == LookupMethod.PARTIAL) {
-			return this.getPartialCues(interval);
-		} else if (lookupMethod == LookupMethod.OVERLAP) {
-			return this.getOverlapCues(interval);
+		if (method == Method.LOOKUP_CUEPOINTS) {
+			return this.lookupCuePoints(interval);
+		} else if (method == Method.LOOKUP_CUES && semantic == Semantic.INSIDE){
+			return this.lookupInsideCues(interval);
+		} else if (method == Method.LOOKUP_CUES && semantic == Semantic.PARTIAL) {
+			return this.lookupPartialCues(interval);
+		} else if (method == Method.LOOKUP_CUES && semantic == Semantic.OVERLAP) {
+			return this.lookupOverlapCues(interval);
+		} else if (method == Method.REMOVE_CUES && semantic == Semantic.INSIDE) {
+			return this.removeCues(interval, semantic);
+		} else if (method == Method.REMOVE_CUES && semantic == Semantic.PARTIAL) {
+			return this.removeCues(interval, semantic);
+		} else if (method == Method.REMOVE_CUES && semantic == Semantic.OVERLAP) {
+			return this.removeCues(interval, semantic);
 		} else {
-			throw new Error("lookupMethod not supported", lookupMethod);
+			throw new Error("method or semantic not supported " + method + " " + semantic);
 		}
 	};
 
@@ -622,7 +646,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		returns list of cues, or list of cuepoints, based on options
 	*/
-	CueBucket.prototype._getCuesFromInterval = function(interval, options={}) {
+	CueBucket.prototype._lookupCuesFromInterval = function(interval, options={}) {
 		const cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false;
 		const points = this._pointIndex.lookup(interval);
 		const res = [];
@@ -669,39 +693,41 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	/*
-		CUEPOINTS - look up all (point, cue) tuples in search interval
+		LOOKUP CUEPOINTS - look up all (point, cue) tuples in search interval
 	*/
-	CueBucket.prototype.getCuePoints = function (interval) {
-		return this._getCuesFromInterval(interval, {cuepoint:true});
+	CueBucket.prototype.lookupCuePoints = function (interval) {
+		return this._lookupCuesFromInterval(interval, {cuepoint:true});
 	};
 
 
 	/*
+		LOOKUP CUES
 		INSIDE - look up all cues with both endpoints INSIDE the search interval
 	*/
-	CueBucket.prototype.getInsideCues = function(interval) {
-		return this._getCuesFromInterval(interval, {cuepoint:false}).filter(function (cue) {
+	CueBucket.prototype.lookupInsideCues = function(interval) {
+		return this._lookupCuesFromInterval(interval, {cuepoint:false}).filter(function (cue) {
 			return interval.coversInterval(cue.interval);
 		});
 	};
 
 
 	/*
+		LOOKUP CUES
 		PARTIAL - look up all INSIDE cues, plus cues with one endpoint inside the search interval
 	*/
-	CueBucket.prototype.getPartialCues = function(interval) {
-		return this._getCuesFromInterval(interval, {cuepoint:false});
+	CueBucket.prototype.lookupPartialCues = function(interval) {
+		return this._lookupCuesFromInterval(interval, {cuepoint:false});
 	};
 
 
 	/*
 		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval
 	*/
-	CueBucket.prototype.getOverlapCues = function (interval) {
+	CueBucket.prototype.lookupOverlapCues = function (interval) {
 		/* 
 			1) all cues with at least one endpoint covered by interval 
 		*/
-		const cues_partial = this.getPartialCues(interval);
+		const cues_partial = this.lookupPartialCues(interval);
 
 		/*
 			2)
@@ -745,7 +771,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			singular cues were isolated in a different index. Similarly, one
 			could split the set of cues by the length of their intervals.
 		*/
-		const cues_outside = this._getCuesFromInterval(leftInterval)
+		const cues_outside = this._lookupCuesFromInterval(leftInterval)
 			.filter(function (cue) {
 				// fast test
 				if (interval.high < cue.interval.low) {
@@ -757,6 +783,18 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			});
 
 		return mergeArrays(cues_partial, cues_outside);
+	};
+
+
+	/*
+		Removing cues within a given interval
+		Make use of locality of points
+	*/
+
+	CueBucket.prototype.removeCuesByInterval = function (interval, semantic) {
+		const indexes = this._pointIndex.lookupIndexes(interval);
+
+		
 	};
 
 
