@@ -172,29 +172,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	eventify.eventifyPrototype(Axis.prototype);
 
 
-
-	/*
-		CLEAR
-	*/
-	Axis.prototype.clear = function () {
-		// clear cue Buckets
-		for (let cueBucket of this._cueBuckets.values()) {
-			cueBucket.clear();
-		}
-		// clear cueMap
-		let cueMap = this._cueMap;
-		this._cueMap = new Map();
-		// create change events for all cues
-		let e = [];
-		for (let cue of cueMap.values()) {
-			e.push({'old': cue});
-		}
-		this.eventifyTriggerEvent("change", e);
-		return cueMap;
-	};
-
-
-
 	/*
 		UPDATE
 
@@ -369,7 +346,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	/*
-		getCuePointsByInterval
+		GET CUEPOINTS BY INTERVAL
 
 		returns (point, cue) for all points covered by given interval
 
@@ -382,7 +359,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	/*
-		getCuesByInterval
+		GET CUES BY INTERVAL
 		
 		semantic - "inside" | "partial" | "overlap"
 
@@ -401,6 +378,44 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		});
 		return this._update(removeCues);
 	};
+
+	/*
+		REMOVE CUES BY INTERVAL
+	*/
+	Axis.prototype.removeCuesByInterval2 = function (interval, semantic=Semantic.INSIDE) {
+		const cues = this._execute(Method.REMOVE_CUES, interval, semantic);
+		// remove from cueMap and make events
+		const eList = [];
+		for (let i=0; i<cues.length; i++) {
+			let cue = cues[i];
+			this._cueMap.delete(cue.key);
+			eList.push({'old': cue});
+		}
+		this.eventifyTriggerEvent("change", eList);
+		return eList;
+	};
+
+	/*
+		CLEAR ALL CUES
+	*/
+	Axis.prototype.clear = function () {
+		// clear cue Buckets
+		for (let cueBucket of this._cueBuckets.values()) {
+			cueBucket.clear();
+		}
+		// clear cueMap
+		let cueMap = this._cueMap;
+		this._cueMap = new Map();
+		// create change events for all cues
+		let e = [];
+		for (let cue of cueMap.values()) {
+			e.push({'old': cue});
+		}
+		this.eventifyTriggerEvent("change", e);
+		return cueMap;
+	};
+
+
 
 
 	/*
@@ -608,11 +623,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		} else if (method == Method.LOOKUP_CUES && semantic == Semantic.OVERLAP) {
 			return this.lookupOverlapCues(interval);
 		} else if (method == Method.REMOVE_CUES && semantic == Semantic.INSIDE) {
-			return this.removeCues(interval, semantic);
+			return this.removeInsideCues(interval);
 		} else if (method == Method.REMOVE_CUES && semantic == Semantic.PARTIAL) {
-			return this.removeCues(interval, semantic);
+			return this.removePartialCues(interval);
 		} else if (method == Method.REMOVE_CUES && semantic == Semantic.OVERLAP) {
-			return this.removeCues(interval, semantic);
+			return this.removeOverlapCues(interval);
 		} else {
 			throw new Error("method or semantic not supported " + method + " " + semantic);
 		}
@@ -791,10 +806,75 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		Make use of locality of points
 	*/
 
-	CueBucket.prototype.removeCuesByInterval = function (interval, semantic) {
+	CueBucket.prototype.removeInsideCues = function (interval) {
+		console.log("removeInsideCues", this._maxLength);
 		const indexes = this._pointIndex.lookupIndexes(interval);
 
+
+		const cuepoints = this._lookupCuesFromInterval(interval, {cuepoint:true})
 		
+		// remove cues in pointMap
+		for (let i=0; i<cuepoints.length; i++) {
+			let cuepoint = cuepoints[i];
+			let cues = this._pointMap.get(point);
+			let empty = removeCueFromArray(cues, cuepoint.cue);
+			console.log(empty);
+		}
+
+
+		return [];
+	};
+
+	CueBucket.prototype.removePartialCues = function (interval) {
+		// console.log("removePartialCues", this._maxLength);
+		
+		/*
+			update pointMap
+			- remove cues of all points within interval
+			- remove cues of endpoints outside interval
+		*/
+		const cues = this.lookupPartialCues(interval);
+		let points, cue;
+		for (let i=0; i<cues.length; i++) {
+			cue = cues[i];
+			if (cue.interval.singular) {
+				points = [cue.interval.low];
+			} else {
+				points = [cue.interval.low, cue.interval.high];
+			}
+			for (let point of points.values()) {
+				let empty = removeCueFromArray(this._pointMap.get(point), cue);
+				if (empty) {
+					this._pointMap.delete(point);
+				}
+			}
+		}
+
+		/*
+			update pointIndex
+			- remove slice according to interval
+			- do not remove endpoints if they are still represented in pointMap 
+			(this may happen when outside cues (not to be deleted) share endpoint)
+
+		*/
+		const [start, end] = this._pointIndex.lookupIndexes(interval);
+		if (this._pointMap.get(interval.low) !== undefined) {
+			start += 1;
+		}
+		if (this._pointMap.get(interval.high) !== undefined) {
+			end -= 1;
+		}
+		if (end-start > 0) {
+			points = this._pointIndex.splice(start, end-start);
+		}
+
+		return cues;
+	};
+
+	CueBucket.prototype.removeOverlapCues = function (interval) {
+		console.log("removeOverlapCues", this._maxLength);
+		const indexes = this._pointIndex.lookupIndexes(interval);
+		return [];
 	};
 
 

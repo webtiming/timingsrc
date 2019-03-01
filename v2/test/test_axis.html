@@ -232,6 +232,44 @@
         };
 
 
+        var test_remove = function () {
+          let ax = new Axis();
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+
+          ax._update(cues);
+
+          let interval = new Interval(4.5, 17.5, false, false);
+          ax._update([{
+            key: "overlapping",
+            interval: new Interval(4, 18, true, true)
+          }]);
+
+          console.log("cueMap", ax._cueMap.size);
+          console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
+          console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
+          console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
+
+          // remove
+          cues = ax.removeCuesByInterval2(interval, "partial");
+          for (let cue of cues.values()) {
+            console.log(cue);
+          }
+
+          console.log("cueMap", ax._cueMap.size);
+          console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
+          console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
+          console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
+
+
+        };
+
+
 
 
 
@@ -381,8 +419,9 @@
 
           //test_batch_collapsing();
           //test_getCuePointsByInterval();
-          test_getCuesByInterval();
+          //test_getCuesByInterval();
           //test_event();
+          test_remove();
         };
 
         if (document.readyState === "complete") run();

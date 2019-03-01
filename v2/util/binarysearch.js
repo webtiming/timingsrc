@@ -467,6 +467,15 @@ define (['./interval', './iterable'], function (Interval, iterable) {
     };
 
 
+    BinarySearch.prototype.slice = function (start, end) {
+        return this.array.slice(start, end);
+    };
+
+    BinarySearch.prototype.splice = function (start, length) {
+        return this.array.splice(start, length);
+    }
+
+
     BinarySearch.prototype.values = function () {
         return iterable.slice(this.array, 0, this.array.length);
     };
