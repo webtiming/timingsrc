@@ -702,6 +702,55 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		return res;
 	};
 
+	/*
+		Find cues that are overlapping search interval, with one endpoint
+		at each side.
+
+		define left and right intervals that cover areas on the timeline to
+		the left and right of search interval. 
+		These intervals are limited by the interval maxLength of cues in this bucket,
+		so that:
+		 - left interval [interval.high-maxLengt, interval.low]
+		 - right interval [interval.high, interval.low+maxlength]
+
+		Only need to search one of them. Preferably the one with the fewest cues.
+		However, doing two searches to figure out which is shortest is quite possibly more expensive than choosing the longest,
+		so no point really
+
+		Choice - always search left.
+
+		If interval.length > maxLength, then there can be no overlapping intervals in this bucket
+
+		Endpoints must not overlap with endpoints of <interval>
+		- if interval.lowInclude, then leftInterval.highInclude must be false,
+		  and vice versa. 
+		- the same consideration applies to interval.highInclude
+	*/
+	CueBucket.prototype._lookupOutsideCuesFromInterval = function(interval){
+		if (interval.length > this._maxLength) {
+			return [];
+		}
+
+		const highIncludeOfLeftInterval = !interval.lowInclude;
+		const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
+
+		const lowIncludeOfRightInterval = !interval.highInclude;		
+		const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
+		
+		//	iterate leftInterval to find cues that have endpoints covered by rightInterval		
+		return this._lookupCuesFromInterval(leftInterval)
+			.filter(function (cue) {
+				// fast test
+				if (interval.high < cue.interval.low) {
+					return true;
+				}
+				// more expensive test that will pick up cornercase
+				// where [a,b] will actually be an outside covering interval for <a,b>
+				return rightInterval.coversPoint(cue.interval.high);
+			});
+	};
+
+
 
 	/*
 		LOOKUP CUEPOINTS - look up all (point, cue) tuples in search interval
@@ -735,96 +784,42 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval
 	*/
 	CueBucket.prototype.lookupOverlapCues = function (interval) {
-		/* 
-			1) all cues with at least one endpoint covered by interval 
-		*/
-		const cues_partial = this.lookupPartialCues(interval);
-
-		/*
-			2)
-
-			define left and right intervals that cover areas on the timeline to
-			the left and right of search interval. 
-			These intervals are limited by the interval maxLength of cues in this bucket,
-			so that:
-			 - left interval [interval.high-maxLengt, interval.low]
-			 - right interval [interval.high, interval.low+maxlength]
-
-			Only need to search one of them. Preferably the one with the fewest cues.
-			However, doing two searches to figure out which is shortest is quite possibly more expensive than choosing the longest,
-			so no point really
-
-			Choice - always search left.
-
-			If interval.length > maxLength, then there can be no overlapping intervals in this bucket
-
-			Endpoints must not overlap with endpoints of <interval>
-			- if interval.lowInclude, then leftInterval.highInclude must be false,
-			  and vice versa. 
-			- the same consideration applies to interval.highInclude			
-		*/
-		if (interval.length > this._maxLength) {
-			return cues_partial;
-		}
-
-		const highIncludeOfLeftInterval = !interval.lowInclude;
-		const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
-
-		const lowIncludeOfRightInterval = !interval.highInclude;		
-		const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
-		
-		/* 
-			iterate leftInterval to find cues that have endpoints covered by rightInterval
-
-			possible optimization - choose the interval with the least points
-			instead of just choosing left.
-			possible optimization - this seek operation would be more effective if
-			singular cues were isolated in a different index. Similarly, one
-			could split the set of cues by the length of their intervals.
-		*/
-		const cues_outside = this._lookupCuesFromInterval(leftInterval)
-			.filter(function (cue) {
-				// fast test
-				if (interval.high < cue.interval.low) {
-					return true;
-				}
-				// more expensive test that will pick up cornercase
-				// where [a,b] will actually be an outside covering interval for <a,b>
-				return rightInterval.coversPoint(cue.interval.high);
-			});
-
-		return mergeArrays(cues_partial, cues_outside);
+		const partial_cues = this.lookupPartialCues(interval);
+		const outside_cues = this._lookupOutsideCuesFromInterval(interval);
+		return mergeArrays(partial_cues, outside_cues);
 	};
 
 
 	/*
-		REMOVE ALL CUES BY INTERVAL
-		
-		semantic "inside" | "partial" | "overlap" 
-
-		exploit locality of points - avoid using regular update mechanism for points within interval
+		REMOVE CUES
 	*/
-
-
 	CueBucket.prototype.removeCues = function (interval, semantic) {
+
 		/*
 			update pointMap
-			- find cues
-			- delete entries for cue endpoints within interval
-			- remove cues for cue endpoints outside interval
-			- todo - distinguish endpoints inside and outside
+			- remove all cues from pointMap
+			- remove empty entries in pointMap
+			- record points that became empty, as these need to be deleted in pointIndex
+			- separate into two bucketes, inside and outside
+
+			to_remove will now (possibly) include points both inside
+			and outside interval scheduled for removal
 		*/
-		const to_remove = [];
 		const cues = this.execute(Method.LOOKUP_CUES, interval, semantic);
-		let points, cue;
+		const to_remove = [];
+		let cue, point, points;
 		for (let i=0; i<cues.length; i++) {
 			cue = cues[i];
+			// points of cue
 			if (cue.interval.singular) {
 				points = [cue.interval.low];
 			} else {
 				points = [cue.interval.low, cue.interval.high];
 			}
-			for (let point of points.values()) {
+			for (let j=0; j<points.length; j++) {
+				point = points[j];	
+				// remove cue from pointMap
+				// delete pointMap entry only if empty
 				let empty = removeCueFromArray(this._pointMap.get(point), cue);
 				if (empty) {
 					this._pointMap.delete(point);
@@ -836,32 +831,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		/*
 			update pointIndex
 
-
-			partial
-			- remove slice according to interval
-			- do not remove endpoints of search interval if they are still represented in pointMap 
-			(this may happen when outside cues (not to be deleted) share endpoint)
+			- remove all points within pointIndex
+			- exploit locality, the operation is limited to a segment of the index, so 
+			  the basic idea is to take out a copy of segment (slice), do modifications, and then reinsert (splice)
+			- the segment to modify is limited by [interval.low - maxLength, interval.high + maxLenght] as this will cover
+			  both cues inside, partial and overlapping.
+		
+			# TODO - optimize
+			this._pointIndex.update(to_remove, []);
 		*/
-
-		if (semantic == Semantic.PARTIAL) {		
-			const [start, end] = this._pointIndex.lookupIndexes(interval);
-			if (this._pointMap.get(interval.low) !== undefined) {
-				start += 1;
-			}
-			if (this._pointMap.get(interval.high) !== undefined) {
-				end -= 1;
-			}
-			if (end-start > 0) {
-				points = this._pointIndex.splice(start, end-start);
-			}
-		}
-
-		/* 
-			remove dangling points outside if they have become empty in pointMap
-			here we should have only those points that are actually outside
-		*/
-		this._pointIndex.update(to_remove, []);
-
+		this._pointIndex.removeInSlice(to_remove);
 
 		return cues;
 	};

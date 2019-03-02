@@ -317,13 +317,31 @@
           }, "insert random floats " + DATASIZE);
         };
 
+
+        var test_remove_inslice = function () {
+          let b = new BinarySearch();
+          let batch1 = make_presorted_ints(20);
+          b.update([], batch1);
+          console.log(b.array);
+
+          let remove = [4,5,8,10];
+
+          b.removeInSlice(remove);
+          console.log(b.array);
+
+
+        };
+
+
+
         var run = function () {
           //test_update_compare_sort_slice();
-          test_lookup();
+          //test_lookup();
           //test_remove_one();
           //test_remove();
           //test_main();
           //make_stats();
+          test_remove_inslice();
         };
 
         if (document.readyState === "complete") run();

@@ -473,7 +473,74 @@ define (['./interval', './iterable'], function (Interval, iterable) {
 
     BinarySearch.prototype.splice = function (start, length) {
         return this.array.splice(start, length);
-    }
+    };
+
+
+
+    /* 
+        get next
+        search [start, end-1] for first element x : current < x && target <= x, if any
+    */
+
+    var get_next = function(array, start, end, current, target) {
+        if (end <= start) {
+            return undefined;
+        }
+        if (target < current) {
+            throw new Error("target less than current");
+        }
+        let i = start;
+        while (i<end) {
+            let x = array[i];
+            if (current < x && target <= x) {
+                return i;
+            }
+            i++;
+        }
+    };
+
+    /*
+        method for removing multiple closely placed elements in place
+        - removeList is sorted
+        - changes only affect the part of the indexe between first and last element
+        - move remaining elements to the left, remove elements with a single splice
+        - efficent if removelist references elements that are close to eachother  
+    */
+
+
+    BinarySearch.prototype.removeInSlice = function (removeList) {
+        if (removeList.length == 0){
+            return;
+        }
+        const low = removeList[0];
+        const high = removeList[removeList.length-1];
+        let [start, end] = this.lookupIndexes(new Interval(low, high, true, true));
+
+        let rd_ptr = start;
+        let wr_ptr = start;
+        let rm_ptr = 0;
+
+        while (rd_ptr < end) {
+            let rd_elem = this.array[rd_ptr];
+            let rm_elem = removeList[rm_ptr];
+            if (rd_elem < rm_elem) {
+                this.array[wr_ptr] = this.array[rd_ptr];
+                wr_ptr++;
+                rd_ptr++;
+            } else if (rd_elem == rm_elem) {
+                rd_ptr++;
+                rm_ptr++;
+            } else {
+                // rd_elem > rm_elem
+                rm_ptr++;
+            }
+            if (rm_ptr == removeList.length) {
+                break
+            }
+        }
+        this.array.splice(wr_ptr, rd_ptr-wr_ptr);
+    };
+
 
 
     BinarySearch.prototype.values = function () {
