@@ -19,7 +19,7 @@
 */
 
 
-define (['./interval', './iterable'], function (Interval, iterable) {
+define (['./interval'], function (Interval) {
 
     'use strict';
 
@@ -161,7 +161,7 @@ define (['./interval', './iterable'], function (Interval, iterable) {
         element exists with value
     */
     BinarySearch.prototype.has = function (x) {
-        return (this.indexOfByValue(x) > -1) ? true : false; 
+        return (this.indexOf(x) > -1) ? true : false; 
     };
 
     BinarySearch.prototype.get = function (index) {
@@ -544,7 +544,7 @@ define (['./interval', './iterable'], function (Interval, iterable) {
 
 
     BinarySearch.prototype.values = function () {
-        return iterable.slice(this.array, 0, this.array.length);
+        return this.array.values();
     };
 
     BinarySearch.prototype.clear = function () {

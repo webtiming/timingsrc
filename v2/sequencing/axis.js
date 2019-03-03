@@ -131,7 +131,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     const Method = Object.freeze({
     	LOOKUP_CUES: "lookup-cues",
     	LOOKUP_CUEPOINTS: "lookup-cuepoints",
-    	REMOVE_CUES: "remove-cues"
+    	REMOVE_CUES: "remove-cues",
+    	INTEGRITY: "integrity"
     });
 
 
@@ -439,6 +440,42 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
+	/*
+		utility
+	*/
+	Axis.prototype.integrity = function () {
+		const res = this._execute(Method.INTEGRITY);
+	
+		// sum up cues and points
+		let cues = [];
+		let points = [];
+		for (let bucketInfo of res.values()) {
+			cues.push(bucketInfo.cues);
+			points.push(bucketInfo.points);
+		}
+		cues = [].concat(...cues);
+		points = [].concat(...points);
+		// remove point duplicates if any
+		points = [...new Set(points)];
+		
+		if (cues.length != this._cueMap.size) {
+			throw new Error("inconsistent cue count cueMap and aggregate cueBuckets " + cues-this._cueMap.size);
+		}
+
+		// check that cues are the same
+		for (let cue of cues.values()) {
+			if (!this._cueMap.has(cue.key)) {
+				throw new Error("inconsistent cues cueMap and aggregate cueBuckets");
+			}
+		}
+
+		return {
+			cues: cues.length,
+			points: points.length
+		};
+	};
+
+
 
 
 	/*
@@ -624,6 +661,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			return this.lookupOverlapCues(interval);
 		} else if (method == Method.REMOVE_CUES) {
 			return this.removeCues(interval, semantic);
+		} else if (method == Method.INTEGRITY) {
+			return this._integrity();
 		} else {
 			throw new Error("method or semantic not supported " + method + " " + semantic);
 		}
@@ -855,13 +894,70 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		  solution could be to remove entire slice, construct a new slice 
 		  with those points that should not be deleted, and set it back in.
 	*/
-
-
-
 	CueBucket.prototype.clear = function () { 
 		this._pointMap = new Map();
 		this._pointIndex = new BinarySearch();
 	};		
+
+
+	/*
+		Integrity test for cue bucket datastructures
+		pointMap and pointIndex
+	*/
+	CueBucket.prototype._integrity = function () {
+		if (this._pointMap.size !== this._pointIndex.length) {
+			throw new Error("unequal number of points" + this._pointMap.size - this._pointIndex);
+		}
+
+		// check that the same cues are present in both pointMap and pointIndex
+		const missing = new Set();
+		for (let point of this._pointIndex.values()) {
+			if (!this._pointMap.has(point)){
+				missing.add(point);
+			}
+		}
+		if (missing.size > 0) {
+			throw new Error("differences in points " + [...missing]);
+		}
+
+		// collect all cues
+		let cues = [];
+		for (let _cues of this._pointMap.values()) {
+			for (let cue of _cues.values()) {
+				cues.push(cue);
+			}
+		}
+		// remove duplicates
+		cues = [...new Map(cues.map(function(cue){
+			return [cue.key, cue];
+		})).values()];
+
+		// check all cues
+		for (let cue of cues.values()) {
+			if (cue.interval.length > this._maxLength) {
+				throw new Error("cue interval violates maxLength ",  cue);
+			}
+			let points;
+			if (cue.singular) {
+				points = [cue.interval.low];
+			} else {
+				points = [cue.interval.low, cue.interval.high];
+			}
+			for (let point of points.values()) {
+				if (!this._pointIndex.has(point)) {
+					throw new Error("point from pointMap cue not found in pointIndex ", point);
+				}
+			}
+		}
+
+		return [{
+			maxLength: this._maxLength,
+			points: [...this._pointMap.keys()],
+			cues: cues
+		}];
+	};
+
+
 
 
 	// module definition
