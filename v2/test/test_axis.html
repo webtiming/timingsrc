@@ -232,40 +232,69 @@
         };
 
 
-        var test_remove = function () {
+        var test_removeCuesByInterval = function () {
           let ax = new Axis();
 
           let cues = [];
+          let _cues;
           for (let i=0; i<100; i++) {
             cues.push({key: i.toString(), interval: new Interval(i, i+1)});
           }
-
-          ax._update(cues);
-
-          let interval = new Interval(4.5, 17.5, false, false);
-          ax._update([{
+          cues.push({
             key: "overlapping",
             interval: new Interval(4, 18, true, true)
-          }]);
+          });
+          
+          // let interval = new Interval(4.5, 17.5, false, false);
+          let interval = new Interval(4, 18, false, false);
 
+   
+          /*
           console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
           console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
           console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
           console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
+          */
 
-          // remove
-          cues = ax.removeCuesByInterval2(interval, "partial");
-          for (let cue of cues.values()) {
-            console.log(cue);
+          // remove partial
+          console.log("remove partial")
+          ax._update(cues);
+          _cues = ax.removeCuesByInterval2(interval, "partial");
+          for (let cue of _cues.values()) {
+            console.log(cue.old.key);
           }
+          ax.integrity();
+          ax.clear();
 
+          // remove inside
+          console.log("remove inside");
+          ax._update(cues);
+          _cues = ax.removeCuesByInterval2(interval, "inside");
+          for (let cue of _cues.values()) {
+            console.log(cue.old.key);
+          }
+          ax.integrity();
+          ax.clear();
+
+          // remove overlap
+          console.log("remove overlap");
+          ax._update(cues);
+          _cues = ax.removeCuesByInterval2(interval, "overlap");
+          for (let cue of _cues.values()) {
+            console.log(cue.old.key);
+          }
+          ax.integrity();
+          ax.clear();
+
+
+          /*
           console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
           console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
           console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
           console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
-
+          */
 
           console.log(ax.integrity());
 
@@ -423,7 +452,7 @@
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_event();
-          test_remove();
+          test_removeCuesByInterval();
         };
 
         if (document.readyState === "complete") run();
