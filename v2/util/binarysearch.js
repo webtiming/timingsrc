@@ -477,28 +477,6 @@ define (['./interval'], function (Interval) {
 
 
 
-    /* 
-        get next
-        search [start, end-1] for first element x : current < x && target <= x, if any
-    */
-
-    var get_next = function(array, start, end, current, target) {
-        if (end <= start) {
-            return undefined;
-        }
-        if (target < current) {
-            throw new Error("target less than current");
-        }
-        let i = start;
-        while (i<end) {
-            let x = array[i];
-            if (current < x && target <= x) {
-                return i;
-            }
-            i++;
-        }
-    };
-
     /*
         method for removing multiple closely placed elements in place
         - removeList is sorted

@@ -335,11 +335,19 @@
           const searchInterval3 = new Interval(4,10, true, false);
           const searchInterval4 = new Interval(4,10, true, true);
 
+          // partial search interval 1
+          console.log("partial", searchInterval1)
+          _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E1", "E3", "G3"];
+          _cues = ax.getCuesByInterval(searchInterval1, "partial");
+          check(_cues, _expect);
+
+          /*
           // inside search interval 1
           console.log("inside", searchInterval1)
           _expect = ["D1", "D3", "D5", "G3"];
           _cues = ax.getCuesByInterval(searchInterval1, "inside");
           check(_cues, _expect);
+          */
 
           
  
