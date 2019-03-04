@@ -232,6 +232,103 @@
         };
 
 
+
+        var test_correctness_inside = function () {
+          const searchInterval1 = new Interval(4,10, false, false);
+          const searchInterval2 = new Interval(4,10, false, true);
+          const searchInterval3 = new Interval(4,10, true, false);
+          const searchInterval4 = new Interval(4,10, true, true);
+
+
+          const check = function(cues, expect) {
+            let missing = [];
+            let wrong = [];
+            for (let key of expect.values()) {
+              let idx = cues.findIndex(function (cue) {
+                return cue.key == key;
+              });
+              if (idx == -1) {
+                missing.push(key);
+              }
+            }
+
+            for (let cue of cues.values()) {
+              let idx = expect.indexOf(cue.key);
+              if (idx == -1) {
+                wrong.push(cue.key);
+              }
+            }
+
+            if (missing.length == 0 && wrong.length == 0) {
+              console.log("all good");
+            } else {
+              if (missing.length > 0) {
+                console.log("missing", missing);
+              }
+              if (wrong.length > 0) {
+                console.log("wrong", wrong);
+              }
+            }
+
+          };
+
+
+
+
+          /*
+            all the different intervals related to low
+            - expect this to be symmetric for high
+          */
+
+          const cues = [
+            // outside left
+            {key:"A", interval: new Interval(1,2, true, false)},
+
+            // outside left touching low
+            {key:"B", interval: new Interval(1,4, true, false)},
+            {key:"C", interval: new Interval(1,4, true, true)},
+
+            // overlap low
+            {key:"D", interval: new Interval(1,6, true, false)},
+
+            // inside touching low
+            {key:"E", interval: new Interval(4,6, true, false)},
+            {key:"F", interval: new Interval(4,6, false, false)},
+
+            // inside touching low and high
+            {key:"G", interval: new Interval(4,10, true, true)},
+            {key:"H", interval: new Interval(4,10, false, false)},
+            {key:"I", interval: new Interval(4,10, false, true)},
+            {key:"J", interval: new Interval(4,10, true, false)},
+            
+            // touching low inside - outside high 
+            {key:"K", interval: new Interval(4,12, true, false)},
+            {key:"L", interval: new Interval(4,12, false, true)},
+
+            // overlapping
+            {key:"M", interval: new Interval(1,12, false, true)},
+          ]
+
+          let _cues;
+          let _expect;
+
+          // insert cues
+          let ax = new Axis();
+          ax._update(cues);
+
+          // inside search interval 1
+          console.log("inside", searchInterval1)
+          _expect = ["F", "H"];
+          _cues = ax.getCuesByInterval(searchInterval1, "inside");
+          check(_cues, _expect);
+
+          
+ 
+
+        };
+
+
+
         var test_removeCuesByInterval = function () {
           let ax = new Axis();
 
@@ -245,8 +342,7 @@
             interval: new Interval(4, 18, true, true)
           });
           
-          // let interval = new Interval(4.5, 17.5, false, false);
-          let interval = new Interval(4, 18, false, false);
+          let interval = new Interval(4.5, 17.5, false, false);
 
    
           /*
@@ -452,7 +548,8 @@
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_event();
-          test_removeCuesByInterval();
+          //test_removeCuesByInterval();
+          test_correctness_inside();
         };
 
         if (document.readyState === "complete") run();
