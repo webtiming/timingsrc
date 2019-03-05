@@ -310,7 +310,7 @@
             {key:"E2", interval: new Interval(4,12, true, false)},
             // left of low, touching high
             {key:"E3", interval: new Interval(1,10, true, false)},
-            {key:"E4", interval: new Interval(1,1, true, true)},
+            {key:"E4", interval: new Interval(1,10, true, true)},
 
             // overlapping
             {key:"F", interval: new Interval(1,12, false, true)},
@@ -334,12 +334,15 @@
           const searchInterval2 = new Interval(4,10, false, true);
           const searchInterval3 = new Interval(4,10, true, false);
           const searchInterval4 = new Interval(4,10, true, true);
+          
 
+          /*
           // partial search interval 1
           console.log("partial", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E1", "E3", "G3"];
           _cues = ax.getCuesByInterval(searchInterval1, "partial");
           check(_cues, _expect);
+          */
 
           /*
           // inside search interval 1
@@ -349,7 +352,78 @@
           check(_cues, _expect);
           */
 
+          /*
+          // inside search interval 1
+          console.log("overlap", searchInterval1)
+          _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "F", "G3"];
+          _cues = ax.getCuesByInterval(searchInterval1, "overlap");
+          check(_cues, _expect);
+          */
           
+          /*          
+          // partial search interval 2
+          console.log("partial", searchInterval2)
+          _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E3", "E4", "G3", "G4"];
+          _cues = ax.getCuesByInterval(searchInterval2, "partial");
+          check(_cues, _expect);
+          
+          // inside search interval 2
+          console.log("inside", searchInterval2)
+          _expect = ["D1", "D3", "D4", "D5", "D7", "G3", "G4"];
+          _cues = ax.getCuesByInterval(searchInterval2, "inside");
+          check(_cues, _expect);
+          
+          // inside search interval 2
+          console.log("overlap", searchInterval2)
+          _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G4", "F"];
+          _cues = ax.getCuesByInterval(searchInterval2, "overlap");
+          check(_cues, _expect);
+          */
+
+          /*
+          // partial search interval 3
+          console.log("partial", searchInterval3)
+          _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "G3", "G2"];
+          _cues = ax.getCuesByInterval(searchInterval3, "partial");
+          check(_cues, _expect);
+          
+          // inside search interval 3
+          console.log("inside", searchInterval3)
+          _expect = ["D1", "D3", "D2", "D5", "D6", "G3", "G2"];
+          _cues = ax.getCuesByInterval(searchInterval3, "inside");
+          check(_cues, _expect);
+          
+          // inside search interval 3
+          console.log("overlap", searchInterval3)
+          _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G2", "F"];
+          _cues = ax.getCuesByInterval(searchInterval3, "overlap");
+          check(_cues, _expect);
+          */
+
+
+          // partial search interval 4
+          console.log("partial", searchInterval4)
+          _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4"];
+          _cues = ax.getCuesByInterval(searchInterval4, "partial");
+          check(_cues, _expect);
+          
+          // inside search interval 4
+          console.log("inside", searchInterval4)
+          _expect = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "G2", "G3", "G4"];
+          _cues = ax.getCuesByInterval(searchInterval4, "inside");
+          check(_cues, _expect);
+          
+          // inside search interval 4
+          console.log("overlap", searchInterval4)
+          _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4", "F"];
+          _cues = ax.getCuesByInterval(searchInterval4, "overlap");
+          check(_cues, _expect);
+
+
+
+
+
+
  
 
         };

@@ -85,6 +85,61 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
+	/*
+		returns true if b has at least one endpoint inside a
+	
+		There are some subtleties if interval B shares one or two endpoints with A
+
+		4 ways for intervals to share an endpoint
+		- a.high == b.low : 
+			><  (b.low outside a) 
+			>[  (b.low outside a)
+			]<  (b.low outside a)
+			][  (b.low inside a)
+		- b.high == a.low : 
+			><  (b.high outside a) 
+			>[  (b.high outside a)
+			]<  (b.high outside a )
+			][  (b.high inside a)
+		- a.high == b.high: 
+			>>  (b.high inside a)
+			>]  (b.high outside a)
+			]>  (b.high inside a)
+			]]  (b.high inside a)
+		- a.low == b.low : 
+			<<  (b.low inside a)
+			<[  (b.low outside a)
+			[<  (b.low inside a)
+			[[  (b.low inside a)
+
+
+	*/
+
+	var endpointInside = function (a, b) {
+		// check if b is to the right of a
+		if (a.high < b.low) return false;
+		// check if b is to the left of a
+		if (b.high < a.low) return false;
+		// check if b.low is inside a
+		if (a.low < b.low && b.low < a.high) return true;
+		// check if b.high is inside a
+		if (a.low < b.high && b.high < a.high) return true;
+		// special consideration if a and b happens to share one or two endpoints
+		if (a.high == b.low) {
+			if (a.highInclude && b.lowInclude) return true;
+		} 
+		if (b.high == a.low) {
+			if (b.highInclude && a.lowInclude) return true;
+		}
+		if (a.high == b.high) {
+			if (!(!a.highInclude && b.highInclude)) return true;
+		}
+		if (a.low == b.low) {
+			if (!(!a.lowInclude && b.lowInclude)) return true;
+		}
+		return false;
+	};
+
 	
 
 
@@ -699,37 +754,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				}
 
 				/* filter out cues that have both endpoints outside the original search interval */
-				if (cue.interval.coversInterval(interval)) {
-					console.log("jalla ", cue.key);
-				}
-
-
-				/*
-					filter out cues which are not covered by the search interval 
-					this may happen when point coincide with one of the endpoints of 
-					search interval 
-				*/
-				let include = true
-				if (point == interval.low || point == interval.high) {
-					include = interval.overlapsInterval(cue.interval);
-				}
-
-
-				/*
-					cues sharing only the endpoints of interval
-					(cue.interval and interval are back-to-back)
-					must be checked specifically to see if they 
-					really overlap at the endpoint
-					no overlap: ><, >[ or ]<
-					overlap: ][     
-				*/
-				/*
-				let include = true;
-				if (point == interval.low || point == interval.high) {
-					include = exclusiveEndpointOverlap(interval, cue.interval);
-				}
-				*/
-				if (include) {
+				
+				if (endpointInside(interval, cue.interval)) {
 					let item = (cuepoint) ? {point:point, cue:cue} : cue;
 					res.push(item);
 				}
@@ -829,9 +855,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	CueBucket.prototype.lookupCues = function (interval, semantic=Semantic.OVERLAP) {
 		const partial_cues = this._lookupCuesFromInterval(interval, {cuepoint:false});
 		if (semantic == Semantic.PARTIAL) {
-			for (let cue of partial_cues.values()) {
-				console.log(cue.key);
-			}
 			return partial_cues;
 		} else if (semantic == Semantic.INSIDE) {
 			return partial_cues.filter(function (cue) {
@@ -839,6 +862,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			});
 		} else if (semantic == Semantic.OVERLAP) {
 			const outside_cues = this._lookupOutsideCuesFromInterval(interval);
+			/*
+			for (let cue of outside_cues.values()) {
+				console.log(cue);
+			}
+			*/
 			return mergeArrays(partial_cues, outside_cues);
 		} else {
 			throw new Error("illegal semantic " + semantic);
