@@ -59,34 +59,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 	};
 
-	/*
-		returns true if interval_A and interval_B
-		- are back-to-back on the timeline, with a shared endpoint
-		- overlaps exclusively on that endpoint
-		  no overlap: ><, >[, ]< 
-		  overlap: ][
-		- else return false 
-	*/
-	var exclusiveEndpointOverlap = function (interval_A, interval_B) {
-		// consider A,B
-		if (interval_A.high == interval_B.low) {
-			if (interval_A.highInclude && interval_B.lowInclude) {
-				return true;
-			}
-		} else {
-			// consider B,A
-			if (interval_B.high == interval_A.low) {
-				if (interval_B.highInclude && interval_A.lowInclude) {
-					return true;
-				}
-			}
-		}
-		return false;
-	};
-
 
 	/*
-		returns true if b has at least one endpoint inside a
+		returns true if interval b has at least one endpoint inside interval a
 	
 		There are some subtleties if interval B shares one or two endpoints with A
 
@@ -111,8 +86,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			<[  (b.low outside a)
 			[<  (b.low inside a)
 			[[  (b.low inside a)
-
-
 	*/
 
 	var endpointInside = function (a, b) {
@@ -141,8 +114,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	
-
-
     /*
 		Setup for cue buckets.
     */
@@ -189,7 +160,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     	REMOVE_CUES: "remove-cues",
     	INTEGRITY: "integrity"
     });
-
 
 	
 	/*
@@ -441,14 +411,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	Axis.prototype.removeCuesByInterval2 = function (interval, semantic=Semantic.INSIDE) {
 		const cues = this._execute(Method.REMOVE_CUES, interval, semantic);
 		// remove from cueMap and make events
-		const eList = [];
+		const eventMap = new Map();
 		for (let i=0; i<cues.length; i++) {
 			let cue = cues[i];
 			this._cueMap.delete(cue.key);
-			eList.push({'old': cue});
+			eventMap.set(cue.key, {'old': cue});
 		}
-		this.eventifyTriggerEvent("change", eList);
-		return eList;
+		this.eventifyTriggerEvent("change", eventMap);
+		return eventMap;
 	};
 
 	/*
