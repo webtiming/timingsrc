@@ -480,11 +480,10 @@ define (['./interval'], function (Interval) {
     /*
         method for removing multiple closely placed elements in place
         - removeList is sorted
-        - changes only affect the part of the indexe between first and last element
+        - changes only affect the part of the index between first and last element
         - move remaining elements to the left, remove elements with a single splice
         - efficent if removelist references elements that are close to eachother  
     */
-
 
     BinarySearch.prototype.removeInSlice = function (removeList) {
         if (removeList.length == 0){

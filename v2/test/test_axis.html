@@ -500,18 +500,16 @@
 
         var test_removeCuesByInterval_stress = function () {
 
-          let DATASIZE = 1000;
+          let DATASIZE = 500000;
+          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
+          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 50);
+
           let ax = new Axis();
 
           // initialise
           let numbers_1 = make_sorted_floats(DATASIZE);
           let batch_1 = make_cues_from_numbers(numbers_1);
           ax._update(batch_1);
-
-
-
-          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
-          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 10);
 
           // remove cues in interval
           [res, t] = timeit(function () {
@@ -526,29 +524,7 @@
           [res, t] = timeit(function () {
             return ax.removeCuesByInterval(smallInterval);
           });
-          console.log("remove cues by smallinterval", interval.toString(), " ", res.size, " ", t);
-
-          ax.clear();
-          ax._update(batch_1);          
-
-          // remove cues in interval
-          [res, t] = timeit(function () {
-            return ax.removeCuesByInterval2(interval);
-          });
-          console.log("remove cues 2 by interval", interval.toString(), " ", res.size, " ", t);
-
-          ax.clear();
-          ax._update(batch_1);          
-
-          // remove cues in interval
-          [res, t] = timeit(function () {
-            return ax.removeCuesByInterval2(smallInterval);
-          });
-          console.log("remove cues 2 by smallinterval", interval.toString(), " ", res.size, " ", t);
-
-          ax.clear();
-          ax._update(batch_1);          
-
+          console.log("remove cues by smallinterval", smallInterval.toString(), " ", res.size, " ", t);
 
         };
 
@@ -583,8 +559,12 @@
 
 
         var test_main = function () {
-          let DATASIZE = 1000;
+          let DATASIZE = 100000;
           let ax = new Axis();
+
+          // Lookup Intervals
+          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
+          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 100);
 
           // initialise
           let numbers_1 = make_sorted_floats(DATASIZE);
@@ -606,7 +586,6 @@
             return ax.clear();
           })
           console.log("remove all cues", res.size, " ", t);
-
 
           // initialise
           let numbers_11 = make_sorted_floats(DATASIZE);
@@ -649,33 +628,36 @@
           console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
           console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
 
-          // lookup
-          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
-          let iterable, arr;
-          
+          // lookup cuepoints          
           [res, t] = timeit(function () {
             return ax.getCuePointsByInterval(interval);
           });
           console.log("lookup cuepoints ", interval.toString(), " ", res.length, " ", t);
 
+          // lookup cues small interval
           [res, t] = timeit(function () {
-            return ax.getCuesByInterval(interval);
+            return ax.getCuesByInterval(smallInterval, "inside");
           });
-          console.log("lookup all cues of interval ", interval.toString(), " ", res.length, " ", t);
-
-          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 10);
+          console.log("lookup cues - small interval ", smallInterval.toString(), " ", res.length, " ", t);
+          
+          // remove cues small interval
           [res, t] = timeit(function () {
-            return ax.getCuesByInterval(smallInterval);
+            return ax.removeCuesByInterval(smallInterval, "inside");
           });
-          console.log("lookup all cues of small interval ", smallInterval.toString(), " ", res.length, " ", t);
+          console.log("remove cues - small interval", smallInterval.toString(), " ", res.size, " ", t);
 
-
-          // remove cues in interval
+          // lookup cues big interval
           [res, t] = timeit(function () {
-            return ax.removeCuesByInterval(interval);
+            return ax.getCuesByInterval(interval, "inside");
           });
-          console.log("remove cues by interval", interval.toString(), " ", res.size, " ", t);
+          console.log("lookup cues - big interval ", interval.toString(), " ", res.length, " ", t);
 
+          // remove cues big interval
+          [res, t] = timeit(function () {
+            return ax.removeCuesByInterval(interval, "inside");
+          });
+          console.log("remove cues - big interval", interval.toString(), " ", res.size, " ", t);
+          
           // remove
           let batch_5 = make_cues_from_numbers(numbers_4, {'op':"remove"});
           [res, t] = timeit(function () {
@@ -706,6 +688,8 @@
           //test_event();
           //test_removeCuesByInterval();
           //test_correctness_lookup();
+
+          //test_removeCuesByInterval_stress();
         };
 
         if (document.readyState === "complete") run();

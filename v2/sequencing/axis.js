@@ -394,21 +394,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		return this._execute(Method.LOOKUP_CUES, interval, semantic);
 	};
 
-	/*
-		Similar to getCuesByInterval, but removing cues.
-	*/
-	Axis.prototype.removeCuesByInterval = function (interval, semantic=Semantic.INSIDE) {
-		let cues = this._execute(Method.LOOKUP_CUES, interval, semantic);
-		let removeCues = cues.map(function (cue) {
-			return {key:cue.key};
-		});
-		return this._update(removeCues);
-	};
 
 	/*
 		REMOVE CUES BY INTERVAL
 	*/
-	Axis.prototype.removeCuesByInterval2 = function (interval, semantic=Semantic.INSIDE) {
+	Axis.prototype.removeCuesByInterval = function (interval, semantic=Semantic.INSIDE) {
 		const cues = this._execute(Method.REMOVE_CUES, interval, semantic);
 		// remove from cueMap and make events
 		const eventMap = new Map();
@@ -442,8 +432,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
-
-
 	/*
 		Accessors
 	*/
@@ -468,7 +456,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	/*
 		utility
 	*/
-	Axis.prototype.integrity = function () {
+	Axis.prototype._integrity = function () {
 		const res = this._execute(Method.INTEGRITY);
 	
 		// sum up cues and points
@@ -499,7 +487,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			points: points.length
 		};
 	};
-
 
 
 
@@ -723,8 +710,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					}
 				}
 
-				/* filter out cues that have both endpoints outside the original search interval */
-				
+				/* filter out cues that have both endpoints outside the original search interval */				
 				if (endpointInside(interval, cue.interval)) {
 					let item = (cuepoint) ? {point:point, cue:cue} : cue;
 					res.push(item);
@@ -832,11 +818,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			});
 		} else if (semantic == Semantic.OVERLAP) {
 			const outside_cues = this._lookupOutsideCuesFromInterval(interval);
-			/*
-			for (let cue of outside_cues.values()) {
-				console.log(cue);
-			}
-			*/
 			return mergeArrays(partial_cues, outside_cues);
 		} else {
 			throw new Error("illegal semantic " + semantic);
@@ -848,16 +829,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		REMOVE CUES
 	*/
 	CueBucket.prototype.removeCues = function (interval, semantic) {
-
 		/*
 			update pointMap
 			- remove all cues from pointMap
 			- remove empty entries in pointMap
 			- record points that became empty, as these need to be deleted in pointIndex
 			- separate into two bucketes, inside and outside
-
-			to_remove will now (possibly) include points both inside
-			and outside interval scheduled for removal
 		*/
 		const cues = this.execute(Method.LOOKUP_CUES, interval, semantic);
 		const to_remove = [];
@@ -891,10 +868,19 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			- the segment to modify is limited by [interval.low - maxLength, interval.high + maxLenght] as this will cover
 			  both cues inside, partial and overlapping.
 		
-			# TODO - optimize
+			# Possible - optimization 
+			alternative approach using regular update could be more efficient for very samll batches
+			this._pointIndex.update(to_remove, []);
+			it could also be comparable for huge loads (250.000 cues)
+		*/
+		
+		to_remove.sort(function(a,b){return a-b});
+		this._pointIndex.removeInSlice(to_remove);
+
+		/*
+			alternative solution
 			this._pointIndex.update(to_remove, []);
 		*/
-		this._pointIndex.removeInSlice(to_remove);
 
 		return cues;
 	};
@@ -920,8 +906,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		pointMap and pointIndex
 	*/
 	CueBucket.prototype._integrity = function () {
+
 		if (this._pointMap.size !== this._pointIndex.length) {
-			throw new Error("unequal number of points" + this._pointMap.size - this._pointIndex);
+			throw new Error("unequal number of points " + (this._pointMap.size - this._pointIndex.length));
 		}
 
 		// check that the same cues are present in both pointMap and pointIndex
