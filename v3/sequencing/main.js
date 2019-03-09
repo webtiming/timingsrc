@@ -18,8 +18,8 @@
   along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(['./axis', './sequencer', './windowsequencer', './timingcallbacks', './timinginteger', './activecue'], 
-	function (axis, seq, WindowSequencer, timingcallbacks, TimingInteger, ActiveCue) {		
+define(['util/interval', './axis', './sequencer', './windowsequencer', './timingcallbacks', './timinginteger', './activecue'], 
+	function (Interval, Axis, DefaultSequencer, WindowSequencer, timingcallbacks, TimingInteger, ActiveCue) {		
 		'use strict';
 
 
@@ -33,7 +33,7 @@ define(['./axis', './sequencer', './windowsequencer', './timingcallbacks', './ti
     };
 
     // Add clone prototype to both Sequencer and WindowSequencer
-    seq.DefaultSequencer.prototype.clone = function (toA, toB) {
+    DefaultSequencer.prototype.clone = function (toA, toB) {
       return Sequencer(toA, toB, this._axis);
     };
     WindowSequencer.prototype.clone = function (toA, toB) {
@@ -41,10 +41,9 @@ define(['./axis', './sequencer', './windowsequencer', './timingcallbacks', './ti
     };
 
 		return {
-      Axis : axis.Axis,
+      Axis : Axis,
 			Sequencer : Sequencer,
-			Interval : seq.Interval,
-			inherit : seq.inherit,
+			Interval : Interval,
       setPointCallback : timingcallbacks.setPointCallback,
       setIntervalCallback : timingcallbacks.setIntervalCallback,
       TimingInteger : TimingInteger,

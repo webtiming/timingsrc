@@ -6,7 +6,7 @@
 define (['./timingobject/main', './sequencing/main', './mediasync/mediasync', './util/main'], 
 	function (timingobject, sequencing, mediasync, util) {
 	return {
-		version : "v2",
+		version : "v3",
 		
 		// Timing Object
 		TimingObject : timingobject.TimingObject,
@@ -31,8 +31,5 @@ define (['./timingobject/main', './sequencing/main', './mediasync/mediasync', '.
 		TimingInteger : sequencing.TimingInteger,
 		ActiveCue : sequencing.ActiveCue,
 
-		// MediaSync
-		MediaSync: mediasync.MediaSync,
-    	mediaNeedKick : mediasync.needKick
 	};
 });

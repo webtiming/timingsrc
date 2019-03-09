@@ -78,7 +78,7 @@
 	- not implemented
 */
 
-define(['../util/eventify', '../util/motionutils', '../util/interval', './axis', './new_sequencer'], 
+define(['../util/eventify', '../util/motionutils', '../util/interval', './axis', './sequencer'], 
 	function (eventify, motionutils, Interval, Axis, Sequencer) {
 	
 	'use strict';
