@@ -13,16 +13,15 @@
     <script text="javascript">
       var to, toA, toB, s, createCue, updateCue, removeCue, repeatCue;
 
-      require(['timingobject/timingobject', 'timingobject/skewconverter', 'sequencing/windowsequencer', 'util/interval' ], 
-        function (timingobject, SkewConverter, WindowSequencer, Interval) {
+      require(['timingsrc'], function (timingsrc) {
 
         // Timing Object
-        to = new timingobject.TimingObject({range:[0,52]});
-        toA = new SkewConverter(to, -5.0);
-        toB = new SkewConverter(to, 4.0);
+        to = new timingsrc.TimingObject({range:[0,52]});
+        toA = new timingsrc.SkewConverter(to, -5.0);
+        toB = new timingsrc.SkewConverter(to, 4.0);
         
         // Sequencer
-        s = new WindowSequencer(toA, toB);    
+        s = new timingsrc.Sequencer(toA, toB);    
         
         // Timed Data
         var data = {
@@ -56,7 +55,7 @@
 
         // load timed data into sequencer
         Object.keys(data).forEach(function (key) {
-          s.addCue(key, new Interval(data[key].start, data[key].end));
+          s.addCue(key, new timingsrc.Interval(data[key].start, data[key].end), data[key].data);
         });
 
         var run = function () {

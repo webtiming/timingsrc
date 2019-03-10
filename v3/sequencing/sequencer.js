@@ -1072,7 +1072,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	    }
 	};
 
-	var eventToString = function (e) {
+    /*
+		utility - print event
+    */
+	Sequencer.prototype.eventToString = function (e) {
 		var s = "[" +  e.point.toFixed(2) + "]";
         s += " " + e.key;
         s += " " + e.interval.toString();
@@ -1086,12 +1089,10 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         s += " delay:" + e.delay.toFixed(4);
         if (e.data) s += " " + JSON.stringify(e.data);
         return s;
-	};
-	Sequencer.eventToString = eventToString;
+	};;
 
 	// Module Definition
 	return Sequencer;
-
 });
 
 

@@ -11,20 +11,20 @@
   <script type="text/javascript" src="../../lib/require.js"></script>
   <script type="text/javascript">
       var to, w, w2;
-      require(['timingobject/main'], function (timingobject) {
+      require(['timingsrc'], function (timingsrc) {
       
         var setup_converter1 = function (to) {
           // Converter objects
-          //w = new timingobject.SkewConverter(to, 2);
+          //w = new timingsrc.SkewConverter(to, 2);
 
-          //w = new timingobject.DelayConverter(to, 1.0);
-          //w = new timingobject.ScaleConverter(to, 2);         
-          //w = new timingobject.LoopConverter(to, [0, 10]);
-          w = new timingobject.RangeConverter(to, [2,8]);
-          //w = new timingobject.TimeShiftConverter(to, -1.0);
-          //w = new timingobject.LocalConverter(to);
+          //w = new timingsrc.DelayConverter(to, 1.0);
+          //w = new timingsrc.ScaleConverter(to, 2);         
+          //w = new timingsrc.LoopConverter(to, [0, 10]);
+          w = new timingsrc.RangeConverter(to, [2,8]);
+          //w = new timingsrc.TimeShiftConverter(to, -1.0);
+          //w = new timingsrc.LocalConverter(to);
        
-          //w = new timingobject.DerivativeConverter(to);
+          //w = new timingsrc.DerivativeConverter(to);
   
 
           var converterhandler = function () {
@@ -81,9 +81,9 @@
 
           // timing object
           //var to = new timingsrc.TimingObject({range:[8,17]});
-          var to = new timingobject.TimingObject({range:[0,10]});
-          //var to = new timingobject.TimingObject();
-          //var to = new timingobject.TimingObject({vector: {velocity:1}});
+          var to = new timingsrc.TimingObject({range:[0,10]});
+          //var to = new timingsrc.TimingObject();
+          //var to = new timingsrc.TimingObject({vector: {velocity:1}});
 
           var sourcehandler = function () {
             if (sourcehandler.init === false) {

@@ -78,12 +78,15 @@
 	- not implemented
 */
 
-define(['../util/eventify', '../util/motionutils', '../util/interval', './axis', './sequencer'], 
-	function (eventify, motionutils, Interval, Axis, Sequencer) {
-	
+define(function(require, exports, module) {
+
 	'use strict';
 
-
+	const eventify = require('util/eventify');
+	const motionutils = require('util/motionutils');
+	const Interval = require('util/interval');
+	const Axis = require('./axis');
+	const Sequencer = require('./sequencer');
 
 	/*
 		get the difference of two Maps
@@ -441,7 +444,6 @@ define(['../util/eventify', '../util/motionutils', '../util/interval', './axis',
 	WindowSequencer.prototype.removeCuesByInterval = function (interval) {
 		return this._axis.removeCuesByInterval(interval);
 	};
-
 
 	// shutdown
 	WindowSequencer.prototype.close = function () {

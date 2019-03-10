@@ -13,15 +13,16 @@
     <script text="javascript">
       var to, s, createCue, updateCue, removeCue, repeatCue;
 
-      require(['timingobject/timingobject', 'sequencing/sequencer', 'util/interval' ], 
-        function (timingobject, Sequencer, Interval) {
+
+
+      require(['timingsrc'], function (timingsrc) {
         
-        let TimingObject = timingobject.TimingObject;
+        const Interval = timingsrc.Interval;
 
         // Timing Object
-        to = new TimingObject({range:[0,20]});
+        to = new timingsrc.TimingObject({range:[0,20]});
         // Sequencer
-        s = new Sequencer(to);
+        s = new timingsrc.Sequencer(to);
 
         var run = function () {
         
@@ -45,7 +46,7 @@
             s.ready.then(function() {
               s.on("events", function(eList) {
                 for (let eItem of eList.values()) {
-                  console.log(Sequencer.eventToString(eItem.e));
+                  console.log(s.eventToString(eItem.e));
                 }
                 console.log([...s.getActiveKeys()])
               });             

@@ -40,9 +40,9 @@
     };
 
 
-    require(['timingobject/main'], function (timingobject) {
+    require(['timingsrc'], function (timingsrc) {
       // timing object
-      to = new timingobject.TimingObject();
+      to = new timingsrc.TimingObject();
       console.log("timingobject init");
       to.ready.then(function () {
         console.log("timingobject ready");
