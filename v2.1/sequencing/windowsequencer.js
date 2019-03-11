@@ -320,9 +320,11 @@ define(function(require, exports, module) {
 			those cues that were modified and also remain within the set of active cues
 		*/
 		let changeCues = new Map();
-		if (eventMap) {		
+		if (eventMap) {
 			const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
 				return eItem.new && eItem.old;
+			}).map(function([key, eItem]) {
+				return [key, eItem.new];
 			}));
 			changeCues = map_intersect(modifiedCues, activeCues);
 		}
