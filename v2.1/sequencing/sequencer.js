@@ -550,6 +550,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		if (cause == Cause.CUECHANGE) {		
 			const modifiedCues = new Map([...eventMap].filter(function ([key, eItem]) {
 				return eItem.new && eItem.old;
+			}).map(function([key, eItem]) {
+				return [key, eItem.new];
 			}));
 			changeCues = map_intersect(modifiedCues, activeCues);
 		}
