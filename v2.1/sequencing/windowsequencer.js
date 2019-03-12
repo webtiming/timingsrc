@@ -148,6 +148,7 @@ define(function(require, exports, module) {
 
 		// active cues
 		this._activeCues = new Map(); // key -> cue
+		this._activeCuesList = [];
 
 		// Define Events API
 		// event type "events" defined by default
@@ -331,7 +332,7 @@ define(function(require, exports, module) {
 
 		// update active cues
 		this._activeCues = activeCues; 
-
+		this._activeCuesList = [...this._activeCues.values()];
 
 	    // make event items from enter/exit keys
 	    const eList = [];
@@ -398,7 +399,7 @@ define(function(require, exports, module) {
 	};
 
 	WindowSequencer.prototype.getActiveCues = function () {
-		return this._activeCues.values();
+		return this._activeCuesList;
 	};
 
 	/*

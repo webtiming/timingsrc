@@ -389,6 +389,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 		// active cues
 		this._activeCues = new Map(); // (key -> cue)
+		this._activeCuesList = [];
 
 		// event stuff
 		eventify.eventifyInstance(this);
@@ -557,8 +558,8 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		}
 
 		// update active cues
-		this._activeCues = activeCues;  
-	
+		this._activeCues = activeCues;
+
 		// make events
 		const eList = this._makeChangeEvents(now, nowVector.position, cause, exitCues, enterCues, changeCues);
 		this.eventifyTriggerEvents(eList);
@@ -631,6 +632,9 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 			this.eventifyTriggerEvents(eList);
 	    }
 
+	    // update list version of activeCues
+		this._activeCuesList = [...this._activeCues.values()];
+
 	    // clear schedule
 		if (this._schedule == undefined) {
 			this._schedule = new Schedule(now);
@@ -680,6 +684,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
    		const directionInt = motionutils.calculateDirection(this._to.vector, now);
    		let eArgList = [];
    		let entry, task;
+   		let dirty = false;
    		for (let i=0; i<scheduleEntries.length; i++) {
    			entry = scheduleEntries[i];
    			task = entry.task;
@@ -699,10 +704,16 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		    	// update activeCues
 		    	if (verbType == VerbType.ENTER) {
 		    		this._activeCues.set(task.cue.key, task.cue);
+		    		dirty = true;
 		    	} else if (verbType == VerbType.EXIT) {
 		    		this._activeCues.delete(task.cue.key);
+		    		dirty = true;
 		    	}
 			}
+   		}
+   		if (dirty) {
+   			// regenerate list from ActiveCues
+			this._activeCuesList = [...this._activeCues.values()];
    		}
 		// make sure events are correctly ordered
 		eArgList = this._reorderEventList(eArgList, directionInt);		
@@ -1014,7 +1025,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 	};
 
 	Sequencer.prototype.getActiveCues = function () {
-		return this._activeCues.values();
+		return this._activeCuesList;
 	};
 
 	/*
