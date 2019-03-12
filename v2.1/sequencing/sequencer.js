@@ -1021,7 +1021,7 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 
 	// Get keys of active cues
 	Sequencer.prototype.getActiveKeys = function () {
-		return this._activeCues.keys();
+		return [...this._activeCues.keys()];
 	};
 
 	Sequencer.prototype.getActiveCues = function () {
@@ -1066,12 +1066,12 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
 		return this._axis.cues();	
 	};
 
-	Sequencer.prototype.getCuesByInterval = function (interval) {
-		return this._axis.getCuesByInterval(interval);
+	Sequencer.prototype.getCuesByInterval = function (interval, semantic) {
+		return this._axis.getCuesByInterval(interval, semantic);
 	};
 
-	Sequencer.prototype.removeCuesByInterval = function (interval) {
-		return this._axis.removeCuesByInterval(interval);
+	Sequencer.prototype.removeCuesByInterval = function (interval, semantic) {
+		return this._axis.removeCuesByInterval(interval, semantic);
 	};
 
 
@@ -1104,7 +1104,6 @@ define(['../util/motionutils', '../util/eventify', '../util/interval', './axis']
         return s;
 	};;
 
-	// Module Definition
 	return Sequencer;
 });
 

@@ -445,11 +445,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 	Axis.prototype.keys = function () {
-		return this._cueMap.keys();
+		return [...this._cueMap.keys()];
 	};
 
 	Axis.prototype.cues = function () {
-		return this._cueMap.values();
+		return [...this._cueMap.values()];
 	};
 
 

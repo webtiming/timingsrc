@@ -390,12 +390,12 @@ define(function(require, exports, module) {
 
 	// return true if cue of given key is currently active
 	WindowSequencer.prototype.isActive = function (key) {
-	    return (this._activeCues.has(key));
+	    return this._activeCues.has(key);
 	};
 
 	// Get keys of active cues
 	WindowSequencer.prototype.getActiveKeys = function () {
-		return this._activeCues.keys();
+		return [...this._activeCues.keys()];
 	};
 
 	WindowSequencer.prototype.getActiveCues = function () {
