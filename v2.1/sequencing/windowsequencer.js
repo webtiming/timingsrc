@@ -188,7 +188,7 @@ define(function(require, exports, module) {
 		Promise.all([this._seqA.ready, this._seqB.ready]).then(function (values) {
 			// both sequencers are ready
 			// by implication - both timing objects are ready too
-			self._axis.on("events", self._onAxisChange, self);
+			self._axis.on("change", self._onAxisChange, self);
 			self._ready.value = true;
 			self._request_reevaluate();
 		});
