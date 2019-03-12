@@ -20,7 +20,7 @@ def build (version):
 	subprocess.call(args)
 
 	# requirejs - minified
-	out = "out={}/timingsrc-min-require-{}.js".format(libdir, version)
+	out = "out={}/timingsrc-require-min-{}.js".format(libdir, version)
 	args = ["node", "r.js", "-o", baseUrl, "name=timingsrc", out]
 	print(" ".join(args))
 	subprocess.call(args)
