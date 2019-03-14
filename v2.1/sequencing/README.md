@@ -6,7 +6,7 @@ The sequencing module provides general purpose sequencing tools for the Timing O
 API documentation and introduction to sequencing is available at  [Sequencer](http://webtiming.github.io/sequencer/).
 
 
-### Sequencer (Point Sequencer)
+### Sequencer
 
 Sequencing cues (key, interval) based on a Timing Object. 
 
@@ -14,13 +14,10 @@ Sequencing cues (key, interval) based on a Timing Object.
 - a cue is *active* whenever its interval covers this moving point. 
 - *enter* and *exit* events are emmitted at the precise momement when a cue becomes *active* or ceases to be *active*.
 
-
-### Interval Sequencer
-
 Sequencing cues (key, interval) based on two Timing Objects. 
 
 - the current positions of the two Timing Objects define a moving interval.
-- a cue is *active* whenever its interval is partially covered by this moving interval.
+- a cue is *active* whenever its interval is at least partially covered by this moving interval.
 - *enter* and *exit* events are emmitted at the precise momement when a cue becomes *active* or ceases to be *active*.
 
 
