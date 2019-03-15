@@ -3,11 +3,11 @@ layout: default
 title: Home
 ---
 
-Multi-device timing has come to the Web.
+Timing has come to the Web.
 
-> **Timingsrc** provides a new programming model for precisely timed **multi-device** Web applications, based on the [timing object](http://webtiming.github.io/timingobject/).
+> **Timingsrc** provides a new programming model for precisely timed Web applications, based on the [timing object](http://webtiming.github.io/timingobject/).
 
-For multi-device timing support, simply plug a *timing provider* into your *timing object*. [Shared Motion](shared_motion.html) by [Motion Corporation](http://motioncorporation.com) provides millisecond precise timing **globally** for Web clients, and is open for non-commercial use.
+For **multi-device** timing support, simply plug a *timing provider* into your *timing object*. [Shared Motion](shared_motion.html) by [Motion Corporation](http://motioncorporation.com) provides millisecond precise timing **globally** for Web clients, and is open for non-commercial use.
 
 - Want to provide echoless sync of HTML5 video, globally, in 3 lines of code? 
 	- Check out the [MediaSync demo](doc/online_mediasync.html).
