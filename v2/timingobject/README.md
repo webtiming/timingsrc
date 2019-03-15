@@ -6,9 +6,7 @@ This implements the *Timing Object* as well as a set of *Timing Converters*.
 
 ### Timing Object
 
-The [Timing Object](https://github.com/webtiming/timingobject) is defined by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/).
-
-- [timingobject.js](timingobject.js) Timing Object
+The [Timing Object](https://webtiming.github.io/timingobject/) is defined by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/).
 
 
 ### Timing Converters
@@ -44,4 +42,3 @@ Some Timing Converters of common utility are provided in this module:
 ### Module
 
 - [timingbase.js](timingbase.js) implements base classes *TimingBase* and *ConverterBase* used to implement Timing Object and Timing Converters.
-- [main.js](main.js) module definition
