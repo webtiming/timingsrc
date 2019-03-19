@@ -8,7 +8,7 @@ versions = ["v1", "v2", "v2.1"]
 
 def build (version):
 	srcdir = os.path.join("../", version)
-	libdir = "../lib"
+	libdir = "../docs/lib"
 
 	baseUrl = "baseUrl={}".format(srcdir)
 	almond = "almond-build-{}.js".format(version)
