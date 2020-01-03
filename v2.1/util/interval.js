@@ -45,9 +45,9 @@ define(function () {
 		var lowIsNumber = isNumber(low);
 		var highIsNumber = isNumber(high);
 		// new Interval(3.0) defines singular - low === high
-		if (lowIsNumber && high === undefined) high = low; 
+		if (lowIsNumber && high === undefined) high = low;
 		if (!isNumber(low)) throw new IntervalError("low not a number");
-		if (!isNumber(high)) throw new IntervalError("high not a number");	
+		if (!isNumber(high)) throw new IntervalError("high not a number");
 		if (low > high) throw new IntervalError("low > high");
 		if (low === high) {
 			lowInclude = true;
@@ -86,16 +86,16 @@ define(function () {
 		return false;
 	};
 
-	// overlap : it exists at least one point x covered by both interval 
+	// overlap : it exists at least one point x covered by both interval
 	Interval.prototype.overlapsInterval = function (other) {
-		if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");	
+		if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
 		// singularities
-		if (this.singular && other.singular) 
+		if (this.singular && other.singular)
 			return (this.low === other.low);
 		if (this.singular)
 			return other.coversPoint(this.low);
 		if (other.singular)
-			return this.coversPoint(other.low); 
+			return this.coversPoint(other.low);
 		// not overlap right
 		if (this.high < other.low) return false;
 		if (this.high === other.low) {
@@ -108,6 +108,8 @@ define(function () {
 		}
 		return true;
 	};
+
+	// Interval fully covering other interval
 	Interval.prototype.coversInterval = function (other) {
 		if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
 		if (other.low < this.low || this.high < other.high) return false;
@@ -127,8 +129,74 @@ define(function () {
 		return true;
 	};
 
-	/* 
-		Possibility for more interval methods such as union, intersection, 
+
+	/*
+		a.hasEndpointInside(b)
+
+		returns true if interval a has at least one endpoint inside interval b
+
+		This is easy for most intervals, but there are some subtleties
+		when when interval a and b have one or two endpoints in common
+
+		4 ways for intervals to share an endpoint
+
+		- a.high == b.low :
+			><  (a.high outside b)
+			>[  (a.high outside b)
+			]<  (a.high outside b)
+			][  (a.high inside b)
+		- a.high == b.high:
+			>>  (a.high inside b)
+			>]  (a.high inside b)
+			]>  (a.high outside b)
+			]]  (a.high inside b)
+		- a.low == b.low :
+			<<  (a.low inside b)
+			<[  (a.low inside b)
+			[<  (a.low outside b)
+			[[  (a.low inside b)
+		- a.low == b.high :
+			<>  (a.low outside b)
+			[>  (a.low outside b)
+			<]  (a.low outside b)
+			[]  (a.low inside b)
+
+	*/
+
+
+	Interval.prototype.hasEndpointInside = function (b) {
+		const a = this;
+		// check if a is to the right of b
+		if (b.high < a.low) return false;
+		// check if a is to the left of b
+		if (a.high < b.low) return false;
+		// check if a.low is inside b
+		if (b.low < a.low && a.low < b.high) return true;
+		// check if a.high is inside b
+		if (b.low < a.high && a.high < b.high) return true;
+
+		// special consideration if a and b share endpoint(s)
+
+		// a.high shared
+		if (a.high == b.low) {
+			if (a.highInclude && b.lowInclude) return true;
+		}
+		if (a.high == b.high) {
+			if (!(a.highInclude && !b.highInclude)) return true;
+		}
+		// a.low shared
+		if (a.low == b.low) {
+			if (!(a.lowInclude && !b.lowInclude)) return true;
+		}
+		if (a.low == b.high) {
+			if (a.lowInclude && b.highInclude) return true;
+		}
+		return false;
+	};
+
+
+	/*
+		Possibility for more interval methods such as union, intersection,
 	*/
 
 	return Interval;

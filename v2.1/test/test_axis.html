@@ -4,7 +4,7 @@
     <!-- requirejs config -->
     <script>
       var require = {
-        baseUrl : '../', 
+        baseUrl : '../',
       };
     </script>
     <!-- requirejs -->
@@ -58,7 +58,7 @@
         var make_singular_cues = function (size, scale) {
           let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
           return numbers.map(function (n) {
-            return {key: "key " + n.toString(), interval: new Interval(n), data: "data_" + n}; 
+            return {key: "key " + n.toString(), interval: new Interval(n), data: "data_" + n};
           });
         };
 
@@ -102,7 +102,7 @@
           console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
           console.log("pointIndex", ax._cueBuckets.get(0)._pointIndex.array.length);
 
-          
+
           let cues2 = make_remove_cues(10, 10);
           console.log("remove keys", cues2.map(x=>x.key));
           batchMap = ax._update(cues2);
@@ -131,7 +131,7 @@
         };
 
 
-        
+
 
 
         var test_batch_collapsing = function () {
@@ -305,7 +305,7 @@
             {key:"D7", interval: new Interval(4,10, false, true)},
             {key:"D8", interval: new Interval(4,10, true, true)},
 
-            // touching low - right of high 
+            // touching low - right of high
             {key:"E1", interval: new Interval(4,12, false, false)},
             {key:"E2", interval: new Interval(4,12, true, false)},
             // left of low, touching high
@@ -334,71 +334,67 @@
           const searchInterval2 = new Interval(4,10, false, true);
           const searchInterval3 = new Interval(4,10, true, false);
           const searchInterval4 = new Interval(4,10, true, true);
-          
 
-          /*
+
+
           // partial search interval 1
           console.log("partial", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E1", "E3", "G3"];
           _cues = ax.getCuesByInterval(searchInterval1, "partial");
           check(_cues, _expect);
-          */
 
-          /*
           // inside search interval 1
           console.log("inside", searchInterval1)
           _expect = ["D1", "D3", "D5", "G3"];
           _cues = ax.getCuesByInterval(searchInterval1, "inside");
           check(_cues, _expect);
-          */
 
-          /*
           // inside search interval 1
           console.log("overlap", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "F", "G3"];
           _cues = ax.getCuesByInterval(searchInterval1, "overlap");
           check(_cues, _expect);
-          */
-          
-          /*          
+
+
+
           // partial search interval 2
           console.log("partial", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E3", "E4", "G3", "G4"];
           _cues = ax.getCuesByInterval(searchInterval2, "partial");
           check(_cues, _expect);
-          
+
           // inside search interval 2
           console.log("inside", searchInterval2)
           _expect = ["D1", "D3", "D4", "D5", "D7", "G3", "G4"];
           _cues = ax.getCuesByInterval(searchInterval2, "inside");
           check(_cues, _expect);
-          
+
           // inside search interval 2
           console.log("overlap", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G4", "F"];
           _cues = ax.getCuesByInterval(searchInterval2, "overlap");
           check(_cues, _expect);
-          */
 
-          /*
+
+
           // partial search interval 3
           console.log("partial", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "G3", "G2"];
           _cues = ax.getCuesByInterval(searchInterval3, "partial");
           check(_cues, _expect);
-          
+
           // inside search interval 3
           console.log("inside", searchInterval3)
           _expect = ["D1", "D3", "D2", "D5", "D6", "G3", "G2"];
           _cues = ax.getCuesByInterval(searchInterval3, "inside");
           check(_cues, _expect);
-          
+
           // inside search interval 3
           console.log("overlap", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G2", "F"];
           _cues = ax.getCuesByInterval(searchInterval3, "overlap");
           check(_cues, _expect);
-          */
+
 
 
           // partial search interval 4
@@ -406,25 +402,18 @@
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4"];
           _cues = ax.getCuesByInterval(searchInterval4, "partial");
           check(_cues, _expect);
-          
+
           // inside search interval 4
           console.log("inside", searchInterval4)
           _expect = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "G2", "G3", "G4"];
           _cues = ax.getCuesByInterval(searchInterval4, "inside");
           check(_cues, _expect);
-          
+
           // inside search interval 4
           console.log("overlap", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4", "F"];
           _cues = ax.getCuesByInterval(searchInterval4, "overlap");
           check(_cues, _expect);
-
-
-
-
-
-
- 
 
         };
 
@@ -442,10 +431,10 @@
             key: "overlapping",
             interval: new Interval(4, 18, true, true)
           });
-          
+
           let interval = new Interval(4.5, 17.5, false, false);
 
-   
+
           /*
           console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
@@ -518,7 +507,7 @@
           console.log("remove cues by interval", interval.toString(), " ", res.size, " ", t);
 
           ax.clear();
-          ax._update(batch_1);          
+          ax._update(batch_1);
 
           // remove cues in interval
           [res, t] = timeit(function () {
@@ -532,12 +521,12 @@
         var test_event = function () {
           let ax = new Axis();
 
-          
+
           // change event for the entire batch
           ax.on("change", function (e) {
             console.log("onchange ", e);
           });
-          
+
 
           // events event for the entire batch
           ax.on("events", function (eItemList) {
@@ -628,7 +617,7 @@
           console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
           console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
 
-          // lookup cuepoints          
+          // lookup cuepoints
           [res, t] = timeit(function () {
             return ax.getCuePointsByInterval(interval);
           });
@@ -639,7 +628,7 @@
             return ax.getCuesByInterval(smallInterval, "inside");
           });
           console.log("lookup cues - small interval ", smallInterval.toString(), " ", res.length, " ", t);
-          
+
           // remove cues small interval
           [res, t] = timeit(function () {
             return ax.removeCuesByInterval(smallInterval, "inside");
@@ -657,7 +646,7 @@
             return ax.removeCuesByInterval(interval, "inside");
           });
           console.log("remove cues - big interval", interval.toString(), " ", res.size, " ", t);
-          
+
           // remove
           let batch_5 = make_cues_from_numbers(numbers_4, {'op':"remove"});
           [res, t] = timeit(function () {
@@ -680,14 +669,14 @@
         var run = function () {
           //test_basic();
           //test_bigbatch(100000);
-          test_main();
+          //test_main();
 
           //test_batch_collapsing();
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_event();
           //test_removeCuesByInterval();
-          //test_correctness_lookup();
+          test_correctness_lookup();
 
           //test_removeCuesByInterval_stress();
         };
@@ -695,7 +684,7 @@
         if (document.readyState === "complete") run();
         else window.onload = run;
       });
-    </script>    
+    </script>
   </head>
   <body>
     <h1>Test Axis</h1>

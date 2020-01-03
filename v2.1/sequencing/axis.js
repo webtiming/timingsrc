@@ -1,4 +1,4 @@
-define (['../util/binarysearch', '../util/interval', '../util/eventify'], 
+define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	function (BinarySearch, Interval, eventify) {
 
 	'use strict';
@@ -8,7 +8,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 
 
-	/* 
+	/*
 		concat two arrays without creating a copy
 		push elements from the shortest into the longest
 		return the longest
@@ -30,8 +30,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		// cue equality defined by key property
 		if (arr.length == 0) {
 			arr.push(cue);
-		} else {		
-			let idx = arr.findIndex(function (_cue) { 
+		} else {
+			let idx = arr.findIndex(function (_cue) {
 				return _cue.key == cue.key;
 			});
 			if (idx == -1) {
@@ -45,11 +45,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		Remove cue from array
 	*/
 	var removeCueFromArray = function (arr, cue) {
-		// cue equality defined by key property 
+		// cue equality defined by key property
 		if (arr.length == 0) {
 			return true;
-		} else {		
-			let idx = arr.findIndex(function (_cue) { 
+		} else {
+			let idx = arr.findIndex(function (_cue) {
 				return _cue.key == cue.key;
 			});
 			if (idx > -1) {
@@ -59,61 +59,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 	};
 
-
-	/*
-		returns true if interval b has at least one endpoint inside interval a
-	
-		There are some subtleties if interval B shares one or two endpoints with A
-
-		4 ways for intervals to share an endpoint
-		- a.high == b.low : 
-			><  (b.low outside a) 
-			>[  (b.low outside a)
-			]<  (b.low outside a)
-			][  (b.low inside a)
-		- b.high == a.low : 
-			><  (b.high outside a) 
-			>[  (b.high outside a)
-			]<  (b.high outside a )
-			][  (b.high inside a)
-		- a.high == b.high: 
-			>>  (b.high inside a)
-			>]  (b.high outside a)
-			]>  (b.high inside a)
-			]]  (b.high inside a)
-		- a.low == b.low : 
-			<<  (b.low inside a)
-			<[  (b.low outside a)
-			[<  (b.low inside a)
-			[[  (b.low inside a)
-	*/
-
-	var endpointInside = function (a, b) {
-		// check if b is to the right of a
-		if (a.high < b.low) return false;
-		// check if b is to the left of a
-		if (b.high < a.low) return false;
-		// check if b.low is inside a
-		if (a.low < b.low && b.low < a.high) return true;
-		// check if b.high is inside a
-		if (a.low < b.high && b.high < a.high) return true;
-		// special consideration if a and b happens to share one or two endpoints
-		if (a.high == b.low) {
-			if (a.highInclude && b.lowInclude) return true;
-		} 
-		if (b.high == a.low) {
-			if (b.highInclude && a.lowInclude) return true;
-		}
-		if (a.high == b.high) {
-			if (!(!a.highInclude && b.highInclude)) return true;
-		}
-		if (a.low == b.low) {
-			if (!(!a.lowInclude && b.lowInclude)) return true;
-		}
-		return false;
-	};
-
-	
     /*
 		Setup for cue buckets.
     */
@@ -134,7 +79,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		INSIDE  - all cues with both endpoints INSIDE the search interval
 		PARTIAL - all INSIDE cues, plus cues that PARTIALL overlap search interval, i.e. have only one endpoint INSIDE search interval
-		OVERLAP - all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval 
+		OVERLAP - all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval
 
     */
     const Semantic = Object.freeze({
@@ -151,7 +96,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		LOOKUP_CUEPOINTS - look up all (point, cue) tuples in search interval
 		LOOKUP_CUES - lookup all cues in interval
-		REMOVE_CUES - remove all cues in interval 
+		REMOVE_CUES - remove all cues in interval
 
     */
     const Method = Object.freeze({
@@ -161,7 +106,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     	INTEGRITY: "integrity"
     });
 
-	
+
 	/*
 		this implements Axis, a datastructure for efficient lookup of cues on a timeline
 		- cues may be tied to one or two points on the timeline, this
@@ -173,7 +118,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	var Axis = function () {
 
 		/*
-			efficient lookup of cues by key	
+			efficient lookup of cues by key
 			key -> cue
 		*/
 		this._cueMap = new Map();
@@ -218,7 +163,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			Promise.resolve().then(function () {
 				self._update([].concat(...self._updateBuffer));
 				// empty updateBuffer
-				self._updateBuffer = [];			
+				self._updateBuffer = [];
 			});
 		}
 	};
@@ -231,11 +176,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		for requesting cue operations to the axis.
 
 		They may be invoked multiple times in say a for-loop,
-		but all cues will still be delivered in one batch to 
+		but all cues will still be delivered in one batch to
 		the internal update operation.
 
-		Actual cue processing happens on the later microtasks, 
-		so one cannot expect to see the effect of these operations 
+		Actual cue processing happens on the later microtasks,
+		so one cannot expect to see the effect of these operations
 		directly after the function call.
 	*/
 
@@ -254,7 +199,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		- add, modify or delete cues
 
 		takes a list of cues
-		
+
 		cue = {
 			key:key,
 			interval: Interval,
@@ -262,38 +207,38 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		}
 
 		if cues do not have an interval property, this means to
-		delete the cue. If not, the cue is added - or modified if 
+		delete the cue. If not, the cue is added - or modified if
 		a cue with the same key already exists
 
 		remove_cue = {key:key}
 
 		batchMap key -> {new: new_cue, old: old_cue}
 
-		BatchMap is generated during initial batch processing, 
-		representing the effects of the entire cue batch, 
+		BatchMap is generated during initial batch processing,
+		representing the effects of the entire cue batch,
 		thus making cue batch processing into an atomic operation.
 
 		- If operation applies to cue that already exists, the old cue
-		  will be included. 
+		  will be included.
 
-		- If multiple operations in a batch apply to the same 
-		cue, items will effectively be collapsed into one operation. 
-	
+		- If multiple operations in a batch apply to the same
+		cue, items will effectively be collapsed into one operation.
+
 		- If a cue was available before cue processing started,
 		this will be reported as old value (if this cue has been modified
 		in any way), even if the cue has been modified multiple times
 		during the batch. The last cue modification on a given key defines the new
-		cue. 
+		cue.
 
 		- If a cue is both added and removed in the same batch,
 		it will not be included in items.
 	*/
 
-	
+
 	Axis.prototype._update = function(cues) {
 
 		/*
-			process cue batch to make batchMap 
+			process cue batch to make batchMap
 			- distinguish add from modify by including old values from cueMap
 			- collapse if same cue is mentioned multiple times
 		*/
@@ -376,9 +321,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		returns (point, cue) for all points covered by given interval
 
-		returns: 
+		returns:
 			- list of cuepoints, from cue endpoints within interval
-			- [{point: point, cue:cue}]		
+			- [{point: point, cue:cue}]
 	*/
 	Axis.prototype.getCuePointsByInterval = function (interval) {
 		return this._execute(Method.LOOKUP_CUEPOINTS, interval);
@@ -386,7 +331,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/*
 		GET CUES BY INTERVAL
-		
+
 		semantic - "inside" | "partial" | "overlap"
 
 	*/
@@ -458,7 +403,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	Axis.prototype._integrity = function () {
 		const res = this._execute(Method.INTEGRITY);
-	
+
 		// sum up cues and points
 		let cues = [];
 		let points = [];
@@ -470,7 +415,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		points = [].concat(...points);
 		// remove point duplicates if any
 		points = [...new Set(points)];
-		
+
 		if (cues.length != this._cueMap.size) {
 			throw new Error("inconsistent cue count cueMap and aggregate cueBuckets " + cues-this._cueMap.size);
 		}
@@ -496,17 +441,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	var CueBucket = function (maxLength) {
-		
+
 		// max length of cues in this bucket
 		this._maxLength = maxLength;
 
 		/*
-			pointMap maintains the associations between values (points on 
-			the timeline) and cues that reference such points. A single point value may be 
+			pointMap maintains the associations between values (points on
+			the timeline) and cues that reference such points. A single point value may be
 			referenced by multiple cues, so one point value maps to a list of cues.
-	
+
 			value -> [cue, ....]
-		*/ 
+		*/
 		this._pointMap = new Map();
 
 
@@ -515,9 +460,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			A large volume of insert and remove operations may be problematic
 			with respect to performance, so the implementation seeks to
 			do a single bulk update on this structure, for each batch of cue
-			operations (i.e. each invocations of addCues). In order to do this 
-			all cue operations are processed to calculate a single batch 
-			of deletes and a single batch of inserts which then will be applied to 
+			operations (i.e. each invocations of addCues). In order to do this
+			all cue operations are processed to calculate a single batch
+			of deletes and a single batch of inserts which then will be applied to
 			the pointIndex in one atomic operation.
 
 			[1.2, 3, 4, 8.1, ....]
@@ -530,53 +475,53 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 
 
-	/* 
+	/*
 
 		CUE BATCH PROCESSING
 
-		Needs to translates cue operations into a minimum set of 
+		Needs to translates cue operations into a minimum set of
 		operations on the pointIndex.
 
 		To do this, we need to record points that are created and
 		points which are modified.
-		
+
 		The total difference that the batch of cue operations
-		amounts to is expressed as one list of values to be 
-		deleted, and and one list of values to be inserted. 
-		The update operation of the pointIndex will process both 
+		amounts to is expressed as one list of values to be
+		deleted, and and one list of values to be inserted.
+		The update operation of the pointIndex will process both
 		in one atomic operation.
 
 		On flush both the pointMap and the pointIndex will brought
 		up to speed
 
-		created and dirty are used for bookeeping during 
-		processing of a cue batch. They are needed to 
+		created and dirty are used for bookeeping during
+		processing of a cue batch. They are needed to
 		create the correct diff operation to be applied on pointIndex.
 
-		created : includes values that were not in pointMap 
+		created : includes values that were not in pointMap
 		before current batch was processed
 
 		dirty : includes values that were in pointMap
 		before curent batch was processed, and that
-		have been become empty at least at one point during cue 
-		processing. 
+		have been become empty at least at one point during cue
+		processing.
 
 		created and dirty are used as temporary alternatives to pointMap.
 		after the cue processing, pointmap will updated based on the
 		contents of these two.
 
 		operation add or remove for given cue
-		
+
 		this method may be invoked at most two times for the same key.
 		- first "remove" on the old cue
-		- second "add" on the new cue 
+		- second "add" on the new cue
 
 
 		"add" means point to be added to point
 		"remove" means cue to be removed from point
 
-		process buffers operations for pointMap and index so that 
-		all operations may be applied in one batch. This happens in flush 
+		process buffers operations for pointMap and index so that
+		all operations may be applied in one batch. This happens in flush
 	*/
 
 	CueBucket.prototype.processCue = function (op, cue) {
@@ -593,7 +538,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		for (let i=0; i<points.length; i++) {
 			point = points[i];
 			cues = (init) ? undefined : this._pointMap.get(point);
-			if (cues == undefined) {	
+			if (cues == undefined) {
 				cues = [];
 				this._pointMap.set(point, cues);
 				this._created.add(point);
@@ -649,15 +594,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		this._dirty.clear();
 	};
 
-	
+
 
 	/*
 		_getCuesFromInterval
 
 		internal utility function to find cues from endpoints in interval
 
-		getCuesByInterval will find points in interval in pointIndex and 
-		find the associated cues from pointMap. 
+		getCuesByInterval will find points in interval in pointIndex and
+		find the associated cues from pointMap.
 
 		Cues may be reported more than once
 		Any specific order of cues is not defined.
@@ -680,12 +625,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	*/
 	CueBucket.prototype._lookupCuesFromInterval = function(interval, options={}) {
 		const cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false;
-		/* 
+		/*
 			search for points in pointIndex using interval
 			if search interval is <a,b> endpoints a and b will not be included
 			this means that at cue [a,b] will not be picked up - as its enpoints are outside the search interval
 			however, this also means that a cue <a,b> will not be picked up - which is not correct - as these endpoints are inside the search interval
-			solution is to broaden the search and filter away 
+			solution is to broaden the search and filter away
 		*/
 		const broadInterval = new Interval(interval.low, interval.high, true, true);
 		const points = this._pointIndex.lookup(broadInterval);
@@ -699,7 +644,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				let cue = cues[j];
 
 				/*
-					avoid duplicate cues 
+					avoid duplicate cues
 					(not for cuepoints, where cues may be associated with two points)
 				*/
 				if (!cuepoint) {
@@ -710,8 +655,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					}
 				}
 
-				/* filter out cues that have both endpoints outside the original search interval */				
-				if (endpointInside(interval, cue.interval)) {
+				/*
+				filter out cues that have both endpoints outside the original search interval
+				in other words: keep only cue.intervals which have at
+				least one endpoint inside the search interval
+				*/
+				if (cue.interval.hasEndpointInside(interval)) {
 					let item = (cuepoint) ? {point:point, cue:cue} : cue;
 					res.push(item);
 				}
@@ -725,7 +674,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		at each side.
 
 		define left and right intervals that cover areas on the timeline to
-		the left and right of search interval. 
+		the left and right of search interval.
 		These intervals are limited by the interval maxLength of cues in this bucket,
 		so that:
 		 - left interval [interval.high-maxLengt, interval.low]
@@ -741,7 +690,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		Endpoints must not overlap with endpoints of <interval>
 		- if interval.lowInclude, then leftInterval.highInclude must be false,
-		  and vice versa. 
+		  and vice versa.
 		- the same consideration applies to interval.highInclude
 	*/
 	CueBucket.prototype._lookupOutsideCuesFromInterval = function(interval){
@@ -752,10 +701,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		const highIncludeOfLeftInterval = !interval.lowInclude;
 		const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
 
-		const lowIncludeOfRightInterval = !interval.highInclude;		
+		const lowIncludeOfRightInterval = !interval.highInclude;
 		const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
-		
-		//	iterate leftInterval to find cues that have endpoints covered by rightInterval		
+
+		//	iterate leftInterval to find cues that have endpoints covered by rightInterval
 		return this._lookupCuesFromInterval(leftInterval)
 			.filter(function (cue) {
 				// fast test
@@ -776,7 +725,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 		INSIDE - look up all cues with both endpoints INSIDE the search interval
 		PARTIAL - look up all INSIDE cues, plus cues with one endpoint inside the search interval
-		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval 
+		ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval
 
 	*/
 	CueBucket.prototype.execute = function (method, interval, semantic) {
@@ -848,7 +797,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				points = [cue.interval.low, cue.interval.high];
 			}
 			for (let j=0; j<points.length; j++) {
-				point = points[j];	
+				point = points[j];
 				// remove cue from pointMap
 				// delete pointMap entry only if empty
 				let empty = removeCueFromArray(this._pointMap.get(point), cue);
@@ -863,17 +812,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			update pointIndex
 
 			- remove all points within pointIndex
-			- exploit locality, the operation is limited to a segment of the index, so 
+			- exploit locality, the operation is limited to a segment of the index, so
 			  the basic idea is to take out a copy of segment (slice), do modifications, and then reinsert (splice)
 			- the segment to modify is limited by [interval.low - maxLength, interval.high + maxLenght] as this will cover
 			  both cues inside, partial and overlapping.
-		
-			# Possible - optimization 
+
+			# Possible - optimization
 			alternative approach using regular update could be more efficient for very samll batches
 			this._pointIndex.update(to_remove, []);
 			it could also be comparable for huge loads (250.000 cues)
 		*/
-		
+
 		to_remove.sort(function(a,b){return a-b});
 		this._pointIndex.removeInSlice(to_remove);
 
@@ -892,13 +841,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		- this can safely be done for LookupMethod.OVERLAP and PARTIAL.
 		- however, for LookupMethod.INSIDE, which is likely the most useful
 		  only some of the points in pointIndex shall be removed
-		  solution could be to remove entire slice, construct a new slice 
+		  solution could be to remove entire slice, construct a new slice
 		  with those points that should not be deleted, and set it back in.
 	*/
-	CueBucket.prototype.clear = function () { 
+	CueBucket.prototype.clear = function () {
 		this._pointMap = new Map();
 		this._pointIndex = new BinarySearch();
-	};		
+	};
 
 
 	/*
