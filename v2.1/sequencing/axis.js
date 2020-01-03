@@ -12,6 +12,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		concat two arrays without creating a copy
 		push elements from the shortest into the longest
 		return the longest
+		- does not preserve ordering
 	*/
 	const mergeArrays = function(arr1, arr2) {
 		const [shortest, longest] = (arr1.length <= arr2.length) ? [arr1, arr2] : [arr2, arr1];
@@ -25,6 +26,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/*
 		Add cue to array
+		- does not add if cue already exists
+		- returns array length
 	*/
 	var addCueToArray = function (arr, cue) {
 		// cue equality defined by key property
@@ -43,6 +46,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	/*
 		Remove cue from array
+		- noop if cue does not exist
+		- returns array length
 	*/
 	var removeCueFromArray = function (arr, cue) {
 		// cue equality defined by key property
@@ -62,7 +67,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     /*
 		Setup for cue buckets.
     */
-    const CueBucketIds = [0,10,100,1000,10000,100000, Infinity];
+    const CueBucketIds = [0, 10, 100, 1000, 10000, 100000, Infinity];
     var getCueBucketId = function (length) {
     	for (let i=0; i<CueBucketIds.length; i++) {
     		if (length <= CueBucketIds[i]) {
@@ -206,9 +211,29 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			data: data
 		}
 
+		given that a cue already exists 4 types of modification
+		is supported
+
+		1) modify only interval
+			(interval defined, data undefined)
+		2) modify only data
+			(interval undefined, data defined)
+		3) modify both interval and data
+			(interval defined, data defined)
+		4) remove cue
+			(interval undefined, data undefined)
+
+
+
+		NB - WRONG!
 		if cues do not have an interval property, this means to
-		delete the cue. If not, the cue is added - or modified if
+		delete the cue. If it does, the cue is added - or modified if
 		a cue with the same key already exists
+
+		modification of existing cue
+			- interval only (data undefined)
+			- data only
+			- both interval and data
 
 		remove_cue = {key:key}
 
@@ -245,22 +270,47 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		let batchMap = new Map(); // key -> {new:new_cue, old:old_cue}
 		let len = cues.length;
 		let init = this._cueMap.size == 0;
+		let cue, old_cue, new_cue;
 		for (let i=0; i<len; i++) {
-    		let cue = cues[i];
+    		cue = cues[i];
     		// check cue
     		if (cue == undefined || cue.key == undefined) {
     			throw new Error("illegal cue", cue);
     		}
-    		// update batchMap
-    		let old_cue = (init) ? undefined : this._cueMap.get(cue.key);
-    		let new_cue = (cue.interval == undefined ) ? undefined : cue;
-    		if (new_cue == undefined && old_cue == undefined) {
-	    		// attempt at remove cue which did not exist before update
-    			// noop - remove from batchMap
-    			batchMap.delete(cue.key);
-  			} else {
-	    		batchMap.set(cue.key, {new:new_cue, old:old_cue});
-  			}
+    		// old cue
+    		old_cue = (init) ? undefined : this._cueMap.get(cue.key);
+    		// new cue
+    		new_cue = cue;
+
+    		if (old_cue == undefined) {
+				/*
+					add new cue
+					if cue.interval is undefined - treat as remove
+					this is attempt at removing cue that did not
+					exists before the update operation
+					- ignore
+				*/
+				if (cue.interval == undefined) {
+					continue;
+				}
+    		} else {
+    			// remove or modify existing cue
+	    		if (cue.interval == undefined && cue.data == undefined) {
+					// remove existing cue
+					new_cue = undefined;
+	    		} else {
+					// modify
+		    		if (cue.interval != undefined && cue.data == undefined) {
+		    			// 1) modify only interval - preserve data
+		    			new_cue.data = old_cue.data;
+		    		}
+		    		else if (cue.interval == undefined && cue.data != undefined) {
+		    			// 2) modify only data - preserve interval
+		    			new_cue.interval = old_cue.interval;
+		    		}
+	    		}
+    		}
+    		batchMap.set(cue.key, {new:new_cue, old:old_cue});
 		}
 
         /*
