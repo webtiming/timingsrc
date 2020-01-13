@@ -7,6 +7,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		UTILITY
 	*/
 
+	function isIterable(obj) {
+	 	// checks for null and undefined
+		if (obj == null) {
+		    return false;
+		}
+		return typeof obj[Symbol.iterator] === 'function';
+	}
+
 
 	/*
 		concat two arrays without creating a copy
@@ -112,6 +120,52 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     });
 
 
+    /*
+		CueOpType
+    */
+
+    const CueOpType = Object.freeze({
+    	NOOP: 0,
+    	ADD_CUE :1,
+    	MODIFY_INTERVAL: 2,
+    	MODIFY_DATA: 3,
+    	MODIFY_CUE: 4,
+    	REMOVE_CUE: 5
+    });
+
+
+    const function getCueOpType(cueOp, cueExists) {
+    	if (!cueOp.getOwnProperty("key")) {
+    		throw Error("illegal cueOp: missing key")
+    	}
+    	let has_interval = false;
+    	if (cueOp.getOwnProperty("interval")) {
+			if (cueOp.interval instanceof Interval) {
+    			has_interval = true;
+    		}
+    	}
+    	let has_data = cueOp.getOwnProperty("data");
+
+    	if (cueExists) {
+    		if (has_interval && has_data) {
+    			return CueOpType.MODIFY_CUE;
+    		} else if (has_interval && !has_data) {
+    			return CueOpType.MODIFY_INTERVAL;
+    		} else if (!has_interval && has_data) {
+    			return CueOpType.MODIFY_DATA;
+    		} else {
+    			return CueOpType.REMOVE_CUE;
+    		}
+    	} else {
+    		if (has_interval && has_data) {
+    			return CueOpType.ADD_CUE;
+    		} else {
+    			return CueOpType.NOOP;
+    		}
+    	}
+    }
+
+
 	/*
 		this implements Axis, a datastructure for efficient lookup of cues on a timeline
 		- cues may be tied to one or two points on the timeline, this
@@ -147,6 +201,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	};
 	eventify.eventifyPrototype(Axis.prototype);
 
+	// size
+	Object.defineProperty(Axis.prototype, 'size', {
+		get : function () {
+			return this._cueMap.size;
+		}
+	});
 
 	/*
 		UPDATE
@@ -158,6 +218,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		collected into one batch.
 	*/
 	Axis.prototype.update = function (cues) {
+		if (!isIterable(cues)) {
+			cues = [cues];
+		}
 		this._updateBuffer.push(cues);
 		if (this._updateBuffer.length === 1) {
 			/*
@@ -191,10 +254,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	Axis.prototype.addCue = function(key, interval, data) {
 		this.update([{key:key, interval:interval, data:data}]);
+		return this;
 	};
 
 	Axis.prototype.removeCue = function(key) {
 		this.update([{key:key}]);
+		return this;
 	};
 
 

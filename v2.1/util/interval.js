@@ -195,6 +195,57 @@ define(function () {
 	};
 
 
+	const function _make_interval_cmp(endpoint) {
+		/*
+			make sort function for sorting intervals based on
+			endpoint "low" or "high" in ascending
+
+			if inteval_a and interval_b have same endpoint value
+			compare lowInclude, highInclude
+
+			low : AB
+				  [[ - equal   - return 0
+				  [< - A first - return 1
+				  <[ - B first - return -1
+				  << - equal   - return 0
+
+			high : AB
+				  ]] - equal   - return 0
+				  ]> - B first - return -1
+				  >] - A first - return 1
+				  >> - equal   - return 0
+
+
+			returns cmp function to be used with array.sort()
+		*/
+
+		const function cmp (interval_a, interval_b) {
+			// sort first by value
+			let diff = interval_b[endpoint] - interval_a[endpoint]
+			if (diff == 0) {
+				// equal endpoint values - compare endpoint include
+				let a_include = interval_a[endpoint+"Include"];
+				let b_include = interval_b[endpoint+"Include"];
+
+				if (a_include == b_include) {
+					return 0;
+				}
+				if (endpoint == "low") {
+					return (a_include) ? 1 : -1
+				} else {
+					return (a_include) ? -1 : 1
+				}
+			} else {
+				return diff;
+			}
+		}
+		return cmp;
+	}
+
+	const cmp_interval_low = _make_cue_cmp("low");
+	const cmp_interval_high = _make_cue_cmp("high");
+
+
 	/*
 		Possibility for more interval methods such as union, intersection,
 	*/
