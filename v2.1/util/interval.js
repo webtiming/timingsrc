@@ -278,14 +278,13 @@ define(function () {
 		endpoint order
 		p), [p, p, p], (p
 	*/
-	const order = new Map([
-		[MODE_RIGHT_OPEN, 0],
-		[MODE_LEFT_CLOSED, 1],
-		[MODE_VALUE, 2],
-		[MODE_RIGHT_CLOSED, 3],
-		[MODE_LEFT_OPEN, 4]
-	]);
 
+	const order = [];
+	order[MODE_RIGHT_OPEN] = 0;
+	order[MODE_LEFT_CLOSED] = 1;
+	order[MODE_VALUE] = 2;
+	order[MODE_RIGHT_CLOSED] = 3;
+	order[MODE_LEFT_OPEN] = 4;
 
 	/*
 		endpoint order
@@ -306,26 +305,27 @@ define(function () {
 
 
 	function _endpoint_order(e1, e2) {
-		let e1_val, e1_right, e1_closed, e1_mode, e1_order;
-		let e2_val, e2_right, e2_closed, e2_mode, e2_order;
 
+		// support plain numbers (not endpoints)
 		if (e1.length === undefined) {
 			if (!isNumber(e1)) {
-				throw new Error("must be number");
+				throw new Error("e1 not a number", e1);
 			}
 			e1 = [e1, undefined, undefined];
 		}
 		if (e2.length === undefined) {
 			if (!isNumber(e2)) {
-				throw new Error("e2 not a number");
+				throw new Error("e2 not a number", e2);
 			}
 			e2 = [e2, undefined, undefined];
 		}
 
-		[e1_val, e1_right, e1_closed] = e1;
-		[e2_val, e2_right, e2_closed] = e2;
+		let [e1_val, e1_right, e1_closed] = e1;
+		let [e2_val, e2_right, e2_closed] = e2;
+		let e1_mode, e2_mode;
 
 		if (e1_val != e2_val) {
+			// different values
 			return [e1_val, e2_val];
 		} else {
 			// equal values
@@ -343,9 +343,7 @@ define(function () {
 				e2_right = Boolean(e2_right);
 				e2_mode = (+e2_closed << CLOSED_BIT) | (+e2_right << RIGHT_BIT);
 			}
-			e1_order = order.get(e1_mode);
-			e2_order = order.get(e2_mode);
-			return [e1_order, e2_order];
+			return [order[e1_mode], order[e2_mode]];
 		}
 	}
 
@@ -366,8 +364,54 @@ define(function () {
 
 	function endpoint_compare(e1, e2) {
 		let [order1, order2] = _endpoint_order(e1, e2);
-		return order2 - order1;
+		let diff = order2 - order1;
+		if (diff == 0) return 0;
+		return (diff > 0) ? 1 : -1;
 	}
+
+
+	/*
+		human friendly endpoint string
+	*/
+	function endpoint_toString(e) {
+		if (e.length === undefined) {
+			return e.toString();
+		} else {
+			let [val, right, closed] = e;
+			let s = val.toString()
+			if (right && closed) {
+				return s + "]";
+			} else if (right && !closed) {
+				return s + ")";
+			} else if (!right && closed) {
+				return "[" + s;
+			} else {
+				return "(" + s;
+			}
+		}
+	}
+
+
+	/*
+		endpoint_inside (e, interval)
+
+		endpoint/point inside interval
+
+		!rightof(e, interval.low) && !leftof(e, interval.high)
+
+	*/
+
+	function endpoint_inside (e, interval) {
+		if (! interval instanceof Interval) {
+			throw new Error("not interval", interval);
+		}
+		let e_low = [interval.low, false, interval.lowInclude];
+		let e_high = [interval.high, true, interval.highInclude];
+		return !endpoint_leftof(e, e_low) && !endpoint_rightof(e, e_high);
+	}
+
+
+
 
 
 	/*
@@ -379,7 +423,9 @@ define(function () {
 		endpoint_leftof: endpoint_leftof,
 		endpoint_rightof: endpoint_rightof,
 		endpoint_equal: endpoint_equal,
-		endpoint_compare: endpoint_compare
+		endpoint_compare: endpoint_compare,
+		endpoint_toString: endpoint_toString,
+		endpoint_inside: endpoint_inside
 	}
 });
 
