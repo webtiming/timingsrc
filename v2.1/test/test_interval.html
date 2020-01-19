@@ -19,8 +19,10 @@
                 const endpoint_rightof = interval.endpoint_rightof;
                 const endpoint_equal = interval.endpoint_equal;
                 const endpoint_compare = interval.endpoint_compare;
-                const endpoint_inside = interval.endpoint_inside;
                 const endpoint_toString = interval.endpoint_toString;
+                const inside = interval.inside;
+                const compare = interval.compare;
+                const IntervalRelation = interval.IntervalRelation;
 
                 function assertEqual(val1, val2) {
                     if (val1 !== val2) {
@@ -125,7 +127,7 @@
                     test_permutations(endpoint_compare, expected_compare);
                 }
 
-                function test_endpoint_inside() {
+                function test_inside() {
 
                     // endpoints with value 4
                     const right_open = [4, right, open];
@@ -157,8 +159,8 @@
                         // test different endpoints with invterval
                         let ok;
                         for (let i=0; i<all.length; i++) {
-                            ok = endpoint_inside(all[i], itv);
-                            console.log(endpoint_toString(all[i]), "inside", itv.toString(), ok);
+                            ok = inside(all[i], itv);
+                            // console.log(endpoint_toString(all[i]), "inside", itv.toString(), ok);
                             assertEqual(ok, expectations[i]);
                         }
                     }
@@ -254,13 +256,69 @@
                 }
 
 
+                function test_compare() {
+
+                    let A, B;
+
+                    // [2,4)
+                    A = new Interval(2,4);
+
+                    // OUTSIDE LEFT
+                    // [0,2)
+                    B = new Interval(0,2);
+                    assertEqual(compare(A, B), IntervalRelation.OUTSIDE_LEFT);
+
+                    // PARTIAL LEFT
+                    // [0,2]
+                    B = new Interval(0,2,true, true);
+                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_LEFT);
+                    // [0,3)
+                    B = new Interval(0,3);
+                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_LEFT);
 
 
+                    // OUTSIDE RIGHT
+                    // [4,5)
+                    B = new Interval(4,5);
+                    assertEqual(compare(A, B), IntervalRelation.OUTSIDE_RIGHT);
+
+                    // PARTIAL RIGHT
+                    // [3,5)
+                    B = new Interval(3,5);
+                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_RIGHT);
+
+                    // EQUAL
+                    // [2,4)
+                    B = new Interval(2,4);
+                    assertEqual(compare(A, B), IntervalRelation.EQUAL);
+
+                    // COVERED
+                    // (2,4)
+                    B = new Interval(2,4, false, false);
+                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+                    // [2,3]
+                    B = new Interval(2,3,true, true);
+                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+                    // [3,3.5)
+                    B = new Interval(3,3.5);
+                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+
+                    // COVERS
+                    // [2,4]
+                    B = new Interval(2,4, true, true);
+                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                    // [1,4)
+                    B = new Interval(1,4);
+                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                    // [2,5)
+                    B = new Interval(2,5);
+                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                }
 
                 var run = function () {
                     test_endpoint_order();
-                    test_endpoint_inside();
-
+                    test_inside();
+                    test_compare();
                     console.log("done");
                 };
 

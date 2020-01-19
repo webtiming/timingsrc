@@ -369,9 +369,8 @@ define(function () {
 		return (diff > 0) ? 1 : -1;
 	}
 
-
 	/*
-		human friendly endpoint string
+		human friendly endpoint representation
 	*/
 	function endpoint_toString(e) {
 		if (e.length === undefined) {
@@ -391,17 +390,14 @@ define(function () {
 		}
 	}
 
-
 	/*
-		endpoint_inside (e, interval)
+		inside (e, interval)
 
-		endpoint/point inside interval
-
-		!rightof(e, interval.low) && !leftof(e, interval.high)
-
+		figure out if given endpoint/point e is inside interval
+		returns bool
 	*/
 
-	function endpoint_inside (e, interval) {
+	function inside (e, interval) {
 		if (! interval instanceof Interval) {
 			throw new Error("not interval", interval);
 		}
@@ -410,9 +406,86 @@ define(function () {
 		return !endpoint_leftof(e, e_low) && !endpoint_rightof(e, e_high);
 	}
 
+	/*
+		compare (a, b)
+		param a Interval
+		param b Interval
+		returns IntervalRelation
+
+		compares interval b to interval a
+		e.g. return value COVERED reads b is covered by a.
 
 
+		cmp_1 = endpoint_compare(b_low, a_low);
+		cmp_2 = endpoint_compare(b_high, a_high);
 
+		key = 10*cmp_1 + cmp_2
+
+		cmp_1  cmp_2  key  relation
+		=====  =====  ===  ============================
+		1 	   1       11  OUTSIDE_LEFT, PARTIAL_LEFT
+		1 	   0       10  COVERS
+		1      -1       9  COVERS
+		0 	   1        1  COVERED
+		0      0        0  EQUAL
+		0	   -1      -1  COVERS
+		-1     1       -9  COVERED
+		-1 	   0      -10  COVERED
+		-1     -1     -11  OUTSIDE_RIGHT, PARTIAL_RIGHT
+		=====  =====  ===  ============================
+
+	*/
+
+    const IntervalRelation = Object.freeze({
+		COVERED: 1,
+		PARTIAL_LEFT: 2,
+		PARTIAL_RIGHT: 3,
+		COVERS: 4,
+		OUTSIDE_LEFT: 5,
+		OUTSIDE_RIGHT: 6,
+		EQUAL: 7
+    });
+
+	function compare(a, b) {
+		if (! a instanceof Interval) {
+			throw new Error("a not interval", a);
+		}
+		if (! b instanceof Interval) {
+			throw new Error("b not interval", b);
+		}
+		// interval endpoints
+		let a_low = [a.low, false, a.lowInclude];
+		let a_high = [a.high, true, a.highInclude];
+		let b_low = [b.low, false, b.lowInclude];
+		let b_high = [b.high, true, b.highInclude];
+
+		let cmp_1 = endpoint_compare(b_low, a_low);
+		let cmp_2 = endpoint_compare(b_high, a_high);
+		let key = cmp_1*10 + cmp_2;
+
+		if (key == 11) {
+			// OUTSIDE_LEFT or PARTIAL_LEFT
+			if (endpoint_leftof(b_high, a_low)) {
+				return IntervalRelation.OUTSIDE_LEFT;
+			} else {
+				return IntervalRelation.PARTIAL_LEFT;
+			}
+		} else if ([-1, 9, 10].includes(key)) {
+			return IntervalRelation.COVERS;
+		} else if ([1, -9, -10].includes(key)) {
+			return IntervalRelation.COVERED;
+		} else if (key == 0) {
+			return IntervalRelation.EQUAL;
+		} else {
+			// key == -11
+			// OUTSIDE_RIGHT, PARTIAL_RIGHT
+			if (endpoint_rightof(b_low, a_high)) {
+				return IntervalRelation.OUTSIDE_RIGHT;
+			} else {
+				return IntervalRelation.PARTIAL_RIGHT;
+			}
+		}
+	}
 
 	/*
 		Possibility for more interval methods such as union, intersection,
@@ -425,7 +498,9 @@ define(function () {
 		endpoint_equal: endpoint_equal,
 		endpoint_compare: endpoint_compare,
 		endpoint_toString: endpoint_toString,
-		endpoint_inside: endpoint_inside
+		inside: inside,
+		compare: compare,
+		IntervalRelation: IntervalRelation
 	}
 });
 
