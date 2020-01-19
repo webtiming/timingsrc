@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- requirejs config -->
+        <script>
+            var require = {
+                baseUrl : '../',
+            };
+        </script>
+        <!-- requirejs -->
+        <script type="text/javascript" src="../../docs/lib/require.js"></script>
+        <!--  main -->
+        <script text="javascript">
+
+            require(['util/interval'], function (interval) {
+
+                const Interval = interval.Interval;
+
+                const endpoint_leftof = interval.endpoint_leftof;
+                const endpoint_rightof = interval.endpoint_rightof;
+                const endpoint_equal = interval.endpoint_equal;
+                const endpoint_compare = interval.endpoint_compare;
+
+
+                function test_endpoint_order () {
+
+
+                // test endpoint order
+                const left = false;
+                const right = true;
+                const open = false;
+                const closed = true;
+
+                const right_open = [4, right, open];
+                const left_closed = [4, left, closed];
+                const point = 4;
+                const right_closed = [4, right, closed];
+                const left_open = [4, left, open];
+
+                /*
+
+                order
+
+                right-open, left-closed, point, right-closed, left-open
+
+                */
+
+                function assertTrue(ok) {
+                    if (!ok) {
+                        throw new Error("fail")
+                    }
+                }
+
+
+                let ok;
+
+                ok = endpoint_leftof(right_open, left_closed);
+                assertTrue(ok);
+
+                ok = endpoint_leftof(right_open, point);
+                assertTrue(ok);
+
+                ok = endpoint_leftof(right_open, right_closed);
+                assertTrue(ok);
+
+                ok = endpoint_leftof(right_open, left_open);
+                assertTrue(ok);
+
+
+
+            }
+
+            var run = function () {
+              test_endpoint_order();
+            };
+
+            if (document.readyState === "complete") run();
+            else window.onload = run;
+          });
+        </script>
+    </head>
+    <body>
+        <h1>Test Interval</h1>
+    </body>
+</html>
