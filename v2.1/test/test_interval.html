@@ -12,13 +12,9 @@
         <!--  main -->
         <script text="javascript">
             let itv;
-            require(['util/interval'], function (interval) {
-                itv = interval;
-                const Interval = interval.Interval;
-                const endpoint = interval.endpoint;
-                const inside = interval.inside;
-                const compare = interval.compare;
-                const IntervalRelation = interval.IntervalRelation;
+            require(['util/interval'], function (Interval) {
+                const endpoint = Interval.endpoint;
+                const IntervalRelation = Interval.IntervalRelation;
 
                 function assertEqual(val1, val2) {
                     if (val1 !== val2) {
@@ -155,7 +151,8 @@
                         // test different endpoints with invterval
                         let ok;
                         for (let i=0; i<all.length; i++) {
-                            ok = inside(all[i], itv);
+                            //ok = inside(all[i], itv);
+                            ok = itv.coversPoint(all[i]);
                             // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
                             assertEqual(ok, expectations[i]);
                         }
@@ -262,59 +259,78 @@
                     // OUTSIDE LEFT
                     // [0,2)
                     B = new Interval(0,2);
-                    assertEqual(compare(A, B), IntervalRelation.OUTSIDE_LEFT);
+                    assertEqual(A.compare(B), IntervalRelation.OUTSIDE_LEFT);
 
                     // PARTIAL LEFT
                     // [0,2]
                     B = new Interval(0,2,true, true);
-                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_LEFT);
+                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_LEFT);
                     // [0,3)
                     B = new Interval(0,3);
-                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_LEFT);
+                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_LEFT);
 
 
                     // OUTSIDE RIGHT
                     // [4,5)
                     B = new Interval(4,5);
-                    assertEqual(compare(A, B), IntervalRelation.OUTSIDE_RIGHT);
+                    assertEqual(A.compare(B), IntervalRelation.OUTSIDE_RIGHT);
 
                     // PARTIAL RIGHT
                     // [3,5)
                     B = new Interval(3,5);
-                    assertEqual(compare(A, B), IntervalRelation.PARTIAL_RIGHT);
+                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_RIGHT);
 
                     // EQUAL
                     // [2,4)
                     B = new Interval(2,4);
-                    assertEqual(compare(A, B), IntervalRelation.EQUAL);
+                    assertEqual(A.compare(B), IntervalRelation.EQUAL);
 
                     // COVERED
                     // (2,4)
                     B = new Interval(2,4, false, false);
-                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+                    assertEqual(A.compare(B), IntervalRelation.COVERED);
                     // [2,3]
                     B = new Interval(2,3,true, true);
-                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+                    assertEqual(A.compare(B), IntervalRelation.COVERED);
                     // [3,3.5)
                     B = new Interval(3,3.5);
-                    assertEqual(compare(A, B), IntervalRelation.COVERED);
+                    assertEqual(A.compare(B), IntervalRelation.COVERED);
 
                     // COVERS
                     // [2,4]
                     B = new Interval(2,4, true, true);
-                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), IntervalRelation.COVERS);
                     // [1,4)
                     B = new Interval(1,4);
-                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), IntervalRelation.COVERS);
                     // [2,5)
                     B = new Interval(2,5);
-                    assertEqual(compare(A, B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), IntervalRelation.COVERS);
                 }
+
+
+                function test_sort() {
+
+                    a = [
+                        new Interval(1,6),
+                        new Interval(2,3),
+                        new Interval(4,5)
+                    ];
+
+                    a.sort(Interval.cmpLow);
+
+                    a.forEach(function(i) {
+                        console.log(i.toString());
+                    })
+                }
+
+
 
                 var run = function () {
                     test_endpoint_order();
                     test_inside();
                     test_compare();
+                    test_sort();
                     console.log("done");
                 };
 
