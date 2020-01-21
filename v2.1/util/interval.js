@@ -261,134 +261,170 @@ define(function () {
 
 
 
-
-	// bit flag
-	const CLOSED_BIT = 0
-	const RIGHT_BIT = 1
-
-	// endpoint mode
-	const MODE_LEFT_OPEN = 0;     //bx000
-	const MODE_LEFT_CLOSED = 1;   //bx001
-	const MODE_RIGHT_OPEN = 2;    //bx010
-	const MODE_RIGHT_CLOSED = 3;  //bx011
-	const MODE_VALUE = 4          //bx100
-
-
 	/*
-		endpoint order
-		p), [p, p, p], (p
+
+		Internal endpoint functionality
+
 	*/
 
-	const order = [];
-	order[MODE_RIGHT_OPEN] = 0;
-	order[MODE_LEFT_CLOSED] = 1;
-	order[MODE_VALUE] = 2;
-	order[MODE_RIGHT_CLOSED] = 3;
-	order[MODE_LEFT_OPEN] = 4;
+	const endpoint = function () {
 
-	/*
-		endpoint order
+		// bit flag
+		const CLOSED_BIT = 0
+		const RIGHT_BIT = 1
 
-		given two endpoints return
-		two numbers representing their order
-		also accepts regular numbers as endpoints
+		// endpoint mode
+		const MODE_LEFT_OPEN = 0;     //bx000
+		const MODE_LEFT_CLOSED = 1;   //bx001
+		const MODE_RIGHT_OPEN = 2;    //bx010
+		const MODE_RIGHT_CLOSED = 3;  //bx011
+		const MODE_VALUE = 4          //bx100
 
-		for points values/endpoint values that are not
-		equal, these values convey order,
-		otherwise the order numbers 0-4 are returned
-		based on endpoint inclusion and direction
+		/*
+			endpoint order
+			p), [p, p, p], (p
+		*/
+		const order = [];
 
-		parameters are either
-		- point (number)
-		- endpoint [value (number), right (bool), closed (bool)]
-	*/
+		order[MODE_RIGHT_OPEN] = 0;
+		order[MODE_LEFT_CLOSED] = 1;
+		order[MODE_VALUE] = 2;
+		order[MODE_RIGHT_CLOSED] = 3;
+		order[MODE_LEFT_OPEN] = 4;
 
+		/*
+			order
 
-	function _endpoint_order(e1, e2) {
+			given two endpoints return
+			two numbers representing their order
+			also accepts regular numbers as endpoints
 
-		// support plain numbers (not endpoints)
-		if (e1.length === undefined) {
-			if (!isNumber(e1)) {
-				throw new Error("e1 not a number", e1);
+			for points values/endpoint values that are not
+			equal, these values convey order,
+			otherwise the order numbers 0-4 are returned
+			based on endpoint inclusion and direction
+
+			parameters are either
+			- point (number)
+			- endpoint [value (number), right (bool), closed (bool)]
+		*/
+
+		function get_order(e1, e2) {
+
+			// support plain numbers (not endpoints)
+			if (e1.length === undefined) {
+				if (!isNumber(e1)) {
+					throw new Error("e1 not a number", e1);
+				}
+				e1 = [e1, undefined, undefined];
 			}
-			e1 = [e1, undefined, undefined];
-		}
-		if (e2.length === undefined) {
-			if (!isNumber(e2)) {
-				throw new Error("e2 not a number", e2);
+			if (e2.length === undefined) {
+				if (!isNumber(e2)) {
+					throw new Error("e2 not a number", e2);
+				}
+				e2 = [e2, undefined, undefined];
 			}
-			e2 = [e2, undefined, undefined];
-		}
 
-		let [e1_val, e1_right, e1_closed] = e1;
-		let [e2_val, e2_right, e2_closed] = e2;
-		let e1_mode, e2_mode;
+			let [e1_val, e1_right, e1_closed] = e1;
+			let [e2_val, e2_right, e2_closed] = e2;
+			let e1_mode, e2_mode;
 
-		if (e1_val != e2_val) {
-			// different values
-			return [e1_val, e2_val];
-		} else {
-			// equal values
-			if (e1_closed === undefined) {
-				e1_mode = MODE_VALUE;
+			if (e1_val != e2_val) {
+				// different values
+				return [e1_val, e2_val];
 			} else {
-				e1_closed = Boolean(e1_closed);
-				e1_right = Boolean(e1_right);
-				e1_mode = (+e1_closed << CLOSED_BIT) | (+e1_right << RIGHT_BIT);
-			}
-			if (e2_closed === undefined) {
-				e2_mode = MODE_VALUE;
-			} else {
-				e2_closed = Boolean(e2_closed);
-				e2_right = Boolean(e2_right);
-				e2_mode = (+e2_closed << CLOSED_BIT) | (+e2_right << RIGHT_BIT);
-			}
-			return [order[e1_mode], order[e2_mode]];
-		}
-	}
-
-	function endpoint_leftof(e1, e2) {
-		let [order1, order2] = _endpoint_order(e1, e2);
-		return (order1 < order2);
-	}
-
-	function endpoint_rightof(e1, e2) {
-		let [order1, order2] = _endpoint_order(e1, e2);
-		return (order1 > order2);
-	}
-
-	function endpoint_equal(e1, e2) {
-		let [order1, order2] = _endpoint_order(e1, e2);
-		return (order1 == order2);
-	}
-
-	function endpoint_compare(e1, e2) {
-		let [order1, order2] = _endpoint_order(e1, e2);
-		let diff = order2 - order1;
-		if (diff == 0) return 0;
-		return (diff > 0) ? 1 : -1;
-	}
-
-	/*
-		human friendly endpoint representation
-	*/
-	function endpoint_toString(e) {
-		if (e.length === undefined) {
-			return e.toString();
-		} else {
-			let [val, right, closed] = e;
-			let s = val.toString()
-			if (right && closed) {
-				return s + "]";
-			} else if (right && !closed) {
-				return s + ")";
-			} else if (!right && closed) {
-				return "[" + s;
-			} else {
-				return "(" + s;
+				// equal values
+				if (e1_closed === undefined) {
+					e1_mode = MODE_VALUE;
+				} else {
+					e1_closed = Boolean(e1_closed);
+					e1_right = Boolean(e1_right);
+					e1_mode = (+e1_closed << CLOSED_BIT) | (+e1_right << RIGHT_BIT);
+				}
+				if (e2_closed === undefined) {
+					e2_mode = MODE_VALUE;
+				} else {
+					e2_closed = Boolean(e2_closed);
+					e2_right = Boolean(e2_right);
+					e2_mode = (+e2_closed << CLOSED_BIT) | (+e2_right << RIGHT_BIT);
+				}
+				return [order[e1_mode], order[e2_mode]];
 			}
 		}
-	}
+
+		/*
+			return true if e1 is ordered before e2
+			false if equal
+		*/
+
+		function leftof(e1, e2) {
+			let [order1, order2] = get_order(e1, e2);
+			return (order1 < order2);
+		}
+
+		/*
+			return true if e1 is ordered after e2
+			false is equal
+		*/
+
+		function rightof(e1, e2) {
+			let [order1, order2] = get_order(e1, e2);
+			return (order1 > order2);
+		}
+
+		/*
+			return true if e1 is ordered equal to e2 
+		*/
+
+		function equal(e1, e2) {
+			let [order1, order2] = get_order(e1, e2);
+			return (order1 == order2);
+		}
+
+		/*
+			return 1 if ordering e1, e2 is correct
+			return 0 if e1 and e2 is equal
+			return -1 if ordering e1, e2 is incorrect
+		*/
+
+		function compare(e1, e2) {
+			let [order1, order2] = get_order(e1, e2);
+			let diff = order2 - order1;
+			if (diff == 0) return 0;
+			return (diff > 0) ? 1 : -1;
+		}
+
+		/*
+			human friendly endpoint representation
+		*/
+		function toString(e) {
+			if (e.length === undefined) {
+				return e.toString();
+			} else {
+				let [val, right, closed] = e;
+				let s = val.toString()
+				if (right && closed) {
+					return s + "]";
+				} else if (right && !closed) {
+					return s + ")";
+				} else if (!right && closed) {
+					return "[" + s;
+				} else {
+					return "(" + s;
+				}
+			}
+		}
+
+		return {
+			compare: compare,
+			toString: toString,
+			equal: equal,
+			rightof: rightof,
+			leftof: leftof
+		}
+
+	}();
+
 
 	/*
 		inside (e, interval)
@@ -403,7 +439,7 @@ define(function () {
 		}
 		let e_low = [interval.low, false, interval.lowInclude];
 		let e_high = [interval.high, true, interval.highInclude];
-		return !endpoint_leftof(e, e_low) && !endpoint_rightof(e, e_high);
+		return !endpoint.leftof(e, e_low) && !endpoint.rightof(e, e_high);
 	}
 
 	/*
@@ -448,10 +484,20 @@ define(function () {
 
 	function compare(a, b) {
 		if (! a instanceof Interval) {
-			throw new Error("a not interval", a);
+			// could be a number
+			if (isNumber(a)) {
+				a = new Interval(a);
+			} else {
+				throw new Error("a not interval", a);
+			}
 		}
 		if (! b instanceof Interval) {
-			throw new Error("b not interval", b);
+			// could be a number
+			if (isNumber(b)) {
+				b = new Interval(b);
+			} else {
+				throw new Error("b not interval", a);
+			}
 		}
 		// interval endpoints
 		let a_low = [a.low, false, a.lowInclude];
@@ -459,13 +505,13 @@ define(function () {
 		let b_low = [b.low, false, b.lowInclude];
 		let b_high = [b.high, true, b.highInclude];
 
-		let cmp_1 = endpoint_compare(b_low, a_low);
-		let cmp_2 = endpoint_compare(b_high, a_high);
+		let cmp_1 = endpoint.compare(b_low, a_low);
+		let cmp_2 = endpoint.compare(b_high, a_high);
 		let key = cmp_1*10 + cmp_2;
 
 		if (key == 11) {
 			// OUTSIDE_LEFT or PARTIAL_LEFT
-			if (endpoint_leftof(b_high, a_low)) {
+			if (endpoint.leftof(b_high, a_low)) {
 				return IntervalRelation.OUTSIDE_LEFT;
 			} else {
 				return IntervalRelation.PARTIAL_LEFT;
@@ -479,7 +525,7 @@ define(function () {
 		} else {
 			// key == -11
 			// OUTSIDE_RIGHT, PARTIAL_RIGHT
-			if (endpoint_rightof(b_low, a_high)) {
+			if (endpoint.rightof(b_low, a_high)) {
 				return IntervalRelation.OUTSIDE_RIGHT;
 			} else {
 				return IntervalRelation.PARTIAL_RIGHT;
@@ -493,11 +539,7 @@ define(function () {
 
 	return {
 		Interval: Interval,
-		endpoint_leftof: endpoint_leftof,
-		endpoint_rightof: endpoint_rightof,
-		endpoint_equal: endpoint_equal,
-		endpoint_compare: endpoint_compare,
-		endpoint_toString: endpoint_toString,
+		endpoint: endpoint,
 		inside: inside,
 		compare: compare,
 		IntervalRelation: IntervalRelation

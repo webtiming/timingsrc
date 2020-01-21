@@ -11,15 +11,11 @@
         <script type="text/javascript" src="../../docs/lib/require.js"></script>
         <!--  main -->
         <script text="javascript">
-
+            let itv;
             require(['util/interval'], function (interval) {
-
+                itv = interval;
                 const Interval = interval.Interval;
-                const endpoint_leftof = interval.endpoint_leftof;
-                const endpoint_rightof = interval.endpoint_rightof;
-                const endpoint_equal = interval.endpoint_equal;
-                const endpoint_compare = interval.endpoint_compare;
-                const endpoint_toString = interval.endpoint_toString;
+                const endpoint = interval.endpoint;
                 const inside = interval.inside;
                 const compare = interval.compare;
                 const IntervalRelation = interval.IntervalRelation;
@@ -79,7 +75,7 @@
                         [false, false, false, false, false]
                     ];
 
-                    test_permutations(endpoint_leftof, expected_leftof);
+                    test_permutations(endpoint.leftof, expected_leftof);
 
                     const expected_rightof = [
                         // (right-open, e)
@@ -94,7 +90,7 @@
                         [true, true, true, true, false]
                     ];
 
-                    test_permutations(endpoint_rightof, expected_rightof);
+                    test_permutations(endpoint.rightof, expected_rightof);
 
                     const expected_equal = [
                         // (right-open, e)
@@ -109,7 +105,7 @@
                         [false, false, false, false, true]
                     ];
 
-                    test_permutations(endpoint_equal, expected_equal);
+                    test_permutations(endpoint.equal, expected_equal);
 
                     const expected_compare = [
                         // (right-open, e)
@@ -124,7 +120,7 @@
                         [-1, -1, -1, -1, 0]
                     ];
 
-                    test_permutations(endpoint_compare, expected_compare);
+                    test_permutations(endpoint.compare, expected_compare);
                 }
 
                 function test_inside() {
@@ -160,7 +156,7 @@
                         let ok;
                         for (let i=0; i<all.length; i++) {
                             ok = inside(all[i], itv);
-                            // console.log(endpoint_toString(all[i]), "inside", itv.toString(), ok);
+                            // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
                             assertEqual(ok, expectations[i]);
                         }
                     }
