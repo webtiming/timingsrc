@@ -51,6 +51,7 @@
                                 e1 = all[i];
                                 e2 = all[j];
                                 expected = expectations[i][j];
+                                // console.log(endpoint.toString(e1), endpoint.toString(e2), expected);
                                 // console.log(e1, e2, expected);
                                 ok = func(e1, e2);
                                 assertEqual(ok, expected);
@@ -71,6 +72,7 @@
                         [false, false, false, false, false]
                     ];
 
+                    console.log("test endpoint leftof")
                     test_permutations(endpoint.leftof, expected_leftof);
 
                     const expected_rightof = [
@@ -86,6 +88,7 @@
                         [true, true, true, true, false]
                     ];
 
+                    console.log("test endpoint rightof")
                     test_permutations(endpoint.rightof, expected_rightof);
 
                     const expected_equal = [
@@ -101,25 +104,29 @@
                         [false, false, false, false, true]
                     ];
 
+                    console.log("test endpoint equal")
                     test_permutations(endpoint.equal, expected_equal);
 
                     const expected_compare = [
                         // (right-open, e)
-                        [0, 1, 1, 1, 1],
+                        [0, -1, -1, -1, -1],
                         // (left-closed, e)
-                        [-1, 0, 1, 1, 1],
+                        [1, 0, -1, -1, -1],
                         // (point, e)
-                        [-1, -1, 0, 1, 1],
+                        [1, 1, 0, -1, -1],
                         // (right-closed, e)
-                        [-1, -1, -1, 0, 1],
+                        [1, 1, 1, 0, -1],
                         // (left-open, e)
-                        [-1, -1, -1, -1, 0]
+                        [1, 1, 1, 1, 0]
                     ];
 
+                    console.log("test endpoint compare")
                     test_permutations(endpoint.compare, expected_compare);
                 }
 
                 function test_inside() {
+
+                    console.log("test inside")
 
                     // endpoints with value 4
                     const right_open = [4, right, open];
@@ -148,11 +155,11 @@
                     let expectations;
 
                     function test_endpoints(itv, expectations) {
-                        // test different endpoints with invterval
+                        // test different endpoints with interval
                         let ok;
                         for (let i=0; i<all.length; i++) {
                             //ok = inside(all[i], itv);
-                            ok = itv.coversPoint(all[i]);
+                            ok = Interval.pointInside(all[i], itv);
                             // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
                             assertEqual(ok, expectations[i]);
                         }
@@ -251,70 +258,72 @@
 
                 function test_compare() {
 
+                    console.log("test compare")
+
                     let A, B;
 
                     // [2,4)
                     A = new Interval(2,4);
 
-                    // OUTSIDE LEFT
+                    // OUTSIDE RIGHT
                     // [0,2)
                     B = new Interval(0,2);
-                    assertEqual(A.compare(B), IntervalRelation.OUTSIDE_LEFT);
+                    assertEqual(A.compare(B), Interval.OUTSIDE_RIGHT);
 
-                    // PARTIAL LEFT
+                    // OVERLAP RIGHT
                     // [0,2]
                     B = new Interval(0,2,true, true);
-                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_LEFT);
+                    assertEqual(A.compare(B), Interval.OVERLAP_RIGHT);
                     // [0,3)
                     B = new Interval(0,3);
-                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_LEFT);
+                    assertEqual(A.compare(B), Interval.OVERLAP_RIGHT);
 
 
-                    // OUTSIDE RIGHT
+                    // OUTSIDE LEFT
                     // [4,5)
                     B = new Interval(4,5);
-                    assertEqual(A.compare(B), IntervalRelation.OUTSIDE_RIGHT);
+                    assertEqual(A.compare(B), Interval.OUTSIDE_LEFT);
 
-                    // PARTIAL RIGHT
+                    // OVERLAP LEFT
                     // [3,5)
                     B = new Interval(3,5);
-                    assertEqual(A.compare(B), IntervalRelation.PARTIAL_RIGHT);
+                    assertEqual(A.compare(B), Interval.OVERLAP_LEFT);
 
                     // EQUAL
                     // [2,4)
                     B = new Interval(2,4);
-                    assertEqual(A.compare(B), IntervalRelation.EQUAL);
-
-                    // COVERED
-                    // (2,4)
-                    B = new Interval(2,4, false, false);
-                    assertEqual(A.compare(B), IntervalRelation.COVERED);
-                    // [2,3]
-                    B = new Interval(2,3,true, true);
-                    assertEqual(A.compare(B), IntervalRelation.COVERED);
-                    // [3,3.5)
-                    B = new Interval(3,3.5);
-                    assertEqual(A.compare(B), IntervalRelation.COVERED);
+                    assertEqual(A.compare(B), Interval.EQUAL);
 
                     // COVERS
+                    // (2,4)
+                    B = new Interval(2,4, false, false);
+                    assertEqual(A.compare(B), Interval.COVERS);
+                    // [2,3]
+                    B = new Interval(2,3,true, true);
+                    assertEqual(A.compare(B), Interval.COVERS);
+                    // [3,3.5)
+                    B = new Interval(3,3.5);
+                    assertEqual(A.compare(B), Interval.COVERS);
+
+                    // COVERED
                     // [2,4]
                     B = new Interval(2,4, true, true);
-                    assertEqual(A.compare(B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), Interval.COVERED);
                     // [1,4)
                     B = new Interval(1,4);
-                    assertEqual(A.compare(B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), Interval.COVERED);
                     // [2,5)
                     B = new Interval(2,5);
-                    assertEqual(A.compare(B), IntervalRelation.COVERS);
+                    assertEqual(A.compare(B), Interval.COVERED);
                 }
 
 
                 function test_sort() {
 
                     a = [
-                        new Interval(1,6),
+                        new Interval(4,5),
                         new Interval(2,3),
-                        new Interval(4,5)
+                        new Interval(1,6)
                     ];
 
                     a.sort(Interval.cmpLow);
@@ -323,8 +332,6 @@
                         console.log(i.toString());
                     })
                 }
-
-
 
                 var run = function () {
                     test_endpoint_order();

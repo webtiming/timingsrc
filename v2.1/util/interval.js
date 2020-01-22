@@ -143,7 +143,7 @@ define(function () {
 		}
 
 		/*
-			return true if e1 is ordered equal to e2 
+			return true if e1 is ordered equal to e2
 		*/
 
 		function equal(e1, e2) {
@@ -152,14 +152,14 @@ define(function () {
 		}
 
 		/*
-			return 1 if ordering e1, e2 is correct
+			return -1 if ordering e1, e2 is correct
 			return 0 if e1 and e2 is equal
-			return -1 if ordering e1, e2 is incorrect
+			return 1 if ordering e1, e2 is incorrect
 		*/
 
 		function compare(e1, e2) {
 			let [order1, order2] = get_order(e1, e2);
-			let diff = order2 - order1;
+			let diff = order1 - order2;
 			if (diff == 0) return 0;
 			return (diff > 0) ? 1 : -1;
 		}
@@ -232,28 +232,29 @@ define(function () {
 
 	cmp_1  cmp_2  key  relation
 	=====  =====  ===  ============================
-	1 	   1       11  OUTSIDE_LEFT, PARTIAL_LEFT
-	1 	   0       10  COVERS
-	1      -1       9  COVERS
-	0 	   1        1  COVERED
+	-1     -1     -11  OUTSIDE_LEFT, PARTIAL_LEFT
+	-1 	   0      -10  COVERS
+	-1     1       -9  COVERS
+	0	   -1      -1  COVERED
 	0      0        0  EQUAL
-	0	   -1      -1  COVERS
-	-1     1       -9  COVERED
-	-1 	   0      -10  COVERED
-	-1     -1     -11  OUTSIDE_RIGHT, PARTIAL_RIGHT
+	0 	   1        1  COVERS
+	1      -1       9  COVERED
+	1 	   0       10  COVERED
+	1 	   1       11  OUTSIDE_RIGHT, OVERLAP_RIGHT
 	=====  =====  ===  ============================
-	
+
 	**********************************************************/
 
-    const IntervalRelation = Object.freeze({
-		COVERED: 1,
-		PARTIAL_LEFT: 2,
-		PARTIAL_RIGHT: 3,
-		COVERS: 4,
-		OUTSIDE_LEFT: 5,
-		OUTSIDE_RIGHT: 6,
-		EQUAL: 7
-    });
+	// Interval Relations
+
+	const OUTSIDE_LEFT = 1;
+	const OVERLAP_LEFT = 2;
+	const COVERED = 3;
+	const EQUAL = 4;
+	const COVERS = 5;
+	const OVERLAP_RIGHT = 6;
+	const OUTSIDE_RIGHT = 7;
+
 
 	function compare(a, b) {
 		if (! a instanceof Interval) {
@@ -278,30 +279,30 @@ define(function () {
 		let b_low = [b.low, false, b.lowInclude];
 		let b_high = [b.high, true, b.highInclude];
 
-		let cmp_1 = endpoint.compare(b_low, a_low);
-		let cmp_2 = endpoint.compare(b_high, a_high);
+		let cmp_1 = endpoint.compare(a_low, b_low);
+		let cmp_2 = endpoint.compare(a_high, b_high);
 		let key = cmp_1*10 + cmp_2;
 
 		if (key == 11) {
 			// OUTSIDE_LEFT or PARTIAL_LEFT
 			if (endpoint.leftof(b_high, a_low)) {
-				return IntervalRelation.OUTSIDE_LEFT;
+				return OUTSIDE_RIGHT;
 			} else {
-				return IntervalRelation.PARTIAL_LEFT;
+				return OVERLAP_RIGHT;
 			}
 		} else if ([-1, 9, 10].includes(key)) {
-			return IntervalRelation.COVERS;
+			return COVERED;
 		} else if ([1, -9, -10].includes(key)) {
-			return IntervalRelation.COVERED;
+			return COVERS;
 		} else if (key == 0) {
-			return IntervalRelation.EQUAL;
+			return EQUAL;
 		} else {
 			// key == -11
 			// OUTSIDE_RIGHT, PARTIAL_RIGHT
 			if (endpoint.rightof(b_low, a_high)) {
-				return IntervalRelation.OUTSIDE_RIGHT;
+				return OUTSIDE_LEFT;
 			} else {
-				return IntervalRelation.PARTIAL_RIGHT;
+				return OVERLAP_LEFT;
 			}
 		}
 	}
@@ -418,39 +419,33 @@ define(function () {
 		};
 		*/
 
-		coversPoint (point) {
-			return inside(point, this);
-		}
-
-
 		compare (other) {
 			return compare(this, other);
 		}
 
 		equals (other) {
-			return compare(this, other) == IntervalRelation.EQUALS;
+			return compare(this, other) == EQUALS;
 		}
 
 		outside (other) {
 			return [
-				IntervalRelation.OUTSIDE_LEFT,
-				IntervalRelation.OUTSIDE_RIGHT
+				OUTSIDE_LEFT, OUTSIDE_RIGHT
 			].includes(compare(this, other));
 		}
 
 		overlap (other) {
 			return [
-				IntervalRelation.PARTIAL_LEFT,
-				IntervalRelation.PARTIAL_RIGHT
-			].includes(compare(this, other));	
+				OVERLAP_LEFT,
+				OVERLAP_RIGHT
+			].includes(compare(this, other));
 		}
 
 		covered (other) {
-			return compare(this, other) == IntervalRelation.COVERED;
+			return compare(this, other) == COVERED;
 		}
 
 		covers (other) {
-			return compare(this, other) == IntervalRelation.COVERS;
+			return compare(this, other) == COVERS;
 		}
 
 
@@ -523,11 +518,10 @@ define(function () {
 	}
 
 
-
 	/*********************************************************
 	COMPARE BY INTERVAL ENDPOINTS
 	**********************************************************
-	
+
 	cmp functions for sorting intervals (ascending) based on
 	endpoint low or high
 
@@ -553,9 +547,17 @@ define(function () {
 	/*
 		Add static variables to Interval class.
 	*/
+	Interval.OUTSIDE_LEFT = OUTSIDE_LEFT;
+	Interval.OVERLAP_LEFT = OVERLAP_LEFT;
+	Interval.COVERED = COVERED;
+	Interval.EQUAL = EQUAL;
+	Interval.COVERS = COVERS;
+	Interval.OVERLAP_RIGHT = OVERLAP_RIGHT;
+	Interval.OUTSIDE_RIGHT = OUTSIDE_RIGHT;
 	Interval.cmpLow = _make_interval_cmp(true);
 	Interval.cmpHigh = _make_interval_cmp(false);
-	Interval.IntervalRelation = IntervalRelation;
+	Interval.pointInside = inside;
+	// expose only for testing
 	Interval.endpoint = endpoint;
 
 	/*
