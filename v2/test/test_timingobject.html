@@ -8,7 +8,7 @@
       baseUrl : '../',
     };
   </script>
-  <script type="text/javascript" src="../../lib/require.js"></script>
+  <script type="text/javascript" src="../../docs/lib/require.js"></script>
   <script type="text/javascript">
       var to, w, w2;
       require(['timingobject/main'], function (timingobject) {
@@ -76,7 +76,6 @@
         };     
          
 
-
         var setup_timingobject = function () {
 
           // timing object
@@ -110,6 +109,23 @@
           return to;
         };
 
+
+
+        var test_update_promise = function () {
+
+          const to = new timingobject.TimingObject({range:[0,10]});
+
+
+          to.ready.then(function () {
+            console.log("to ready");
+            console.log("to update", to.vector);
+            to.update({position: 4});
+          }).then(function () {
+            console.log("to updated", to.vector);
+          });
+        }
+
+
         var run = function () {
           to = setup_timingobject();
           w = setup_converter1(to);
@@ -118,6 +134,8 @@
             w2 = setup_converter2(to);  
           }, 4000);
           */
+
+          test_update_promise();
 
         };
         if (document.readyState === "complete") run();
