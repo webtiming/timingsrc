@@ -277,7 +277,7 @@ define(['../util/eventify', '../util/motionutils', './axis', './sequencer'],
     			item = this._axis.getItem(key);
     			// if item is defined in axis, it was recently added
     			// if item is not defined in axis, it was recently removed
-    			if (item == undefind) {
+    			if (item == undefined) {
     				// corner case - item just remove - no acess to item state
     				// invent fake info for remove event
     				item = {
