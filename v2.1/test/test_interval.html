@@ -159,7 +159,7 @@
                         let ok;
                         for (let i=0; i<all.length; i++) {
                             //ok = inside(all[i], itv);
-                            ok = Interval.pointInside(all[i], itv);
+                            ok = itv.inside(all[i]);
                             // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
                             assertEqual(ok, expectations[i]);
                         }

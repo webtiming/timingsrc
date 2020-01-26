@@ -357,10 +357,10 @@ define(function () {
 		}
 
 		toString () {
-			var lowBracket = (this.lowInclude) ? "[" : "<";
-			var highBracket = (this.highInclude) ? "]" : ">";
-			var low = (this.low === -Infinity) ? "<--" : this.low; //.toFixed(2);
-			var high = (this.high === Infinity) ? "-->" : this.high; //.toFixed(2);
+			var lowBracket = (this.lowInclude) ? "[" : "(";
+			var highBracket = (this.highInclude) ? "]" : ")";
+			var low = (this.low === -Infinity) ? "[--" : this.low; //.toFixed(2);
+			var high = (this.high === Infinity) ? "--]" : this.high; //.toFixed(2);
 			if (this.singular)
 				return lowBracket + low + highBracket;
 			return lowBracket + low + ',' + high + highBracket;
@@ -423,29 +423,8 @@ define(function () {
 			return compare(this, other);
 		}
 
-		equals (other) {
-			return compare(this, other) == EQUALS;
-		}
-
-		outside (other) {
-			return [
-				OUTSIDE_LEFT, OUTSIDE_RIGHT
-			].includes(compare(this, other));
-		}
-
-		overlap (other) {
-			return [
-				OVERLAP_LEFT,
-				OVERLAP_RIGHT
-			].includes(compare(this, other));
-		}
-
-		covered (other) {
-			return compare(this, other) == COVERED;
-		}
-
-		covers (other) {
-			return compare(this, other) == COVERS;
+		inside (p) {
+			return inside(p, this);
 		}
 
 
@@ -556,7 +535,6 @@ define(function () {
 	Interval.OUTSIDE_RIGHT = OUTSIDE_RIGHT;
 	Interval.cmpLow = _make_interval_cmp(true);
 	Interval.cmpHigh = _make_interval_cmp(false);
-	Interval.pointInside = inside;
 	// expose only for testing
 	Interval.endpoint = endpoint;
 
