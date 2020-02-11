@@ -427,6 +427,18 @@ define(function () {
 			return inside(p, this);
 		}
 
+		equals (other) {
+			return compare(this, other) == EQUAL;
+		}
+
+		covered (other) {
+			return compare(this, other) == COVERED;
+		}
+
+		covers (other) {
+			return compare(this, other) == COVERS;
+		}
+
 
 		/*
 			a.hasEndpointInside(b)

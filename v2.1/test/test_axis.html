@@ -96,21 +96,19 @@
           let cues = make_singular_cues(10, 10);
           console.log("insert keys", cues.map(x=>x.key));
           let ax = new Axis();
-          let batchMap = ax._update(cues);
-          console.log(batchMap);
-          console.log("cueMap", ax._cueMap.size);
+          let batchMap = ax.update(cues);
+          console.log(batchMap.size);
+          console.log("cueMap", ax.size);
           console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
           console.log("pointIndex", ax._cueBuckets.get(0)._pointIndex.array.length);
-
 
           let cues2 = make_remove_cues(10, 10);
           console.log("remove keys", cues2.map(x=>x.key));
-          batchMap = ax._update(cues2);
+          batchMap = ax.update(cues2);
           console.log(batchMap);
           console.log("cueMap", ax._cueMap.size);
           console.log("pointMap", ax._cueBuckets.get(0)._pointMap.size);
           console.log("pointIndex", ax._cueBuckets.get(0)._pointIndex.array.length);
-
         };
 
         var test_bigbatch = function (size) {
