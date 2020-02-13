@@ -124,11 +124,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     */
 
     const CueOpType = Object.freeze({
-    	INSERT_CUE: 1,
-    	DELETE_CUE: 2,
+    	INSERT: 1,
+    	DELETE: 2,
     	REPLACE_INTERVAL: 3,
     	REPLACE_DATA: 4,
-    	REPLACE_CUE: 5,
+    	REPLACE: 5,
     });
 
 
@@ -290,7 +290,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					continue;
 				} else {
 					// INSERT
-					item.type = CueOpType.INSERT_CUE;
+					item.type = CueOpType.INSERT;
 				}
     		} else {
     			// replace or delete existing cue
@@ -298,7 +298,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     				// DELETE
 					// delete existing cue
 					item.new = undefined;
-					item.type = CueOpType.DELETE_CUE;
+					item.type = CueOpType.DELETE;
 	    		} else {
 	    			// REPLACE
 					/*
@@ -333,7 +333,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 					} else {
 						// REPLACE_CUE
 						// replace interval and data
-						item.type = CueOpType.REPLACE_CUE;
+						item.type = CueOpType.REPLACE;
 					}
 	    		}
     		}
@@ -393,6 +393,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		update(cues, options) {
 			let batchMap;
 			options = options || {};
+			if (!Array.isArray(cues)) {
+				cues = [cues];
+			}
 			// collapse
 			if (options.collapse) {
 				cues = collapse(cues);
@@ -403,28 +406,30 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			} else {
 				batchMap = make_batchMap(cues, this._cueMap, options.equals);
 			}
-			// dispatch cue operations to appropriate cueBucket
-			for (let item of batchMap.values()) {
-				// update cueMap
-				if (item.new) {
-					this._cueMap.set(item.new.key, item.new);
-				} else {
-					this._cueMap.delete(item.old.key);
+			if (batchMap.size > 0) {
+				// dispatch cue operations to appropriate cueBucket
+				for (let item of batchMap.values()) {
+					// update cueMap
+					if (item.new) {
+						this._cueMap.set(item.new.key, item.new);
+					} else {
+						this._cueMap.delete(item.old.key);
+					}
+					// update cue buckets
+					if (item.old) {
+						let cueBucketId = getCueBucketId(item.old.interval.length);
+						this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
+					}
+					if (item.new) {
+						let cueBucketId = getCueBucketId(item.new.interval.length);
+						let cueBucket = this._cueBuckets.get(cueBucketId);
+						cueBucket.processCue("add", item.new);
+					}
 				}
-				// update cue buckets
-				if (item.old) {
-					let cueBucketId = getCueBucketId(item.old.interval.length);
-					this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
+				// flush all buckets so updates take effect
+				for (let cueBucket of this._cueBuckets.values()) {
+					cueBucket.flush();
 				}
-				if (item.new) {
-					let cueBucketId = getCueBucketId(item.new.interval.length);
-					let cueBucket = this._cueBuckets.get(cueBucketId);
-					cueBucket.processCue("add", item.new);
-				}
-			}
-			// flush all buckets so updates take effect
-			for (let cueBucket of this._cueBuckets.values()) {
-				cueBucket.flush();
 			}
 	        // event notification
 			this.eventifyTriggerEvent("change", batchMap);
@@ -1060,6 +1065,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	}
 
+
+	// Static variables
+	Axis.CueOpType = CueOpType;
 
 	// module definition
 	return Axis;

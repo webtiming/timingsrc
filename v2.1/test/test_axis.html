@@ -14,6 +14,9 @@
 
       require(['sequencing/axis', 'util/interval'], function (Axis, Interval) {
 
+        const CueOpType = Axis.CueOpType;
+
+
         var timeit = function (func) {
           let t0 = performance.now();
           let result = func();
@@ -661,12 +664,221 @@
         };
 
 
+        function assertTrue(val) {
+          if (!val) {
+            throw new Error("not true: " + val);
+          }
+        }
+
+        function equals(a, b) {
+            // Create arrays of property names
+            var aProps = Object.getOwnPropertyNames(a);
+            var bProps = Object.getOwnPropertyNames(b);
+
+            // If number of properties is different,
+            // objects are not equivalent
+            if (aProps.length != bProps.length) {
+                return false;
+            }
+
+            for (var i = 0; i < aProps.length; i++) {
+                var propName = aProps[i];
+
+                // If values of same property are not equal,
+                // objects are not equivalent
+                if (a[propName] !== b[propName]) {
+                    return false;
+                }
+            }
+
+            // If we made it this far, objects
+            // are considered equivalent
+            return true;
+        }
+
+
+        function cue_equals(cue_a, cue_b) {
+          if (cue_a.key != cue_b.key) {
+            return false;
+          }
+          if (!cue_a.interval.equals(cue_b.interval)) {
+            return false;
+          }
+          if (!equals(cue_a.data, cue_b.data)) {
+            return false;
+          }
+          return true;
+        }
+
+
+        /*
+          test all basic update operations
+        */
+        function test_update() {
+
+          let ax = new Axis();
+
+          let res, cue;
+
+          // test insert
+          let cue1 = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+          let cue2 = {key: 2, interval: new Interval(3, 4), data: {j:"jalla"}}
+          let cue3 = {key: 3, interval: new Interval(3, 4), data: {j:"jalla"}}
+          res = ax.update([cue1, cue2, cue3]);
+          assertTrue(res.size == 3)
+          assertTrue(res.get(1).type == CueOpType.INSERT);
+          assertTrue(res.get(1).old === undefined);
+          assertTrue(res.get(1).new === cue1);
+
+          // test replace
+          cue11 = {key: 1, interval: new Interval(3, 5), data: {j:"palla"}}
+          res = ax.update(cue11);
+          assertTrue(res.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE);
+          assertTrue(res.get(1).old === cue1);
+          assertTrue(res.get(1).new === cue11);
+          assertTrue(cue_equals(res.get(1).old, cue1));
+          assertTrue(cue_equals(res.get(1).new, cue11));
+
+          // test replace interval
+          cue = {key: 1, interval: new Interval(3, 4)}
+          res = ax.update(cue);
+          assertTrue(res.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE_INTERVAL);
+          assertTrue(ax.get(1).interval.equals(cue.interval));
+          assertTrue(cue_equals(res.get(1).old, cue11));
+          assertTrue(cue_equals(res.get(1).new, cue));
+
+          // test replace data
+          cue = {key: 1, data: {j:"jalla"}}
+          res = ax.update(cue);
+          assertTrue(res.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE_DATA);
+          assertTrue(ax.get(1).interval.equals(new Interval(3, 4)));
+          assertTrue(equals(ax.get(1).data, {j:"jalla"}));
+
+          // test repeat without equals func
+          // is effectively replace data
+          cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+          res = ax.update(cue);
+          assertTrue(res.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE_DATA);
+          assertTrue(ax.get(1).interval.equals(new Interval(3, 4)));
+          assertTrue(equals(ax.get(1).data, {j:"jalla"}));
+
+          // test repeat with equals func
+          // is effectively replace data
+          cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+          res = ax.update(cue, {equals:equals});
+          assertTrue(res.size == 0);
+
+          // test repeat interval
+          cue = {key: 1, interval: new Interval(3, 4)}
+          res = ax.update(cue);
+          assertTrue(res.size == 0);
+
+          // test delete
+          cue = ax.get(1);
+          res = ax.update({key: 1});
+          assertTrue(res.size == 1);
+          assertTrue(res.get(1).type == CueOpType.DELETE);
+          assertTrue(res.get(1).new === undefined);
+          assertTrue(res.get(1).old === cue);
+        }
+
+
+        /*
+          test multiple updates regarding the same cue
+
+        */
+        function test_update_multiple() {
+          let res;
+          let ax = new Axis();
+          cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+          ax.update(cue);
+
+          // delete first, then replace interval
+          // should result in the delete operation being ignored
+          let cues = [
+            {key: 1},
+            {key: 1, interval: new Interval(3, 5)}
+          ]
+          res = ax.update(cues);
+          assertTrue(res.size == 1);
+          assertTrue(ax.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE_INTERVAL);
+          assertTrue(cue_equals(res.get(1).old, cue));
+          assertTrue(cue_equals(res.get(1).new, cues[1]));
+          assertTrue(cue_equals(ax.get(1), cues[1]));
+
+          ax.clear();
+          ax.update(cue);
+
+          // replace interval, then delete
+          cues = [
+            {key: 1, interval: new Interval(3, 5)},
+            {key: 1}
+          ]
+          res = ax.update(cues);
+          assertTrue(res.size == 1);
+          assertTrue(ax.size == 0);
+          assertTrue(res.get(1).type == CueOpType.DELETE);
+          assertTrue(cue_equals(res.get(1).old, cue));
+          assertTrue(res.get(1).new === undefined);
+          assertTrue(ax.get(1) === undefined);
+
+
+          ax.clear();
+          ax.update(cue);
+
+          // multiple updates with collapse
+          cues = [
+            {key: 1, interval: new Interval(3, 5)},
+            {key: 1, data: {j: "palla"}}
+          ];
+          res = ax.update(cues, {collapse:true});
+          assertTrue(res.size == 1);
+          assertTrue(ax.size == 1);
+          assertTrue(res.get(1).type == CueOpType.REPLACE);
+          assertTrue(cue_equals(res.get(1).old, cue));
+          assertTrue(res.get(1).new.interval.equals(cues[0].interval));
+          assertTrue(equals(res.get(1).new.data, cues[1].data));
+
+          ax.clear();
+          ax.update(cue);
+
+          // multiple updates with collapse
+          // delete first, then update interval
+          cues = [
+            {key: 1},
+            {key: 1, interval: new Interval(3, 5)}
+          ];
+          res = ax.update(cues, {collapse:true});
+          assertTrue(res.size == 1);
+          assertTrue(ax.size == 1);
+          //assertTrue(res.get(1).type == CueOpType.REPLACE);
+          console.log(res.get(1))
+
+          /*
+            issue - delete first fails to actually delete first
+            should throw warning - effectively trying to INSERT
+            cue with only interval
+
+            note - we are replaceing multiple cue args,
+            with one that has same effect as if the two were
+            done in consequtive updates.
+
+          */
+
+        }
 
 
 
 
         var run = function () {
-          test_basic();
+          //test_update();
+          test_update_multiple();
+          //test_basic();
           //test_bigbatch(100000);
           //test_main();
           //test_batch_collapsing();
