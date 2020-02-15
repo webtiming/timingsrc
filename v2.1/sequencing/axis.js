@@ -30,6 +30,35 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		return longest;
 	};
 
+	/*
+		object equals
+	*/
+	function object_equals(a, b) {
+        // Create arrays of property names
+        var aProps = Object.getOwnPropertyNames(a);
+        var bProps = Object.getOwnPropertyNames(b);
+
+        // If number of properties is different,
+        // objects are not equivalent
+        if (aProps.length != bProps.length) {
+            return false;
+        }
+
+        for (var i = 0; i < aProps.length; i++) {
+            var propName = aProps[i];
+
+            // If values of same property are not equal,
+            // objects are not equivalent
+            if (a[propName] !== b[propName]) {
+                return false;
+            }
+        }
+
+        // If we made it this far, objects
+        // are considered equivalent
+        return true;
+    }
+
 
 	/*
 		Add cue to array
@@ -120,61 +149,252 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
     /*
-		CueOpType
+		Delta
     */
 
-    const CueOpType = Object.freeze({
+    const Delta = Object.freeze({
+    	NOOP: 0,
     	INSERT: 1,
-    	DELETE: 2,
-    	REPLACE_INTERVAL: 3,
-    	REPLACE_DATA: 4,
-    	REPLACE: 5,
+    	REPLACE: 2,
+    	DELETE: 3
     });
 
 
+
+
+
+
+
 	/*
-		the cues list to update may include multiple
-		entries for each cues.
-		this collapses multiple entries into one,
-		applying cue updates sequentially,
-		generating a new cue list that only has one
-		entry per cue
+		check that cue argument is legal
+	*/
+	function check_cue (cue) {
+		if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
+			throw new Error("illegal cue", cue);
+		}
+		if (cue.hasOwnProperty("interval") && !cue.interval instanceof Interval) {
+			throw new Error("interval must be Interval");
+		}
+	}
+
+
+    /*
+		Characterize the transition from cue_a to cue_b
+		in terms of delta values for interval and data
+
+		For instance, interval has
+		- INSERT: value not in a but in b
+		- DELETE: value in a but not in b
+		- REPLACE: value in a and in be and not equal
+		- NOOP: either remains undefined or remains equal
+
+		optional equals function for data comparison
+		otherwise simple object equality (==) is used
+    */
+	function cue_delta(cue_a, cue_b, equals) {
+		let interval_delta, data_delta, eq;
+		// interval delta
+		let a_interval_defined = cue_a != undefined && cue_a.interval != undefined;
+		let b_interval_defined = cue_b != undefined && cue_b.interval != undefined;
+		if (!a_interval_defined && !b_interval_defined) {
+			interval_delta = Delta.NOOP;
+		} else if (!a_interval_defined) {
+			interval_delta = Delta.INSERT;
+		} else if (!b_interval_defined) {
+			interval_delta = Delta.DELETE;
+		} else {
+			// check interval equality
+			eq = cue_a.interval.equals(cue_b.interval);
+			interval_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
+		}
+		// data delta
+		let a_data_defined = cue_a != undefined && cue_a.data != undefined;
+		let b_data_defined = cue_b != undefined && cue_b.data != undefined;
+		if (!a_data_defined && !b_data_defined) {
+			data_delta = Delta.NOOP;
+		} else if (!a_data_defined) {
+			data_delta = Delta.INSERT;
+		} else if (!b_data_defined) {
+			data_delta = Delta.DELETE;
+		} else {
+			// check data equality
+			if (equals) {
+				eq = equals(cue_a.data, cue_b.data);
+			} else {
+				eq = (cue_a.data == cue_b.data);
+			}
+			data_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
+		}
+		return {interval: interval_delta, data: data_delta};
+	}
+
+	/*
+		determine equality for two cues
+		<equals> is optional equality function for cue.data
+		if not specified simple value equality (==) is used
+	*/
+	function cue_equals(cue_a, cue_b, equals) {
+		let delta = cue_delta(cue_a, cue_b, equals);
+		return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
+	}
+
+
+	/*
+		make_batchMap (cues, cueMap, equals)
+
+		<cueMap> - map with cues representing state before update
+		<equals> - equality function for data objects
+		<cues> ordered list of cues to be updated
+
+		cue = {
+			key:key,
+			interval: Interval,
+			data: data
+		}
+
+		cue completeness
+
+		required (see check cue)
+		- cue.key property is defined and value is != undefined
+		- if cue.interval != undefined, it must be instance of Interval
+
+
+		EXAMPLES
+
+		// INSERT (no pre-existing cue)
+
+		cue = {key:1, interval: new Interval(3,4), data: {}}
+		// insert cue with only interval
+		cue = {key:1, interval: new Interval(3,4)}
+		// insert cue with only data
+		cue = {key:1, data: {}}
+
+
+		// REPLACE (pre-existing cue)
+		preexisting_cue = {key:1, interval: new Interval(3,4), data: {}}
+
+		cue = {key:1, interval: new Interval(3,5), data: {foo:"bar"}}
+		// replace interval, keep data
+		cue = {key:1, interval: new Interval(3,5)}
+		// replace interval, delete data
+		cue = {key:1, interval: new Interval(3,5), data: undefined
+		// replace data, keep interval
+		cue = {key:1, data: {foo:"bar"}}
+		// replace data, delete interval
+		cue = {key:1, interval: undefined, data: {foo:"bar"}}
+
+		// DELETE (pre-existing)
+		cue = {key:1}
+		// delete interval, keep data
+		cue = {key:1, interval: undefined}
+		// delete data, keep interval
+		cue = {key:1, data: undefined}
+
+
+		Returns batchMap - describes the effects of an update.
+
+			batchMap is a Map() object
+			key -> {
+				new: new_cue,
+				old: old_cue,
+				delta: {
+					interval: Delta,
+					data: Delta
+				}
+			}
+
+		with independent delta values for interval and data:
+    	Delta.NOOP: 0
+    	Delta.INSERT: 1
+    	Delta.REPLACE: 2
+    	Delta.DELETE: 3
+
+
+		- if there are multiple cue operations for the same key,
+		  within the same batch of cues,
+		  these will be processed in order.
+		  However, returned delta values will be calcultate relative to
+		  the state before the batch.
+		  This way, external mirroring observers may will be able to duplicate the transitions.
+		  Also, internal index management depends on the correct
+		  representation of state changes.
+
+		- NOOP operations, such as delete non-existent cue will also
+		  be present in batch map.
+
+		- If a cue was available before cue processing started,
+		this will be reported as old value
+
 	*/
 
-	function collapse(cues) {
-		const cueCache = new Map();
-		const len = cues.length;
-		let cue, last_cue, has_interval, has_data;
+	function make_batchMap_collapse(cues, cueMap, equals) {
+		const batchMap = new Map();
+		const _cueMap = new Map();
+		let cue, old_cue;
+		let has_interval, has_data;
+		let old_has_interval, old_has_data;
+		let delta;
+		let len = cues.length;
 		for (let i=0; i<len; i++) {
     		cue = cues[i];
-    		if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-    			throw new Error("illegal cue", cue);
+	    	has_interval = cue.hasOwnProperty("interval");
+		    has_data = cue.hasOwnProperty("data");
+    		old_cue = _cueMap.get(cue.key);
+
+    		// load old cue
+    		if (old_cue == undefined) {
+    			// load old cue from cueMap
+    			old_cue = cueMap.get(cue.key);
     		}
-    		has_interval = cue.hasOwnProperty("interval") && cue.interval instanceof Interval
-    		has_data = cue.hasOwnProperty("data");
-    		// last cue
-    		last_cue = cueCache.get(cue.key);
-    		if (last_cue == undefined) {
-    			// no last cue in cueMap
-    			// insert new cue as last cue
-    			cueCache.set(cue.key, cue);
-    		} else {
-    			// update last cue
-    			if (has_interval && has_data) {
-    				last_cue.interval = cue.interval;
-    				last_cue.data = cue.data;
-    			} else if (has_interval) {
-    				last_cue.interval = cue.interval;
-    			} else if (has_data) {
-    				last_cue.data = cue.data;
-    			} else {
-    				// delete last cue from cache
-    				cueCache.delete(cue.key);
+    		// some operations preserve values from pre-existing cue
+    		if (old_cue == undefined) {
+    			// make sure properties are defined
+    			if (!has_interval) {
+    				cue.interval = undefined;
     			}
-    		}
+    			if (!has_data) {
+    				cue.data = undefined;
+    			}
+    		} else if (old_cue != undefined) {
+		    	if (!has_interval && !has_data) {
+		    		// make sure properties are defined
+		    		cue.interval = undefined;
+		    		cue.data = undefined;
+		    	} else if (!has_data) {
+					// REPLACE_INTERVAL, preserve data
+					let old_has_data = old_cue.hasOwnProperty("data");
+					if (old_has_data) {
+						cue.data = old_cue.data;
+					}
+				} else if (!has_interval) {
+					// REPLACE_DATA, preserve interval
+					let old_has_itv = old_cue.hasOwnProperty("interval");
+					if (old_has_itv) {
+						cue.interval = old_cue.interval;
+					}
+				} else {
+					// REPLACE CUE
+				}
+		    }
+		    _cueMap.set(cue.key, cue);
+	    }
+
+	    // make batchMap
+	    for (cue of _cueMap.values()) {
+			old_cue = cueMap.get(cue.key);
+			// check for equality, drop if equal
+			delta = cue_delta(old_cue, cue, equals);
+			// make sure new is undefined if both interval and data is undefined
+			if (cue.interval == undefined && cue.data == undefined) {
+				batchMap.set(cue.key, {new:undefined, old:old_cue, delta: delta});
+			} else {
+	    		batchMap.set(cue.key, {new:cue, old:old_cue, delta: delta});
+			}
 		}
-		return [...cueCache.values()];
+
+	    return batchMap;
 	}
+
 
 
 	/*
@@ -208,139 +428,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	}
 
 
-	/*
-		make_batchMap (cues, cueMap, equals)
 
-		<cueMap> - map with cues representing state before update
-		<equalFunc> - equality function for data objects
-		<cues> ordered list of cues to be updated
-
-		cue = {
-			key:key,
-			interval: Interval,
-			data: data
-		}
-
-		cue completeness
-		required - cue.key property is defined and value is != undefined
-
-		has_data - cue.data property is defined
-		has_interval - cue.interval property is Interval object
-
-		pre-existing cues in cueMap
-
-		cueOpType
-		INSERT_CUE: no pre-existing cue, cue has both interval and data
-		DELETE_CUE: pre-existing cue, no interval and no data
-		REPLACE_INTERVAL: pre-existing cue, has interval, but no data
-		REPLACE_DATA: pre-existing cue, has data, but no interval
-		REPLACE_CUE: pre-existing cue, has both interval and data
-
-		Returns batchMap - describing the effects of an update.
-
-			batchMap is a Map() object
-			key -> {new: new_cue, old: old_cue, type: cueOpType}
-
-		- If cue operation applies to cue that already exists, the old cue
-		  (before the update) will be included in batchMap,
-		  and cueOpType will be relative to old cue.
-
-		- If multiple operations in a batch apply to the same
-		cue, only the last cue of each key is processed.
-		Alternatively, supply the collapse option to the update operation,
-		to ensure that multiple cues are correctly collapsed into one.
-
-		- If a cue was available before cue processing started,
-		this will be reported as old value
-
-		- If a cue is both added and removed in the same batch,
-		it will not be included in batchMap.
-
-	*/
-
-    function make_batchMap(cues, cueMap, equals) {
-
-		/*
-			batchMap
-			key -> {new:new_cue, old:old_cue, type: cueOpType}
-		*/
-		const batchMap = new Map();
-		const len = cues.length;
-		let cue, old_cue, new_cue, has_interval, has_data, cueOpType;
-		let item;
-
-		for (let i=0; i<len; i++) {
-    		cue = cues[i];
-    		if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-    			throw new Error("illegal cue", cue);
-    		}
-    		has_interval = cue.hasOwnProperty("interval") && cue.interval instanceof Interval
-    		has_data = cue.hasOwnProperty("data");
-
-    		// clear any previous entry in batchMap
-    		batchMap.delete(cue.key);
-    		item = {new: cue, old: cueMap.get(cue.key)};
-    		if (item.old == undefined) {
-				/*
-					insert new cue
-					- requires both interval and data to be defined
-				*/
-				if (!has_interval || !has_data) {
-					// NOOP
-					continue;
-				} else {
-					// INSERT
-					item.type = CueOpType.INSERT;
-				}
-    		} else {
-    			// replace or delete existing cue
-    			if (!has_interval && !has_data) {
-    				// DELETE
-					// delete existing cue
-					item.new = undefined;
-					item.type = CueOpType.DELETE;
-	    		} else {
-	    			// REPLACE
-					/*
-						Equality - if either interval or data
-						happens to be equal to the state of the old cue,
-						there is no need to update - NOOP.
-
-						Update has_data and has_interval to reflect this
-						equal is the same as not providing
-					*/
-					if (has_data && equals) {
-						if (equals(item.new.data, item.old.data)) {
-							has_data = false;
-						}
-					}
-					if (has_interval) {
-						if (item.new.interval.equals(item.old.interval)) {
-							has_interval = false;
-						}
-					}
-					if (!has_interval && !has_data) {
-						// NOOP - due to equality
-						continue;
-					} else if (!has_data) {
-						// REPLACE_INTERVAL
-		    			item.new.data = item.old.data;
-		    			item.type = CueOpType.REPLACE_INTERVAL;
-					} else if (!has_interval) {
-						// REPLACE_DATA
-		    			item.new.interval = item.old.interval;
-		    			item.type = CueOpType.REPLACE_DATA;
-					} else {
-						// REPLACE_CUE
-						// replace interval and data
-						item.type = CueOpType.REPLACE;
-					}
-	    		}
-    		}
-    		batchMap.set(cue.key, item);
-		}
-		return batchMap;
-    }
 
 
 
@@ -396,9 +484,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			if (!Array.isArray(cues)) {
 				cues = [cues];
 			}
+			batchMap = make_batchMap_collapse(cues, this._cueMap, options.equals);
+			/*
 			// collapse
 			if (options.collapse) {
-				cues = collapse(cues);
+				batchMap = make_batchMap_collapse(cues, this._cueMap, options.equals);
 			}
 			// make batchMap
 			if (this._cueMap.size == 0) {
@@ -406,9 +496,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			} else {
 				batchMap = make_batchMap(cues, this._cueMap, options.equals);
 			}
+			*/
 			if (batchMap.size > 0) {
 				// dispatch cue operations to appropriate cueBucket
 				for (let item of batchMap.values()) {
+					if (item.delta.interval == Delta.NOOP && item.delta.data == Delta.NOOP) {
+						continue;
+					}
 					// update cueMap
 					if (item.new) {
 						this._cueMap.set(item.new.key, item.new);
@@ -416,11 +510,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 						this._cueMap.delete(item.old.key);
 					}
 					// update cue buckets
-					if (item.old) {
+					if (item.old && item.old.interval) {
 						let cueBucketId = getCueBucketId(item.old.interval.length);
 						this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
 					}
-					if (item.new) {
+					if (item.new && item.new.interval) {
 						let cueBucketId = getCueBucketId(item.new.interval.length);
 						let cueBucket = this._cueBuckets.get(cueBucketId);
 						cueBucket.processCue("add", item.new);
@@ -1067,8 +1161,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
 	// Static variables
-	Axis.CueOpType = CueOpType;
-
+	Axis.Delta = Delta;
+	Axis.cue_equals = cue_equals;
+	Axis.equals = object_equals;
 	// module definition
 	return Axis;
 });
