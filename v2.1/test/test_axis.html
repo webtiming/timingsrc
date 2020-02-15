@@ -1046,7 +1046,7 @@
           function test_delete_first() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
-            ax.update(init_cue, {collapse:true});
+            ax.update(init_cue);
             cues = [
               {key: 1},
               {key: 1, interval: new Interval(3, 5)}
@@ -1070,7 +1070,7 @@
           function test_delete_last() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
-            ax.update(init_cue, {collapse:true});
+            ax.update(init_cue);
 
             // test delete last
             cues = [
@@ -1097,7 +1097,7 @@
           function test_preserve_data() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
-            ax.update(init_cue, {collapse:true});
+            ax.update(init_cue);
 
             // test preserve data
             cues = [
@@ -1125,14 +1125,14 @@
           function test_preserve_interval() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
-            ax.update(init_cue, {collapse:true});
+            ax.update(init_cue);
 
             // test preserve interval
             cues = [
               {key: 1, data: {}},
               {key: 1, data: {j:"palla"}}
             ];
-            res = ax.update(cues, {collapse:true});
+            res = ax.update(cues, {collapse:false});
 
             // test sizes
             assertTrue(res.size == 1);
@@ -1163,7 +1163,7 @@
 
         var run = function () {
           test_update();
-          //test_update_multiple();
+          test_update_multiple();
 
           //test_basic();
           //test_bigbatch(100000);

@@ -150,6 +150,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     /*
 		Delta
+
+		Uset to represent statechanges in batchMap,
+		for intervals and data.
     */
 
     const Delta = Object.freeze({
@@ -158,24 +161,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     	REPLACE: 2,
     	DELETE: 3
     });
-
-
-
-
-
-
-
-	/*
-		check that cue argument is legal
-	*/
-	function check_cue (cue) {
-		if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-			throw new Error("illegal cue", cue);
-		}
-		if (cue.hasOwnProperty("interval") && !cue.interval instanceof Interval) {
-			throw new Error("interval must be Interval");
-		}
-	}
 
 
     /*
@@ -238,13 +223,61 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
 	}
 
+	/*
+		given the current state of a cue,
+		and a cue argument,
+		generate the resulting cue
+
+		- implements preservation of values from old_cue
+	*/
+	function cue_process(old_cue, cue, check) {
+		if (check) {
+			if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
+				throw new Error("illegal cue", cue);
+			}
+		}
+		let has_interval = cue.hasOwnProperty("interval");
+	    let has_data = cue.hasOwnProperty("data");
+	    if (check && has_interval) {
+	    	if (!cue.interval instanceof Interval) {
+	    		throw new Error("interval must be Interval");
+	    	}
+	    }
+		if (old_cue == undefined) {
+			// make sure properties are defined
+			if (!has_interval) {
+				cue.interval = undefined;
+			}
+			if (!has_data) {
+				cue.data = undefined;
+			}
+		} else if (old_cue != undefined) {
+	    	if (!has_interval && !has_data) {
+	    		// make sure properties are defined
+	    		cue.interval = undefined;
+	    		cue.data = undefined;
+	    	} else if (!has_data) {
+				// REPLACE_INTERVAL, preserve data
+				cue.data = old_cue.data;
+			} else if (!has_interval) {
+				// REPLACE_DATA, preserve interval
+				cue.interval = old_cue.interval;
+			} else {
+				// REPLACE CUE
+			}
+	    }
+	    return cue;
+	}
+
+
 
 	/*
-		make_batchMap (cues, cueMap, equals)
+		make_batchMap (cues, cueMap, equals, check)
 
 		<cueMap> - map with cues representing state before update
 		<equals> - equality function for data objects
 		<cues> ordered list of cues to be updated
+		<check> - check cue integrity if true
 
 		cue = {
 			key:key,
@@ -327,117 +360,76 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 	*/
 
-	function make_batchMap_collapse(cues, cueMap, equals) {
+	function make_batchMap_collapse(cues, cueMap, equals, check) {
 		const batchMap = new Map();
 		const _cueMap = new Map();
-		let cue, old_cue;
-		let has_interval, has_data;
-		let old_has_interval, old_has_data;
-		let delta;
+		let cue, old_cue, delta;
+		let init = cueMap.size == 0;
 		let len = cues.length;
 		for (let i=0; i<len; i++) {
     		cue = cues[i];
-	    	has_interval = cue.hasOwnProperty("interval");
-		    has_data = cue.hasOwnProperty("data");
     		old_cue = _cueMap.get(cue.key);
-
     		// load old cue
     		if (old_cue == undefined) {
     			// load old cue from cueMap
-    			old_cue = cueMap.get(cue.key);
+    			old_cue = (init) ? undefined : cueMap.get(cue.key);
     		}
-    		// some operations preserve values from pre-existing cue
-    		if (old_cue == undefined) {
-    			// make sure properties are defined
-    			if (!has_interval) {
-    				cue.interval = undefined;
-    			}
-    			if (!has_data) {
-    				cue.data = undefined;
-    			}
-    		} else if (old_cue != undefined) {
-		    	if (!has_interval && !has_data) {
-		    		// make sure properties are defined
-		    		cue.interval = undefined;
-		    		cue.data = undefined;
-		    	} else if (!has_data) {
-					// REPLACE_INTERVAL, preserve data
-					let old_has_data = old_cue.hasOwnProperty("data");
-					if (old_has_data) {
-						cue.data = old_cue.data;
-					}
-				} else if (!has_interval) {
-					// REPLACE_DATA, preserve interval
-					let old_has_itv = old_cue.hasOwnProperty("interval");
-					if (old_has_itv) {
-						cue.interval = old_cue.interval;
-					}
-				} else {
-					// REPLACE CUE
-				}
-		    }
+    		// process cue
+    		cue = cue_process(old_cue, cue, check);
 		    _cueMap.set(cue.key, cue);
 	    }
-
 	    // make batchMap
 	    for (cue of _cueMap.values()) {
 			old_cue = cueMap.get(cue.key);
-			// check for equality, drop if equal
+			// check for equality
 			delta = cue_delta(old_cue, cue, equals);
-			// make sure new is undefined if both interval and data is undefined
+			// make sure new is undefined if both interval and data are undefined
 			if (cue.interval == undefined && cue.data == undefined) {
 				batchMap.set(cue.key, {new:undefined, old:old_cue, delta: delta});
 			} else {
 	    		batchMap.set(cue.key, {new:cue, old:old_cue, delta: delta});
 			}
 		}
-
 	    return batchMap;
 	}
 
 
-
 	/*
-		make initial batchmap quickly when axis is empty
-
-		returns Map: batchMap
-			key -> {new:new_cue, old:old_cue, type: cueOpType}
+		make batchmap more quickly assuming with a different semantic
+		- if there are multiple cue operations for the same key,
+		  only the last one is used
 	*/
 
-	function make_init_batchMap(cues) {
+	function make_batchMap(cues, cueMap, equals, check) {
 		const batchMap = new Map();
 		const len = cues.length;
-		let cue, has_interval, has_data;
+		let cue, old_cue, delta;
+		let init = cueMap.size == 0;
 		for (let i=0; i<len; i++) {
     		cue = cues[i];
-    		if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-    			throw new Error("illegal cue", cue);
-    		}
-    		has_interval = cue.hasOwnProperty("interval") && cue.interval instanceof Interval
-    		has_data = cue.hasOwnProperty("data");
-
-
-
-			if (has_interval && has_data) {
-				batchMap.set(cue.key, {
-    				new:cue, old:undefined, type:CueOpType.INSERT
-				});
+			old_cue = (init) ? undefined : cueMap.get(cue.key);
+			// process cue
+			cue = cue_process(old_cue, cue, check);
+			// check for equality
+			delta = cue_delta(old_cue, cue, equals);
+			// make sure new is undefined if both interval and data are undefined
+			if (cue.interval == undefined && cue.data == undefined) {
+				batchMap.set(cue.key, {new:undefined, old:old_cue, delta: delta});
+			} else {
+	    		batchMap.set(cue.key, {new:cue, old:old_cue, delta: delta});
 			}
 		}
 		return batchMap;
 	}
 
 
-
-
-
-
 	/*
 		this implements Axis, a datastructure for efficient lookup of cues on a timeline
 		- cues may be tied to one or two points on the timeline, this
-		is expressed by an Interval.
-		- cues are indexed both by key and by cuepoint values
-		- cues are maintained in buckets, based on their interval length, for efficient lookup
+		  is expressed by an Interval.
+		- cues are indexed both by key and by intervals
+		- cues are maintained in buckets, based on their interval length,
+		  for efficient lookup
 	*/
 
 	class Axis {
@@ -480,23 +472,24 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		*/
 		update(cues, options) {
 			let batchMap;
+			// options
 			options = options || {};
+			let equals = options.equals;
+			let collapse = options.collapse;
+			// check is false by default
+			if (options.check == undefined) {
+				options.check = false;
+			}
+			let check = options.check;
 			if (!Array.isArray(cues)) {
 				cues = [cues];
 			}
-			batchMap = make_batchMap_collapse(cues, this._cueMap, options.equals);
-			/*
 			// collapse
-			if (options.collapse) {
-				batchMap = make_batchMap_collapse(cues, this._cueMap, options.equals);
-			}
-			// make batchMap
-			if (this._cueMap.size == 0) {
-				batchMap = make_init_batchMap(cues)
+			if (collapse) {
+				batchMap = make_batchMap_collapse(cues, this._cueMap, equals, check);
 			} else {
-				batchMap = make_batchMap(cues, this._cueMap, options.equals);
+				batchMap = make_batchMap(cues, this._cueMap, equals, check);
 			}
-			*/
 			if (batchMap.size > 0) {
 				// dispatch cue operations to appropriate cueBucket
 				for (let item of batchMap.values()) {
