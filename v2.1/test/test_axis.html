@@ -930,11 +930,8 @@
             cue = {key: 1}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 1);
+            assertTrue(res.size == 0);
             assertTrue(ax.size == 0);
-            // test delta values
-            assertTrue(res.get(1).delta.interval == Delta.NOOP);
-            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_interval_data() {
@@ -943,11 +940,8 @@
             cue = {key: 1, interval:undefined, data:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 1);
+            assertTrue(res.size == 0);
             assertTrue(ax.size == 0);
-            // test delta values
-            assertTrue(res.get(1).delta.interval == Delta.NOOP);
-            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_interval() {
@@ -956,11 +950,8 @@
             cue = {key: 1, interval:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 1);
+            assertTrue(res.size == 0);
             assertTrue(ax.size == 0);
-            // test delta values
-            assertTrue(res.get(1).delta.interval == Delta.NOOP);
-            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_data() {
@@ -969,11 +960,8 @@
             cue = {key: 1, data:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 1);
+            assertTrue(res.size == 0);
             assertTrue(ax.size == 0);
-            // test delta values
-            assertTrue(res.get(1).delta.interval == Delta.NOOP);
-            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           /*
@@ -989,8 +977,9 @@
             res = ax.update(cue, {equals: equals})
 
             // test sizes
-            assertTrue(res.size == 1);
+            assertTrue(res.size == 0);
             assertTrue(ax.size == 1);
+            /*
             // test delta values
             assertTrue(res.get(1).delta.interval == Delta.NOOP);
             assertTrue(res.get(1).delta.data == Delta.NOOP);
@@ -998,6 +987,7 @@
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
             assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            */
           }
 
 
@@ -1143,6 +1133,13 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
+            console.log("init_cue")
+            console.log(init_cue);
+            console.log("result old cue")
+            console.log(res.get(1).old)
+
+
+
             assertTrue(cue_equals(init_cue, res.get(1).old, equals))
             // test that resulting interval is from original cue
             assertTrue(res.get(1).new.interval.equals(init_cue.interval))
