@@ -24,7 +24,13 @@
           }
         }
 
-
+        function copy_cue(cue) {
+          return {
+            key: cue.key,
+            interval: cue.interval,
+            data: cue.data
+          };
+        }
 
         var timeit = function (func) {
           let t0 = performance.now();
@@ -751,6 +757,7 @@
           function test_replace() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}};
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, interval: new Interval(3, 5), data: {j:"palla"}}
             res = ax.update(cue, {equals: equals})
@@ -764,7 +771,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue is equal to cue
             assertTrue(cue_equals(res.get(1).new, cue));
           }
@@ -772,6 +779,7 @@
           function test_replace_interval_preserve_data() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, interval: new Interval(3, 5)}
             res = ax.update(cue, {equals: equals})
@@ -785,7 +793,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue is equal to cue
             assertTrue(cue_equals(res.get(1).new, cue));
           }
@@ -793,6 +801,7 @@
           function test_replace_interval_delete_data() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, interval: new Interval(3, 5), data:undefined}
             res = ax.update(cue, {equals: equals})
@@ -806,7 +815,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue is equal to cue
             assertTrue(cue_equals(res.get(1).new, cue));
           }
@@ -814,6 +823,7 @@
           function test_replace_data_preserve_interval() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, data: {j:"palla"}}
             res = ax.update(cue, {equals: equals})
@@ -827,7 +837,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue is equal to cue
             assertTrue(cue_equals(res.get(1).new, cue));
           }
@@ -835,6 +845,7 @@
           function test_replace_data_delete_interval() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, interval: undefined, data: {j:"palla"}}
             res = ax.update(cue, {equals: equals})
@@ -848,7 +859,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue is equal to cue
             assertTrue(cue_equals(res.get(1).new, cue));
           }
@@ -860,6 +871,7 @@
           function test_delete_cue() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1}
             res = ax.update(cue, {equals: equals})
@@ -873,7 +885,7 @@
             // test that deleted cue is not found in axis
             assertTrue(ax.get(1) == undefined);
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that reported new cue is undefined
             assertTrue(cue_equals(res.get(1).new, undefined, equals))
           }
@@ -881,6 +893,7 @@
           function test_delete_data_preserve_interval() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, data:undefined}
             res = ax.update(cue, {equals: equals})
@@ -894,9 +907,9 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue preserves interval
-            assertTrue(res.get(1).new.interval.equals(init_cue.interval));
+            assertTrue(res.get(1).new.interval.equals(_init_cue.interval));
             // test that resulting new cue deletes data
             assertTrue(res.get(1).data == undefined);
           }
@@ -904,6 +917,7 @@
           function test_delete_interval_preserve_data() {
             ax.clear()
             init_cue = {key: 1, interval: new Interval(3, 4), data: {j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cue = {key: 1, interval: undefined}
             res = ax.update(cue, {equals: equals})
@@ -917,7 +931,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting new cue deletes interval
             assertTrue(res.get(1).new.interval == undefined);
             // test that resulting new cue preserves data
@@ -979,15 +993,6 @@
             // test sizes
             assertTrue(res.size == 0);
             assertTrue(ax.size == 1);
-            /*
-            // test delta values
-            assertTrue(res.get(1).delta.interval == Delta.NOOP);
-            assertTrue(res.get(1).delta.data == Delta.NOOP);
-            // test that reported new cue is equal to cue found in axis
-            assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
-            // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
-            */
           }
 
 
@@ -1036,12 +1041,13 @@
           function test_delete_first() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
             cues = [
               {key: 1},
               {key: 1, interval: new Interval(3, 5)}
             ];
-            res = ax.update(cues, {collapse:true});
+            res = ax.update(cues);
             // test sizes
             assertTrue(res.size == 1);
             assertTrue(ax.size == 1);
@@ -1051,7 +1057,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
           }
 
           /*
@@ -1060,6 +1066,7 @@
           function test_delete_last() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
 
             // test delete last
@@ -1067,7 +1074,7 @@
               {key: 1, interval: new Interval(3, 5)},
               {key: 1}
             ];
-            res = ax.update(cues, {collapse:true});
+            res = ax.update(cues);
             // test sizes
             assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
@@ -1077,7 +1084,7 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
           }
 
 
@@ -1087,6 +1094,7 @@
           function test_preserve_data() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
 
             // test preserve data
@@ -1094,7 +1102,7 @@
               {key: 1, interval: new Interval(3, 5)},
               {key: 1, interval: new Interval(3, 6)}
             ];
-            res = ax.update(cues, {collapse:true});
+            res = ax.update(cues);
 
             // test sizes
             assertTrue(res.size == 1);
@@ -1105,16 +1113,17 @@
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
             // test that reported old cue is equal to initial cue
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting interval is from second cue
             assertTrue(res.get(1).new.interval.equals(cues[1].interval))
             // test that resulting data is from original cue
-            assertTrue(equals(res.get(1).new.data, init_cue.data));
+            assertTrue(equals(res.get(1).new.data, _init_cue.data));
           }
 
           function test_preserve_interval() {
             ax.clear();
             init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
 
             // test preserve interval
@@ -1122,7 +1131,7 @@
               {key: 1, data: {}},
               {key: 1, data: {j:"palla"}}
             ];
-            res = ax.update(cues, {collapse:false});
+            res = ax.update(cues);
 
             // test sizes
             assertTrue(res.size == 1);
@@ -1132,17 +1141,9 @@
             assertTrue(res.get(1).delta.data == Delta.REPLACE);
             // test that reported new cue is equal to cue found in axis
             assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
-            // test that reported old cue is equal to initial cue
-            console.log("init_cue")
-            console.log(init_cue);
-            console.log("result old cue")
-            console.log(res.get(1).old)
-
-
-
-            assertTrue(cue_equals(init_cue, res.get(1).old, equals))
+            assertTrue(cue_equals(_init_cue, res.get(1).old, equals))
             // test that resulting interval is from original cue
-            assertTrue(res.get(1).new.interval.equals(init_cue.interval))
+            assertTrue(res.get(1).new.interval.equals(_init_cue.interval))
             // test that resulting data is from second cue
             assertTrue(equals(res.get(1).new.data, cues[1].data));
           }

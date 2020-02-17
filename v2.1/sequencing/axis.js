@@ -163,6 +163,18 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     });
 
 
+    function cue_copy(cue) {
+    	if (cue == undefined) {
+    		return;
+    	}
+     	return {
+	        key: cue.key,
+	        interval: cue.interval,
+	        data: cue.data
+      	};
+    }
+
+
     /*
 		Characterize the transition from cue_a to cue_b
 		in terms of delta values for interval and data
@@ -396,17 +408,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			  Also, internal index management depends on the correct
 			  representation of state changes.
 
-			- NOOP operations, such as delete non-existent cue will also
+			- NOOP,NOOP operations, such as delete non-existent cue will noop
 			  be present in batch map.
 
 			- If a cue was available before cue processing started,
 			this will be reported as old value
 
 		*/
-		_update_cues_collapse(cues, equals, check) {
+		_update_cues(cues, equals, check) {
 			const batchMap = new Map();
 			const _cueMap = new Map();
-			let cue, old_cue, entry;
+			let cue, old_cue, copy_cue, delta;
 			let init = this._cueMap.size == 0;
 			let len = cues.length;
 			for (let i=0; i<len; i++) {
@@ -417,7 +429,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 	    			// load old cue from cueMap
 	    			old_cue = (init) ? undefined : this._cueMap.get(cue.key);
 	    		}
-	    		// process cue
+	    		// calculate new cue
 	    		cue = cue_process(old_cue, cue, check);
 			    _cueMap.set(cue.key, cue);
 		    }
@@ -425,79 +437,32 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 		    // make batchMap
 		    for (cue of _cueMap.values()) {
 				old_cue = this._cueMap.get(cue.key);
-				// update cue in cueMap
-				entry = this._update_cue(old_cue, cue, equals);
-				batchMap.set(entry.key, entry);
+				// check for equality
+				delta = cue_delta(old_cue, cue, equals);
+				// ignore (NOOP, NOOP)
+				if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
+					continue;
+				}
+				// update cueMap
+				if (old_cue == undefined) {
+					// add cue object to cueMap
+					this._cueMap.set(cue.key, cue);
+					batchMap.set(cue.key, {new:cue, old:undefined, delta: delta});
+				} else if (cue.interval == undefined && cue.data == undefined) {
+					// remove cue object from cueMap
+					this._cueMap.delete(cue.key);
+					batchMap.set(cue.key, {new:undefined, old:old_cue, delta: delta});
+				} else {
+					// modify existing cue (old_cue) in place
+					// copy old cue before modification
+					copy_cue = cue_copy(old_cue);
+					// update old cue in place
+					old_cue.interval = cue.interval;
+					old_cue.data = cue.data;
+					batchMap.set(cue.key, {new:old_cue, old:copy_cue, delta: delta});
+				}
 			}
 		    return batchMap;
-		}
-
-		/*
-			make batchmap more quickly assuming a different semantic
-			- if there are multiple cue operations for the same key,
-			  only the last one is used
-		*/
-		_update_cues(cues, equals, check) {
-			const batchMap = new Map();
-			const len = cues.length;
-			let cue, old_cue, entry;
-			let init = this._cueMap.size == 0;
-			for (let i=0; i<len; i++) {
-	    		cue = cues[i];
-				old_cue = (init) ? undefined : this._cueMap.get(cue.key);
-				// process cue
-				cue = cue_process(old_cue, cue, check);
-				// update cueMap
-				entry = this._update_cue(old_cue, cue, equals);
-				if (entry != undefined) {
-					batchMap.set(entry.key, entry);
-				}
-			}
-			return batchMap;
-		}
-
-
-		/*
-		update cue in cueMap
-		- if old_cue is defined, it is already stored in cueMap
-		- do in-place update of old_cue for replace type operations
-		- return entry for batchmap (undefined means NOOP)
-		*/
-		_update_cue(old_cue, cue, equals) {
-			let copy_cue;
-			// check for equality
-			let delta = cue_delta(old_cue, cue, equals);
-			// ignore (NOOP, NOOP)
-			if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
-				return;
-			}
-			// update cueMap
-			if (old_cue == undefined) {
-				// add cue object to cueMap
-				copy_cue = {
-					key: cue.key,
-					interval: cue.interval,
-					data: cue.data
-				}
-				this._cueMap.set(cue.key, copy_cue);
-				return {key: cue.key, new:cue, old:undefined, delta: delta};
-			} else if (cue.interval == undefined && cue.data == undefined) {
-				// remove cue object from cueMap
-				this._cueMap.delete(cue.key);
-				return {key: cue.key, new:undefined, old:old_cue, delta: delta};
-			} else {
-				// modify existing cue (old_cue) in place
-				// copy old cue before modification
-				copy_cue = {
-					key: old_cue.key,
-					interval: old_cue.interval,
-					data: old_cue.data
-				}
-				// update cue in place
-				old_cue.interval = cue.interval;
-				old_cue.data = cue.data;
-				return {key: cue.key, new:old_cue, old:copy_cue, delta: delta};
-			}
 		}
 
 		/*
@@ -509,7 +474,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			// options
 			options = options || {};
 			let equals = options.equals;
-			let collapse = options.collapse;
 			// check is false by default
 			if (options.check == undefined) {
 				options.check = false;
@@ -519,11 +483,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 				cues = [cues];
 			}
 			// make batchMap
-			if (collapse) {
-				batchMap = this._update_cues_collapse(cues, equals, check);
-			} else {
-				batchMap = this._update_cues(cues, equals, check);
-			}
+			batchMap = this._update_cues(cues, equals, check);
 			// update cueMap
 			if (batchMap.size > 0) {
 				// dispatch cue operations to appropriate cueBucket
@@ -532,14 +492,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 						continue;
 					}
 
-					// update cueMap
-					/*
-					if (item.new) {
-						this._cueMap.set(item.new.key, item.new);
-					} else {
-						this._cueMap.delete(item.old.key);
-					}
-					*/
 					// update cue buckets
 					if (item.old && item.old.interval) {
 						let cueBucketId = getCueBucketId(item.old.interval.length);
@@ -560,8 +512,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 			this.eventifyTriggerEvent("change", batchMap);
 			return batchMap;
 		};
-
-
 
 
 		/*
