@@ -241,6 +241,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         generate the resulting cue state
 
         - implements preservation of values from old_cue
+        - does not change old_value, only potentially cue
     */
     function cue_process(old_cue, cue, check) {
         if (check) {
@@ -403,61 +404,20 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
               within the same batch of cues,
               these will be processed in order.
               However, returned delta values will be calcultated relative to
-              the state before the batch.
+              the state before the batch (old value).
               This way, external mirroring observers may will be able to duplicate the transitions.
               Also, internal index management depends on the correct
               representation of state changes.
 
-            - NOOP,NOOP operations, such as delete non-existent cue will noop
+            - NOOP,NOOP operations, such as delete non-existent cue will not
               be present in batch map.
 
             - If a cue was available before cue processing started,
             this will be reported as old value
 
         */
+
         _update_cues(cues, equals, check) {
-            const batchMap = new Map();
-            const _cueMap = new Map();
-            let cue, old_cue, copy_cue, delta;
-            let init = this._cueMap.size == 0;
-            let len = cues.length;
-            for (let i=0; i<len; i++) {
-                cue = cues[i];
-                old_cue = _cueMap.get(cue.key);
-                // load old cue
-                if (old_cue == undefined) {
-                    // load old cue from cueMap
-                    old_cue = (init) ? undefined : this._cueMap.get(cue.key);
-                }
-                // calculate new cue
-                cue = cue_process(old_cue, cue, check);
-                _cueMap.set(cue.key, cue);
-            }
-            // process cueMap
-            for (cue of _cueMap.values()) {
-                old_cue = this._cueMap.get(cue.key);
-                this._update_cue(batchMap, old_cue, cue, equals);
-            }
-            // flush all buckets so updates take effect
-            for (let cueBucket of this._cueBuckets.values()) {
-                cueBucket.flush();
-            }
-            return batchMap;
-        }
-
-
-        /*
-            make batchmap more quickly assuming that there are no
-            cue duplicates
-            - throws exception if a duplicate is found
-            - if duplicates occur, this will not be a huge problem
-              there will be multiple updates on all indexes, but
-              cueBuckets will only apply cumulative effect
-            - the only effect is that that the reported old item will be
-              last but one state, not the state before the operation
-              started
-        */
-        _update_cues_fast(cues, equals, check) {
             const batchMap = new Map();
             const len = cues.length;
             let cue, old_cue;
@@ -560,10 +520,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             let batchMap;
             // options
             options = options || {};
-            // duplicates by default
-            if (options.duplicates == undefined) {
-                options.duplicates = false;
-            }
             // check is false by default
             if (options.check == undefined) {
                 options.check = false;
@@ -572,15 +528,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 cues = [cues];
             }
             // process cue updates
-            if (options.duplicates) {
-                batchMap = this._update_cues(cues,
-                                             options.equals,
-                                             options.check);
-            } else {
-                batchMap = this._update_cues_fast(cues,
-                                                  options.equals,
-                                                  options.check);
-            }
+            batchMap = this._update_cues(cues,
+                                         options.equals,
+                                         options.check);
             // update cueMap
             if (batchMap.size > 0) {
                 // event notification

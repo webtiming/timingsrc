@@ -1047,7 +1047,7 @@
               {key: 1},
               {key: 1, interval: new Interval(3, 5)}
             ];
-            res = ax.update(cues, {duplicates:true});
+            res = ax.update(cues);
             // test sizes
             assertTrue(res.size == 1);
             assertTrue(ax.size == 1);
@@ -1074,7 +1074,7 @@
               {key: 1, interval: new Interval(3, 5)},
               {key: 1}
             ];
-            res = ax.update(cues, {duplicates:true});
+            res = ax.update(cues);
             // test sizes
             assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
@@ -1102,7 +1102,7 @@
               {key: 1, interval: new Interval(3, 5)},
               {key: 1, interval: new Interval(3, 6)}
             ];
-            res = ax.update(cues, {duplicates:true});
+            res = ax.update(cues);
 
             // test sizes
             assertTrue(res.size == 1);
@@ -1131,7 +1131,7 @@
               {key: 1, data: {}},
               {key: 1, data: {j:"palla"}}
             ];
-            res = ax.update(cues, {duplicates:true});
+            res = ax.update(cues);
 
             // test sizes
             assertTrue(res.size == 1);
