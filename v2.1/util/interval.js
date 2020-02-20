@@ -367,6 +367,8 @@ define(function () {
 		};
 
 
+
+		// DEPRECATED
 		/*
 		coversPoint (x) {
 			if (this.low < x && x < this.high) return true;
@@ -374,7 +376,9 @@ define(function () {
 			if (this.highInclude && x === this.high) return true;
 			return false;
 		};
+		*/
 
+		/*
 		// overlap : it exists at least one point x covered by both interval
 		overlapsInterval(other) {
 			if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
@@ -398,7 +402,11 @@ define(function () {
 			return true;
 		};
 
+		*/
+
+		// DEPRECATED
 		// Interval fully covering other interval
+		/*
 		coversInterval (other) {
 			if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
 			if (other.low < this.low || this.high < other.high) return false;
@@ -410,6 +418,10 @@ define(function () {
 				return false;
 			return true;
 		};
+		*/
+
+
+		/*
 		equals (other) {
 			if (this.low !== other.low) return false;
 			if (this.high !== other.high) return false;
@@ -473,6 +485,16 @@ define(function () {
 
 		*/
 
+
+		hasEndpointInside(b) {
+			const a = this;
+			let e_low = [a.low, false, a.lowInclude];
+			let e_high = [a.high, true, a.highInclude];
+			return inside(e_low, b) || inside(e_high, b);
+		}
+
+
+		// DEPRECATED
 		/*
 		hasEndpointInside (b) {
 			const a = this;
@@ -503,7 +525,6 @@ define(function () {
 			}
 			return false;
 		};
-
 		*/
 
 	}

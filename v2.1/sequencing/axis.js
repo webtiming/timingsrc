@@ -448,8 +448,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             - update cue bucket
         */
         _update_cue(batchMap, current_cue, cue, equals) {
-            let old_cue, new_cue, cueBucketId;
+            let old_cue, new_cue;
             let item, _item;
+            let cueBucket, cueBucketId;
+            let low_changed, high_changed;
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
             // ignore (NOOP, NOOP)
@@ -492,22 +494,50 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             batchMap.set(cue.key, item)
 
             // update cue buckets
-            // TODO : only update when actually necessary
-
             /*
                 note : cues in cuebucket may be removed with at copy, because
                 remove is by key.
                 cues added to cuebucket must be the correct object, so that
                 later in-place modifications become reflected on lookup
-
             */
-            if (item.old && item.old.interval) {
-                cueBucketId = getCueBucketId(item.old.interval.length);
-                this._cueBuckets.get(cueBucketId).processCue("remove", item.old);
-            }
-            if (item.new && item.new.interval) {
+            if (delta.interval == Delta.NOOP) {
+                return;
+            } else if (delta.interval == Delta.INSERT) {
                 cueBucketId = getCueBucketId(item.new.interval.length);
-                this._cueBuckets.get(cueBucketId).processCue("add", item.new);
+                cueBucket = this._cueBuckets.get(cueBucketId)
+                low_changed = true;
+                high_changed = true;
+                cueBucket.processCue("add", item.new, low_changed, high_changed);
+            } else if (delta.interval == Delta.DELETE) {
+                cueBucketId = getCueBucketId(item.old.interval.length);
+                cueBucket = this._cueBuckets.get(cueBucketId)
+                low_changed = true;
+                high_changed = true;
+                cueBucket.processCue("remove", item.old, low_changed, high_changed);
+            } else if (delta.interval == Delta.REPLACE) {
+                /*
+                    the interval is replaced
+                    (new.interval != old.interval)
+                    - interval change:
+                        - low changed
+                        - high changed
+                        - low and high changed
+                    - if low or high is not changed in value, but only in
+                      from closed to oper or opposide, then this does not
+                      require any changes to the indexing of cues.
+                */
+                low_changed = item.new.interval.low != item.old.interval.low;
+                high_changed = item.new.interval.high != item.old.interval.high;
+                if (low_changed || high_changed) {
+                    // remove old cue entry
+                    cueBucketId = getCueBucketId(item.old.interval.length);
+                    cueBucket = this._cueBuckets.get(cueBucketId)
+                    cueBucket.processCue("remove", item.old, low_changed, high_changed);
+                    // add new cue entry
+                    cueBucketId = getCueBucketId(item.new.interval.length);
+                    cueBucket = this._cueBuckets.get(cueBucketId)
+                    cueBucket.processCue("add", item.new, low_changed, high_changed);
+                }
             }
         }
 
@@ -772,15 +802,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             all operations may be applied in one batch. This happens in flush
         */
 
-        processCue(op, cue) {
-
-            /*
-                TODO -
-                - process batchMap item instead of op,cue
-                - be sensitive to REPLACE DATA
-                  - pointMap - update existing cue
-                  - avoid updateing pointIndex
-            */
+        processCue(op, cue, low_changed, high_changed) {
 
             let points, point, cues;
             if (cue.singular) {
@@ -969,7 +991,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     }
                     // more expensive test that will pick up cornercase
                     // where [a,b] will actually be an outside covering interval for <a,b>
-                    return rightInterval.coversPoint(cue.interval.high);
+                    let e = [cue.interval.high, true, cue.interval.highInclude];
+                    return rightInterval.inside(e);
+                    //return rightInterval.coversPoint(cue.interval.high);
                 });
         };
 
@@ -1019,7 +1043,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 return partial_cues;
             } else if (semantic == Semantic.INSIDE) {
                 return partial_cues.filter(function (cue) {
-                    return interval.coversInterval(cue.interval);
+                    return [Interval.COVERS, Interval.EQUAL].includes(interval.compare(cue.interval));
                 });
             } else if (semantic == Semantic.OVERLAP) {
                 const outside_cues = this._lookupOutsideCuesFromInterval(interval);
