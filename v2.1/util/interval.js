@@ -202,14 +202,14 @@ define(function () {
 
 	inside (e, interval)
 
-	return true if given point e is inside interval
+	return true if given point/endpoint e is inside interval
 
 	**********************************************************/
 
 	function inside (e, interval) {
-		let e_low = [interval.low, false, interval.lowInclude];
-		let e_high = [interval.high, true, interval.highInclude];
-		return !endpoint.leftof(e, e_low) && !endpoint.rightof(e, e_high);
+		let leftof = endpoint.leftof(e, interval.endpointLow);
+		let rightof = endpoint.rightof(e, interval.endpointHigh);
+		return !leftof && !rightof;
 	}
 
 
@@ -246,14 +246,16 @@ define(function () {
 	**********************************************************/
 
 	// Interval Relations
+    const Relation = Object.freeze({
+		OUTSIDE_LEFT: 1,
+		OVERLAP_LEFT: 2,
+		COVERED: 3,
+		EQUALS: 4,
+		COVERS: 5,
+		OVERLAP_RIGHT: 6,
+		OUTSIDE_RIGHT: 7
+    });
 
-	const OUTSIDE_LEFT = 1;
-	const OVERLAP_LEFT = 2;
-	const COVERED = 3;
-	const EQUAL = 4;
-	const COVERS = 5;
-	const OVERLAP_RIGHT = 6;
-	const OUTSIDE_RIGHT = 7;
 
 
 	function compare(a, b) {
@@ -273,36 +275,31 @@ define(function () {
 				throw new Error("b not interval", b);
 			}
 		}
-		// interval endpoints
-		let a_low = [a.low, false, a.lowInclude];
-		let a_high = [a.high, true, a.highInclude];
-		let b_low = [b.low, false, b.lowInclude];
-		let b_high = [b.high, true, b.highInclude];
 
-		let cmp_1 = endpoint.compare(a_low, b_low);
-		let cmp_2 = endpoint.compare(a_high, b_high);
+		let cmp_1 = endpoint.compare(a.endpointLow, b.endpointLow);
+		let cmp_2 = endpoint.compare(a.endpointHigh, b.endpointHigh);
 		let key = cmp_1*10 + cmp_2;
 
 		if (key == 11) {
 			// OUTSIDE_LEFT or PARTIAL_LEFT
-			if (endpoint.leftof(b_high, a_low)) {
-				return OUTSIDE_RIGHT;
+			if (endpoint.leftof(b.endpointHigh, a.endpointLow)) {
+				return Relation.OUTSIDE_RIGHT;
 			} else {
-				return OVERLAP_RIGHT;
+				return Relation.OVERLAP_RIGHT;
 			}
 		} else if ([-1, 9, 10].includes(key)) {
-			return COVERED;
+			return Relation.COVERED;
 		} else if ([1, -9, -10].includes(key)) {
-			return COVERS;
+			return Relation.COVERS;
 		} else if (key == 0) {
-			return EQUAL;
+			return Relation.EQUALS;
 		} else {
 			// key == -11
 			// OUTSIDE_RIGHT, PARTIAL_RIGHT
-			if (endpoint.rightof(b_low, a_high)) {
-				return OUTSIDE_LEFT;
+			if (endpoint.rightof(b.endpointLow, a.endpointHigh)) {
+				return Relation.OUTSIDE_LEFT;
 			} else {
-				return OVERLAP_LEFT;
+				return Relation.OVERLAP_LEFT;
 			}
 		}
 	}
@@ -354,6 +351,15 @@ define(function () {
 			this.length = this.high - this.low;
 			this.singular = (this.low === this.high);
 			this.finite = (isFinite(this.low) && isFinite(this.high));
+
+			/*
+				Accessors for full endpoint representationo
+				[value (number), right (bool), closed (bool)]
+
+				- use with inside(endpoint, interval)
+			*/
+			this.endpointLow = [this.low, false, this.lowInclude];
+			this.endpointHigh = [this.high, true, this.highInclude];
 		}
 
 		toString () {
@@ -365,6 +371,8 @@ define(function () {
 				return lowBracket + low + highBracket;
 			return lowBracket + low + ',' + high + highBracket;
 		};
+
+
 
 
 
@@ -440,15 +448,15 @@ define(function () {
 		}
 
 		equals (other) {
-			return compare(this, other) == EQUAL;
+			return compare(this, other) == Relation.EQUALS;
 		}
 
 		covered (other) {
-			return compare(this, other) == COVERED;
+			return compare(this, other) == Relation.COVERED;
 		}
 
 		covers (other) {
-			return compare(this, other) == COVERS;
+			return compare(this, other) == Relation.COVERS;
 		}
 
 
@@ -487,10 +495,7 @@ define(function () {
 
 
 		hasEndpointInside(b) {
-			const a = this;
-			let e_low = [a.low, false, a.lowInclude];
-			let e_high = [a.high, true, a.highInclude];
-			return inside(e_low, b) || inside(e_high, b);
+			return inside(this.endpointLow, b) || inside(this.endpointHigh, b);
 		}
 
 
@@ -559,13 +564,7 @@ define(function () {
 	/*
 		Add static variables to Interval class.
 	*/
-	Interval.OUTSIDE_LEFT = OUTSIDE_LEFT;
-	Interval.OVERLAP_LEFT = OVERLAP_LEFT;
-	Interval.COVERED = COVERED;
-	Interval.EQUAL = EQUAL;
-	Interval.COVERS = COVERS;
-	Interval.OVERLAP_RIGHT = OVERLAP_RIGHT;
-	Interval.OUTSIDE_RIGHT = OUTSIDE_RIGHT;
+	Interval.Relation = Relation;
 	Interval.cmpLow = _make_interval_cmp(true);
 	Interval.cmpHigh = _make_interval_cmp(false);
 	// expose only for testing

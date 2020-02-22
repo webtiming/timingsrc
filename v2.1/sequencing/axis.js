@@ -3,6 +3,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     'use strict';
 
+    const Relation = Interval.Relation;
+
     /*
         UTILITY
     */
@@ -145,13 +147,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         LOOKUP_CUEPOINTS: "lookup-cuepoints",
         REMOVE_CUES: "remove-cues",
         INTEGRITY: "integrity",
-        LOOKUP_POINTS: 1
+        LOOKUP_POINTS: 1,
+        LOOKUP: 2
     });
 
     /*
         Delta
 
-        Uset to represent statechanges in batchMap,
+        Used to represent statechanges in batchMap,
         for intervals and data.
     */
 
@@ -807,6 +810,18 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             // bookeeping during batch processing
             this._created = new Set(); // point
             this._dirty = new Set(); // point
+
+
+            // method map
+            this._methodMap = new Map([
+                [Method.LOOKUP_CUEPOINTS, this.lookupCuePoints.bind(this)],
+                [Method.LOOKUP_CUES, this.lookupCues.bind(this)],
+                [Method.REMOVE_CUES, this.removeCues.bind(this)],
+                [Method.LOOKUP, this.lookup.bind(this)],
+                [Method.LOOKUP_POINTS, this._lookup_points.bind(this)],
+                [Method.INTEGRITY, this._integrity.bind(this)]
+            ]);
+
         };
 
 
@@ -952,6 +967,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             returns list of cues, or list of cuepoints, based on options
         */
+
+
+
+
+
         _lookup_points(interval) {
             console.log("lookup_points");
             const broad_interval = new Interval(interval.low, interval.high, true, true);
@@ -1087,19 +1107,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (this._pointIndex.length == 0) {
                 return [];
             }
-            if (method == Method.LOOKUP_CUEPOINTS) {
-                return this.lookupCuePoints(interval);
-            } else if (method == Method.LOOKUP_CUES) {
-                return this.lookupCues(interval, semantic);
-            } else if (method == Method.REMOVE_CUES) {
-                return this.removeCues(interval, semantic);
-            } else if (method == Method.INTEGRITY) {
-                return this._integrity();
-            } else if (method == Method.LOOKUP_POINTS) {
-                return this._lookup_points(interval);
-            }
-
-            else {
+            let func = this._methodMap.get(method);
+            if (func) {
+                return func(interval, semantic);
+            } else {
                 throw new Error("method or semantic not supported " + method + " " + semantic);
             }
         };
@@ -1113,16 +1124,52 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         };
 
 
+
+
+        /*
+            LOOKUP
+        */
+        lookup(interval, mode) {
+
+            // mode
+            // OVERLAP_LEFT, OVERLAP_RIGHT, COVERED, EQUALS, COVERS
+            let Relation = Interval.Relation;
+            mode = [
+                Relation.OVERLAP_LEFT,
+                Relation.COVERED,
+                Relation.EQUALS,
+                Relation.COVERS,
+                Relation.OVERLAP_RIGHT
+            ]
+
+            // get inside cues
+            const partial_cues = this._lookupCuesFromInterval(interval, {cuepoint:false});
+
+            // get outside cues
+            const outside_cues = this._lookupOutsideCuesFromInterval(interval);
+
+            // return merge
+
+        }
+
+
+
+
+
+
+
+
         /*
             LOOKUP CUES
         */
         lookupCues(interval, semantic=Semantic.OVERLAP) {
+
             const partial_cues = this._lookupCuesFromInterval(interval, {cuepoint:false});
             if (semantic == Semantic.PARTIAL) {
                 return partial_cues;
             } else if (semantic == Semantic.INSIDE) {
                 return partial_cues.filter(function (cue) {
-                    return [Interval.COVERS, Interval.EQUAL].includes(interval.compare(cue.interval));
+                    return [Relation.COVERS, Relation.EQUALS].includes(interval.compare(cue.interval));
                 });
             } else if (semantic == Semantic.OVERLAP) {
                 const outside_cues = this._lookupOutsideCuesFromInterval(interval);
