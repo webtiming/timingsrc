@@ -463,6 +463,25 @@
         };
 
 
+        function test_simple () {
+
+
+
+          let ax = new Axis();
+
+          let init_cue = {key:1, interval: new Interval(2,3), data: {jalla: "jalla"}}
+          ax.update(init_cue);
+
+          let lookup_interval = new Interval(1,4);
+
+          let cues = ax.getCuesByInterval(lookup_interval);
+
+          console.log(cues);
+
+
+        }
+
+
 
 
         var run = function () {
@@ -471,6 +490,8 @@
           //test_removeCuesByInterval();
           test_lookup_correctness();
           //test_removeCuesByInterval_stress();
+          //test_simple();
+
         };
 
         if (document.readyState === "complete") run();

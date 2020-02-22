@@ -297,8 +297,10 @@
             cue = {key: 1}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 0);
+            assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
+            assertTrue(res.get(1).delta.interval == Delta.NOOP);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_interval_data() {
@@ -307,8 +309,10 @@
             cue = {key: 1, interval:undefined, data:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 0);
+            assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
+            assertTrue(res.get(1).delta.interval == Delta.NOOP);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_interval() {
@@ -317,8 +321,10 @@
             cue = {key: 1, interval:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 0);
+            assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
+            assertTrue(res.get(1).delta.interval == Delta.NOOP);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           function test_delete_nonexistent_data() {
@@ -327,8 +333,10 @@
             cue = {key: 1, data:undefined}
             res = ax.update(cue, {equals: equals})
             // test sizes
-            assertTrue(res.size == 0);
+            assertTrue(res.size == 1);
             assertTrue(ax.size == 0);
+            assertTrue(res.get(1).delta.interval == Delta.NOOP);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
           /*
@@ -344,8 +352,10 @@
             res = ax.update(cue, {equals: equals})
 
             // test sizes
-            assertTrue(res.size == 0);
+            assertTrue(res.size == 1);
             assertTrue(ax.size == 1);
+            assertTrue(res.get(1).delta.interval == Delta.NOOP);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
           }
 
 

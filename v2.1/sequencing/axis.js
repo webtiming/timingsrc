@@ -60,6 +60,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     }
 
 
+
+
     /*
         Add cue to array
         - does not add if cue already exists
@@ -101,7 +103,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     };
 
     /*
-        Setup for cue buckets.
+        Setup ID's for cue buckets.
     */
     const CueBucketIds = [0, 10, 100, 1000, 10000, 100000, Infinity];
     var getCueBucketId = function (length) {
@@ -111,7 +113,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
         }
     };
-
 
     /*
         Semantic
@@ -128,7 +129,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         PARTIAL: "partial",
         OVERLAP: "overlap"
     });
-
 
     /*
         Method
@@ -147,7 +147,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         INTEGRITY: "integrity"
     });
 
-
     /*
         Delta
 
@@ -163,6 +162,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     });
 
 
+    /*
+        make a shallow copy of a cue
+    */
     function cue_copy(cue) {
         if (cue == undefined) {
             return;
@@ -173,7 +175,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             data: cue.data
         };
     }
-
 
     /*
         Characterize the transition from cue_a to cue_b
@@ -225,6 +226,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         return {interval: interval_delta, data: data_delta};
     }
 
+
     /*
         determine equality for two cues
         <equals> is optional equality function for cue.data
@@ -235,62 +237,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
     }
 
-    /*
-        given the current state of a cue (old_cue),
-        and a cue argument,
-        generate the resulting cue state
-
-        - implements preservation of values from old_cue
-        - does not change old_value, only potentially cue
-    */
-    function cue_process(old_cue, cue, check) {
-        if (check) {
-            if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-                throw new Error("illegal cue", cue);
-            }
-        }
-        let has_interval = cue.hasOwnProperty("interval");
-        let has_data = cue.hasOwnProperty("data");
-        if (check && has_interval) {
-            if (!cue.interval instanceof Interval) {
-                throw new Error("interval must be Interval");
-            }
-        }
-        if (old_cue == undefined) {
-            // make sure properties are defined
-            if (!has_interval) {
-                cue.interval = undefined;
-            }
-            if (!has_data) {
-                cue.data = undefined;
-            }
-        } else if (old_cue != undefined) {
-            if (!has_interval && !has_data) {
-                // make sure properties are defined
-                cue.interval = undefined;
-                cue.data = undefined;
-            } else if (!has_data) {
-                // REPLACE_INTERVAL, preserve data
-                cue.data = old_cue.data;
-            } else if (!has_interval) {
-                // REPLACE_DATA, preserve interval
-                cue.interval = old_cue.interval;
-            } else {
-                // REPLACE CUE
-            }
-        }
-        return cue;
-    }
-
-
 
     /*
-        this implements Axis, a datastructure for efficient lookup of cues on a timeline
+        this implements Axis, a datastructure for efficient lookup of
+        cues on a timeline
+
         - cues may be tied to one or two points on the timeline, this
           is expressed by an Interval.
         - cues are indexed both by key and by intervals
-        - cues are maintained in buckets, based on their interval length,
-          for efficient lookup
+        - the timeline index is divided into a set of CueBuckets,
+          based on cue interval length, for efficient lookup
     */
 
     class Axis {
@@ -328,12 +284,15 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         }
 
 
-        /*
-            _update_collaps (cues, equals, check)
+        /***************************************************************
+            UPDATE
 
-            <cueMap> - map with cues representing state before update
-            <equals> - equality function for data objects
+            - insert, replace or delete cues
+
+            update(cues, equals, check)
+
             <cues> ordered list of cues to be updated
+            <equals> - equality function for data objects
             <check> - check cue integrity if true
 
             cue = {
@@ -342,12 +301,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 data: data
             }
 
-            cue completeness
-
-            required (see check cue)
+            required
             - cue.key property is defined and value is != undefined
             - if cue.interval != undefined, it must be instance of Interval
-
 
             EXAMPLES
 
@@ -381,8 +337,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             cue = {key:1, data: undefined}
 
 
-            Returns batchMap - describes the effects of an update.
-
+            Update returns a batchMap - describes the effects of an update.
                 batchMap is a Map() object
                 key -> {
                     new: new_cue,
@@ -399,78 +354,158 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             Delta.REPLACE: 2
             Delta.DELETE: 3
 
-            Duplicate
+            Duplicates
             - if there are multiple cue operations for the same key,
               within the same batch of cues,
               these will be processed in order.
-              However, returned delta values will be calcultated relative to
-              the state before the batch (old value).
-              This way, external mirroring observers may will be able to duplicate the transitions.
-              Also, internal index management depends on the correct
-              representation of state changes.
 
-            - NOOP,NOOP operations, such as delete non-existent cue will not
-              be present in batch map.
+            - The old cue will always be the state of the cue,
+              before the batch started.
 
-            - If a cue was available before cue processing started,
-            this will be reported as old value
+            - The returned delta values will be calcultated relative to
+              the cue before the batch started (old).
 
-        */
+              This way, external mirroring observers may will be able to
+              replicate the effects of the update operation.
 
-        _update_cues(cues, equals, check) {
+        ***************************************************************/
+
+        update(cues, options) {
             const batchMap = new Map();
-            const len = cues.length;
-            let cue, old_cue;
+            let len, cue, current_cue;
+            let has_interval, has_data;
             let init = this._cueMap.size == 0;
+            // options
+            options = options || {};
+            // check is false by default
+            if (options.check == undefined) {
+                options.check = false;
+            }
+            if (!Array.isArray(cues)) {
+                cues = [cues];
+            }
+
+            /***********************************************************
+                process all cues
+            ***********************************************************/
+            len = cues.length;
             for (let i=0; i<len; i++) {
                 cue = cues[i];
-                old_cue = (init) ? undefined : this._cueMap.get(cue.key);
-                // process cue
-                cue = cue_process(old_cue, cue, check);
-                // update cueMap
-                this._update_cue(batchMap, old_cue, cue, equals);
+
+                /*******************************************************
+                    check validity of cue argument
+                *******************************************************/
+
+                if (options.check) {
+                    if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
+                        throw new Error("illegal cue", cue);
+                    }
+                }
+                has_interval = cue.hasOwnProperty("interval");
+                has_data = cue.hasOwnProperty("data");
+                if (options.check && has_interval) {
+                    if (!cue.interval instanceof Interval) {
+                        throw new Error("interval must be Interval");
+                    }
+                }
+
+                /*******************************************************
+                    adjust cue so that it correctly represents
+                    the new cue to replace the current cue
+                    - includeds preservation of values from current cue
+                *******************************************************/
+
+                current_cue = (init) ? undefined : this._cueMap.get(cue.key);
+                if (current_cue == undefined) {
+                    // make sure properties are defined
+                    if (!has_interval) {
+                        cue.interval = undefined;
+                    }
+                    if (!has_data) {
+                        cue.data = undefined;
+                    }
+                } else if (current_cue != undefined) {
+                    if (!has_interval && !has_data) {
+                        // make sure properties are defined
+                        cue.interval = undefined;
+                        cue.data = undefined;
+                    } else if (!has_data) {
+                        // REPLACE_INTERVAL, preserve data
+                        cue.data = current_cue.data;
+                    } else if (!has_interval) {
+                        // REPLACE_DATA, preserve interval
+                        cue.interval = current_cue.interval;
+                    } else {
+                        // REPLACE CUE
+                    }
+                }
+
+                /*******************************************************
+                    update cue
+                    - update cueMap
+                    - update cueBuckets
+                    - create batchMap
+                *******************************************************/
+
+                this._update_cue(batchMap, current_cue, cue, options.equals);
             }
             if (batchMap.size > 0) {
                 // flush all buckets so updates take effect
                 for (let cueBucket of this._cueBuckets.values()) {
                     cueBucket.flush();
                 }
+                // event notification
+                this.eventifyTriggerEvent("change", batchMap);
             }
             return batchMap;
-        }
+        };
 
 
-        /*
+
+        /***************************************************************
+            UPDATE CUE
+
             update operation for a single cue
 
             - update cueMap
             - generate entry for batchMap
-            - update cue bucket
-        */
+            - update CueBucket
+        ***************************************************************/
+
         _update_cue(batchMap, current_cue, cue, equals) {
             let old_cue, new_cue;
             let item, _item;
-            let cueBucket, cueBucketId;
+            let oldCueBucket, newCueBucket;
             let low_changed, high_changed;
+            let remove_needed, add_needed;
+
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
+
             // ignore (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
+                item = {new:current_cue, old:current_cue, delta:delta};
+                batchMap.set(cue.key, item);
                 return;
             }
-            // update cueMap and batchMap
+
+            /***********************************************************
+                update cueMap and batchMap
+            ***********************************************************/
+
             if (current_cue == undefined) {
-                // add cue object to cueMap
+                // INSERT - add cue object to cueMap
                 old_cue = undefined;
                 new_cue = cue;
                 this._cueMap.set(cue.key, new_cue);
             } else if (cue.interval == undefined && cue.data == undefined) {
-                // remove cue object from cueMap
+                // DELETE - remove cue object from cueMap
                 old_cue = current_cue;
                 new_cue = undefined;
                 this._cueMap.delete(cue.key);
             } else {
-                // modification of current cue
+                // REPLACE
+                // in-place modification of current cue
                 // copy old cue before modification
                 old_cue = cue_copy(current_cue);
                 new_cue = current_cue;
@@ -484,8 +519,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 if this item has been set earlier in batchMap
                 restore the correct old_cue by getting it from
                 the previous batchMap item
-                also recalculate delta
+                also recalculate delta relative to old_cue
             */
+
             _item = batchMap.get(cue.key);
             if (_item != undefined) {
                 item.old = _item.old;
@@ -493,81 +529,93 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
             batchMap.set(cue.key, item)
 
-            // update cue buckets
-            /*
-                note : cues in cuebucket may be removed with at copy, because
-                remove is by key.
-                cues added to cuebucket must be the correct object, so that
-                later in-place modifications become reflected on lookup
-            */
+            /***********************************************************
+                update cueBuckets
+                - use delta.interval to avoid unnessesary changes
+
+                - interval may change in several ways:
+                    - low changed
+                    - high changed
+                    - low and high changed
+                - intervals may also go from
+                    - singular -> singular
+                    - singular -> regular
+                    - regular -> singular
+                    - regular -> regular
+                - changes to interval.lowInclude and interval highInclude
+                  do not require any changes to CueBuckets, as long
+                  as interval.low and interval.high values stay unchanged.
+            ***********************************************************/
+
             if (delta.interval == Delta.NOOP) {
+                // data changes are reflected in cueMap changes,
+                // since data changes are made in-place, these
+                // changes will be visible in cues registered in
+                // CueBuckets
                 return;
             } else if (delta.interval == Delta.INSERT) {
-                cueBucketId = getCueBucketId(item.new.interval.length);
-                cueBucket = this._cueBuckets.get(cueBucketId)
+                remove_needed = false;
+                add_needed = true;
                 low_changed = true;
                 high_changed = true;
-                cueBucket.processCue("add", item.new, low_changed, high_changed);
             } else if (delta.interval == Delta.DELETE) {
-                cueBucketId = getCueBucketId(item.old.interval.length);
-                cueBucket = this._cueBuckets.get(cueBucketId)
+                remove_needed = true;
+                add_needed = false;
                 low_changed = true;
                 high_changed = true;
-                cueBucket.processCue("remove", item.old, low_changed, high_changed);
             } else if (delta.interval == Delta.REPLACE) {
-                /*
-                    the interval is replaced
-                    (new.interval != old.interval)
-                    - interval change:
-                        - low changed
-                        - high changed
-                        - low and high changed
-                    - if low or high is not changed in value, but only in
-                      from closed to oper or opposide, then this does not
-                      require any changes to the indexing of cues.
-                */
+                remove_needed = true;
+                add_needed = true;
                 low_changed = item.new.interval.low != item.old.interval.low;
                 high_changed = item.new.interval.high != item.old.interval.high;
-                if (low_changed || high_changed) {
-                    // remove old cue entry
-                    cueBucketId = getCueBucketId(item.old.interval.length);
-                    cueBucket = this._cueBuckets.get(cueBucketId)
-                    cueBucket.processCue("remove", item.old, low_changed, high_changed);
-                    // add new cue entry
-                    cueBucketId = getCueBucketId(item.new.interval.length);
-                    cueBucket = this._cueBuckets.get(cueBucketId)
-                    cueBucket.processCue("add", item.new, low_changed, high_changed);
+            }
+
+            /*
+                old cue and new cue might not belong to the same cue bucket
+            */
+            if (remove_needed) {
+                let bid = getCueBucketId(item.old.interval.length);
+                oldCueBucket = this._cueBuckets.get(bid);
+            }
+            if (add_needed) {
+                let bid = getCueBucketId(item.new.interval.length);
+                newCueBucket = this._cueBuckets.get(bid);
+            }
+
+            /*
+                dispatch add and remove operations for interval points
+
+                cues in CueBucket may be removed with at copy of the cue,
+                because remove is by key.
+
+                cues added to CueBucket must be the correct object, so that
+                later in-place modifications become reflected in CueBucket.
+                batchMap item.new is the current cue object.
+            */
+
+            // update low point - if changed
+            if (low_changed) {
+                if (remove_needed) {
+                    // console.log("remove old low", item.old.interval.low);
+                    oldCueBucket.processCue("remove", item.old.interval.low, item.old);
+                }
+                if (add_needed) {
+                    // console.log("add new low", item.new.interval.low);
+                    newCueBucket.processCue("add", item.new.interval.low, item.new);
+                }
+            }
+            // update high point - if changed
+            if (high_changed) {
+                if (remove_needed && !item.old.interval.singular) {
+                    // console.log("remove old high", item.old.interval.high);
+                    oldCueBucket.processCue("remove", item.old.interval.high, item.old);
+                }
+                if (add_needed && !item.new.interval.singular) {
+                    // console.log("add new high", item.new.interval.high);
+                    newCueBucket.processCue("add", item.new.interval.high, item.new);
                 }
             }
         }
-
-
-        /*
-            UPDATE
-            - insert, replace or delete cues
-        */
-        update(cues, options) {
-            let batchMap;
-            // options
-            options = options || {};
-            // check is false by default
-            if (options.check == undefined) {
-                options.check = false;
-            }
-            if (!Array.isArray(cues)) {
-                cues = [cues];
-            }
-            // process cue updates
-            batchMap = this._update_cues(cues,
-                                         options.equals,
-                                         options.check);
-            // update cueMap
-            if (batchMap.size > 0) {
-                // event notification
-                this.eventifyTriggerEvent("change", batchMap);
-            }
-            return batchMap;
-        };
 
 
         /*
@@ -762,7 +810,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             operations on the pointIndex.
 
             To do this, we need to record points that are created and
-            points that are modified.
+            points that are removed.
 
             The total difference that the batch of cue operations
             amounts to is expressed as one list of values to be
@@ -802,32 +850,20 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             all operations may be applied in one batch. This happens in flush
         */
 
-        processCue(op, cue, low_changed, high_changed) {
-
-            let points, point, cues;
-            if (cue.singular) {
-                points = [cue.interval.low]
-            } else {
-                points = [cue.interval.low, cue.interval.high];
-            }
-
+        processCue(op, point, cue) {
             let init = (this._pointMap.size == 0);
-
-            for (let i=0; i<points.length; i++) {
-                point = points[i];
-                cues = (init) ? undefined : this._pointMap.get(point);
-                if (cues == undefined) {
-                    cues = [];
-                    this._pointMap.set(point, cues);
-                    this._created.add(point);
-                }
-                if (op == "add") {
-                    addCueToArray(cues, cue);
-                } else {
-                    let empty = removeCueFromArray(cues, cue);
-                    if (empty) {
-                        this._dirty.add(point);
-                    }
+            let cues = (init) ? undefined : this._pointMap.get(point);
+            if (cues == undefined) {
+                cues = [];
+                this._pointMap.set(point, cues);
+                this._created.add(point);
+            }
+            if (op == "add") {
+                addCueToArray(cues, cue);
+            } else {
+                let empty = removeCueFromArray(cues, cue);
+                if (empty) {
+                    this._dirty.add(point);
                 }
             }
         };
