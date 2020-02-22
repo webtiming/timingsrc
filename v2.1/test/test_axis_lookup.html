@@ -465,18 +465,75 @@
 
         function test_simple () {
 
+          const ax = new Axis();
+
+          /*
+            all the different intervals related to low = 4 and high = 10
+          */
+
+          const cues = [
+
+            // outside left
+            {key:"A1", interval: new Interval(1,2)},
+            // outside right
+            {key:"A2", interval: new Interval(12,14)},
+
+            // outside left touching low
+            {key:"B1", interval: new Interval(1,4, true, false)},
+            {key:"B2", interval: new Interval(1,4, true, true)},
+
+            // outside right - touching high
+            {key:"B3", interval: new Interval(10,12, false, false)},
+            {key:"B4", interval: new Interval(10,12, true, false)},
+
+            // overlap low
+            {key:"C1", interval: new Interval(1,6, true, false)},
+            // overlap high
+            {key:"C2", interval: new Interval(6,12, true, false)},
+
+            // inside - touching low
+            {key:"D1", interval: new Interval(4,6, false, false)},
+            {key:"D2", interval: new Interval(4,6, true, false)},
+            // inside - touching high
+            {key:"D3", interval: new Interval(6,10, true, false)},
+            {key:"D4", interval: new Interval(6,10, true, true)},
+            // inside touching low and high
+            {key:"D5", interval: new Interval(4,10, false, false)},
+            {key:"D6", interval: new Interval(4,10, true, false)},
+            {key:"D7", interval: new Interval(4,10, false, true)},
+            {key:"D8", interval: new Interval(4,10, true, true)},
+
+            // touching low - right of high
+            {key:"E1", interval: new Interval(4,12, false, false)},
+            {key:"E2", interval: new Interval(4,12, true, false)},
+            // left of low, touching high
+            {key:"E3", interval: new Interval(1,10, true, false)},
+            {key:"E4", interval: new Interval(1,10, true, true)},
+
+            // overlapping
+            // {key:"F", interval: new Interval(1,12, false, true)},
+
+            // singulars
+            // {key:"G1", interval: new Interval(1)},
+            // {key:"G2", interval: new Interval(4)},
+            // {key:"G3", interval: new Interval(6)},
+            // {key:"G4", interval: new Interval(10)},
+            // {key:"G5", interval: new Interval(12)},
+          ]
+
+          // insert cues
+          ax.update(cues);
+
+          const lookup_1 = new Interval(4,10, false, false);
+          const lookup_2 = new Interval(4,10, false, true);
+          const lookup_3 = new Interval(4,10, true, false);
+          const lookup_4 = new Interval(4,10, true, true);
 
 
-          let ax = new Axis();
+          let res = ax.lookup_points(lookup_4);
+          console.log(res)
 
-          let init_cue = {key:1, interval: new Interval(2,3), data: {jalla: "jalla"}}
-          ax.update(init_cue);
 
-          let lookup_interval = new Interval(1,4);
-
-          let cues = ax.getCuesByInterval(lookup_interval);
-
-          console.log(cues);
 
 
         }
@@ -488,9 +545,9 @@
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_removeCuesByInterval();
-          test_lookup_correctness();
+          //test_lookup_correctness();
           //test_removeCuesByInterval_stress();
-          //test_simple();
+          test_simple();
 
         };
 

@@ -144,7 +144,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         LOOKUP_CUES: "lookup-cues",
         LOOKUP_CUEPOINTS: "lookup-cuepoints",
         REMOVE_CUES: "remove-cues",
-        INTEGRITY: "integrity"
+        INTEGRITY: "integrity",
+        LOOKUP_POINTS: 1
     });
 
     /*
@@ -531,6 +532,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             /***********************************************************
                 update cueBuckets
+
                 - use delta.interval to avoid unnessesary changes
 
                 - interval may change in several ways:
@@ -585,11 +587,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             /*
                 dispatch add and remove operations for interval points
 
-                cues in CueBucket may be removed with at copy of the cue,
+                cues in CueBucket may be removed using a copy of the cue,
                 because remove is by key.
 
-                cues added to CueBucket must be the correct object, so that
-                later in-place modifications become reflected in CueBucket.
+                cues added to CueBucket must be the correct object
+                (current_cue), so that later in-place modifications become
+                reflected in CueBucket.
                 batchMap item.new is the current cue object.
             */
 
@@ -646,6 +649,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         getCuePointsByInterval(interval) {
             return this._execute(Method.LOOKUP_CUEPOINTS, interval);
         };
+
+        lookup_points(interval) {
+            return this._execute(Method.LOOKUP_POINTS, interval);
+        }
+
 
         /*
             GET CUES BY INTERVAL
@@ -911,40 +919,71 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
         /*
-            _getCuesFromInterval
+            _LOOKUP_POINTS
 
-            internal utility function to find cues from endpoints in interval
+            internal function
 
-            getCuesByInterval will find points in interval in pointIndex and
+            basic operation:
+
+            returns all (point, cue) pairs where
+                - point is cue endpoint (cue.low or cue.high)
+                - point is INSIDE interval
+                - [{point:point, cue: cue}]
+
+            Implementation: find points in interval from pointIndex and
             find the associated cues from pointMap.
 
-            Cues may be reported more than once
-            Any specific order of cues is not defined.
+            - a given point may appear multiple times in the result,
+              as multiple cues may be tied to the same cue
+            - a given cue may appear two times in the result, if
+              both cue.low and cue.high are INSIDE interval
+            - a singular cue will appear only once
+            - ordering: no specific order is guaranteed
+              - results are concatenated from multiple CueBuckets
+              - internally in a single CueBucket
+                - points will be ordered ascending
+                - no defined order for cues tied to the same point
 
-            (at least one cue endpoint will be equal to point)
+            options:
+                - cuepoint (boolean):
+                    true: basic operation (above)
+                    false: return only list of cues, duplicates removes
 
-            Note: This function returns only cues with endpoints covered by the interval.
-            It does not return cues that cover the interval (i.e. one endpoint at each
-            side of the interval).
-
-            option cuepoint signals to include both the cue and its point
-            {point:point, cue:cue}
-            if not - a list of cues is returned
-
-            the order is defined by point values (ascending), whether points are included or not.
-            each point value is reported once, yet one cue
-            may be reference by 1 or 2 points.
 
             returns list of cues, or list of cuepoints, based on options
         */
+        _lookup_points(interval) {
+            console.log("lookup_points");
+            const broad_interval = new Interval(interval.low, interval.high, true, true);
+            const points = this._pointIndex.lookup(broad_interval);
+            const res = [];
+            const len = points.length;
+            let point, cue, cues;
+            for (let i=0; i<len; i++) {
+                point = points[i];
+                cues = this._pointMap.get(point);
+                for (let j=0; j<cues.length; j++) {
+                    cue = cues[j];
+                    res.push({point:point, cue:cue});
+                }
+            }
+            return res;
+        }
+
+
+
+
+
+
         _lookupCuesFromInterval(interval, options={}) {
             const cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false;
             /*
                 search for points in pointIndex using interval
                 if search interval is <a,b> endpoints a and b will not be included
-                this means that at cue [a,b] will not be picked up - as its enpoints are outside the search interval
-                however, this also means that a cue <a,b> will not be picked up - which is not correct - as these endpoints are inside the search interval
-                solution is to broaden the search and filter away
+                this means that cue <a,b> will not be picked up even though both
+                endpoints are INSIDE the search interval. For this reason, we
+                always search for [a,b] to ensure that we get all required, and
+                then filter out cues which have no endpoints INSIDE the interval.
             */
             const broadInterval = new Interval(interval.low, interval.high, true, true);
             const points = this._pointIndex.lookup(broadInterval);
@@ -1056,7 +1095,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 return this.removeCues(interval, semantic);
             } else if (method == Method.INTEGRITY) {
                 return this._integrity();
-            } else {
+            } else if (method == Method.LOOKUP_POINTS) {
+                return this._lookup_points(interval);
+            }
+
+            else {
                 throw new Error("method or semantic not supported " + method + " " + semantic);
             }
         };
