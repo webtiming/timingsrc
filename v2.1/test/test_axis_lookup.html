@@ -510,7 +510,7 @@
             {key:"E3", interval: new Interval(1,10, true, false)},
             {key:"E4", interval: new Interval(1,10, true, true)},
 
-            // overlapping
+            // covering
             // {key:"F", interval: new Interval(1,12, false, true)},
 
             // singulars
@@ -530,7 +530,7 @@
           const lookup_4 = new Interval(4,10, true, true);
 
 
-          let res = ax.lookup_points(lookup_4);
+          let res = ax.lookup(lookup_4);
           console.log(res)
 
 
@@ -545,9 +545,9 @@
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_removeCuesByInterval();
-          test_lookup_correctness();
+          //test_lookup_correctness();
           //test_removeCuesByInterval_stress();
-          //test_simple();
+          test_simple();
 
         };
 
