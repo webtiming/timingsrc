@@ -629,10 +629,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             execute method across all cue buckets
             and aggregate results
         */
-        _execute(method, interval, semantic) {
+        _execute(method, interval, arg) {
             const res = [];
             for (let cueBucket of this._cueBuckets.values()) {
-                let cues = cueBucket.execute(method, interval, semantic);
+                let cues = cueBucket.execute(method, interval, arg);
                 if (cues.length > 0) {
                     res.push(cues);
                 }
@@ -833,11 +833,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             // method map
             this._methodMap = new Map([
-                [Method.LOOKUP_CUEPOINTS, this.lookupCuePoints.bind(this)],
-                [Method.LOOKUP_CUES, this.lookupCues.bind(this)],
-                [Method.REMOVE_CUES, this.removeCues.bind(this)],
+                [Method.LOOKUP_REMOVE, this.lookup_remove.bind(this)],
                 [Method.LOOKUP, this.lookup.bind(this)],
-                [Method.LOOKUP_POINTS, this._lookup_points.bind(this)],
+                [Method.LOOKUP_POINTS, this.lookup_points.bind(this)],
                 [Method.INTEGRITY, this._integrity.bind(this)]
             ]);
 
@@ -951,247 +949,134 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         };
 
 
+        /*
+            execute dispatches request to given method on CueBatch.
+        */
+        execute(method, interval, arg) {
+            if (this._pointIndex.length == 0) {
+                return [];
+            }
+            let func = this._methodMap.get(method);
+            if (func) {
+                return func(interval, arg);
+            } else {
+                throw new Error("method not supported " + method);
+            }
+        };
+
 
         /*
-            _LOOKUP_POINTS
-
-            internal function
-
-            basic operation:
+            LOOKUP_POINTS
 
             returns all (point, cue) pairs where
-                - point is cue endpoint (cue.low or cue.high)
-                - point is INSIDE interval
+                - point is a cue endpoint (cue.low or cue.high)
+                - at least one cue endpoint is INSIDE search interval
                 - [{point:point, cue: cue}]
-
-            Implementation: find points in interval from pointIndex and
-            find the associated cues from pointMap.
 
             - a given point may appear multiple times in the result,
               as multiple cues may be tied to the same cue
             - a given cue may appear two times in the result, if
-              both cue.low and cue.high are INSIDE interval
+              both cue.low and cue.high are both INSIDE interval
             - a singular cue will appear only once
             - ordering: no specific order is guaranteed
               - results are concatenated from multiple CueBuckets
               - internally in a single CueBucket
                 - points will be ordered ascending
                 - no defined order for cues tied to the same point
+              - the natural order is endpoint order
+                - but this can be added on the outside if needed
+                - no order is defined if two cues have exactly the
+                  same endpoint
 
-            options:
-                - cuepoint (boolean):
-                    true: basic operation (above)
-                    false: return only list of cues, duplicates removes
-
-
-            returns list of cues, or list of cuepoints, based on options
         */
 
-
-
-
-
-        _lookup_points(interval) {
-            console.log("lookup points");
+        lookup_points(interval) {
             const broader_interval = new Interval(interval.low, interval.high, true, true);
             const points = this._pointIndex.lookup(broader_interval);
-            const res = [];
+            const result = [];
             const len = points.length;
-            let point, cue, cues;
+            let low_inside, high_inside;
             for (let i=0; i<len; i++) {
                 point = points[i];
-                cues = this._pointMap.get(point);
-                for (let j=0; j<cues.length; j++) {
-                    cue = cues[j];
-                    res.push({point:point, cue:cue});
-                }
+                this._pointMap.get(point)
+                    forEach(function (cue) {
+                        /*
+                            keep only cues that have at least one
+                            cue endpoint inside the search interval
+                            (as defined by endpoint ordering)
+
+                            there are two reasons why such cues might appear
+                            - the broadening of the search interval
+                            - insensitivity to endpoint ordering in pointIndex
+                        */
+                        low_inside = interval.inside(cue.interval.endpointLow);
+                        high_inside = interval.inside(cue.interval.endpointHigh);
+                        if (low_inside || high_inside) {
+                            result.push({point:point, cue:cue});
+                        }
+                    });
             }
-            return res;
+            return result;
         }
 
 
+        /*
+            _LOOKUP CUES
+
+            Internal function, used by LOOKUP.
+
+            Return list of cues
+            - all cues inside an interval, i.e. cues that
+              have at least one endpoint INSIDE interval.
+            - no duplicates
+        */
+
         _lookup_cues(interval) {
-            console.log("lookup cues");
             const broader_interval = new Interval(interval.low, interval.high, true, true);
             const points = this._pointIndex.lookup(broader_interval);
             const len = points.length;
             const cueSet = new Set();
             const result = [];
-            let cue, cues;
-
             let low_inside, high_inside;
-
             for (let i=0; i<len; i++) {
-                cues = this._pointMap.get(points[i]);
-                for (let j=0; j<cues.length; j++) {
-                    cue = cues[j];
+                this._pointMap.get(points[i])
+                    .forEach(function(cue) {
+                        // avoid duplicates
+                        if (cueSet.has(cue.key)) {
+                            return;
+                        } else {
+                            cueSet.add(cue.key);
+                        }
+                        /*
+                            keep only cues that have at least one
+                            cue endpoint inside the search interval
+                            (as defined by endpoint ordering)
 
-                    // avoid duplicates
-                    if (cueSet.has(cue.key)) {
-                        continue;
-                    } else {
-                        cueSet.add(cue.key);
-                    }
-
-                    /*
-                        keep only cues that have at least one
-                        cue endpoint inside the search interval
-                        (as defined by endpoint ordering)
-
-                        there are two reasons why such cues might appear
-                        - the broadening of the search interval
-                        - insensitivity to endpoint ordering in pointIndex
-                    */
-                    low_inside = interval.inside(cue.interval.endpointLow);
-                    high_inside = interval.inside(cue.interval.endpointHigh);
-                    if (low_inside || high_inside) {
-                        result.push(cue);
-                    }
-                }
+                            there are two reasons why such cues might appear
+                            - the broadening of the search interval
+                            - insensitivity to endpoint ordering in pointIndex
+                        */
+                        low_inside = interval.inside(cue.interval.endpointLow);
+                        high_inside = interval.inside(cue.interval.endpointHigh);
+                        if (low_inside || high_inside) {
+                            result.push(cue);
+                        }
+                    });
             }
             return result;
         }
 
 
 
-
-
-
-        _lookupCuesFromInterval(interval, options={}) {
-            const cuepoint = (options.cuepoint != undefined) ? options.cuepoint : false;
-            /*
-                search for points in pointIndex using interval
-                if search interval is <a,b> endpoints a and b will not be included
-                this means that cue <a,b> will not be picked up even though both
-                endpoints are INSIDE the search interval. For this reason, we
-                always search for [a,b] to ensure that we get all required, and
-                then filter out cues which have no endpoints INSIDE the interval.
-            */
-            const broadInterval = new Interval(interval.low, interval.high, true, true);
-            const points = this._pointIndex.lookup(broadInterval);
-            const res = [];
-            const len = points.length;
-            const cueSet = new Set();
-            for (let i=0; i<len; i++) {
-                let point = points[i];
-                let cues = this._pointMap.get(point);
-                for (let j=0; j<cues.length; j++) {
-                    let cue = cues[j];
-
-                    /*
-                        avoid duplicate cues
-                        (not for cuepoints, where cues may be associated with two points)
-                    */
-                    if (!cuepoint) {
-                        if (cueSet.has(cue.key)) {
-                            continue;
-                        } else {
-                            cueSet.add(cue.key);
-                        }
-                    }
-
-                    /*
-                    filter out cues that have both endpoints outside the original search interval
-                    in other words: keep only cue.intervals which have at
-                    least one endpoint inside the search interval
-                    */
-                    if (cue.interval.hasEndpointInside(interval)) {
-                        let item = (cuepoint) ? {point:point, cue:cue} : cue;
-                        res.push(item);
-                    }
-                }
-            }
-            return res;
-        };
-
-        /*
-            Find cues that are overlapping search interval, with one endpoint
-            at each side.
-
-            define left and right intervals that cover areas on the timeline to
-            the left and right of search interval.
-            These intervals are limited by the interval maxLength of cues in this bucket,
-            so that:
-             - left interval [interval.high-maxLengt, interval.low]
-             - right interval [interval.high, interval.low+maxlength]
-
-            Only need to search one of them. Preferably the one with the fewest cues.
-            However, doing two searches to figure out which is shortest is quite possibly more expensive than choosing the longest,
-            so no point really
-
-            Choice - always search left.
-
-            If interval.length > maxLength, then there can be no overlapping intervals in this bucket
-
-            Endpoints must not overlap with endpoints of <interval>
-            - if interval.lowInclude, then leftInterval.highInclude must be false,
-              and vice versa.
-            - the same consideration applies to interval.highInclude
-        */
-        _lookupOutsideCuesFromInterval(interval){
-            if (interval.length > this._maxLength) {
-                return [];
-            }
-
-            const highIncludeOfLeftInterval = !interval.lowInclude;
-            const leftInterval = new Interval(interval.high - this._maxLength, interval.low, true, highIncludeOfLeftInterval);
-
-            const lowIncludeOfRightInterval = !interval.highInclude;
-            const rightInterval = new Interval(interval.high, interval.low + this._maxLength, lowIncludeOfRightInterval, true);
-
-            //  iterate leftInterval to find cues that have endpoints covered by rightInterval
-            return this._lookupCuesFromInterval(leftInterval)
-                .filter(function (cue) {
-                    // fast test
-                    if (interval.high < cue.interval.low) {
-                        return true;
-                    }
-                    // more expensive test that will pick up cornercase
-                    // where [a,b] will actually be an outside covering interval for <a,b>
-                    let e = [cue.interval.high, true, cue.interval.highInclude];
-                    return rightInterval.inside(e);
-                    //return rightInterval.coversPoint(cue.interval.high);
-                });
-        };
-
-
-
-
-        /*
-            execute dispatches request to given method.
-
-            CUEPOINTS - look up all (point, cue) tuples in search interval
-
-            INSIDE - look up all cues with both endpoints INSIDE the search interval
-            PARTIAL - look up all INSIDE cues, plus cues with one endpoint inside the search interval
-            ALL - look up all PARTIAL cues, plus cues with one cue at each side of search interval
-
-        */
-        execute(method, interval, semantic) {
-            if (this._pointIndex.length == 0) {
-                return [];
-            }
-            let func = this._methodMap.get(method);
-            if (func) {
-                return func(interval, semantic);
-            } else {
-                throw new Error("method or semantic not supported " + method + " " + semantic);
-            }
-        };
-
-
-        /*
-            LOOKUP CUEPOINTS - look up all (point, cue) tuples in search interval
-        */
-        lookupCuePoints(interval) {
-            return this._lookupCuesFromInterval(interval, {cuepoint:true});
-        };
-
-
-
-
         /*
             LOOKUP
+
+            Strategy split task into two subtasks,
+
+            1) find cues [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
+            2) find cues [COVERS]
+
+
         */
         lookup(interval, mode) {
             let Relation = Interval.Relation;
@@ -1247,10 +1132,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
                 search left of search interval for cues
                 that covers the search interval
-
                 search left is limited by CueBucket maxlength
-
                 left_interval: [interval.high-maxLength, interval.low]
+
+                it would be possible to search right too, but we
+                have to choose one.
             */
             let low = interval.high - this._maxLength;
             let high = interval.low;
@@ -1265,37 +1151,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         }
 
 
-
-
-
-
-
-
-        /*
-            LOOKUP CUES
-        */
-        lookupCues(interval, semantic=Semantic.OVERLAP) {
-
-            const partial_cues = this._lookupCuesFromInterval(interval, {cuepoint:false});
-            if (semantic == Semantic.PARTIAL) {
-                return partial_cues;
-            } else if (semantic == Semantic.INSIDE) {
-                return partial_cues.filter(function (cue) {
-                    return [Relation.COVERS, Relation.EQUALS].includes(interval.compare(cue.interval));
-                });
-            } else if (semantic == Semantic.OVERLAP) {
-                const outside_cues = this._lookupOutsideCuesFromInterval(interval);
-                return mergeArrays(partial_cues, outside_cues);
-            } else {
-                throw new Error("illegal semantic " + semantic);
-            }
-        }
-
-
         /*
             REMOVE CUES
         */
-        removeCues(interval, semantic) {
+        lookup_remove(interval, semantic) {
             /*
                 update pointMap
                 - remove all cues from pointMap
