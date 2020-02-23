@@ -669,6 +669,21 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         };
 
         lookup(interval, mode) {
+            // check mode
+            if (!mode) {
+                // default mode
+                mode = [
+                    Relation.OVERLAP_LEFT,
+                    Relation.COVERED,
+                    Relation.EQUALS,
+                    Relation.COVERS,
+                    Relation.OVERLAP_RIGHT
+                ];
+            } else {
+                if (!Array.isArray(mode)) {
+                    throw new Error("mode must Array of integers, or undefined", mode);
+                }
+            }
             return this._execute(Method.LOOKUP, interval, mode);
         }
 
@@ -1000,8 +1015,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             const broader_interval = new Interval(interval.low, interval.high, true, true);
             const points = this._pointIndex.lookup(broader_interval);
             const len = points.length;
-            const cueMap = new Map();
+            const cueSet = new Set();
+            const result = [];
             let cue, cues;
+
             let low_inside, high_inside;
 
             for (let i=0; i<len; i++) {
@@ -1010,8 +1027,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     cue = cues[j];
 
                     // avoid duplicates
-                    if (cueMap.has(cue.key)) {
+                    if (cueSet.has(cue.key)) {
                         continue;
+                    } else {
+                        cueSet.add(cue.key);
                     }
 
                     /*
@@ -1026,11 +1045,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     low_inside = interval.inside(cue.interval.endpointLow);
                     high_inside = interval.inside(cue.interval.endpointHigh);
                     if (low_inside || high_inside) {
-                        cueMap.set(cue.key, cue);
+                        result.push(cue);
                     }
                 }
             }
-            return cueMap;
+            return result;
         }
 
 
@@ -1135,48 +1154,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 });
         };
 
-        /*
-            lookup cues which interval covers the given search interval
-        */
-        _lookup_covers(interval) {
-            const result = [];
-
-            /*
-                intervals in this CueBucket are limited by maxLength
-                if interval.length is larger than maxLength, no cue
-                in this CueBucket can cover interval
-            */
-            if (interval.length > this._maxLength) {
-                return [];
-            }
-
-            /*
-                search left interval
-                [interval.high-maxLength, interval.low]
-
-                look for cues which covers the search interval
-
-                adjust highInclude so that
-                left_interval.highInclude so that
-                left_interval and interval are back to back (not overlapping)
-            */
-            const low = interval.high - this._maxLength;
-            const high = interval.low;
-            const high_include = !interval.leftInclude;
-            const left_interval = new Interval(low, high, true, high_include);
-            const cues = this._lookup_cues(left_interval);
-
-            const len = cues.length;
-            let cue;
-            for (let i=0; i<len; i++) {
-                cue = cues[i];
-                if (cues.interval.covers(interval)) {
-                    result.push(cue);
-                }
-            }
-            return result;
-        }
-
 
 
 
@@ -1217,42 +1194,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             LOOKUP
         */
         lookup(interval, mode) {
-            let cues = []
             let Relation = Interval.Relation;
-            let cueMap;
+            let cues = [];
 
-            // default mode
-            if (!mode) {
-                mode = [
-                    Relation.OVERLAP_LEFT,
-                    Relation.COVERED,
-                    Relation.EQUALS,
-                    Relation.COVERS,
-                    Relation.OVERLAP_RIGHT
-                ];
-            }
-
-            // check which lookup types are needed
-            let needed = [
-                mode.includes(Relation.OVERLAP_LEFT),
-                mode.includes(Relation.COVERED),
-                mode.includes(Relation.EQUALS),
-                mode.includes(Relation.OVERLAP_RIGHT)
-            ];
-            let any_regular_needed = needed.some((e) => e == true);
-            let all_regular_needed = needed.every((e) => e == true);
-            let only_equals_needed = (needed.length == 1 && needed[0] == Relation.EQUALS)
-            let covering_needed = mode.includes(Relation.COVERS);
-            /*
-                intervals in this CueBucket are limited by maxLength
-                if interval.length is larger than maxLength, no cue
-                in this CueBucket can cover interval
-            */
-            if (interval.length > this._maxLength) {
-                covering_needed = false;
-            }
 
             // special case only [EQUALS]
+            let only_equals_needed = (mode.length == 1 && mode[0] == Relation.EQUALS)
             if (only_equals_needed) {
                 return this._pointMap.get(interval.low).filter(function(cue) {
                     return cue.interval.equals(interval)
@@ -1260,48 +1207,60 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
 
             // common case: [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
-            if (any_regular_needed) {
-                let cueMap = this._lookup_cues(interval);
-                // keep cues which match lookup mode
-                if (all_regular_needed) {
-                    cues = [...cueMap.values()];
-                } else {
-                    // keep those needed
-                    for (let cue of cueMap.values()) {
+            // exclude [COVERS]
+            // check which lookup types are needed
+            let basic = [
+                mode.includes(Relation.OVERLAP_LEFT),
+                mode.includes(Relation.COVERED),
+                mode.includes(Relation.EQUALS),
+                mode.includes(Relation.OVERLAP_RIGHT)
+            ];
+            let any_basic_needed = basic.some((e) => e == true);
+            if (any_basic_needed) {
+                // keep cues which match lookup mode,
+                // except COVERS, which is excluded here
+                cues = this._lookup_cues(interval)
+                    .filter(function(cue){
                         let relation = cue.interval.compare(interval);
-                        if (mode.includes(relation)) {
-                            cues.push(cue);
+                        // exclude COVERS
+                        if (relation == Relation.COVERS) {
+                            return false;
                         }
-                    }
-                }
+                        return mode.includes(relation);
+                    });
             }
 
-            // special handling [COVERS]
-            if (covering_needed) {
+            /*
+                intervals in this CueBucket are limited by maxLength
+                if interval.length is larger than maxLength, no cue
+                in this CueBucket can cover interval
+            */
+            if (interval.length > this._maxLength) {
+                return cues;
+            }
+            if (!mode.includes(Relation.COVERS)) {
+                return cues;
+            }
 
-                /*
-                    search left of search interval for cues
-                    that covers the search interval
+            /*
+                special handling [COVERS]
 
-                    search left is limited by CueBucket maxlength
+                search left of search interval for cues
+                that covers the search interval
 
-                    left_interval: [interval.high-maxLength, interval.low]
+                search left is limited by CueBucket maxlength
 
-                    adjust highInclude so that
-                    left_interval.highInclude so that
-                    left_interval and interval are back to back (not overlapping)
-                */
-                let low = interval.high - this._maxLength;
-                let high = interval.low;
-                let high_include = !interval.leftInclude;
-                let left_interval = new Interval(low, high, true, high_include);
-                cueMap = this._lookup_cues(left_interval);
-                for (let cue of cueMap.values()) {
-                    if (cue.interval.covers(interval)) {
+                left_interval: [interval.high-maxLength, interval.low]
+            */
+            let low = interval.high - this._maxLength;
+            let high = interval.low;
+            let left_interval = new Interval(low, high, true, true);
+            this._lookup_cues(left_interval)
+                .forEach(function(cue){
+                    if (cue.interval.compare(interval) == Relation.COVERS) {
                         cues.push(cue);
                     }
-                }
-            }
+                });
             return cues;
         }
 
