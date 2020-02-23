@@ -1217,20 +1217,20 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             LOOKUP
         */
         lookup(interval, mode) {
-            let relation,
-                regular_cues = [],
-                covering_cues = [];
-
-            // mode
-            // OVERLAP_LEFT, OVERLAP_RIGHT, COVERED, EQUALS, COVERS
+            let cues = []
             let Relation = Interval.Relation;
-            mode = [
-                Relation.OVERLAP_LEFT,
-                Relation.COVERED,
-                Relation.EQUALS,
-                Relation.COVERS,
-                Relation.OVERLAP_RIGHT
-            ];
+            let cueMap;
+
+            // default mode
+            if (!mode) {
+                mode = [
+                    Relation.OVERLAP_LEFT,
+                    Relation.COVERED,
+                    Relation.EQUALS,
+                    Relation.COVERS,
+                    Relation.OVERLAP_RIGHT
+                ];
+            }
 
             // check which lookup types are needed
             let needed = [
@@ -1241,8 +1241,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             ];
             let any_regular_needed = needed.some((e) => e == true);
             let all_regular_needed = needed.every((e) => e == true);
-
-
+            let only_equals_needed = (needed.length == 1 && needed[0] == Relation.EQUALS)
             let covering_needed = mode.includes(Relation.COVERS);
             /*
                 intervals in this CueBucket are limited by maxLength
@@ -1253,23 +1252,31 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 covering_needed = false;
             }
 
+            // special case only [EQUALS]
+            if (only_equals_needed) {
+                return this._pointMap.get(interval.low).filter(function(cue) {
+                    return cue.interval.equals(interval)
+                });
+            }
+
+            // common case: [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
             if (any_regular_needed) {
-                // get cues [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
-                let regularCueMap = this._lookup_cues(interval);
+                let cueMap = this._lookup_cues(interval);
                 // keep cues which match lookup mode
                 if (all_regular_needed) {
-                    regular_cues = [...regularCueMap.values()];
+                    cues = [...cueMap.values()];
                 } else {
                     // keep those needed
-                    for (let cue of regularCueMap.values()) {
-                        relation = cue.interval.compare(interval);
+                    for (let cue of cueMap.values()) {
+                        let relation = cue.interval.compare(interval);
                         if (mode.includes(relation)) {
-                            regular_cues.push(cue);
+                            cues.push(cue);
                         }
                     }
                 }
             }
 
+            // special handling [COVERS]
             if (covering_needed) {
 
                 /*
@@ -1284,23 +1291,18 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     left_interval.highInclude so that
                     left_interval and interval are back to back (not overlapping)
                 */
-                const low = interval.high - this._maxLength;
-                const high = interval.low;
-                const high_include = !interval.leftInclude;
-                const left_interval = new Interval(low, high, true, high_include);
-
-                let coversCueMap = this._lookup_cues(left_interval);
-
-                // keep cues which covers the search interval
-                for (let cue of coversCueMap.values()) {
+                let low = interval.high - this._maxLength;
+                let high = interval.low;
+                let high_include = !interval.leftInclude;
+                let left_interval = new Interval(low, high, true, high_include);
+                cueMap = this._lookup_cues(left_interval);
+                for (let cue of cueMap.values()) {
                     if (cue.interval.covers(interval)) {
-                        covering_cues.push(cue);
+                        cues.push(cue);
                     }
                 }
             }
-
-            return mergeArrays(regular_cues, covering_cues);
-
+            return cues;
         }
 
 
