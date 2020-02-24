@@ -5,9 +5,18 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     const Relation = Interval.Relation;
 
+
+
     /*
         UTILITY
     */
+
+
+    function divmod (n, d) {
+        let r = n % d;
+        let q = (n-r)/d;
+        return [q, r];
+    }
 
     function isIterable(obj) {
         // checks for null and undefined
@@ -142,6 +151,25 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         REPLACE: 2,
         DELETE: 3
     });
+
+    // mode mask
+    const LookupMask = Object.freeze({
+        OVERLAP_LEFT: 16, //bx10000
+        COVERED: 8,       //bx01000
+        EQUALS: 4,        //bx00100
+        COVERS: 2,        //bx00010
+        OVERLAP_RIGHT: 1  //bx00001
+    });
+
+    // mapping cue relations to lookupmasks
+    const LookupMaskMap = new Map([
+        [Relation.OVERLAP_LEFT, LookupMask.OVERLAP_LEFT],
+        [Relation.COVERED, LookupMask.COVERED],
+        [Relation.EQUALS, LookupMask.EQUALS],
+        [Relation.COVERS, LookupMask.COVERS],
+        [Relation.OVERLAP_RIGHT, LookupMask.OVERLAP_RIGHT]
+    ]);
+
 
     /*
         make a shallow copy of a cue
@@ -635,21 +663,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         */
 
         lookup(interval, mode) {
-            // check mode
-            if (!mode) {
-                // default mode
-                mode = [
-                    Relation.OVERLAP_LEFT,
-                    Relation.COVERED,
-                    Relation.EQUALS,
-                    Relation.COVERS,
-                    Relation.OVERLAP_RIGHT
-                ];
-            } else {
-                if (!Array.isArray(mode)) {
-                    throw new Error("mode must Array of integers, or undefined", mode);
-                }
-            }
             return this._execute(Method.LOOKUP, interval, mode);
         }
 
@@ -1026,6 +1039,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         }
 
 
+
         /*
             LOOKUP
 
@@ -1034,35 +1048,21 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             1) find cues [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
             2) find cues [COVERS]
 
-
+            // mode order
+            Relation.OVERLAP_LEFT,
+            Relation.COVERED,
+            Relation.EQUALS,
+            Relation.COVERS,
+            Relation.OVERLAP_RIGHT
         */
-        lookup(interval, mode) {
-            let Relation = Interval.Relation;
+        lookup(interval, mode=31) {
+
+
+
             let cues = [];
 
-
-            const all_relations = new Set([
-                Relation.OVERLAP_LEFT,
-                Relation.COVERED,
-                Relation.EQUALS,
-                Relation.COVERS,
-                Relation.OVERLAP_RIGHT
-            ]);
-
-            const basic_relations = new Set([
-                Relation.OVERLAP_LEFT,
-                Relation.COVERED,
-                Relation.EQUALS,
-                Relation.OVERLAP_RIGHT
-            ])
-
-
-
             // special case only [EQUALS]
-            let only_equals_needed = !mode.some(e => e != Relation.EQUALS)
-
-
-            if (only_equals_needed) {
+            if (mode == LookupMask.EQUALS_MASK) {
                 return this._pointMap.get(interval.low).filter(function(cue) {
                     return cue.interval.equals(interval)
                 });
@@ -1070,15 +1070,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             // common case: [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
             // exclude [COVERS]
-            // check which lookup types are needed
-            let basic = [
-                mode.includes(Relation.OVERLAP_LEFT),
-                mode.includes(Relation.COVERED),
-                mode.includes(Relation.EQUALS),
-                mode.includes(Relation.OVERLAP_RIGHT)
-            ];
-            let any_basic_needed = basic.some((e) => e == true);
-            if (any_basic_needed) {
+            if (mode - LookupMask.COVERS > 0) {
                 // keep cues which match lookup mode,
                 // except COVERS, which is excluded here
                 cues = this._lookup_cues(interval)
@@ -1088,7 +1080,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                         if (relation == Relation.COVERS) {
                             return false;
                         }
-                        return mode.includes(relation);
+                        return mode & LookupMaskMap.get(relation)
+                        //return mode.includes(relation);
                     });
             }
 
@@ -1100,7 +1093,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (interval.length > this._maxLength) {
                 return cues;
             }
-            if (!mode.includes(Relation.COVERS)) {
+            if (!(mode & LookupMask.COVERS)) {
                 return cues;
             }
 
