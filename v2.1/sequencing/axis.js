@@ -61,9 +61,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         return true;
     }
 
-
-
-
     /*
         Add cue to array
         - does not add if cue already exists
@@ -116,21 +113,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         }
     };
 
-    /*
-        Semantic
-
-        Specifies the semantic for cue operations
-
-        INSIDE  - all cues with both endpoints INSIDE the search interval
-        PARTIAL - all INSIDE cues, plus cues that PARTIALL overlap search interval, i.e. have only one endpoint INSIDE search interval
-        OVERLAP - all PARTIAL cues, plus cues that fully OVERLAP search interval, but have no endpoints INSIDE search interval
-
-    */
-    const Semantic = Object.freeze({
-        INSIDE: "inside",
-        PARTIAL: "partial",
-        OVERLAP: "overlap"
-    });
 
     /*
         Method
@@ -143,14 +125,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     */
     const Method = Object.freeze({
-        LOOKUP_CUES: "lookup-cues",
-        LOOKUP_CUEPOINTS: "lookup-cuepoints",
-        REMOVE_CUES: "remove-cues",
-        INTEGRITY: "integrity",
-        LOOKUP_POINTS: 1,
+        INTEGRITY: 0,
+        LOOKUP_ENDPOINTS: 1,
         LOOKUP: 2
     });
-
 
     /*
         Delta
@@ -158,14 +136,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         Used to represent statechanges in batchMap,
         for intervals and data.
     */
-
     const Delta = Object.freeze({
         NOOP: 0,
         INSERT: 1,
         REPLACE: 2,
         DELETE: 3
     });
-
 
     /*
         make a shallow copy of a cue
@@ -255,7 +231,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     */
 
     class Axis {
-
 
         constructor() {
             /*
@@ -642,32 +617,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         };
 
         /*
-            GET CUEPOINTS BY INTERVAL
+            LOOKUP ENDPOINTS
 
-            returns (point, cue) for all points covered by given interval
+            returns (endpoint, cue) for all endpoints covered by given interval
 
             returns:
-                - list of cuepoints, from cue endpoints within interval
-                - [{point: point, cue:cue}]
+                - [{endpoint: endpoint, cue:cue}]
         */
-        getCuePointsByInterval(interval) {
-            return this._execute(Method.LOOKUP_CUEPOINTS, interval);
-        };
 
-        lookup_points(interval) {
-            return this._execute(Method.LOOKUP_POINTS, interval);
+        lookup_endpoints(interval) {
+            return this._execute(Method.LOOKUP_ENDPOINTS, interval);
         }
 
 
         /*
-            GET CUES BY INTERVAL
-
-            semantic - "inside" | "partial" | "overlap"
-
+            LOOKUP
         */
-        getCuesByInterval(interval, semantic=Semantic.OVERLAP) {
-            return this._execute(Method.LOOKUP_CUES, interval, semantic);
-        };
 
         lookup(interval, mode) {
             // check mode
@@ -836,7 +801,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             this._methodMap = new Map([
                 [Method.LOOKUP_REMOVE, this.lookup_remove.bind(this)],
                 [Method.LOOKUP, this.lookup.bind(this)],
-                [Method.LOOKUP_POINTS, this.lookup_points.bind(this)],
+                [Method.LOOKUP_ENDPOINTS, this.lookup_endpoints.bind(this)],
                 [Method.INTEGRITY, this._integrity.bind(this)]
             ]);
 
@@ -967,44 +932,53 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
         /*
-            LOOKUP_POINTS
+            LOOKUP_ENDPOINTS
 
-            returns all (point, cue) pairs where
-                - point is a cue endpoint (cue.low or cue.high)
-                - all cues with at least one endpoint value v,
-                    where interval.low <= v <= interval.high
-                - [{point:point, cue: cue}]
+            returns all (endpoint, cue) pairs where
+                - endpoint is a cue endpoint (cue.endpointLow or cue.endpointHigh)
+                - endpoint is INSIDE search interval
+                - [{endpoint:endpoint, cue: cue}]
 
-            - a given point may appear multiple times in the result,
-              as multiple cues may be tied to the same cue
+            - a given endpoint may appear multiple times in the result,
+              as multiple cues may be tied to the same endpoint
             - a given cue may appear two times in the result, if
-              both cue.low and cue.high are both INSIDE interval
+              both cue.endpointLow and cue.endpointHigh are both INSIDE interval
             - a singular cue will appear only once
             - ordering: no specific order is guaranteed
               - results are concatenated from multiple CueBuckets
               - internally in a single CueBucket
-                - points will be ordered ascending
-                - no defined order for cues tied to the same point
+                - no defined order for cues tied to the same endpoint
               - the natural order is endpoint order
                 - but this can be added on the outside if needed
                 - no order is defined if two cues have exactly the
                   same endpoint
-            - may return cues that are OUTSIDE the search interval
-                e.g. if the search interval is [.., 4) then
-                (4, ...] will be returned, event if this strictly
+
         */
 
-        lookup_points(interval) {
+        lookup_endpoints(interval) {
             const broader_interval = new Interval(interval.low, interval.high, true, true);
             const points = this._pointIndex.lookup(broader_interval);
             const result = [];
             const len = points.length;
-            let low_inside, high_inside;
+            let endpoint;
             for (let i=0; i<len; i++) {
                 point = points[i];
                 this._pointMap.get(point)
                     forEach(function (cue) {
-                        result.push({point:point, cue:cue});
+                        /*
+                            figure out if point is endpoint low or high
+                            include cue if the endpoint is inside search interval
+                        */
+                        if (point == cue.low) {
+                            endpoint = cue.endpointLow;
+                        } else if (point == cue.high) {
+                            endpoint = cue.endpointHigh;
+                        } else {
+                            throw new Error("fatal: point cue mismatch");
+                        }
+                        if (interval.inside(endpoint)) {
+                            result.push({endpoint:endpoint, cue:cue});
+                        }
                     });
             }
             return result;
@@ -1050,6 +1024,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
             return result;
         }
+
 
         /*
             LOOKUP
