@@ -14,6 +14,7 @@
 
       require(['sequencing/axis', 'util/interval'], function (Axis, Interval) {
 
+        const Relation = Interval.Relation;
         const Delta = Axis.Delta;
         const cue_equals = Axis.cue_equals;
         const equals = Axis.equals;
@@ -216,6 +217,26 @@
           };
 
 
+
+          const INSIDE = [
+            Relation.COVERED,
+            Relation.EQUALS
+          ];
+          const PARTIAL = [
+            Relation.OVERLAP_LEFT,
+            Relation.COVERED,
+            Relation.EQUALS,
+            Relation.OVERLAP_RIGHT
+          ];
+          const COVERS = [
+            Relation.OVERLAP_LEFT,
+            Relation.COVERED,
+            Relation.EQUALS,
+            Relation.COVERS,
+            Relation.OVERLAP_RIGHT
+          ];
+
+
           /*
             all the different intervals related to low = 4 and high = 10
           */
@@ -281,23 +302,26 @@
           const searchInterval3 = new Interval(4,10, true, false);
           const searchInterval4 = new Interval(4,10, true, true);
 
-
+          /*
           // partial search interval 1
           console.log("partial", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E1", "E3", "G3"];
-          _cues = ax.getCuesByInterval(searchInterval1, "partial");
+          _cues = ax.lookup(searchInterval1, PARTIAL);
           check(_cues, _expect);
 
           // inside search interval 1
           console.log("inside", searchInterval1)
           _expect = ["D1", "D3", "D5", "G3"];
-          _cues = ax.getCuesByInterval(searchInterval1, "inside");
+          _cues = ax.lookup(searchInterval1, INSIDE);
           check(_cues, _expect);
+          */
 
+
+          /*
           // inside search interval 1
-          console.log("overlap", searchInterval1)
+          console.log("covers", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "F", "G3"];
-          _cues = ax.getCuesByInterval(searchInterval1, "overlap");
+          _cues = ax.lookup(searchInterval1, COVERS);
           check(_cues, _expect);
 
 
@@ -305,19 +329,19 @@
           // partial search interval 2
           console.log("partial", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E3", "E4", "G3", "G4"];
-          _cues = ax.getCuesByInterval(searchInterval2, "partial");
+          _cues = ax.lookup(searchInterval2, PARTIAL);
           check(_cues, _expect);
 
           // inside search interval 2
           console.log("inside", searchInterval2)
           _expect = ["D1", "D3", "D4", "D5", "D7", "G3", "G4"];
-          _cues = ax.getCuesByInterval(searchInterval2, "inside");
+          _cues = ax.lookup(searchInterval2, INSIDE);
           check(_cues, _expect);
 
           // inside search interval 2
-          console.log("overlap", searchInterval2)
+          console.log("covers", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G4", "F"];
-          _cues = ax.getCuesByInterval(searchInterval2, "overlap");
+          _cues = ax.lookup(searchInterval2, COVERS);
           check(_cues, _expect);
 
 
@@ -325,19 +349,26 @@
           // partial search interval 3
           console.log("partial", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "G3", "G2"];
-          _cues = ax.getCuesByInterval(searchInterval3, "partial");
+          _cues = ax.lookup(searchInterval3, PARTIAL);
           check(_cues, _expect);
 
           // inside search interval 3
           console.log("inside", searchInterval3)
           _expect = ["D1", "D3", "D2", "D5", "D6", "G3", "G2"];
-          _cues = ax.getCuesByInterval(searchInterval3, "inside");
+          _cues = ax.lookup(searchInterval3, INSIDE);
           check(_cues, _expect);
 
           // inside search interval 3
-          console.log("overlap", searchInterval3)
+          console.log("covers", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G2", "F"];
-          _cues = ax.getCuesByInterval(searchInterval3, "overlap");
+          _cues = ax.lookup(searchInterval3, COVERS);
+          check(_cues, _expect);
+          */
+
+          // inside search interval 4
+          console.log("inside", searchInterval4)
+          _expect = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "G2", "G3", "G4"];
+          _cues = ax.lookup(searchInterval4, INSIDE);
           check(_cues, _expect);
 
 
@@ -345,20 +376,17 @@
           // partial search interval 4
           console.log("partial", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4"];
-          _cues = ax.getCuesByInterval(searchInterval4, "partial");
+          _cues = ax.lookup(searchInterval4, PARTIAL);
           check(_cues, _expect);
 
-          // inside search interval 4
-          console.log("inside", searchInterval4)
-          _expect = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "G2", "G3", "G4"];
-          _cues = ax.getCuesByInterval(searchInterval4, "inside");
-          check(_cues, _expect);
 
           // inside search interval 4
-          console.log("overlap", searchInterval4)
+          console.log("covers", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4", "F"];
-          _cues = ax.getCuesByInterval(searchInterval4, "overlap");
+          _cues = ax.lookup(searchInterval4, COVERS);
           check(_cues, _expect);
+
+
 
         };
 
@@ -546,9 +574,9 @@
           //test_getCuePointsByInterval();
           //test_getCuesByInterval();
           //test_removeCuesByInterval();
-          //test_lookup_correctness();
+          test_lookup_correctness();
           //test_removeCuesByInterval_stress();
-          test_simple();
+          //test_simple();
 
         };
 

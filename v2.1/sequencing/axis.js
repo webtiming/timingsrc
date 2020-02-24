@@ -151,6 +151,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         LOOKUP: 2
     });
 
+
     /*
         Delta
 
@@ -1083,8 +1084,27 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             let cues = [];
 
 
+            const all_relations = new Set([
+                Relation.OVERLAP_LEFT,
+                Relation.COVERED,
+                Relation.EQUALS,
+                Relation.COVERS,
+                Relation.OVERLAP_RIGHT
+            ]);
+
+            const basic_relations = new Set([
+                Relation.OVERLAP_LEFT,
+                Relation.COVERED,
+                Relation.EQUALS,
+                Relation.OVERLAP_RIGHT
+            ])
+
+
+
             // special case only [EQUALS]
-            let only_equals_needed = (mode.length == 1 && mode[0] == Relation.EQUALS)
+            let only_equals_needed = !mode.some(e => e != Relation.EQUALS)
+
+
             if (only_equals_needed) {
                 return this._pointMap.get(interval.low).filter(function(cue) {
                     return cue.interval.equals(interval)
