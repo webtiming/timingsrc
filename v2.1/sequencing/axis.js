@@ -971,7 +971,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             returns all (point, cue) pairs where
                 - point is a cue endpoint (cue.low or cue.high)
-                - at least one cue endpoint is INSIDE search interval
+                - all cues with at least one endpoint value v,
+                    where interval.low <= v <= interval.high
                 - [{point:point, cue: cue}]
 
             - a given point may appear multiple times in the result,
@@ -988,7 +989,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 - but this can be added on the outside if needed
                 - no order is defined if two cues have exactly the
                   same endpoint
-
+            - may return cues that are OUTSIDE the search interval
+                e.g. if the search interval is [.., 4) then
+                (4, ...] will be returned, event if this strictly
         */
 
         lookup_points(interval) {
@@ -1001,20 +1004,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 point = points[i];
                 this._pointMap.get(point)
                     forEach(function (cue) {
-                        /*
-                            keep only cues that have at least one
-                            cue endpoint inside the search interval
-                            (as defined by endpoint ordering)
-
-                            there are two reasons why such cues might appear
-                            - the broadening of the search interval
-                            - insensitivity to endpoint ordering in pointIndex
-                        */
-                        low_inside = interval.inside(cue.interval.endpointLow);
-                        high_inside = interval.inside(cue.interval.endpointHigh);
-                        if (low_inside || high_inside) {
-                            result.push({point:point, cue:cue});
-                        }
+                        result.push({point:point, cue:cue});
                     });
             }
             return result;
@@ -1027,9 +1017,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             Internal function, used by LOOKUP.
 
             Return list of cues
-            - all cues inside an interval, i.e. cues that
-              have at least one endpoint INSIDE interval.
+            - all cues with at least one endpoint value v,
+              where interval.low <= v <= interval.high
             - no duplicates
+
+            Note - some cues may be outside the search interval
+            e.g. if the search interval is [.., 4) then
+            (4, ...] will be returned, event if this strictly
+            is OUTSIDE_RIGHT the search interval.
+            This is necessary in lookup for correct calculation of covers
+            from left_interval.
         */
 
         _lookup_cues(interval) {
@@ -1048,26 +1045,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                         } else {
                             cueSet.add(cue.key);
                         }
-                        /*
-                            keep only cues that have at least one
-                            cue endpoint inside the search interval
-                            (as defined by endpoint ordering)
-
-                            there are two reasons why such cues might appear
-                            - the broadening of the search interval
-                            - insensitivity to endpoint ordering in pointIndex
-                        */
-                        low_inside = interval.inside(cue.interval.endpointLow);
-                        high_inside = interval.inside(cue.interval.endpointHigh);
-                        if (low_inside || high_inside) {
-                            result.push(cue);
-                        }
+                        result.push(cue);
                     });
             }
             return result;
         }
-
-
 
         /*
             LOOKUP
