@@ -670,17 +670,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         /*
             REMOVE CUES BY INTERVAL
         */
-        removeCuesByInterval(interval, semantic=Semantic.INSIDE) {
-            const cues = this._execute(Method.REMOVE_CUES, interval, semantic);
+        lookup_remove(interval, mode) {
+            const cues = this._execute(Method.LOOKUP_REMOVE, interval, mode);
             // remove from cueMap and make events
-            const eventMap = new Map();
+            const batchMap = new Map();
+            let cue, delta;
             for (let i=0; i<cues.length; i++) {
-                let cue = cues[i];
+                cue = cues[i];
                 this._cueMap.delete(cue.key);
-                eventMap.set(cue.key, {'old': cue});
+                // check for equality
+                delta = cue_delta(cue, undefined);
+                batchMap.set(cue.key, {new: undefined, old: cue, delta: delta});
             }
-            this.eventifyTriggerEvent("change", eventMap);
-            return eventMap;
+            if (batchMap.size > 0) {
+                this.eventifyTriggerEvent("change", batchMap);
+            }
+            return batchMap;
         };
 
         /*
@@ -695,12 +700,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             let cueMap = this._cueMap;
             this._cueMap = new Map();
             // create change events for all cues
-            let e = [];
+            const batchMap = new Map();
+            let delta;
             for (let cue of cueMap.values()) {
-                e.push({'old': cue});
+                delta = cue_delta(cue, undefined);
+                batchMap.set(cue.key, {new: undefined, old: cue, delta: delta});
             }
-            this.eventifyTriggerEvent("change", e);
-            return cueMap;
+            if (batchMap.size > 0) {
+                this.eventifyTriggerEvent("change", batchMap);
+            }
+            return batchMap;
         };
 
 
@@ -1057,8 +1066,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         */
         lookup(interval, mode=31) {
 
-
-
             let cues = [];
 
             // special case only [EQUALS]
@@ -1124,7 +1131,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         /*
             REMOVE CUES
         */
-        lookup_remove(interval, semantic) {
+        lookup_remove(interval, mode) {
             /*
                 update pointMap
                 - remove all cues from pointMap
@@ -1132,7 +1139,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 - record points that became empty, as these need to be deleted in pointIndex
                 - separate into two bucketes, inside and outside
             */
-            const cues = this.execute(Method.LOOKUP_CUES, interval, semantic);
+            const cues = this.lookup(interval, mode);
             const to_remove = [];
             let cue, point, points;
             for (let i=0; i<cues.length; i++) {
