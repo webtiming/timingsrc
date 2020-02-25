@@ -1199,8 +1199,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
               with those points that should not be deleted, and set it back in.
         */
         clear() {
-            this._pointMap = new Map();
+            this._pointMap.clear();
             this._pointIndex = new BinarySearch();
+            this._created.clear();
+            this._dirty.clear();
         };
 
 
