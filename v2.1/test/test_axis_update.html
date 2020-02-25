@@ -550,7 +550,7 @@
             cue = {key:1, data: {palla: "palla"}};
             ax.update(cue);
 
-            cues = ax.getCuesByInterval(lookup_interval);
+            cues = ax.lookup(lookup_interval);
 
             // test that cue object is the same as the initial update
             assertTrue(cues[0] === init_cue);
@@ -577,13 +577,13 @@
 
             // make cue invisible by shifting right
             ax.update({key:1, interval: new Interval(5,7)});
-            cues = ax.getCuesByInterval(lookup_interval);
+            cues = ax.lookup(lookup_interval);
             assertTrue(cues.length == 0);
 
             // make cue visible by shifting left
             cue = {key:1, interval: new Interval(3,5)};
             ax.update(cue);
-            cues = ax.getCuesByInterval(lookup_interval);
+            cues = ax.lookup(lookup_interval);
 
             assertTrue(cues.length == 1);
 
@@ -594,12 +594,36 @@
           }
 
 
+
+          /*
+            by stretching a cue it will end up in a new bucket
+          */
+          function test_lookup_after_stretch_update() {
+
+            ax.clear();
+
+            init_cue = {key:1, interval: new Interval(2,3), data: {jalla: "jalla"}}
+            _init_cue = copy_cue(init_cue)
+            ax.update(init_cue);
+            ax._integrity()
+
+            let cues = ax.lookup(new Interval(10,20));
+            assertTrue(cues.length == 0);
+
+            ax.update({key:1, interval: new Interval(2,13)});
+            ax._integrity()
+
+            cues = ax.lookup(new Interval(10,20));
+            assertTrue(cues.length == 1);
+          }
+
+
           test_lookup_after_data_update();
           test_lookup_after_interval_update();
+          test_lookup_after_stretch_update();
 
           console.log("done test update lookup");
         }
-
 
 
         var run = function () {

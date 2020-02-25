@@ -582,13 +582,27 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             /*
                 old cue and new cue might not belong to the same cue bucket
             */
-            if (remove_needed) {
-                let bid = getCueBucketId(item.old.interval.length);
-                oldCueBucket = this._cueBuckets.get(bid);
+            if (remove_needed){
+                let old_bid = getCueBucketId(item.old.interval.length);
+                oldCueBucket = this._cueBuckets.get(old_bid);
             }
             if (add_needed) {
-                let bid = getCueBucketId(item.new.interval.length);
-                newCueBucket = this._cueBuckets.get(bid);
+                let new_bid = getCueBucketId(item.new.interval.length);
+                newCueBucket = this._cueBuckets.get(new_bid);
+            }
+
+            /*
+                if old CueBucket is different from the new cue Buckets
+                both low and high must be moved, even it one was not
+                changed
+            */
+            if (oldCueBucket && newCueBucket) {
+                if (oldCueBucket != newCueBucket) {
+                    remove_needed = true;
+                    add_needed = true;
+                    low_changed = true;
+                    high_changed = true;
+                }
             }
 
             /*
@@ -670,8 +684,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         /*
             REMOVE CUES BY INTERVAL
         */
-        lookup_remove(interval, mode) {
-            const cues = this._execute(Method.LOOKUP_REMOVE, interval, mode);
+        lookup_delete(interval, mode) {
+            const cues = this._execute(Method.LOOKUP_DELETE, interval, mode);
             // remove from cueMap and make events
             const batchMap = new Map();
             let cue, delta;
@@ -821,7 +835,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             // method map
             this._methodMap = new Map([
-                [Method.LOOKUP_REMOVE, this.lookup_remove.bind(this)],
+                [Method.LOOKUP_DELETE, this.lookup_delete.bind(this)],
                 [Method.LOOKUP, this.lookup.bind(this)],
                 [Method.LOOKUP_ENDPOINTS, this.lookup_endpoints.bind(this)],
                 [Method.INTEGRITY, this._integrity.bind(this)]
@@ -982,20 +996,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             const points = this._pointIndex.lookup(broader_interval);
             const result = [];
             const len = points.length;
-            let endpoint;
+            let point, endpoint;
             for (let i=0; i<len; i++) {
                 point = points[i];
                 this._pointMap.get(point)
-                    forEach(function (cue) {
+                    .forEach(function (cue) {
                         /*
                             figure out if point is endpoint low or high
                             include cue if the endpoint is inside search interval
                         */
-                        if (point == cue.low) {
-                            endpoint = cue.endpointLow;
-                        } else if (point == cue.high) {
-                            endpoint = cue.endpointHigh;
+                        if (point == cue.interval.low) {
+                            endpoint = cue.interval.endpointLow;
+                        } else if (point == cue.interval.high) {
+                            endpoint = cue.interval.endpointHigh;
                         } else {
+                            console.log(point)
+                            console.log(cue)
                             throw new Error("fatal: point cue mismatch");
                         }
                         if (interval.inside(endpoint)) {
@@ -1131,7 +1147,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         /*
             REMOVE CUES
         */
-        lookup_remove(interval, mode) {
+        lookup_delete(interval, mode) {
             /*
                 update pointMap
                 - remove all cues from pointMap

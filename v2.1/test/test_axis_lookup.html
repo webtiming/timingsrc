@@ -14,175 +14,50 @@
 
       require(['sequencing/axis', 'util/interval'], function (Axis, Interval) {
 
-        const Relation = Interval.Relation;
-        const Delta = Axis.Delta;
-        const cue_equals = Axis.cue_equals;
-        const equals = Axis.equals;
-
         function assertTrue(val) {
           if (!val) {
             throw new Error("not true: " + val);
           }
         }
 
-        function copy_cue(cue) {
-          return {
-            key: cue.key,
-            interval: cue.interval,
-            data: cue.data
-          };
-        }
-
-        var timeit = function (func) {
-          let t0 = performance.now();
-          let result = func();
-          return [result, performance.now()-t0];
-        };
-
-        var make_sorted_ints = function (size, options) {
-          options = options || {};
-          offset = options['offset'] || 0;
-          let numbers = [];
-          for (let i=0; i<size; i++) {
-            numbers.push(Math.floor(i+offset));
-          }
-          return numbers;
-        };
-
-        var make_sorted_floats = function (size, options) {
-          options = options || {};
-          offset = options['offset'] || 0;
-          let numbers = [];
-          for (let i=0; i<size; i++) {
-            numbers.push(i+offset);
-          }
-          return numbers;
-        };
-
-        var make_random_ints = function (size, options) {
-          options = options || {};
-          scale = options['scale'] || 1;
-          offset = options['offset'] || 0;
-          return Array.from({length: size}, () => Math.floor(Math.random() * scale + offset));
-        };
-
-        var make_random_floats = function (size, options) {
-          options = options || {};
-          scale = options['scale'] || 1;
-          offset = options['offset'] || 0;
-          return Array.from({length: size}, () => Math.random() * scale + offset);
-        };
-
-
-        var make_singular_cues = function (size, scale) {
-          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
-          return numbers.map(function (n) {
-            return {key: "key " + n.toString(), interval: new Interval(n), data: "data_" + n};
-          });
-        };
-
-        var make_remove_cues = function (size, scale) {
-          let numbers = Array.from({length: size}, () => Math.floor(Math.random() * scale));
-          return numbers.map(function (n) {
-            return {key: "key " + n.toString()};
-          });
-        };
-
-        var make_singular_cues_sorted_unique = function (size) {
-          let numbers = [];
-          for (let i=0; i<size; i++) {
-            numbers.push(i);
-          }
-          return numbers.map(function (n) {
-            return {key: n.toString(), interval: new Interval(n, n+1), data: "data_" + n};
-          });
-        };
-
-        var make_cues_from_numbers = function (numbers, options) {
-          options = options || {};
-          let op = options['op'] || "add";
-          return numbers.map(function (n) {
-            if (op == "remove") {
-              return {key: n.toString()};
-            } else {
-              return {key: n.toString(), interval: new Interval(n, n+1), data: "data_" + n};
-            }
-          });
-        };
-
-
-
-
-        var test_getCuePointsByInterval = function () {
+        /*
+          test lookup endpoints
+        */
+        var test_lookup_endpoints = function () {
           let ax = new Axis();
 
           let cues = [];
           for (let i=0; i<100; i++) {
-            cues.push({key: i.toString(), interval: new Interval(i)});
+            cues.push({key: i, interval: new Interval(i)});
           }
           for (let i=0; i<100; i++) {
-            cues.push({key: "jalla" + i.toString(), interval: new Interval(i)});
+            cues.push({key: 1000 + i, interval: new Interval(i)});
           }
+          ax.update(cues);
 
-          ax._update(cues);
+          let interval = new Interval(4,18, false, false);
+          let endpoints = ax.lookup_endpoints(interval);
 
-          let interval = new Interval(4,18, true, true);
-          let points = ax.getCuePointsByInterval(interval);
+          let current = 0;
 
-          for (let p of points) {
-            console.log(p);
-          }
+          let len = endpoints.length;
+          assertTrue(len == (17-4)*2);
+          assertTrue(endpoints[0].endpoint[0] == 5);
+          assertTrue(endpoints[len-1].endpoint[0] == 17);
+
+          console.log("test_lookup_endpoints done");
         };
-
-
-        var test_getCuesByInterval = function () {
-          let ax = new Axis();
-
-          let cues = [];
-          for (let i=0; i<100; i++) {
-            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
-          }
-
-          // add some singletons
-          cues.push({key: "single", interval: new Interval(11.5)});
-
-          ax._update(cues);
-
-          let interval = new Interval(4.5, 17.5, false, false);
-          ax._update([{
-            key: "overlapping",
-            interval: new Interval(4, 18, true, true)
-          }]);
-
-          console.log("inside");
-          cues = ax.getCuesByInterval(interval, "inside");
-          for (let cue of cues.values()) {
-            console.log(cue);
-          }
-
-          console.log("partial");
-          cues = ax.getCuesByInterval(interval, "partial");
-          for (let cue of cues.values()) {
-            console.log(cue);
-          }
-
-          console.log("overlap");
-          cues = ax.getCuesByInterval(interval, "overlap");
-          for (let cue of cues.values()) {
-            console.log(cue);
-          }
-
-
-        };
-
 
 
         /*
           test lookup correctness
         */
 
-
         var test_lookup_correctness = function () {
+
+          const INSIDE = 12;
+          const OVERLAP = 29;
+          const COVERS = 31;
 
           const check = function(cues, expect) {
             let missing = [];
@@ -215,12 +90,6 @@
             }
 
           };
-
-
-          const INSIDE = 12;
-          const OVERLAP = 29;
-          const COVERS = 31;
-
 
           /*
             all the different intervals related to low = 4 and high = 10
@@ -360,105 +229,73 @@
           _cues = ax.lookup(searchInterval4, COVERS);
           check(_cues, _expect);
 
+          console.log("test_lookup_correctness done");
+
         };
 
 
 
-        var test_removeCuesByInterval = function () {
+        var test_lookup_delete = function () {
           let ax = new Axis();
+          let batchMap, expect;
 
+          const INSIDE = 12;
+          const OVERLAP = 29;
+          const COVERS = 31;
+
+          /*
+          cues [0,1),[1,2),...[99,100) + [4,18]
+          */
           let cues = [];
-          let _cues;
           for (let i=0; i<100; i++) {
-            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+            cues.push({key: i, interval: new Interval(i, i+1)});
           }
           cues.push({
             key: "overlapping",
             interval: new Interval(4, 18, true, true)
           });
 
+          // search interval
           let interval = new Interval(4.5, 17.5, false, false);
 
 
-          /*
-          console.log("cueMap", ax._cueMap.size);
-          console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
-          console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
-          console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
-          console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
-          */
-
-          // remove partial
-          console.log("remove partial")
-          ax._update(cues);
-          _cues = ax.removeCuesByInterval(interval, "partial");
-          for (let cue of _cues.values()) {
-            console.log(cue.old.key);
+          // test evaluate
+          function evaluate (expect, batchMap) {
+            expect.forEach(function (key) {
+              assertTrue(batchMap.has(key));
+            });
+            for (let item of batchMap.values()) {
+              assertTrue(expect.includes(item.old.key));
+            }
+            ax._integrity();
           }
-          ax._integrity();
-          ax.clear();
 
           // remove inside
           console.log("remove inside");
-          ax._update(cues);
-          _cues = ax.removeCuesByInterval(interval, "inside");
-          for (let cue of _cues.values()) {
-            console.log(cue.old.key);
-          }
+          expect = [5,6,7,8,9,10,11,12,13,14,15,16];
+          ax.update(cues);
+          batchMap = ax.lookup_delete(interval, INSIDE);
+          evaluate(expect, batchMap);
+          ax.clear();
+
+          // remove partial
+          console.log("remove partial")
+          expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17];
+          ax.update(cues);
+          batchMap = ax.lookup_delete(interval, OVERLAP);
           ax._integrity();
+          evaluate(expect, batchMap);
           ax.clear();
 
           // remove overlap
           console.log("remove overlap");
-          ax._update(cues);
-          _cues = ax.removeCuesByInterval(interval, "overlap");
-          for (let cue of _cues.values()) {
-            console.log(cue.old.key);
-          }
-          ax._integrity();
+          expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17, "overlapping"];
+          ax.update(cues);
+          batchMap = ax.lookup_delete(interval, COVERS);
+          evaluate(expect, batchMap);
           ax.clear();
 
-
-          /*
-          console.log("cueMap", ax._cueMap.size);
-          console.log("pointMap", 10, ax._cueBuckets.get(10)._pointMap.size);
-          console.log("pointIndex", 10, ax._cueBuckets.get(10)._pointIndex.array.length);
-          console.log("pointMap", 100, ax._cueBuckets.get(100)._pointMap.size);
-          console.log("pointIndex", 100, ax._cueBuckets.get(100)._pointIndex.array.length);
-          */
-
-          console.log(ax._integrity());
-
-        };
-
-
-        var test_removeCuesByInterval_stress = function () {
-
-          let DATASIZE = 500000;
-          let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
-          let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 50);
-
-          let ax = new Axis();
-
-          // initialise
-          let numbers_1 = make_sorted_floats(DATASIZE);
-          let batch_1 = make_cues_from_numbers(numbers_1);
-          ax._update(batch_1);
-
-          // remove cues in interval
-          [res, t] = timeit(function () {
-            return ax.removeCuesByInterval(interval);
-          });
-          console.log("remove cues by interval", interval.toString(), " ", res.size, " ", t);
-
-          ax.clear();
-          ax._update(batch_1);
-
-          // remove cues in interval
-          [res, t] = timeit(function () {
-            return ax.removeCuesByInterval(smallInterval);
-          });
-          console.log("remove cues by smallinterval", smallInterval.toString(), " ", res.size, " ", t);
+          console.log("test lookup delete done");
 
         };
 
@@ -467,75 +304,6 @@
 
           const ax = new Axis();
 
-          /*
-            all the different intervals related to low = 4 and high = 10
-          */
-
-          const cues = [
-
-
-            // outside left
-            {key:"A1", interval: new Interval(1,2)},
-            // outside right
-            {key:"A2", interval: new Interval(12,14)},
-
-            // outside left touching low
-            {key:"B1", interval: new Interval(1,4, true, false)},
-            {key:"B2", interval: new Interval(1,4, true, true)},
-
-            // outside right - touching high
-            {key:"B3", interval: new Interval(10,12, false, false)},
-            {key:"B4", interval: new Interval(10,12, true, false)},
-
-            // overlap low
-            {key:"C1", interval: new Interval(1,6, true, false)},
-            // overlap high
-            {key:"C2", interval: new Interval(6,12, true, false)},
-
-            // inside - touching low
-            {key:"D1", interval: new Interval(4,6, false, false)},
-            {key:"D2", interval: new Interval(4,6, true, false)},
-            // inside - touching high
-            {key:"D3", interval: new Interval(6,10, true, false)},
-            {key:"D4", interval: new Interval(6,10, true, true)},
-            // inside touching low and high
-            {key:"D5", interval: new Interval(4,10, false, false)},
-            {key:"D6", interval: new Interval(4,10, true, false)},
-            {key:"D7", interval: new Interval(4,10, false, true)},
-            {key:"D8", interval: new Interval(4,10, true, true)},
-
-            // touching low - right of high
-            {key:"E1", interval: new Interval(4,12, false, false)},
-            {key:"E2", interval: new Interval(4,12, true, false)},
-            // left of low, touching high
-            {key:"E3", interval: new Interval(1,10, true, false)},
-            {key:"E4", interval: new Interval(1,10, true, true)},
-
-            // covering
-            // {key:"F", interval: new Interval(1,12, false, true)},
-
-            // singulars
-            // {key:"G1", interval: new Interval(1)},
-            // {key:"G2", interval: new Interval(4)},
-            // {key:"G3", interval: new Interval(6)},
-            // {key:"G4", interval: new Interval(10)},
-            // {key:"G5", interval: new Interval(12)},
-          ]
-
-          // insert cues
-          ax.update(cues);
-
-          const lookup_1 = new Interval(4,10, false, false);
-          const lookup_2 = new Interval(4,10, false, true);
-          const lookup_3 = new Interval(4,10, true, false);
-          const lookup_4 = new Interval(4,10, true, true);
-
-
-          let res = ax.lookup(lookup_4);
-          console.log(res)
-
-
-
 
         }
 
@@ -543,12 +311,10 @@
 
 
         var run = function () {
-          //test_getCuePointsByInterval();
-          //test_getCuesByInterval();
-          //test_removeCuesByInterval();
-          test_lookup_correctness();
-          //test_removeCuesByInterval_stress();
-          //test_simple();
+          test_lookup_endpoints();
+          //test_lookup_delete();
+          //test_lookup_correctness();
+
 
         };
 
