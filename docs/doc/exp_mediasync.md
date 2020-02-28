@@ -17,8 +17,8 @@ Synchronization and control of two video elements using timing object. Both vide
     <button id='tostart'>Reset</button>
     <button id='pause'>Pause</button>
     <b><button id='forward'>Play</button></b>
-    <button id='skipforward'>Skip 5 Ahead</button>
     <button id='skipbackward'>Skip 5 Back </button>   
+    <button id='skipforward'>Skip 5 Ahead</button>
   </p>
  
 </div>
@@ -29,14 +29,14 @@ Synchronization and control of two video elements using timing object. Both vide
 
 **Player 1**
 <p>
-  <video id="player1" style="height:200px">
+  <video id="player1" style="height:200px" autoplay>
       <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
       <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
   </video>
 </p>
 **Player 2**
 <p>
-  <video id="player2" style="height:200px">
+  <video id="player2" style="height:200px" autoplay>
       <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
       <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
   </video>
