@@ -267,7 +267,7 @@
             for (let item of batchMap.values()) {
               assertTrue(expect.includes(item.old.key));
             }
-            ax._integrity();
+            ax.integrity();
           }
 
           // remove inside
@@ -283,7 +283,7 @@
           expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17];
           ax.update(cues);
           batchMap = ax.lookup_delete(interval, OVERLAP);
-          ax._integrity();
+          ax.integrity();
           evaluate(expect, batchMap);
           ax.clear();
 
@@ -312,8 +312,8 @@
 
         var run = function () {
           test_lookup_endpoints();
-          //test_lookup_delete();
-          //test_lookup_correctness();
+          test_lookup_delete();
+          test_lookup_correctness();
 
 
         };

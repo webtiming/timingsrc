@@ -124,22 +124,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
     /*
-        Method
-
-        Specifies various methods on CueBuckets
-
-        LOOKUP_CUEPOINTS - look up all (point, cue) tuples in search interval
-        LOOKUP_CUES - lookup all cues in interval
-        REMOVE_CUES - remove all cues in interval
-
-    */
-    const Method = Object.freeze({
-        INTEGRITY: 0,
-        LOOKUP_ENDPOINTS: 1,
-        LOOKUP: 2
-    });
-
-    /*
         Delta
 
         Used to represent statechanges in batchMap,
@@ -459,9 +443,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
             if (batchMap.size > 0) {
                 // flush all buckets so updates take effect
-                for (let cueBucket of this._cueBuckets.values()) {
-                    cueBucket.flush();
-                }
+                this._call_buckets("flush");
                 // event notification
                 this.eventifyTriggerEvent("change", batchMap);
             }
@@ -621,22 +603,22 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (low_changed) {
                 if (remove_needed) {
                     // console.log("remove old low", item.old.interval.low);
-                    oldCueBucket.processCue("remove", item.old.interval.low, item.old);
+                    oldCueBucket.del_endpoint(item.old.interval.low, item.old);
                 }
                 if (add_needed) {
                     // console.log("add new low", item.new.interval.low);
-                    newCueBucket.processCue("add", item.new.interval.low, item.new);
+                    newCueBucket.add_endpoint(item.new.interval.low, item.new);
                 }
             }
             // update high point - if changed
             if (high_changed) {
                 if (remove_needed && !item.old.interval.singular) {
                     // console.log("remove old high", item.old.interval.high);
-                    oldCueBucket.processCue("remove", item.old.interval.high, item.old);
+                    oldCueBucket.del_endpoint(item.old.interval.high, item.old);
                 }
                 if (add_needed && !item.new.interval.singular) {
                     // console.log("add new high", item.new.interval.high);
-                    newCueBucket.processCue("add", item.new.interval.high, item.new);
+                    newCueBucket.add_endpoint(item.new.interval.high, item.new);
                 }
             }
         }
@@ -647,10 +629,13 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             execute method across all cue buckets
             and aggregate results
         */
-        _execute(method, interval, arg) {
+        _call_buckets(method, ...args) {
             const res = [];
             for (let cueBucket of this._cueBuckets.values()) {
-                let cues = cueBucket.execute(method, interval, arg);
+                let cues = cueBucket[method](...args);
+                if (cues == undefined) {
+                    continue;
+                }
                 if (cues.length > 0) {
                     res.push(cues);
                 }
@@ -668,7 +653,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         */
 
         lookup_endpoints(interval) {
-            return this._execute(Method.LOOKUP_ENDPOINTS, interval);
+            return this._call_buckets("lookup_endpoints", interval);
         }
 
 
@@ -677,7 +662,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         */
 
         lookup(interval, mode) {
-            return this._execute(Method.LOOKUP, interval, mode);
+            return this._call_buckets("lookup", interval, mode);
         }
 
 
@@ -685,7 +670,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             REMOVE CUES BY INTERVAL
         */
         lookup_delete(interval, mode) {
-            const cues = this._execute(Method.LOOKUP_DELETE, interval, mode);
+            const cues = this._call_buckets("lookup_delete", interval, mode);
             // remove from cueMap and make events
             const batchMap = new Map();
             let cue, delta;
@@ -707,9 +692,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         */
         clear() {
             // clear cue Buckets
-            for (let cueBucket of this._cueBuckets.values()) {
-                cueBucket.clear();
-            }
+            this._call_buckets("clear");
             // clear cueMap
             let cueMap = this._cueMap;
             this._cueMap = new Map();
@@ -751,8 +734,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         /*
             utility
         */
-        _integrity() {
-            const res = this._execute(Method.INTEGRITY);
+        integrity() {
+            const res = this._call_buckets("integrity");
 
             // sum up cues and points
             let cues = [];
@@ -832,23 +815,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             this._created = new Set(); // point
             this._dirty = new Set(); // point
 
-
-            // method map
-            this._methodMap = new Map([
-                [Method.LOOKUP_DELETE, this.lookup_delete.bind(this)],
-                [Method.LOOKUP, this.lookup.bind(this)],
-                [Method.LOOKUP_ENDPOINTS, this.lookup_endpoints.bind(this)],
-                [Method.INTEGRITY, this._integrity.bind(this)]
-            ]);
-
         };
 
 
         /*
 
-            CUE BATCH PROCESSING
+            ENDPOINT BATCH PROCESSING
 
-            Needs to translate cue operations into a minimum set of
+            Needs to translate endpoint operations into a minimum set of
             operations on the pointIndex.
 
             To do this, we need to record points that are created and
@@ -879,36 +853,31 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             after the cue processing, pointmap will updated based on the
             contents of these two.
 
-            operation add or remove for given cue
-
-            this method may be invoked at most two times for the same key.
-            - first "remove" on the old cue
-            - second "add" on the new cue
-
-            "add" means cue to be added to point
-            "remove" means cue to be removed from point
-
             process buffers operations for pointMap and index so that
             all operations may be applied in one batch. This happens in flush
         */
 
-        processCue(op, point, cue) {
+        add_endpoint(point, cue) {
             let init = (this._pointMap.size == 0);
             let cues = (init) ? undefined : this._pointMap.get(point);
             if (cues == undefined) {
-                cues = [];
-                this._pointMap.set(point, cues);
+                this._pointMap.set(point, [cue]);
                 this._created.add(point);
-            }
-            if (op == "add") {
-                addCueToArray(cues, cue);
             } else {
+                addCueToArray(cues, cue);
+            }
+        }
+
+        del_endpoint(point, cue) {
+            let init = (this._pointMap.size == 0);
+            let cues = (init) ? undefined : this._pointMap.get(point);
+            if (cues != undefined) {
                 let empty = removeCueFromArray(cues, cue);
                 if (empty) {
                     this._dirty.add(point);
                 }
             }
-        };
+        }
 
         /*
             Batch processing is completed
@@ -948,22 +917,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             // cleanup
             this._created.clear();
             this._dirty.clear();
-        };
-
-
-        /*
-            execute dispatches request to given method on CueBatch.
-        */
-        execute(method, interval, arg) {
-            if (this._pointIndex.length == 0) {
-                return [];
-            }
-            let func = this._methodMap.get(method);
-            if (func) {
-                return func(interval, arg);
-            } else {
-                throw new Error("method not supported " + method);
-            }
         };
 
 
@@ -1035,7 +988,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             Note - some cues may be outside the search interval
             e.g. if the search interval is [.., 4) then
-            (4, ...] will be returned, event if this strictly
+            (4, ...] will be returned, even if this strictly
             is OUTSIDE_RIGHT the search interval.
             This is necessary in lookup for correct calculation of covers
             from left_interval.
@@ -1226,7 +1179,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             Integrity test for cue bucket datastructures
             pointMap and pointIndex
         */
-        _integrity() {
+        integrity() {
 
             if (this._pointMap.size !== this._pointIndex.length) {
                 throw new Error("unequal number of points " + (this._pointMap.size - this._pointIndex.length));

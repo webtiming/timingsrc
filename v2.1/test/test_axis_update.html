@@ -605,13 +605,13 @@
             init_cue = {key:1, interval: new Interval(2,3), data: {jalla: "jalla"}}
             _init_cue = copy_cue(init_cue)
             ax.update(init_cue);
-            ax._integrity()
+            ax.integrity()
 
             let cues = ax.lookup(new Interval(10,20));
             assertTrue(cues.length == 0);
 
             ax.update({key:1, interval: new Interval(2,13)});
-            ax._integrity()
+            ax.integrity()
 
             cues = ax.lookup(new Interval(10,20));
             assertTrue(cues.length == 1);
