@@ -27,18 +27,29 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     }
 
     /*
-        concat two arrays without creating a copy
-        push elements from the shortest into the longest
-        return the longest
-        - does not preserve ordering
+        effective concatenation of multiple arrays
+        longest array is extended by values from
+        the other arrays
     */
-    const mergeArrays = function(arr1, arr2) {
-        const [shortest, longest] = (arr1.length <= arr2.length) ? [arr1, arr2] : [arr2, arr1];
-        let len = shortest.length;
-        for (let i=0; i<len; i++) {
-            longest.push(shortest[i]);
+    function array_concat(...arrays) {
+        let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
+        // sort arrays according to length - longest first
+        arrays.sort((a, b) => b.length - a.length);
+        let first = arrays.shift();
+        let start = first.length;
+        // reserve memory total length
+        first.length = total_len;
+        // fill up first with entries from other arrays
+        let end, len;
+        for (let arr of arrays) {
+            len = arr.length;
+            end = start + len;
+            for (let i=0; i<len; i++) {
+                first[start + i] = arr[i]
+            }
+            start = end;
         }
-        return longest;
+        return first;
     };
 
     /*
