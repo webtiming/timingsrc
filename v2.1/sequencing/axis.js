@@ -32,6 +32,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         the other arrays
     */
     function array_concat(...arrays) {
+        if (arrays.length == 0) {
+            return [];
+        }
+        if (arrays.length == 1) {
+            return arrays[0];
+        }
         let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
         // sort arrays according to length - longest first
         arrays.sort((a, b) => b.length - a.length);
@@ -96,6 +102,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             });
             if (idx == -1) {
                 arr.push(cue);
+            } else {
+                console.log("duplicate");
             }
         }
         return arr.length;
@@ -104,11 +112,17 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     /*
         Remove cue from array
         - noop if cue does not exist
-        - returns array length
+        - returns array empty
     */
     var removeCueFromArray = function (arr, cue) {
         // cue equality defined by key property
-        if (arr.length == 0) {
+        if (arr.length == 1) {
+            if (arr[0].key == cue.key) {
+                arr.shift();
+            }
+            return arr.length == 0;
+        }
+        else if (arr.length == 0) {
             return true;
         } else {
             let idx = arr.findIndex(function (_cue) {
@@ -375,7 +389,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
         update(cues, options) {
             const batchMap = new Map();
-            let len, cue, current_cue;
+            let current_cue;
             let has_interval, has_data;
             let init = this._cueMap.size == 0;
             // options
@@ -384,16 +398,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (options.check == undefined) {
                 options.check = false;
             }
-            if (!Array.isArray(cues)) {
+            if (!isIterable(cues)) {
                 cues = [cues];
             }
 
             /***********************************************************
                 process all cues
             ***********************************************************/
-            len = cues.length;
-            for (let i=0; i<len; i++) {
-                cue = cues[i];
+            for (let cue of cues) {
 
                 /*******************************************************
                     check validity of cue argument
@@ -483,7 +495,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
 
-            // ignore (NOOP, NOOP)
+            // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
                 item = {new:current_cue, old:current_cue, delta:delta};
                 batchMap.set(cue.key, item);
@@ -641,17 +653,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             and aggregate results
         */
         _call_buckets(method, ...args) {
-            const res = [];
+            const arrays = [];
             for (let cueBucket of this._cueBuckets.values()) {
                 let cues = cueBucket[method](...args);
-                if (cues == undefined) {
-                    continue;
-                }
-                if (cues.length > 0) {
-                    res.push(cues);
+                if (cues != undefined && cues.length > 0) {
+                    arrays.push(cues);
                 }
             }
-            return [].concat(...res);
+            return array_concat(...arrays);
         };
 
         /*
@@ -875,7 +884,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 this._pointMap.set(point, [cue]);
                 this._created.add(point);
             } else {
-                addCueToArray(cues, cue);
+                cues.push(cue);
+                // addCueToArray(cues, cue);
             }
         }
 
@@ -1068,7 +1078,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                             return false;
                         }
                         return mode & LookupMaskMap.get(relation)
-                        //return mode.includes(relation);
                     });
             }
 

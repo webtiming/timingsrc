@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!--  main -->
+    <script text="javascript">
+
+
+      function timeit(func) {
+        let t0 = performance.now();
+        let result = func();
+        return [result, performance.now()-t0];
+      };
+
+
+      function array_concat(...arrays) {
+        let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
+        // sort arrays according to length - longest first
+        arrays.sort((a, b) => b.length - a.length);
+        let first = arrays.shift();
+        let start = first.length;
+        // reserve memory total length
+        first.length = total_len;
+        // fill up first with entries from other arrays
+        let end, len;
+        for (let arr of arrays) {
+          len = arr.length;
+          end = start + len;
+          for (let i=0; i<len; i++) {
+            first[start + i] = arr[i]
+          }
+          start = end;
+        }
+        return first;
+      }
+
+
+      function map_concat(map1, map2) {
+        const [shortest, longest] = (map1.size <= map2.size) ? [map1, map2] : [map2, map1];
+        for (let [key, val] of shortest.entries()) {
+          longest.set(key, val);
+        }
+        return longest;
+      }
+
+
+      function make_array(size) {
+          let numbers = [];
+          for (let i=0; i<size; i++) {
+            numbers.push(i);
+          }
+          return numbers;
+        };
+
+      function make_map(size, key_func) {
+        let map = new Map();
+        for (let i=0; i<size; i++) {
+          map.set(key_func(i), i);
+        }
+        return map;
+      }
+
+
+
+      function test_array_concat() {
+        let a = make_array(10000);
+        let b = make_array(100000);
+        let t0 = performance.now();
+        let c = array_concat(a, b);
+        let t1 = performance.now();
+
+        console.log("array concat", t1-t0);
+      }
+
+
+
+
+      function test_map_concat() {
+        let a = make_map(10000, i => i);
+        let b = make_map(100000, i => i.toString());
+        let t0 = performance.now();
+        let c = map_concat(a, b);
+        let t1 = performance.now();
+        console.log("map concat", t1-t0);
+      }
+
+      var run = function () {
+        test_array_concat();
+        test_map_concat();
+
+      };
+
+      if (document.readyState === "complete") run();
+      else window.onload = run;
+    </script>
+  </head>
+  <body>
+    <h1>Test Concat</h1>
+  </body>
+</html>
