@@ -59,31 +59,26 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     };
 
     /*
-        object equals
+        default object equals
     */
-    function object_equals(a, b) {
+    function default_equals(a, b) {
         // Create arrays of property names
-        var aProps = Object.getOwnPropertyNames(a);
-        var bProps = Object.getOwnPropertyNames(b);
-
-        // If number of properties is different,
-        // objects are not equivalent
+        let aProps = Object.getOwnPropertyNames(a);
+        let bProps = Object.getOwnPropertyNames(b);
+        let len = aProps.length;
+        let propName;
+        // If properties lenght is different => not equal
         if (aProps.length != bProps.length) {
             return false;
         }
-
-        for (var i = 0; i < aProps.length; i++) {
-            var propName = aProps[i];
-
-            // If values of same property are not equal,
-            // objects are not equivalent
+        for (let i=0; i<len; i++) {
+            propName = aProps[i];
+            // If property values are not equal => not equal
             if (a[propName] !== b[propName]) {
                 return false;
             }
         }
-
-        // If we made it this far, objects
-        // are considered equivalent
+        // equal
         return true;
     }
 
@@ -102,8 +97,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             });
             if (idx == -1) {
                 arr.push(cue);
-            } else {
-                console.log("duplicate");
             }
         }
         return arr.length;
@@ -237,7 +230,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (equals) {
                 eq = equals(cue_a.data, cue_b.data);
             } else {
-                eq = (cue_a.data == cue_b.data);
+                eq = default_equals(cue_a.data, cue_b.data);
             }
             data_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
         }
@@ -398,6 +391,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (options.check == undefined) {
                 options.check = false;
             }
+            // chaining is true by default
+            if (options.chaining == undefined) {
+                options.chaining = true;
+            }
+
             if (!isIterable(cues)) {
                 cues = [cues];
             }
@@ -462,7 +460,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     - create batchMap
                 *******************************************************/
 
-                this._update_cue(batchMap, current_cue, cue, options.equals);
+                this._update_cue(batchMap, current_cue, cue, options);
             }
             if (batchMap.size > 0) {
                 // flush all buckets so updates take effect
@@ -485,12 +483,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             - update CueBucket
         ***************************************************************/
 
-        _update_cue(batchMap, current_cue, cue, equals) {
+        _update_cue(batchMap, current_cue, cue, options) {
             let old_cue, new_cue;
             let item, _item;
             let oldCueBucket, newCueBucket;
             let low_changed, high_changed;
             let remove_needed, add_needed;
+            let equals = options.equals;
+            let chaining = options.chaining;
 
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
@@ -534,12 +534,14 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 the previous batchMap item
                 also recalculate delta relative to old_cue
             */
-
-            _item = batchMap.get(cue.key);
-            if (_item != undefined) {
-                item.old = _item.old;
-                item.delta = cue_delta(item.old, item.new);
+            if (chaining) {
+                _item = batchMap.get(cue.key);
+                if (_item != undefined) {
+                    item.old = _item.old;
+                    item.delta = cue_delta(item.old, item.new);
+                }
             }
+
             batchMap.set(cue.key, item)
 
             /***********************************************************
@@ -674,7 +676,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
         lookup_endpoints(interval) {
             return this._call_buckets("lookup_endpoints", interval);
-        }
+        };
 
 
         /*
@@ -683,7 +685,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
         lookup(interval, mode) {
             return this._call_buckets("lookup", interval, mode);
-        }
+        };
 
 
         /*
@@ -731,7 +733,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
 
         /*
-            Accessors
+            Map accessors
         */
 
         has(key) {
@@ -743,12 +745,16 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         };
 
         keys() {
-            return [...this._cueMap.keys()];
+            return this._cueMap.keys();
         };
 
-        cues() {
-            return [...this._cueMap.values()];
+        values() {
+            return this._cueMap.values();
         };
+
+        entries() {
+            return this._cueMap.entries();
+        }
 
 
         /*
@@ -885,7 +891,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 this._created.add(point);
             } else {
                 cues.push(cue);
-                // addCueToArray(cues, cue);
+                //addCueToArray(cues, cue);
             }
         }
 
@@ -898,7 +904,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     this._dirty.add(point);
                 }
             }
-        }
+        };
 
         /*
             Batch processing is completed
@@ -910,6 +916,9 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             pointIndex
             - points to delete - dirty and empty
             - points to insert - created and non-empty
+
+            it is possible that a cue ends up in both created and dirty
+
         */
         flush() {
             if (this._created.size == 0 && this._dirty.size == 0) {
@@ -929,6 +938,10 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             }
             for (let point of this._dirty.values()) {
                 let cues = this._pointMap.get(point);
+                if (cues == undefined) {
+                    // point already deleted from created set - ignore
+                    continue;
+                }
                 if (cues.length == 0) {
                     to_remove.push(point);
                     this._pointMap.delete(point);
@@ -1259,7 +1272,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     // Static variables
     Axis.Delta = Delta;
     Axis.cue_equals = cue_equals;
-    Axis.equals = object_equals;
+    Axis.equals = default_equals;
     // module definition
     return Axis;
 });

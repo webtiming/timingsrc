@@ -451,6 +451,62 @@
           }
 
 
+ /*
+            verify that original data is not preserved when interval is given
+            after delete
+          */
+          function test_delete_first_no_chaining() {
+            ax.clear();
+            init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
+            ax.update(init_cue);
+            cues = [
+              {key: 1},
+              {key: 1, interval: new Interval(3, 5)}
+            ];
+            res = ax.update(cues, {chaining:false});
+            // test sizes
+            assertTrue(res.size == 1);
+            assertTrue(ax.size == 1);
+            // test delta values
+            assertTrue(res.get(1).delta.interval == Delta.INSERT);
+            assertTrue(res.get(1).delta.data == Delta.NOOP);
+            // test that reported new cue is equal to cue found in axis
+            assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
+            // test that reported old cue is equal to previous cue
+            assertTrue(cue_equals(undefined, res.get(1).old, equals))
+          }
+
+          /*
+            verify that delete last does the job
+          */
+          function test_delete_last_no_chaining() {
+            ax.clear();
+            init_cue = {key: 1, interval: new Interval(3, 4), data:{j:"jalla"}}
+            _init_cue = copy_cue(init_cue)
+            ax.update(init_cue);
+
+            // test delete last
+            cues = [
+              {key: 1, interval: new Interval(3.5, 5)},
+              {key: 1}
+            ];
+            res = ax.update(cues, {chaining:false});
+            // test sizes
+            assertTrue(res.size == 1);
+            assertTrue(ax.size == 0);
+            // test delta values
+            assertTrue(res.get(1).delta.interval == Delta.DELETE);
+            assertTrue(res.get(1).delta.data == Delta.DELETE);
+            // test that reported new cue is equal to cue found in axis
+            assertTrue(cue_equals(ax.get(1), res.get(1).new, equals))
+            // test that reported old cue is equal to the previous cue
+            assertTrue(cue_equals(cues[0], res.get(1).old, equals))
+          }
+
+
+
+
           /*
             verify that data is preserved through multiple interval replacements
           */
@@ -511,13 +567,12 @@
             assertTrue(equals(res.get(1).new.data, cues[1].data));
           }
 
-
           test_delete_first();
           test_delete_last();
+          test_delete_first_no_chaining();
           test_preserve_data();
           test_preserve_interval();
-
-
+          test_delete_last_no_chaining();
           console.log("done test update multiple")
         }
 
