@@ -146,7 +146,7 @@ define(function () {
 			return true if e1 is ordered equal to e2
 		*/
 
-		function equal(e1, e2) {
+		function equals(e1, e2) {
 			let [order1, order2] = get_order(e1, e2);
 			return (order1 == order2);
 		}
@@ -188,7 +188,7 @@ define(function () {
 		return {
 			compare: compare,
 			toString: toString,
-			equal: equal,
+			equals: equals,
 			rightof: rightof,
 			leftof: leftof
 		}
@@ -460,6 +460,7 @@ define(function () {
 		}
 
 
+
 		/*
 			a.hasEndpointInside(b)
 
@@ -494,9 +495,11 @@ define(function () {
 		*/
 
 
+		/*
 		hasEndpointInside(b) {
 			return inside(this.endpointLow, b) || inside(this.endpointHigh, b);
 		}
+		*/
 
 
 		// DEPRECATED
@@ -567,7 +570,6 @@ define(function () {
 	Interval.Relation = Relation;
 	Interval.cmpLow = _make_interval_cmp(true);
 	Interval.cmpHigh = _make_interval_cmp(false);
-	// expose only for testing
 	Interval.endpoint = endpoint;
 
 	/*

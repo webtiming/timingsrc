@@ -213,7 +213,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             interval_delta = Delta.DELETE;
         } else {
             // check interval equality
-            eq = cue_a.interval.equals(cue_b.interval);
+            eq = (cue_a.interval.low == cue_b.interval.low) && (cue_a.interval.high == cue_b.interval.high);
+            //eq = cue_a.interval.equals(cue_b.interval);
             interval_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
         }
         // data delta
@@ -238,15 +239,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     }
 
 
-    /*
-        determine equality for two cues
-        <equals> is optional equality function for cue.data
-        if not specified simple value equality (==) is used
-    */
-    function cue_equals(cue_a, cue_b, equals) {
-        let delta = cue_delta(cue_a, cue_b, equals);
-        return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
-    }
 
 
     /*
@@ -497,8 +489,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
             // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
-                item = {new:current_cue, old:current_cue, delta:delta};
-                batchMap.set(cue.key, item);
+                batchMap.set(cue.key, {new:current_cue, old:current_cue});
                 return;
             }
 
@@ -526,7 +517,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 new_cue.interval = cue.interval;
                 new_cue.data = cue.data;
             }
-            item = {new:new_cue, old:old_cue, delta:delta};
+            item = {new:new_cue, old:old_cue};
 
             /*
                 if this item has been set earlier in batchMap
@@ -538,7 +529,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 _item = batchMap.get(cue.key);
                 if (_item != undefined) {
                     item.old = _item.old;
-                    item.delta = cue_delta(item.old, item.new);
                 }
             }
 
@@ -695,13 +685,12 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             const cues = this._call_buckets("lookup_delete", interval, mode);
             // remove from cueMap and make events
             const batchMap = new Map();
-            let cue, delta;
+            let cue;
             for (let i=0; i<cues.length; i++) {
                 cue = cues[i];
                 this._cueMap.delete(cue.key);
                 // check for equality
-                delta = cue_delta(cue, undefined);
-                batchMap.set(cue.key, {new: undefined, old: cue, delta: delta});
+                batchMap.set(cue.key, {new: undefined, old: cue});
             }
             if (batchMap.size > 0) {
                 this.eventifyTriggerEvent("change", batchMap);
@@ -720,10 +709,8 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             this._cueMap = new Map();
             // create change events for all cues
             const batchMap = new Map();
-            let delta;
             for (let cue of cueMap.values()) {
-                delta = cue_delta(cue, undefined);
-                batchMap.set(cue.key, {new: undefined, old: cue, delta: delta});
+                batchMap.set(cue.key, {new: undefined, old: cue});
             }
             if (batchMap.size > 0) {
                 this.eventifyTriggerEvent("change", batchMap);
@@ -1268,11 +1255,11 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
 
     }
 
-
-    // Static variables
+    // testing
     Axis.Delta = Delta;
-    Axis.cue_equals = cue_equals;
+    Axis.cue_delta = cue_delta;
     Axis.equals = default_equals;
+
     // module definition
     return Axis;
 });
