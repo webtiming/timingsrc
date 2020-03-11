@@ -719,11 +719,41 @@
           console.log("done test update lookup");
         }
 
+        /*
+          test change event
+        */
+
+        function test_event () {
+          let ax = new Axis();
+          let flag = false;
+
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            cues.push({key: i.toString(), interval: new Interval(i, i+1)});
+          }
+
+          // events event for the entire batch
+          ax.on("change", function (eItemMap) {
+            assertTrue(eItemMap.size == cues.length);
+            flag = true;
+          });
+
+          // update
+          ax.update(cues)
+
+          setTimeout(e => {
+            assertTrue(flag);
+            console.log("done test event");
+          }, 0);
+
+        };
+
 
         var run = function () {
           test_update();
           test_update_multiple();
           test_update_lookup();
+          test_event();
         };
 
         if (document.readyState === "complete") run();

@@ -324,9 +324,6 @@ define(function () {
 	class Interval {
 
 		constructor (low, high, lowInclude, highInclude) {
-			if (!(this instanceof Interval)) {
-				throw new Error("Contructor function called without new operation");
-			}
 			var lowIsNumber = isNumber(low);
 			var highIsNumber = isNumber(high);
 			// new Interval(3.0) defines singular - low === high
@@ -372,73 +369,6 @@ define(function () {
 			return lowBracket + low + ',' + high + highBracket;
 		};
 
-
-
-
-
-		// DEPRECATED
-		/*
-		coversPoint (x) {
-			if (this.low < x && x < this.high) return true;
-			if (this.lowInclude && x === this.low) return true;
-			if (this.highInclude && x === this.high) return true;
-			return false;
-		};
-		*/
-
-		/*
-		// overlap : it exists at least one point x covered by both interval
-		overlapsInterval(other) {
-			if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
-			// singularities
-			if (this.singular && other.singular)
-				return (this.low === other.low);
-			if (this.singular)
-				return other.coversPoint(this.low);
-			if (other.singular)
-				return this.coversPoint(other.low);
-			// not overlap right
-			if (this.high < other.low) return false;
-			if (this.high === other.low) {
-				return this.coversPoint(other.low) && other.coversPoint(this.high);
-			}
-			// not overlap left
-			if (this.low > other.high) return false;
-			if (this.low === other.high) {
-				return (this.coversPoint(other.high) && other.coversPoint(this.low));
-			}
-			return true;
-		};
-
-		*/
-
-		// DEPRECATED
-		// Interval fully covering other interval
-		/*
-		coversInterval (other) {
-			if (other instanceof Interval === false) throw new IntervalError("paramenter not instance of Interval");
-			if (other.low < this.low || this.high < other.high) return false;
-			if (this.low < other.low && other.high < this.high) return true;
-			// corner case - one or both endpoints are the same (the other endpoint is covered)
-			if (this.low === other.low && this.lowInclude === false && other.lowInclude === true)
-				return false;
-			if (this.high === other.high && this.highInclude === false && other.highInclude === true)
-				return false;
-			return true;
-		};
-		*/
-
-
-		/*
-		equals (other) {
-			if (this.low !== other.low) return false;
-			if (this.high !== other.high) return false;
-			if (this.lowInclude !== other.lowInclude) return false;
-			if (this.highInclude !== other.highInclude) return false;
-			return true;
-		};
-		*/
-
 		compare (other) {
 			return compare(this, other);
 		}
@@ -458,83 +388,6 @@ define(function () {
 		covers (other) {
 			return compare(this, other) == Relation.COVERS;
 		}
-
-
-
-		/*
-			a.hasEndpointInside(b)
-
-			returns true if interval a has at least one endpoint inside interval b
-
-			This is easy for most intervals, but there are some subtleties
-			when when interval a and b have one or two endpoints in common
-
-			4 ways for intervals to share an endpoint
-
-			- a.high == b.low :
-				><  (a.high outside b)
-				>[  (a.high outside b)
-				]<  (a.high outside b)
-				][  (a.high inside b)
-			- a.high == b.high:
-				>>  (a.high inside b)
-				>]  (a.high inside b)
-				]>  (a.high outside b)
-				]]  (a.high inside b)
-			- a.low == b.low :
-				<<  (a.low inside b)
-				<[  (a.low inside b)
-				[<  (a.low outside b)
-				[[  (a.low inside b)
-			- a.low == b.high :
-				<>  (a.low outside b)
-				[>  (a.low outside b)
-				<]  (a.low outside b)
-				[]  (a.low inside b)
-
-		*/
-
-
-		/*
-		hasEndpointInside(b) {
-			return inside(this.endpointLow, b) || inside(this.endpointHigh, b);
-		}
-		*/
-
-
-		// DEPRECATED
-		/*
-		hasEndpointInside (b) {
-			const a = this;
-			// check if a is to the right of b
-			if (b.high < a.low) return false;
-			// check if a is to the left of b
-			if (a.high < b.low) return false;
-			// check if a.low is inside b
-			if (b.low < a.low && a.low < b.high) return true;
-			// check if a.high is inside b
-			if (b.low < a.high && a.high < b.high) return true;
-
-			// special consideration if a and b share endpoint(s)
-
-			// a.high shared
-			if (a.high == b.low) {
-				if (a.highInclude && b.lowInclude) return true;
-			}
-			if (a.high == b.high) {
-				if (!(a.highInclude && !b.highInclude)) return true;
-			}
-			// a.low shared
-			if (a.low == b.low) {
-				if (!(a.lowInclude && !b.lowInclude)) return true;
-			}
-			if (a.low == b.high) {
-				if (a.lowInclude && b.highInclude) return true;
-			}
-			return false;
-		};
-		*/
-
 	}
 
 
