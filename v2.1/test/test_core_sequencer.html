@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../',
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../docs/lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+      require(['sequencing/core_sequencer', 'util/interval'],
+              function (CoreSequencer, Interval) {
+
+        function run(){
+          let c = new CoreSequencer();
+          console.log(c);
+        }
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Test Core Sequencer</h1>
+  </body>
+</html>
