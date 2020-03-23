@@ -12,12 +12,13 @@
     <!--  main -->
     <script text="javascript">
 
-      require(['sequencing/core_sequencer', 'util/interval'],
-              function (CoreSequencer, Interval) {
+      require(['test/main'], function (timingsrc) {
 
         function run(){
-          let c = new CoreSequencer();
-          console.log(c);
+
+          let to = new timingsrc.TimingObject();
+          let s = new timingsrc.Schedule(to);
+          console.log(s);
         }
 
         if (document.readyState === "complete") run();
@@ -26,6 +27,6 @@
     </script>
   </head>
   <body>
-    <h1>Test Core Sequencer</h1>
+    <h1>Test Schedule</h1>
   </body>
 </html>
