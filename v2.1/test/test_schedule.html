@@ -14,11 +14,42 @@
 
       require(['test/main'], function (timingsrc) {
 
+        const isMoving = timingsrc.motionutils.isMoving;
+
+
         function run(){
 
           let to = new timingsrc.TimingObject();
           let s = new timingsrc.Schedule(to);
-          console.log(s);
+
+          to.on("change", function() {
+            if (isMoving(to.vector)) {
+              s.start();
+            } else {
+              s.stop();
+            }
+          });
+
+          // Hook up buttons UI
+          document.getElementById('play').onclick = function () {
+            to.update({velocity:1.0});
+          };
+          document.getElementById('pause').onclick = function () {
+            to.update({velocity:0.0});
+          };
+          document.getElementById('reset').onclick = function () {
+            to.update({position: 0.0, velocity: 0.0});
+          };
+          document.getElementById('back').onclick = function () {
+            to.update({velocity: -1.0});
+          };
+
+          // Hook up text UI
+          var value = document.getElementById('value');
+          to.on("timeupdate", function () {
+            value.innerHTML = to.query().position.toFixed(2);
+          });
+
         }
 
         if (document.readyState === "complete") run();
@@ -28,5 +59,10 @@
   </head>
   <body>
     <h1>Test Schedule</h1>
+    <div id="value"></div>
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+    <button id="back">Back</button>
   </body>
 </html>

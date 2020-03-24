@@ -9,12 +9,6 @@ define(function(require) {
         constructor(to) {
             this.to = to;
             this.tid = undefined;
-
-            // kickoff
-            let self = this;
-            this.to.ready.then(function(){
-                self.main();
-            });
         }
 
         clearTimeout() {
@@ -46,6 +40,17 @@ define(function(require) {
                 this.main(now, true);
             }
         }
+
+        start() {
+            if (this.tid == undefined) {
+                this.main();
+            }
+        }
+
+        stop() {
+            this.clearTimeout();
+        }
+
 
         main(now, is_timeout) {
             now = now || this.to.clock.now();
