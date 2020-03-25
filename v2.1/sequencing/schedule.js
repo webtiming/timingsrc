@@ -17,13 +17,16 @@ define(function(require) {
 
         constructor(to, options) {
             this.to = to;
-            this.tid = undefined;
+            this.tid;
             this.running = false;
+
+            // time interval - back to back
+            this.timeInterval;
+
             // options
             options = options || {};
             options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
             this.options = options;
-
         }
 
         /*
@@ -58,7 +61,6 @@ define(function(require) {
         /*
             start schedule
         */
-
         start() {
             if (!this.running) {
                 this.running = true;
@@ -69,7 +71,6 @@ define(function(require) {
         /*
             stop schedule
         */
-
         stop() {
             if (this.running) {
                 this.running = false;
@@ -84,18 +85,36 @@ define(function(require) {
         */
         run(now, run_flag) {
 
-            // do something
-            console.log("run", now, run_flag);
-
-
-            if (run_flag != Schedule.RUN_STOP) {
-                // timeout 5 sec
-                let ts = now + 5;
-                this.setTimeout(ts);
+            // update time interval
+            let delta = this.options.lookahead;
+            if (run_flag == Schedule.RUN_START) {
+                this.timeInterval = new Interval(now, now + delta, true, false);
+            } else if (run_flag == Schedule.RUN_TIMEOUT) {
+                // update timeInterval is expired
+                const leftof = Interval.endpoint.leftof;
+                if (leftof(this.timeInterval.endpointHigh, now)) {
+                    let start = this.timeInterval.high;
+                    this.timeInterval = new Interval(start, start + delta, true, false);
+                }
+            } else if (run_flag == Schedule.RUN_STOP) {
+                this.timeInterval = undefined;
             }
 
-        }
+            // do something
+            console.log("run", now, run_flag);
+            if (this.timeInterval) {
+                console.log(this.timeInterval.toString());
+            }
 
+            if (run_flag == Schedule.RUN_STOP) {
+                // clear events
+            } else {
+                // load events
+                // process due events
+                // timeout until next event is due
+                this.setTimeout(Math.min(now + 1, this.timeInterval.high));
+            }
+        }
     }
 
     return Schedule;
