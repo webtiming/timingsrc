@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../',
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../docs/lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+      require(['test/main'], function (timingsrc) {
+        const Interval = timingsrc.Interval;
+
+        function run(){
+
+
+          const axis = new timingsrc.Axis();
+
+          // fill axis with some cues
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            let j0 = i;
+            let j1 = i + 1;
+            cues.push({key: i, interval: new Interval(j0, j1)});
+          }
+          for (let i=0; i<100; i++) {
+            let j0 = i + 0.5;
+            let j1 = j0 + 1;
+            cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
+          }
+          axis.update(cues);
+
+
+          const ac = new timingsrc.ActiveCues(axis);
+
+
+          // Hook up buttons UI
+          document.getElementById('a').onclick = function () {
+            let ev = ac.jumpTo(new Interval(1.0));
+            console.log("1.0");
+            console.log("exit", ev.exitCues);
+            console.log("enter", ev.enterCues);
+            console.log(ac.activeCues);
+          };
+          document.getElementById('b').onclick = function () {
+            let ev = ac.jumpTo(new Interval(1.3));
+            console.log("1.3");
+            console.log("exit", ev.exitCues);
+            console.log("enter", ev.enterCues);
+            console.log(ac.activeCues);
+          };
+          document.getElementById('c').onclick = function () {
+            let ev = ac.jumpTo(new Interval(1.7));
+            console.log("1.7");
+            console.log("exit", ev.exitCues);
+            console.log("enter", ev.enterCues);
+            console.log(ac.activeCues);
+          };
+          document.getElementById('d').onclick = function () {
+            let ev = ac.jumpTo(new Interval(2.0));
+            console.log("2.0");
+            console.log("exit", ev.exitCues);
+            console.log("enter", ev.enterCues);
+            console.log(ac.activeCues);
+          };
+
+        }
+
+        if (document.readyState === "complete") run();
+        else window.onload = run;
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Test ActiveCues</h1>
+    <div id="value"></div>
+    <button id="a">1.0</button>
+    <button id="b">1.3</button>
+    <button id="c">1.7</button>
+    <button id="d">2.0</button>
+  </body>
+</html>

@@ -6,7 +6,8 @@ define(function(require) {
         Interval: require("../util/interval"),
         Axis: require("../sequencing/axis"),
         Schedule: require("../sequencing/schedule"),
-        TimingObject: require("../timingobject/timingobject").TimingObject
+        TimingObject: require("../timingobject/timingobject").TimingObject,
+        ActiveCues: require("../sequencing/activecues")
     };
 });
 
