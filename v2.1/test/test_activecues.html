@@ -15,6 +15,24 @@
       require(['test/main'], function (timingsrc) {
         const Interval = timingsrc.Interval;
 
+
+        function pprint(ev, ac) {
+          console.log("exitCues");
+          for (let cue of ev.exitCues.values()) {
+            console.log(cue.key, cue.interval.toString());
+          }
+          console.log("enterCues");
+          for (let cue of ev.enterCues.values()) {
+            console.log(cue.key, cue.interval.toString());
+          }
+          console.log("activeCues");
+          for (let cue of ac.activeCues.values()) {
+            console.log(cue.key, cue.interval.toString());
+          }
+        };
+
+
+
         function run(){
 
 
@@ -42,30 +60,22 @@
           document.getElementById('a').onclick = function () {
             let ev = ac.jumpTo(new Interval(1.0));
             console.log("1.0");
-            console.log("exit", ev.exitCues);
-            console.log("enter", ev.enterCues);
-            console.log(ac.activeCues);
+            pprint(ev, ac);
           };
           document.getElementById('b').onclick = function () {
             let ev = ac.jumpTo(new Interval(1.3));
             console.log("1.3");
-            console.log("exit", ev.exitCues);
-            console.log("enter", ev.enterCues);
-            console.log(ac.activeCues);
+            pprint(ev, ac);
           };
           document.getElementById('c').onclick = function () {
             let ev = ac.jumpTo(new Interval(1.7));
             console.log("1.7");
-            console.log("exit", ev.exitCues);
-            console.log("enter", ev.enterCues);
-            console.log(ac.activeCues);
+            pprint(ev, ac);
           };
           document.getElementById('d').onclick = function () {
             let ev = ac.jumpTo(new Interval(2.0));
             console.log("2.0");
-            console.log("exit", ev.exitCues);
-            console.log("enter", ev.enterCues);
-            console.log(ac.activeCues);
+            pprint(ev, ac);
           };
 
         }
