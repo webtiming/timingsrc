@@ -15,12 +15,14 @@ define(function(require) {
         static RUN_STOP = 3;
 
 
-        constructor(to, options) {
-            this.to = to;
+        constructor(clock, options) {
+            // clock
+            this.clock = clock;
+            // current timeout
             this.tid;
-            this.running = false;
-
-            // time interval - back to back
+            // current vector
+            this.vector;
+            // current time interval
             this.timeInterval;
 
             // options
@@ -32,28 +34,29 @@ define(function(require) {
         /*
             set timeout to point in time (seconds)
         */
-        setTimeout(ts) {
+        setTimeout(target_ts) {
             if (this.tid != undefined) {
                 throw new Error("at most on timeout");
             }
-            let delay = Math.max(ts - this.to.clock.now(), 0) * 1000;
-            this.tid = setTimeout(this.onTimeout.bind(this), delay, ts);
+            let now = this.clock.now();
+            let delay = Math.max(target_ts - now, 0) * 1000;
+            this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts);
         }
 
         /*
             handle timeout intended for point in time (seconds)
         */
-        onTimeout(ts) {
+        onTimeout(target_ts) {
             if (this.tid != undefined) {
                 this.tid = undefined;
                 // check if timeout was too early
-                let now = this.to.clock.now()
-                if (now < ts) {
+                let now = this.clock.now()
+                if (now < target_ts) {
                     // schedule new timeout
-                    this.setTimeout(ts);
+                    this.setTimeout(target_ts);
                 } else {
                     // handle timeout
-                    this.run(now, Schedule.RUN_TIMEOUT);
+                    this.run(target_ts, Schedule.RUN_TIMEOUT);
                 }
             }
         }
@@ -61,22 +64,22 @@ define(function(require) {
         /*
             start schedule
         */
-        start() {
-            if (!this.running) {
-                this.running = true;
-                this.run(this.to.clock.now(), Schedule.RUN_START);
+        start(now, vector) {
+            if (this.vector == undefined) {
+                this.vector = vector;
+                this.run(now, Schedule.RUN_START);
             }
         }
 
         /*
             stop schedule
         */
-        stop() {
-            if (this.running) {
-                this.running = false;
+        stop(now, vector) {
+            if (this.vector != undefined) {
+                this.vector = undefined;
                 clearTimeout(this.tid);
                 this.tid = undefined;
-                this.run(this.to.clock.now(), Schedule.RUN_STOP);
+                this.run(now, Schedule.RUN_STOP);
             }
         }
 

@@ -20,13 +20,16 @@
         function run(){
 
           let to = new timingsrc.TimingObject();
-          let s = new timingsrc.Schedule(to);
+          let s = new timingsrc.Schedule(to.clock);
 
           to.on("change", function() {
+
+            let now = to.clock.now();
+
             if (isMoving(to.vector)) {
-              s.start();
+              s.start(now, to.vector);
             } else {
-              s.stop();
+              s.stop(now, to.vector);
             }
           });
 
