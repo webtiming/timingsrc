@@ -15,12 +15,29 @@
       require(['test/main'], function (timingsrc) {
 
         const isMoving = timingsrc.motionutils.isMoving;
-
+        const Interval = timingsrc.Interval;
 
         function run(){
 
+          const axis = new timingsrc.Axis();
+
+          // fill axis with some cues
+          let cues = [];
+          for (let i=0; i<100; i++) {
+            let j0 = i;
+            let j1 = i + 1;
+            cues.push({key: i, interval: new Interval(j0, j1)});
+          }
+          for (let i=0; i<100; i++) {
+            let j0 = i + 0.5;
+            let j1 = j0 + 1;
+            cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
+          }
+          axis.update(cues);
+
+
           let to = new timingsrc.TimingObject();
-          let s = new timingsrc.Schedule(to.clock);
+          let s = new timingsrc.Schedule(to.clock, axis);
 
           to.on("change", function() {
 

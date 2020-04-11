@@ -15,7 +15,7 @@ define(function(require) {
         static RUN_STOP = 3;
 
 
-        constructor(clock, options) {
+        constructor(clock, axis, options) {
             // clock
             this.clock = clock;
             // current timeout
@@ -24,7 +24,10 @@ define(function(require) {
             this.vector;
             // current time interval
             this.timeInterval;
-
+            // current position interval
+            this.posInterval;
+            // axis
+            this.axis = axis;
             // options
             options = options || {};
             options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
@@ -92,12 +95,14 @@ define(function(require) {
             let delta = this.options.lookahead;
             if (run_flag == Schedule.RUN_START) {
                 this.timeInterval = new Interval(now, now + delta, true, false);
+                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
             } else if (run_flag == Schedule.RUN_TIMEOUT) {
                 // update timeInterval is expired
                 const leftof = Interval.endpoint.leftof;
                 if (leftof(this.timeInterval.endpointHigh, now)) {
                     let start = this.timeInterval.high;
                     this.timeInterval = new Interval(start, start + delta, true, false);
+                    this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
                 }
             } else if (run_flag == Schedule.RUN_STOP) {
                 this.timeInterval = undefined;
@@ -107,6 +112,7 @@ define(function(require) {
             console.log("run", now, run_flag);
             if (this.timeInterval) {
                 console.log(this.timeInterval.toString());
+                console.log(this.posInterval.toString());
             }
 
             if (run_flag == Schedule.RUN_STOP) {
@@ -118,6 +124,15 @@ define(function(require) {
                 this.setTimeout(Math.min(now + 1, this.timeInterval.high));
             }
         }
+
+
+        /*
+            load events for
+        */
+
+
+
+
     }
 
     return Schedule;

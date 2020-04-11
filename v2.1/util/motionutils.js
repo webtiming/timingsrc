@@ -19,9 +19,11 @@
 */
 
 
-define(function () {
+define(function (require) {
 
 	'use strict';
+
+    const Interval = require("./interval");
 
 
 
@@ -421,6 +423,112 @@ define(function () {
     };
 
 
+    /*
+        given
+        - a time interval (start_ts, end_ts)
+        - a vector describing motion within the time interval
+        figure out the smallest position interval (start_pos, end_pos)
+        that covers all possible positions during the time interval
+    */
+
+
+    function getPositionInterval (timeInterval, vector) {
+
+        /*
+            no motion or singular time interval
+        */
+        if (!isMoving(vector) || timeInterval.singular) {
+            return new Interval(vector.position);
+        }
+
+
+        let t0 = timeInterval.low;
+        let t1 = timeInterval.high;
+        let t0_closed = timeInterval.lowInclude;
+        let t1_closed = timeInterval.highInclude;
+
+        let vector0 = calculateVector(vector, t0);
+        let p0 = vector0.position;
+        let v0 = vector0.velocity;
+        let a0 = vector0.acceleration;
+        let p1 = calculateVector(vector, t1).position;
+
+        if (a0 != 0) {
+
+            /*
+                motion, with acceleration
+
+                position over time is a parabola
+                figure out if extrema happens to occor within
+                timeInterval. If it does, extreme point is endpoint in
+                position Interval. p0 or p1 will be the other
+                interval endpoint.
+
+                I extreme point is not occuring within timeInterval,
+                interval endpoint will be p0 and p1.
+
+                general parabola
+                y = Ax*x + Bx + C
+                extrema (x,y) : x = - B/2A, y = -B*B/4A + C
+
+                where t0 <= t <= t1
+                p(t) = 0.5*a0*(t-t0)*(t-t0) + v0*(t-t0) + p0,
+
+                A = a0/2, B = v0, C = p0
+
+                extrema (t_extrema, p_extrema):
+                t_extrem = -v0/a0 + t0
+                p_extrem = -v0*v0/(2*a0) + p0
+
+            */
+            let t_extrem = -v0/a0 + t0;
+            if (timeInterval.inside(t_extrem)) {
+                let p_extrem = -v0*vo/(2.0*a0) + p0;
+                // maximal point reached in time interval
+                if (a0 > 0.0) {
+                    // p_extrem is minimum
+                    // figure out if p0 or p1 is maximum
+                    if (p0 < p1) {
+                        return new Interval(p_extrem, p1, true, t1_closed);
+                    } else {
+                        return new Interval(p_extrem, p0, true, t0_closed);
+                    }
+                } else {
+                    // p_extrem is maximum
+                    // figure out if p0 or p1 is minimum
+                    if (p0 < p1) {
+                        return new Interval(p0, p_extrem, t0_closed, true);
+                    } else {
+                        return new Interval(p1, p_extrem, t1_closed, true);
+                    }
+                }
+            }
+        }
+
+
+        /*
+            Motion, with or without acceleration,
+            yet with no extreme points within interval
+
+            positition monotonic increasing (forward velocity)
+            or decreasing (backward velocity)
+
+            extrem positions are associated with p0 and p1.
+        */
+
+        if (p0 < p1) {
+            // forward
+            return new Interval(p0, p1, t0_closed, t1_closed);
+        } else {
+            // backward
+            return new Interval(p1, p0, t1_closed, t0_closed);
+        }
+
+    }
+
+
+
+
 	// return module object
 	return {
 		calculateVector : calculateVector,
@@ -433,7 +541,8 @@ define(function () {
 		getCorrectRangeState : getCorrectRangeState,
 		checkRange : checkRange,
 		RangeState : RangeState,
-        isMoving: isMoving
+        isMoving: isMoving,
+        getPositionInterval: getPositionInterval
 	};
 });
 
