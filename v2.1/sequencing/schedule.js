@@ -5,6 +5,8 @@ define(function(require) {
     const leftof = Interval.endpoint.leftof;
     const isMoving = motionutils.isMoving;
 
+    function queueCmp(a,b) {return a.ts - b.ts;};
+
     class Schedule {
 
         // Default lookahead in seconds
@@ -27,6 +29,8 @@ define(function(require) {
             this.posInterval;
             // axis
             this.axis = axis;
+            // task queue
+            this.queue = [];
             // options
             options = options || {};
             options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
@@ -85,30 +89,9 @@ define(function(require) {
 
 
         /*
-            run schedule
+            advance timeInterval and posInterval if needed
         */
-        run(now, run_flag) {
-
-            // do something
-            console.log("run", now, run_flag);
-
-            // advance timeInterval and posInterval if needed
-            this.advanceIntervals(now);
-
-            // load events
-
-            // process - due events
-
-            // timeout - until next due event
-            this.setTimeout(Math.min(now + 1, this.timeInterval.high));
-
-        }
-
-
-        /*
-            update time interval if needed
-        */
-        advanceIntervals(now) {
+        advance(now) {
             let start, delta = this.options.lookahead;
             let advance = false;
             if (this.timeInterval == undefined) {
@@ -124,51 +107,96 @@ define(function(require) {
                 this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
                 console.log("time:", this.timeInterval.toString());
                 console.log("pos:", this.posInterval.toString());
-
-                // fetch cue endpoints for posInterval
-                let endpoints = this.axis.lookup_endpoints(this.posInterval);
-                // load events
-                this.load(now, endpoints);
-
+                // clear task queue
+                this.queue = [];
             }
+            return advance;
         }
 
+
+        /*
+            push eventItem onto queue
+        */
+        push(eventItems) {
+            eventItems.forEach(function(item) {
+                if (this.timeInterval.inside(item.ts)) {
+                    this.queue.push(item);
+                }
+            }, this);
+            // maintain ordering
+            this.queue.sort(queueCmp);
+        };
+
+        /*
+            pop due eventItems from queue
+        */
+        pop(now) {
+            let eventItem, res = [];
+            while (this.queue.length > 0 && this.queue[0].ts <= now) {
+                res.push(this.queue.shift());
+            }
+            return res;
+        };
+
+        /*
+            return timestamp of next eventItem
+        */
+        next() {
+            return (this.queue.length > 0) ? this.queue[0].ts: undefined;
+        }
 
         /*
             load events
         */
 
-        load(now, endpoints) {
-
-            console.log("load")
-            // console.log(endpoints)
+        load(endpoints) {
+            console.log("load");
+            let endpointEvents = motionutils.getEndpointEvents(this.timeInterval,
+                                                               this.posInterval,
+                                                               this.vector,
+                                                               endpoints);
 
             /*
-                make time ordered sequence of events
-
-                - endpoint
-                - cue
-                - ts
-                - direction
-                - enter/exit
-
-                given endpoints, timeInterval, vector
-
-                - see calculateSolutionsInInterval()
-
+                filter event items
             */
 
+            return endpointEvents;
+        }
+
+        /*
+            process due cue events
+        */
+        process(now) {
+            this.pop(now).forEach(function(item){
+                let dir = (item.direction == 1) ? "forward" : "backward";
+                console.log(`key: ${item.cue.key} value: ${item.endpoint[0]} dir: ${dir}`);
+            });
         }
 
 
 
+        /*
+            run schedule
+        */
+        run(now, run_flag) {
+            // process - due events
+            this.process(now);
+            // advance schedule and load events if needed
+            let advanced = this.advance(now);
+            if (advanced) {
+                // fetch cue endpoints for posInterval
+                let endpoints = this.axis.lookup_endpoints(this.posInterval);
+                // load events and push on queue
+                this.push(this.load(endpoints));
+                // process - possibly new due events
+                this.process(now);
+            }
+            // timeout - until next due event
+            let ts = this.next() || this.timeInterval.high;
+            this.setTimeout(Math.min(ts, this.timeInterval.high));
+        }
+
     }
-
-
-
-
-
-
 
     return Schedule;
 });

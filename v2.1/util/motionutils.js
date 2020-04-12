@@ -363,6 +363,90 @@ define(function (require) {
     };
 
 
+
+    /*
+        GET EVENTS
+
+        Given
+        - timeInterval
+        - posInterval
+        - vector describing motion within timeInterval
+        - list of endpointItems
+
+        endpointItem
+        {
+            endpoint: [value, high, closed],
+            cue: {
+                key: "mykey",
+                interval: new Interval(...),
+                data: {...}
+            }
+        }
+
+        Creates eventItem by adding to endpointItem
+        - ts : timestamp (future) when motion will pass the endpoint
+        - direction: true if motion passes endpoint while moving forward
+
+        EventItems will be sorted by ts
+
+
+    */
+
+    function getEndpointEvents (timeInterval, posInterval, vector, endpointItems) {
+
+        /*
+            no motion or singular time interval
+        */
+        if (timeInterval.singular) {
+            throw new Error("getEventItems: timeInterval is singular");
+        }
+        if (!isMoving(vector)) {
+            throw new Error("getEventItems: no motion")
+        }
+
+        let p0 = vector.position;
+        let v0 = vector.velocity;
+        let a0 = vector.acceleration;
+        let t0 = vector.timestamp;
+
+        let value, ts, deltas;
+        let eventItems = [];
+
+        endpointItems.forEach(function(item) {
+            // check that endpoint is inside given posInterval
+            if (!posInterval.inside(item.endpoint)) {
+                return;
+            }
+            value = item.endpoint[0];
+            // check if equation has any solutions
+            if (!hasRealSolution(p0, v0, a0, value)) {
+                return;
+            }
+            // find time when motion will pass value
+            // time delta is relative to t0
+            // could be both in history or future
+            deltas = calculateRealSolutions(p0,v0,a0, value);
+            // include any timestamp within the timeinterval
+            deltas.forEach(function(delta) {
+                ts = t0 + delta;
+                if (timeInterval.inside(ts)){
+                    item.ts = ts;
+                    item.direction = calculateDirection(vector, ts);
+                    eventItems.push(item);
+                }
+            });
+        });
+
+        // sort eventItems according to ts
+        let cmp = function (a,b) {return a.ts-b.ts;};
+        eventItems.sort(cmp);
+        return eventItems;
+    };
+
+
+
+
+
     /*
       Within a definite time interval, a motion will "cover" a
       definite interval on the dimension. Calculate the min, max
@@ -440,7 +524,6 @@ define(function (require) {
         if (!isMoving(vector) || timeInterval.singular) {
             return new Interval(vector.position);
         }
-
 
         let t0 = timeInterval.low;
         let t1 = timeInterval.high;
@@ -541,7 +624,8 @@ define(function (require) {
 		checkRange : checkRange,
 		RangeState : RangeState,
         isMoving: isMoving,
-        getPositionInterval: getPositionInterval
+        getPositionInterval: getPositionInterval,
+        getEndpointEvents: getEndpointEvents
 	};
 });
 
