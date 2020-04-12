@@ -2,7 +2,8 @@ define(function(require) {
 
     const motionutils = require("../util/motionutils");
     const Interval = require("../util/interval");
-
+    const leftof = Interval.endpoint.leftof;
+    const isMoving = motionutils.isMoving;
 
     class Schedule {
 
@@ -10,10 +11,8 @@ define(function(require) {
         static LOOKAHEAD = 5
 
         // Run flags
-        static RUN_START = 1;
-        static RUN_TIMEOUT = 2;
-        static RUN_STOP = 3;
-
+        static RUN_VECTOR = "vector";
+        static RUN_TIMEOUT = "timeout";
 
         constructor(clock, axis, options) {
             // clock
@@ -65,75 +64,111 @@ define(function(require) {
         }
 
         /*
-            start schedule
+            update schedule with new motion vector
         */
-        start(now, vector) {
-            if (this.vector == undefined) {
-                this.vector = vector;
-                this.run(now, Schedule.RUN_START);
+        setVector(now, vector) {
+            // clean up current motion
+            let current_vector = this.vector;
+            if (this.vector != undefined) {
+                clearTimeout(this.tid);
+                this.tid = undefined;
+                this.timeInterval = undefined;
+                this.posInterval = undefined;
+            }
+            // update vector
+            this.vector = vector;
+            // start scheduler if moving
+            if (isMoving(this.vector)) {
+                this.run(now, Schedule.RUN_VECTOR);
             }
         }
 
-        /*
-            stop schedule
-        */
-        stop(now, vector) {
-            if (this.vector != undefined) {
-                this.vector = undefined;
-                clearTimeout(this.tid);
-                this.tid = undefined;
-                this.run(now, Schedule.RUN_STOP);
-            }
-        }
 
         /*
             run schedule
         */
         run(now, run_flag) {
 
-            // update time interval
-            let delta = this.options.lookahead;
-            if (run_flag == Schedule.RUN_START) {
-                this.timeInterval = new Interval(now, now + delta, true, false);
-                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
-            } else if (run_flag == Schedule.RUN_TIMEOUT) {
-                // update timeInterval is expired
-                const leftof = Interval.endpoint.leftof;
-                if (leftof(this.timeInterval.endpointHigh, now)) {
-                    let start = this.timeInterval.high;
-                    this.timeInterval = new Interval(start, start + delta, true, false);
-                    this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
-                }
-            } else if (run_flag == Schedule.RUN_STOP) {
-                this.timeInterval = undefined;
-            }
-
             // do something
             console.log("run", now, run_flag);
-            if (this.timeInterval) {
-                console.log(this.timeInterval.toString());
-                console.log(this.posInterval.toString());
-            }
 
-            if (run_flag == Schedule.RUN_STOP) {
-                // clear events
-            } else {
+            // advance timeInterval and posInterval if needed
+            this.advanceIntervals(now);
+
+            // load events
+
+            // process - due events
+
+            // timeout - until next due event
+            this.setTimeout(Math.min(now + 1, this.timeInterval.high));
+
+        }
+
+
+        /*
+            update time interval if needed
+        */
+        advanceIntervals(now) {
+            let start, delta = this.options.lookahead;
+            let advance = false;
+            if (this.timeInterval == undefined) {
+                start = now;
+                advance = true;
+            } else if (leftof(this.timeInterval.endpointHigh, now)) {
+                start = this.timeInterval.high;
+                advance = true
+            }
+            if (advance) {
+                // advance intervals
+                this.timeInterval = new Interval(start, start + delta, true, false);
+                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
+                console.log("time:", this.timeInterval.toString());
+                console.log("pos:", this.posInterval.toString());
+
+                // fetch cue endpoints for posInterval
+                let endpoints = this.axis.lookup_endpoints(this.posInterval);
                 // load events
-                // process due events
-                // timeout until next event is due
-                this.setTimeout(Math.min(now + 1, this.timeInterval.high));
+                this.load(now, endpoints);
+
             }
         }
 
 
         /*
-            load events for
+            load events
         */
 
+        load(now, endpoints) {
+
+            console.log("load")
+            // console.log(endpoints)
+
+            /*
+                make time ordered sequence of events
+
+                - endpoint
+                - cue
+                - ts
+                - direction
+                - enter/exit
+
+                given endpoints, timeInterval, vector
+
+                - see calculateSolutionsInInterval()
+
+            */
+
+        }
 
 
 
     }
+
+
+
+
+
+
 
     return Schedule;
 });

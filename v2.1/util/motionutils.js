@@ -425,9 +425,9 @@ define(function (require) {
 
     /*
         given
-        - a time interval (start_ts, end_ts)
+        - a time interval
         - a vector describing motion within the time interval
-        figure out the smallest position interval (start_pos, end_pos)
+        figure out the smallest interval (of positions)
         that covers all possible positions during the time interval
     */
 
@@ -504,7 +504,6 @@ define(function (require) {
                 }
             }
         }
-
 
         /*
             Motion, with or without acceleration,

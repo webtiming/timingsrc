@@ -40,14 +40,7 @@
           let s = new timingsrc.Schedule(to.clock, axis);
 
           to.on("change", function() {
-
-            let now = to.clock.now();
-
-            if (isMoving(to.vector)) {
-              s.start(now, to.vector);
-            } else {
-              s.stop(now, to.vector);
-            }
+            s.setVector(to.clock.now(), to.vector);
           });
 
           // Hook up buttons UI
