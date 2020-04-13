@@ -275,6 +275,31 @@ define(function (require) {
 
 
     /*
+        Return ts of (first) range intersect if any.
+    */
+    function getRangeIntersect(vector, range) {
+        let t0 = vector.timestamp;
+        // Time delta to hit rangeLeft
+        let deltaLeft = calculateMinPositiveRealSolution(vector, range[0]);
+        // Time delta to hit rangeRight
+        let deltaRight = calculateMinPositiveRealSolution(vector, range[1]);
+        // Pick the appropriate solution
+        if (deltaLeft !== null && deltaRight !== null) {
+            if (deltaLeft < deltaRight) {
+                return [t0 + deltaLeft, range[0]];
+            }
+            else
+                return [t0 + deltaRight, range[1]];
+        }
+        else if (deltaLeft !== null)
+            return [t0 + deltaLeft, range[0]];
+        else if (deltaRight !== null)
+            return [t0 + deltaRight, range[1]];
+        else return [undefined, undefined];
+    }
+
+
+    /*
       calculate_solutions_in_interval (vector, d, plist)
 
       Find all intersects in time between a motion and a the
@@ -625,7 +650,8 @@ define(function (require) {
 		RangeState : RangeState,
         isMoving: isMoving,
         getPositionInterval: getPositionInterval,
-        getEndpointEvents: getEndpointEvents
+        getEndpointEvents: getEndpointEvents,
+        getRangeIntersect: getRangeIntersect
 	};
 });
 

@@ -37,10 +37,10 @@
 
 
           let to = new timingsrc.TimingObject();
-          let s = new timingsrc.Schedule(to.clock, axis);
+          let s = new timingsrc.Schedule(to.clock, to.range, axis);
 
           to.on("change", function() {
-            s.setVector(to.clock.now(), to.vector);
+            s.setVector(to.vector.timestamp, to.vector);
           });
 
           // Hook up buttons UI
