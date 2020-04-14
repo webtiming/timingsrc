@@ -12,8 +12,12 @@
     <!--  main -->
     <script text="javascript">
 
+
       require(['test/main'], function (timingsrc) {
         const Interval = timingsrc.Interval;
+
+        const toA = new timingsrc.TimingObject();
+        const toB = new timingsrc.SkewConverter(toA, 4);
 
 
         function pprint(ev, ac) {
@@ -53,8 +57,7 @@
           axis.update(cues);
 
 
-          const ac = new timingsrc.ActiveCues(axis);
-
+          const ac = new timingsrc.ActiveCues(axis, toA, toB);
 
           // Hook up buttons UI
           document.getElementById('a').onclick = function () {

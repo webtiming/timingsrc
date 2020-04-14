@@ -8,6 +8,7 @@ define(function(require) {
         Axis: require("../sequencing/axis"),
         Schedule: require("../sequencing/schedule"),
         TimingObject: require("../timingobject/timingobject").TimingObject,
+        SkewConverter: require("../timingobject/skewconverter"),
         ActiveCues: require("../sequencing/activecues")
     };
 });

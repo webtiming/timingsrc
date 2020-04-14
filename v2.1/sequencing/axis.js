@@ -204,6 +204,9 @@ define (function (require) {
                 this._cueBuckets.set(cueBucketId, new CueBucket(cueBucketId));
             }
 
+            // Inline update callbacks
+            this._update_callbacks = [];
+
             // Change event
             eventify.eventifyInstance(this, {init:false});
             this.eventifyDefineEvent("change", {init:false});
@@ -217,6 +220,35 @@ define (function (require) {
         get size () {
             return this._cueMap.size;
         }
+
+
+
+        /***************************************************************
+            UPDATE CALLBACKS
+        */
+
+        add_callback (handler) {
+            let handle = {
+                handler: handler
+            }
+            this._update_callbacks.push(handle);
+            return handle;
+        };
+
+
+        del_callback (handle) {
+            let index = this._update_callbacks.indexof(handle);
+            if (index > -1) {
+                this._update_callbacks.splice(index, 1);
+            }
+        };
+
+
+        _notify_callbacks (ev) {
+            this._update_callbacks.forEach(function(handle) {
+                handle.handler(ev);
+            });
+        };
 
 
         /***************************************************************
@@ -390,6 +422,8 @@ define (function (require) {
             if (batchMap.size > 0) {
                 // flush all buckets so updates take effect
                 this._call_buckets("flush");
+                // callbacks
+                this._notify_callbacks(batchMap);
                 // event notification
                 this.eventifyTriggerEvent("change", batchMap);
             }
