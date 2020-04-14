@@ -1,6 +1,7 @@
 define(function(require) {
 
     return {
+        util: require("../util/util"),
         motionutils: require("../util/motionutils"),
         eventify: require("../util/eventify"),
         Interval: require("../util/interval"),

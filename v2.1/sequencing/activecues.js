@@ -6,11 +6,34 @@ define(function(require) {
 
     class ActiveCues {
 
+        static MODE_POINT = "point";
+        static MODE_RANGE = "range";
 
-        constructor (axis) {
+        constructor (axis, toA, toB) {
             this.axis = axis;
+            this.toA = toA;
+            this.toB = toB;
+            if (this.toB == undefined) {
+                this.mode = ActiveCues.MODE_POINT;
+            } else {
+                this.mode = ActiveCues.MODE_RANGE;
+            }
+
             this.activeCues = new Map(); // (key -> cue)
+
+            // Add Axis callbacks
+
         }
+
+        get ready () {
+            if (this.mode == ActiveCues.MODE_POINT) {
+                return this.toA.ready;
+            } else {
+                return Promise.all([this.toA, this.toB]);
+            }
+        }
+
+
 
         /*
             This calculates the transition in activeCues caused by

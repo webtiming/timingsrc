@@ -1,8 +1,11 @@
-define (['../util/binarysearch', '../util/interval', '../util/eventify'],
-    function (BinarySearch, Interval, eventify) {
+define (function (require) {
 
     'use strict';
 
+    const BinarySearch = require("../util/binarysearch");
+    const Interval = require("../util/interval");
+    const eventify = require('../util/eventify');
+    const util = require("../util/util");
     const Relation = Interval.Relation;
 
 
@@ -11,76 +14,6 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
         UTILITY
     */
 
-
-    function divmod (n, d) {
-        let r = n % d;
-        let q = (n-r)/d;
-        return [q, r];
-    }
-
-    function isIterable(obj) {
-        // checks for null and undefined
-        if (obj == null) {
-            return false;
-        }
-        return typeof obj[Symbol.iterator] === 'function';
-    }
-
-    /*
-        effective concatenation of multiple arrays
-        longest array is extended by values from
-        the other arrays
-    */
-    function array_concat(...arrays) {
-        if (arrays.length == 0) {
-            return [];
-        }
-        if (arrays.length == 1) {
-            return arrays[0];
-        }
-        let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
-        // sort arrays according to length - longest first
-        arrays.sort((a, b) => b.length - a.length);
-        let first = arrays.shift();
-        let start = first.length;
-        // reserve memory total length
-        first.length = total_len;
-        // fill up first with entries from other arrays
-        let end, len;
-        for (let arr of arrays) {
-            len = arr.length;
-            end = start + len;
-            for (let i=0; i<len; i++) {
-                first[start + i] = arr[i]
-            }
-            start = end;
-        }
-        return first;
-    };
-
-    /*
-        default object equals
-    */
-    function default_equals(a, b) {
-        // Create arrays of property names
-        let aProps = Object.getOwnPropertyNames(a);
-        let bProps = Object.getOwnPropertyNames(b);
-        let len = aProps.length;
-        let propName;
-        // If properties lenght is different => not equal
-        if (aProps.length != bProps.length) {
-            return false;
-        }
-        for (let i=0; i<len; i++) {
-            propName = aProps[i];
-            // If property values are not equal => not equal
-            if (a[propName] !== b[propName]) {
-                return false;
-            }
-        }
-        // equal
-        return true;
-    }
 
     /*
         Add cue to array
@@ -231,7 +164,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
             if (equals) {
                 eq = equals(cue_a.data, cue_b.data);
             } else {
-                eq = default_equals(cue_a.data, cue_b.data);
+                eq = util.object_equals(cue_a.data, cue_b.data);
             }
             data_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
         }
@@ -388,7 +321,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                 options.chaining = true;
             }
 
-            if (!isIterable(cues)) {
+            if (!util.isIterable(cues)) {
                 cues = [cues];
             }
 
@@ -652,7 +585,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
                     arrays.push(cues);
                 }
             }
-            return array_concat(...arrays);
+            return util.array_concat(...arrays);
         };
 
         /*
@@ -1258,7 +1191,7 @@ define (['../util/binarysearch', '../util/interval', '../util/eventify'],
     // testing
     Axis.Delta = Delta;
     Axis.cue_delta = cue_delta;
-    Axis.equals = default_equals;
+
 
     // module definition
     return Axis;

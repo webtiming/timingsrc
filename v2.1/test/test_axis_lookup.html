@@ -12,7 +12,10 @@
     <!--  main -->
     <script text="javascript">
 
-      require(['sequencing/axis', 'util/interval'], function (Axis, Interval) {
+      require(['test/main'], function (timingsrc) {
+
+        const Axis = timingsrc.Axis;
+        const Interval = timingsrc.Interval;
 
         function assertTrue(val) {
           if (!val) {
