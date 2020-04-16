@@ -6,49 +6,83 @@ define(function(require) {
 
     class ActiveCues {
 
-
-
         constructor (axis, toA, toB) {
             this._axis = axis;
             this._toA = toA;
             this._toB = toB;
             this._activeCues = new Map(); // (key -> cue)
 
-            // Add Axis callback
+            // Register axis callback
             this._handle = this._axis.add_callback(this._onAxisUpdate.bind(this));
 
-            // Handler for timing object A
-            this._onTimingA = function (ev) {
-                if (this._toA.isReady() && this._toB.isReady()) {
-                    this._onTimingUpdate(this._toA, ev);
+            /*
+
+            Wrap onTimingUpdate
+
+            To allow multiple instances of ActiveCues to subscribe to
+            the same event source, the handler must be different objects.
+            If we use the class method directly as handler, it will
+            be on the prototype and therefor be shared between instances.
+
+            It is safe to use the same handler for multiple event sources.
+
+            Additionally we also use the trick of not specifying a context
+            for the handler. This implies that the this object will be
+            the event source, which we need to distinguish between the
+            two timingobjects.
+
+            */
+
+            let self = this;
+            this._onTimingUpdateWrapper = function () {
+                let to = this;
+                if (self.isReady()) {
+                    self._onTimingUpdate(to);
                 }
             };
-            this._toA.on("change", this._onTimingA, this);
-            // Handler for timing object B
-            this._onTimingB = function (ev) {
-                if (this._toA.isReady() && this._toB.isReady()) {
-                    this._onTimingUpdate(this._toB, ev);
-                }
-            };
-            this._toB.on("change", this._onTimingB, this);
+            this._toA.on("change", this._onTimingUpdateWrapper);
+            this._toB.on("change", this._onTimingUpdateWrapper);
         }
+
+
+        /*
+            Ready State
+        */
 
         get ready () {
             return Promise.all([this._toA.ready, this._toB.ready]);
         };
 
+        isReady() {
+            return this._toA.isReady() && this._toB.isReady();
+        }
+
+
+        /*
+            Handling Axis Update Callbacks
+        */
 
         _onAxisUpdate(batchMap) {
             // Do something
             console.log("onAxisUpdate");
         }
 
-        _onTimingUpdate (src, eArg) {
-            if (src == this._toA) {
-                console.log("onTimingUpdateA");
-            } else if (src == this._toB) {
-                console.log("onTimingUpdateB");
+        /*
+            Handling Change Events from Timing Objects
+        */
+
+        _onTimingUpdate (to) {
+            if (to == this._toA) {
+                console.log("update toA");
             }
+            if (to == this._toB) {
+                console.log("update toB");
+            }
+
+            // next up - figure out the new timing object state and
+            // what needs to be done.
+
+
         };
 
 
@@ -85,6 +119,13 @@ define(function(require) {
             };
 
         }
+
+
+
+        values() {
+            return this._activeCues.values();
+        }
+
 
     }
 

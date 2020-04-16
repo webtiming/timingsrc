@@ -12,81 +12,91 @@
     <!--  main -->
     <script text="javascript">
 
-
-      require(['test/main'], function (timingsrc) {
-        const Interval = timingsrc.Interval;
-
-        const toA = new timingsrc.TimingObject();
-        const toB = new timingsrc.SkewConverter(toA, 4);
+        let toA, toB, axis, ac, Interval;
 
 
         function pprint(ev, ac) {
           console.log("exitCues");
-          for (let cue of ev.exitCues.values()) {
-            console.log(cue.key, cue.interval.toString());
-          }
-          console.log("enterCues");
-          for (let cue of ev.enterCues.values()) {
-            console.log(cue.key, cue.interval.toString());
-          }
-          console.log("activeCues");
-          for (let cue of ac.activeCues.values()) {
-            console.log(cue.key, cue.interval.toString());
-          }
+            for (let cue of ev.exitCues.values()) {
+                console.log(cue.key, cue.interval.toString());
+            }
+            console.log("enterCues");
+            for (let cue of ev.enterCues.values()) {
+                console.log(cue.key, cue.interval.toString());
+            }
+            console.log("activeCues");
+            for (let cue of ac.values()) {
+                console.log(cue.key, cue.interval.toString());
+            }
+        };
+
+        function run() {
+
+            // Hook up buttons UI
+            document.getElementById('a').onclick = function () {
+                let ev = ac.jumpTo(new Interval(1.0));
+                console.log("1.0");
+                pprint(ev, ac);
+            };
+            document.getElementById('b').onclick = function () {
+                let ev = ac.jumpTo(new Interval(1.3));
+                console.log("1.3");
+                pprint(ev, ac);
+            };
+            document.getElementById('c').onclick = function () {
+                let ev = ac.jumpTo(new Interval(1.7));
+                console.log("1.7");
+                pprint(ev, ac);
+            };
+            document.getElementById('d').onclick = function () {
+                let ev = ac.jumpTo(new Interval(2.0));
+                console.log("2.0");
+                pprint(ev, ac);
+            };
+
+            let value = document.getElementById("value");
+            toA.on("timeupdate", function () {
+                value.innerHTML = toA.query().position.toFixed(2);
+            });
         };
 
 
+        require(['test/main'], function (timingsrc) {
 
-        function run(){
+            Interval = timingsrc.Interval;
+
+            // initialise
+            toA = new timingsrc.TimingObject();
+            //toB = new timingsrc.SkewConverter(toA, 4);
+            toB = new timingsrc.TimingObject({position:4});
+            axis = new timingsrc.Axis();
+            ac = new timingsrc.ActiveCues(axis, toA, toB);
+
+            // fill axis with some cues
+            let cues = [];
+            for (let i=0; i<100; i++) {
+                let j0 = i;
+                let j1 = i + 1;
+                cues.push({key: i, interval: new Interval(j0, j1)});
+            }
+            for (let i=0; i<100; i++) {
+                let j0 = i + 0.5;
+                let j1 = j0 + 1;
+                cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
+            }
+            axis.update(cues);
 
 
-          const axis = new timingsrc.Axis();
+            if (document.readyState === "complete") {
+                run();
+            } else {
+                window.onload = run;
+            };
 
-          // fill axis with some cues
-          let cues = [];
-          for (let i=0; i<100; i++) {
-            let j0 = i;
-            let j1 = i + 1;
-            cues.push({key: i, interval: new Interval(j0, j1)});
-          }
-          for (let i=0; i<100; i++) {
-            let j0 = i + 0.5;
-            let j1 = j0 + 1;
-            cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
-          }
-          axis.update(cues);
+        });
 
 
-          const ac = new timingsrc.ActiveCues(axis, toA, toB);
-
-          // Hook up buttons UI
-          document.getElementById('a').onclick = function () {
-            let ev = ac.jumpTo(new Interval(1.0));
-            console.log("1.0");
-            pprint(ev, ac);
-          };
-          document.getElementById('b').onclick = function () {
-            let ev = ac.jumpTo(new Interval(1.3));
-            console.log("1.3");
-            pprint(ev, ac);
-          };
-          document.getElementById('c').onclick = function () {
-            let ev = ac.jumpTo(new Interval(1.7));
-            console.log("1.7");
-            pprint(ev, ac);
-          };
-          document.getElementById('d').onclick = function () {
-            let ev = ac.jumpTo(new Interval(2.0));
-            console.log("2.0");
-            pprint(ev, ac);
-          };
-
-        }
-
-        if (document.readyState === "complete") run();
-        else window.onload = run;
-      });
-    </script>
+</script>
   </head>
   <body>
     <h1>Test ActiveCues</h1>
