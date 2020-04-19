@@ -636,6 +636,113 @@ define(function (require) {
 
 
 
+
+
+
+
+
+
+    /*
+        Figure the nature of the change when old_vector is
+        replaced by new_vector at time ts.
+
+        - was moving (boolean) - true if moving before change
+        - is moving (boolean) - true if moving after change
+        - pos changed (boolean) - true if position was changed instantaneously
+        - move changed (boolean) - true if movement was changed instanteneously
+
+        report changed in two independent aspects
+        - change in position (i.e. discontinuity in position)
+        - change in movement (i.e. starting, stopping, changed)
+
+        These are represented as
+        - PosChangeType
+        - MoveChangeType
+
+        return [PosChangeType, MoveChangeType]
+    */
+
+    const PosChangeType = Object.freeze({
+        NOOP: 0,                // no change in position
+        CHANGE: 1               // change in position
+    });
+
+    const MoveChangeType = Object.freeze({
+        NOOP: 0,                // no change in movement, not moving
+        NOOP_MOVING: 1,         // no change in movement, moving
+        START: 2,               // not moving -> moving
+        CHANGE: 3,              // keep moving, movement changed
+        STOP: 4                 // moving -> not moving
+    });
+
+
+    function getMotionChange(old_vector, new_vector, ts) {
+        let is_moving = isMoving(new_vector)
+        let init = (old_vector == undefined);
+        if (init) {
+            console.log("init");
+            /*
+                Possible to introduce
+                PosChangeType.INIT here instead of PosChangeType.CHANGE
+                Not sure if this is needed.
+            */
+            if (is_moving) {
+                return [PosChangeType.CHANGE, MoveChangeType.START];
+            } else {
+                return [PosChangeType.CHANGE, MoveChangeType.NOOP];
+            }
+        }
+
+        let was_moving = isMoving(old_vector);
+        let end_vector = calculateVector(old_vector, ts);
+        let start_vector = calculateVector(new_vector, ts);
+
+        // position change
+        // console.log(end_vector.position, start_vector.position);
+        // console.log(end_vector.position == start_vector.position);
+        let pos_changed = (end_vector.position != start_vector.position);
+        let pct = (pos_changed) ? PosChangeType.CHANGE : PosChangeType.NOOP;
+
+        // movement change
+        let mct;
+        if (was_moving && is_moving) {
+            let vel_changed = (end_vector.velocity != start_vector.velocity);
+            let acc_changed = (end_vector.acceleration != start_vector.acceleration);
+            let move_changed = (vel_changed || acc_changed);
+            if (move_changed) {
+                mct = MoveChangeType.CHANGE;
+            } else {
+                mct = MoveChangeType.NOOP_MOVING;
+            }
+        } else if (!was_moving && is_moving) {
+            mct = MoveChangeType.START;
+        } else if (was_moving && !is_moving) {
+            mct = MoveChangeType.STOP;
+        } else if (!was_moving && !is_moving) {
+            mct = MoveChangeType.NOOP;
+        }
+
+        return [pct, mct];
+    }
+
+
+    function getMotionChangeString(mc){
+        let str = (mc[0] == PosChangeType.CHANGE) ? "jump, " : "";
+        if (mc[1] == MoveChangeType.START) {
+            str += "movement started";
+        } else if (mc[1] == MoveChangeType.CHANGE) {
+            str += "movement changed";
+        } else if (mc[1] == MoveChangeType.STOP) {
+            str += "movement stopped";
+        } else if (mc[1] == MoveChangeType.NOOP_MOVING) {
+            str += "movement noop - moving";
+        } else if (mc[1] == MoveChangeType.NOOP) {
+            str += "movement noop - not moving";
+        }
+        return str;
+    };
+
+
 	// return module object
 	return {
 		calculateVector : calculateVector,
@@ -651,7 +758,9 @@ define(function (require) {
         isMoving: isMoving,
         getPositionInterval: getPositionInterval,
         getEndpointEvents: getEndpointEvents,
-        getRangeIntersect: getRangeIntersect
+        getRangeIntersect: getRangeIntersect,
+        getMotionChange: getMotionChange,
+        getMotionChangeString: getMotionChangeString
 	};
 });
 

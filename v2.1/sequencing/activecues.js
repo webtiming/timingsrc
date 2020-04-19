@@ -2,14 +2,24 @@ define(function(require) {
 
     const Interval = require("../util/interval");
     const util = require("../util/util");
+    const motionutils = require("../util/motionutils");
     const eventify = require("../util/eventify");
+
+
+
+
+
 
     class ActiveCues {
 
         constructor (axis, toA, toB) {
             this._axis = axis;
             this._toA = toA;
+            this._toA_ready = false;
+            this._toA_current_vector = undefined;
             this._toB = toB;
+            this._toB_ready = false;
+            this._toB_current_vector = undefined;
             this._activeCues = new Map(); // (key -> cue)
 
             // Register axis callback
@@ -36,7 +46,28 @@ define(function(require) {
             let self = this;
             this._onTimingUpdateWrapper = function () {
                 let to = this;
-                if (self.isReady()) {
+                let mc;
+                if (to == self._toA) {
+                    self._toA_ready = true;
+                    let old_vector = self._toA_current_vector;
+                    let new_vector = self._toA.vector;
+                    let ts = new_vector.timestamp;
+                    mc = motionutils.getMotionChange(old_vector, new_vector, ts);
+                    console.log("update toA");
+                    console.log(motionutils.getMotionChangeString(mc));
+                    self._toA_current_vector = new_vector;
+                }
+                if (to == self._toB) {
+                    let old_vector = self._toB_current_vector;
+                    let new_vector = self._toB.vector;
+                    let ts = new_vector.timestamp;
+                    mc = motionutils.getMotionChange(old_vector, new_vector, ts);
+                    console.log("update toB");
+                    console.log(motionutils.getMotionChangeString(mc));
+                    self._toB_current_vector = new_vector;
+                    self._toB_ready = true;
+                }
+                if (self._toA_ready && self._toB_ready) {
                     self._onTimingUpdate(to);
                 }
             };
@@ -73,10 +104,10 @@ define(function(require) {
 
         _onTimingUpdate (to) {
             if (to == this._toA) {
-                console.log("update toA");
+
             }
             if (to == this._toB) {
-                console.log("update toB");
+
             }
 
             // next up - figure out the new timing object state and
