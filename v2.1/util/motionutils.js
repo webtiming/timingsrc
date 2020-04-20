@@ -677,6 +677,7 @@ define(function (require) {
 
 
     function getMotionChange(old_vector, new_vector, ts) {
+
         let is_moving = isMoving(new_vector)
         let init = (old_vector == undefined);
         if (init) {
