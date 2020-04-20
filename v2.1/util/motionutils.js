@@ -644,7 +644,8 @@ define(function (require) {
 
     /*
         Figure the nature of the change when old_vector is
-        replaced by new_vector at time ts.
+        replaced by new_vector. The time when this transition
+        occured is given bey new_vector.timestamp, by definition.
 
         - was moving (boolean) - true if moving before change
         - is moving (boolean) - true if moving after change
@@ -676,72 +677,75 @@ define(function (require) {
     });
 
 
-    function getMotionChange(old_vector, new_vector, ts) {
+    class MotionDelta {
 
-        let is_moving = isMoving(new_vector)
-        let init = (old_vector == undefined);
-        if (init) {
-            console.log("init");
-            /*
-                Possible to introduce
-                PosChangeType.INIT here instead of PosChangeType.CHANGE
-                Not sure if this is needed.
-            */
-            if (is_moving) {
-                return [PosChangeType.CHANGE, MoveChangeType.START];
+        constructor (old_vector, new_vector) {
+            console.log(old_vector);
+            console.log(new_vector);
+            let ts = new_vector.timestamp;
+            let is_moving = isMoving(new_vector)
+            let init = (old_vector == undefined || old_vector.position == undefined);
+            if (init) {
+                /*
+                    Possible to introduce
+                    PosChangeType.INIT here instead of PosChangeType.CHANGE
+                    Not sure if this is needed.
+                */
+                if (is_moving) {
+                    this._mc = [PosChangeType.CHANGE, MoveChangeType.START];
+                } else {
+                    this._mc = [PosChangeType.CHANGE, MoveChangeType.NOOP];
+                }
             } else {
-                return [PosChangeType.CHANGE, MoveChangeType.NOOP];
+                let was_moving = isMoving(old_vector);
+                let end_vector = calculateVector(old_vector, ts);
+                let start_vector = calculateVector(new_vector, ts);
+
+                // position change
+                // console.log(end_vector.position, start_vector.position);
+                // console.log(end_vector.position == start_vector.position);
+                let pos_changed = (end_vector.position != start_vector.position);
+                let pct = (pos_changed) ? PosChangeType.CHANGE : PosChangeType.NOOP;
+
+                // movement change
+                let mct;
+                if (was_moving && is_moving) {
+                    let vel_changed = (end_vector.velocity != start_vector.velocity);
+                    let acc_changed = (end_vector.acceleration != start_vector.acceleration);
+                    let move_changed = (vel_changed || acc_changed);
+                    if (move_changed) {
+                        mct = MoveChangeType.CHANGE;
+                    } else {
+                        mct = MoveChangeType.NOOP_MOVING;
+                    }
+                } else if (!was_moving && is_moving) {
+                    mct = MoveChangeType.START;
+                } else if (was_moving && !is_moving) {
+                    mct = MoveChangeType.STOP;
+                } else if (!was_moving && !is_moving) {
+                    mct = MoveChangeType.NOOP;
+                }
+                this._mc = [pct, mct];
             }
         }
 
-        let was_moving = isMoving(old_vector);
-        let end_vector = calculateVector(old_vector, ts);
-        let start_vector = calculateVector(new_vector, ts);
-
-        // position change
-        // console.log(end_vector.position, start_vector.position);
-        // console.log(end_vector.position == start_vector.position);
-        let pos_changed = (end_vector.position != start_vector.position);
-        let pct = (pos_changed) ? PosChangeType.CHANGE : PosChangeType.NOOP;
-
-        // movement change
-        let mct;
-        if (was_moving && is_moving) {
-            let vel_changed = (end_vector.velocity != start_vector.velocity);
-            let acc_changed = (end_vector.acceleration != start_vector.acceleration);
-            let move_changed = (vel_changed || acc_changed);
-            if (move_changed) {
-                mct = MoveChangeType.CHANGE;
-            } else {
-                mct = MoveChangeType.NOOP_MOVING;
+        toString() {
+            let mc = this._mc;
+            let str = (mc[0] == PosChangeType.CHANGE) ? "jump, " : "";
+            if (mc[1] == MoveChangeType.START) {
+                str += "movement started";
+            } else if (mc[1] == MoveChangeType.CHANGE) {
+                str += "movement changed";
+            } else if (mc[1] == MoveChangeType.STOP) {
+                str += "movement stopped";
+            } else if (mc[1] == MoveChangeType.NOOP_MOVING) {
+                str += "movement noop - moving";
+            } else if (mc[1] == MoveChangeType.NOOP) {
+                str += "movement noop - not moving";
             }
-        } else if (!was_moving && is_moving) {
-            mct = MoveChangeType.START;
-        } else if (was_moving && !is_moving) {
-            mct = MoveChangeType.STOP;
-        } else if (!was_moving && !is_moving) {
-            mct = MoveChangeType.NOOP;
+            return str;
         }
-
-        return [pct, mct];
     }
-
-
-    function getMotionChangeString(mc){
-        let str = (mc[0] == PosChangeType.CHANGE) ? "jump, " : "";
-        if (mc[1] == MoveChangeType.START) {
-            str += "movement started";
-        } else if (mc[1] == MoveChangeType.CHANGE) {
-            str += "movement changed";
-        } else if (mc[1] == MoveChangeType.STOP) {
-            str += "movement stopped";
-        } else if (mc[1] == MoveChangeType.NOOP_MOVING) {
-            str += "movement noop - moving";
-        } else if (mc[1] == MoveChangeType.NOOP) {
-            str += "movement noop - not moving";
-        }
-        return str;
-    };
 
 
 	// return module object
@@ -760,8 +764,7 @@ define(function (require) {
         getPositionInterval: getPositionInterval,
         getEndpointEvents: getEndpointEvents,
         getRangeIntersect: getRangeIntersect,
-        getMotionChange: getMotionChange,
-        getMotionChangeString: getMotionChangeString
+        MotionDelta: MotionDelta
 	};
 });
 
