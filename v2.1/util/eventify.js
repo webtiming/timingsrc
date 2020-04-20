@@ -28,11 +28,11 @@ define(function () {
 		UTILITY
 	*/
 
-	// unique ID generator 
+	// unique ID generator
 	var id = (function(length) {
 	 	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	    return function (len) { // key length
-	    	len = len || length; 
+	    	len = len || length;
 	    	var text = "";
 		    for( var i=0; i < len; i++ )
 	    	    text += possible.charAt(Math.floor(Math.random() * possible.length));
@@ -56,7 +56,7 @@ define(function () {
 		F.prototype = Parent.prototype;
 		Child.prototype = new F(); // child gets parents prototypes via F
 		Child.uber = Parent.prototype; // reference in parent to superclass
-		Child.prototype.constructor = Child; // resetting constructor pointer 
+		Child.prototype.constructor = Child; // resetting constructor pointer
 	};
 
 	// equality function for object values
@@ -67,7 +67,7 @@ define(function () {
 		// disallow array comparison
 		if (Array.isArray(a)) throw new Error("illegal parameter a, array not supported", a);
 		if (Array.isArray(b)) throw new Error("illegal parameter b, array not supported", b);
-	    
+
 		if (typeof a === 'object' && typeof b === 'object') {
 			// Create arrays of property names
 		    var aProps = Object.getOwnPropertyNames(a);
@@ -193,7 +193,7 @@ define(function () {
 		// default true
 		if (options.init == undefined) {
 			options.init = true;
-		} 
+		}
 		object._callbacks["events"] = new HandlerMap();
 		object._callbacks["events"]._options = {init:options.init};
 
@@ -249,20 +249,20 @@ define(function () {
 				return concatMap(typeList, function(_type){
 					return this._eventifyMakeEItemList(_type);
 				}, this);
-			}	
+			}
 		};
 
 		/*
 			EVENT FORMATTER
 
-			Format the structure of EventArgs. 
+			Format the structure of EventArgs.
 			Parameter e is the object that was supplied to triggerEvent
 			Parameter type is the event type that was supplied to triggerEvent
 			Default is to use 'e' given in triggerEvent unchanged.
 
 			Note, for protected event type 'events', eventFormatter is also applied recursively
 			within the list of events
-			ex: { type: "events", e: [{type:"change",e:e1},])  
+			ex: { type: "events", e: [{type:"change",e:e1},])
 
 			Implement
 			.eventifyEventFormatter(type, e) to override default
@@ -274,7 +274,7 @@ define(function () {
 				e = e.map(function(eItem){
 					return {type: eItem.type, e: eventFormatter(eItem.type, eItem.e)};
 				});
-			}			
+			}
 			return eventFormatter(type,e);
 		};
 
@@ -282,7 +282,7 @@ define(function () {
 			CALLBACK FORMATTER
 
 			Format which parameters are included in event callback.
-			Returns a list of parameters. 
+			Returns a list of parameters.
 			Default is to exclude type and eInfo and just deliver the event supplied to triggerEvent
 
 			Implement
@@ -293,7 +293,7 @@ define(function () {
 			return callbackFormatter.call(this, type, e, eInfo);
 		};
 
-		/* 
+		/*
 			TRIGGER EVENTS
 
 			This is the hub - all events go through here
@@ -309,8 +309,8 @@ define(function () {
 				if (eItem.type === "events") throw new Error("Illegal event type; triggering of events on protocted event type 'events'" );
 			}, this);
 			if (eItemList.length === 0) return this;
-			/* 
-				Buffer list of eItems so that iterative calls to eventifyTriggerEvents 
+			/*
+				Buffer list of eItems so that iterative calls to eventifyTriggerEvents
 				will be emitted in one batch
 			*/
 			this._eBuffer.push.apply(this._eBuffer, eItemList);
@@ -324,7 +324,7 @@ define(function () {
 					// empty eBuffer
 					self._eBuffer = [];
 					// flush immediate callbacks
-					self._eventifyFlushImmediateCallbacks();			
+					self._eventifyFlushImmediateCallbacks();
 				});
 			}
 			return this;
@@ -343,7 +343,7 @@ define(function () {
 			- distinguish "events" from other event names
 		*/
 	  	_prototype._eventifyTriggerProtectedEvents = function (eItemList, handlerID) {
-	  		// trigger event list on protected event type "events"      		
+	  		// trigger event list on protected event type "events"
 	  		this._eventifyTriggerEvent("events", eItemList, handlerID);
 	  	};
 
@@ -357,17 +357,18 @@ define(function () {
 		/*
 			Internal method for triggering a single event.
 			- if handler specificed - trigger only on given handler (for internal use only)
-			- awareness of init-events	
+			- awareness of init-events
 	    */
-	    _prototype._eventifyTriggerEvent = function (type, e, handlerID) {	
-			var argList, e, eInfo = {};
-			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type); 
+	    _prototype._eventifyTriggerEvent = function (type, e, handlerID) {
+
+			var argList, eInfo = {};
+			if (!this._callbacks.hasOwnProperty(type)) throw new Error("Unsupported event type " + type);
 			var handlerMap = this._callbacks[type];
 			var init = handlerMap._options.init;
 			handlerMap.getItems().forEach(function (handlerItem) {
 				if (handlerID === undefined) {
 	       			// all handlers to be invoked, except those with initial pending
-	        		if (handlerItem.pending) { 
+	        		if (handlerItem.pending) {
 	          			return false;
 	        		}
 	      		} else {
@@ -446,7 +447,7 @@ define(function () {
 				callbacks.forEach(function (callback) {
 					callback();
 				});
-			} 
+			}
 			// if buffer is non-empty, immediate callbacks will be flushed after
 			// buffer is emptied
 		};
@@ -462,7 +463,7 @@ define(function () {
 			if (this._callbacks[type] !== undefined) {
 				var handlerMap = this._callbacks[type];
 				handlerMap.unregister(handler);
-				
+
 	  		}
 	  		return this;
 		};
@@ -475,7 +476,7 @@ define(function () {
 
 		Convenience base class allowing eventified classes to be derived using (prototypal) inheritance.
 		This is alternative approach, hiding the use of eventifyInstance and eventifyPrototype.
-		
+
 	*/
 	var BaseEventObject = function () {
 		eventifyInstance(this);
@@ -486,17 +487,17 @@ define(function () {
 	BaseEventObject.inherit = inherit;
 
 
-	/* 
+	/*
 		EVENT BOOLEAN
 
-		Single boolean variable, its value accessible through get and toggle methods. 
-		Defines an event 'change' whenever the value of the variable is changed. 
+		Single boolean variable, its value accessible through get and toggle methods.
+		Defines an event 'change' whenever the value of the variable is changed.
 
 		initialised to false if initValue is not specified
-		
+
 		Note : implementation uses falsiness of input parameter to constructor and set() operation,
 		so eventBoolean(-1) will actually set it to true because
-		(-1) ? true : false -> true !  
+		(-1) ? true : false -> true !
 	*/
 
 	var EventBoolean = function (initValue, options) {
@@ -506,7 +507,7 @@ define(function () {
 		BaseEventObject.call(this);
 		this._value = (initValue) ? true : false;
 		// define change event (supporting init-event)
-		this.eventifyDefineEvent("change", options); 
+		this.eventifyDefineEvent("change", options);
 	};
 	BaseEventObject.inherit(EventBoolean, BaseEventObject);
 
@@ -536,7 +537,7 @@ define(function () {
 			this.eventifyTriggerEvent("change", newValue);
 			return true;
 		}
-		return false;	
+		return false;
 	};
 
 	EventBoolean.prototype.toggle = function () {
@@ -551,16 +552,16 @@ define(function () {
 
 
 
-	/* 
+	/*
 		EVENT VARIABLE
 
-		Single variable, its value accessible through get and set methods. 
-		Defines an event 'change' whenever the value of the variable is changed. 
+		Single variable, its value accessible through get and set methods.
+		Defines an event 'change' whenever the value of the variable is changed.
 
 		Event variable may alternatively have a src eventVariable.
 		If it does, setting values will simply be forwarded to the source,
 		and value changes in src will be reflected.
-		This may be used to switch between event variables, simply by setting the 
+		This may be used to switch between event variables, simply by setting the
 		src property.
 	*/
 
@@ -569,12 +570,12 @@ define(function () {
 		options = options || {};
 		options.eqFunc = options.eqFunc || areEqual;
 		this._options = options;
-		
+
 		BaseEventObject.call(this);
 		this._value = initValue;
 		this._src;
 		// define change event (supporting init-event)
-		this.eventifyDefineEvent("change", options); 
+		this.eventifyDefineEvent("change", options);
 
 		// onSrcChange
 		var self = this;
@@ -644,12 +645,12 @@ define(function () {
 					ev.off("change", callback);
 				}
 			};
-			ev.on("change", callback);	
+			ev.on("change", callback);
 		});
 	};
 
 
-	
+
 
 
 

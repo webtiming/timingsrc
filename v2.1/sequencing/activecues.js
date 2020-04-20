@@ -41,22 +41,20 @@ define(function(require) {
 
             */
 
-            let self = this;
-            this._onTimingUpdateWrapper = function () {
-                let to = this;
-                let mc;
-                if (to == self._toA && !self._toA_ready) {
-                    self._toA_ready = true;
+            this._onTimingUpdateWrapper = function (eInfo) {
+                let to = eInfo.src;
+                if (to == this._toA && !this._toA_ready) {
+                    this._toA_ready = true;
                 }
-                if (to == self._toB && !self.toB_ready) {
-                    self._toB_ready = true;
+                if (to == this._toB && !this.toB_ready) {
+                    this._toB_ready = true;
                 }
-                if (self._toA_ready && self._toB_ready) {
-                    self._onTimingUpdate(to);
+                if (this._toA_ready && this._toB_ready) {
+                    this._onTimingUpdate(eInfo);
                 }
             };
-            this._toA.on("change", this._onTimingUpdateWrapper);
-            this._toB.on("change", this._onTimingUpdateWrapper);
+            this._toA.on("change", this._onTimingUpdateWrapper, this);
+            this._toB.on("change", this._onTimingUpdateWrapper, this);
         }
 
 
@@ -86,7 +84,8 @@ define(function(require) {
             Handling Change Events from Timing Objects
         */
 
-        _onTimingUpdate (to) {
+        _onTimingUpdate (eInfo) {
+            let to = eInfo.src;
             if (to == this._toA) {
                 console.log("update toA");
             }

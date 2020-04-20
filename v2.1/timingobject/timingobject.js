@@ -94,6 +94,9 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 			timestamp : undefined
 		};
 
+		// support update promise
+		this._event_variables = [];
+
 		// cached range
 		this._range = [undefined,undefined];
 
@@ -136,6 +139,9 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		return [];
 	};
 
+	TimingBase.prototype.eventifyCallbackFormatter = function (type, e, eInfo) {
+		return [eInfo];
+	};
 
 	/*
 
@@ -338,6 +344,11 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 			this._vector = vector;
 			// trigger events
 			this._ready.value = true;
+			// unlock update promises
+			this._event_variables.forEach(function(event) {
+				event.set(true);
+			});
+			this._event_variables = [];
 			this._postProcess(this._vector);
 		}
 		// renew timeout
@@ -471,8 +482,11 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 	// update
 	InternalProvider.prototype.update = function (vector) {
 		var newVector = this.checkUpdateVector(vector);
+		// create promise
+		var event = new eventify.EventBoolean();
+		this._event_variables.push(event);
 		this._preProcess(newVector);
-		return newVector;
+		return eventify.makeEventPromise(event);
 	};
 
 

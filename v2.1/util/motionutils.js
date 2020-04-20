@@ -680,8 +680,6 @@ define(function (require) {
     class MotionDelta {
 
         constructor (old_vector, new_vector) {
-            console.log(old_vector);
-            console.log(new_vector);
             let ts = new_vector.timestamp;
             let is_moving = isMoving(new_vector)
             let init = (old_vector == undefined || old_vector.position == undefined);
