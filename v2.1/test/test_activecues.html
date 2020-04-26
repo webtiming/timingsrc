@@ -12,7 +12,7 @@
     <!--  main -->
     <script text="javascript">
 
-        let toA, toB, axis, s, Interval;
+        let toA, toB, toC, axis, s, Interval;
 
 
         function pprint(ev, s) {
@@ -57,13 +57,8 @@
 
             Interval = timingsrc.Interval;
 
-            // initialise
-            toA = new timingsrc.TimingObject();
-
-            //toB = new timingsrc.SkewConverter(toA, 4);
-            toB = new timingsrc.TimingObject({position:4});
+            // Axis
             axis = new timingsrc.Axis();
-            s = new timingsrc.Sequencer(axis, toA, toB);
 
             // fill axis with some cues
             let cues = [];
@@ -79,14 +74,27 @@
             }
             axis.update(cues);
 
+            // initialise
+            toA = new timingsrc.TimingObject();
+
+            //toB = new timingsrc.SkewConverter(toA, 4);
+            toB = new timingsrc.TimingObject({vector: {position:4}});
+            s = new timingsrc.Sequencer(axis, toA, toB);
 
             // add change handler
-            s.on("change", function(ev, eInfo) {
-                console.log("ActiveCues init", eInfo.init);
-                for (let cue of s.values()) {
-                    console.log(cue.key, cue.interval.toString());
+            s.on("change", function(eventMap, eInfo) {
+                for (let [key, item] of eventMap.entries()) {
+                    if (!item.new && item.old) {
+                        console.log("remove", key, item.old.interval.toString());
+                    } else if (item.new && !item.old) {
+                        console.log("add", key, item.new.interval.toString());
+                    } else if (item.new && item.old) {
+                        console.log("change", key);
+                    }
+
                 }
             });
+
 
             if (document.readyState === "complete") {
                 run();
