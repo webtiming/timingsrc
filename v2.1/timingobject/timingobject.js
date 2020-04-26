@@ -180,7 +180,6 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 	});
 
 	// range
-
 	Object.defineProperty(TimingBase.prototype, 'range', {
 		get : function () {
 			// copy range
@@ -202,6 +201,13 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		}
 	});
 
+
+	// old vector
+	Object.defineProperty(TimingBase.prototype, 'old_vector', {
+		get : function() {
+			return this._old_vector;
+		}
+	});
 
 	// last delta
 	Object.defineProperty(TimingBase.prototype, 'delta', {

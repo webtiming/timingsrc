@@ -8,9 +8,7 @@ define(function(require) {
 
 
 
-
-
-    class ActiveCues {
+    class Sequencer {
 
         constructor (axis, toA, toB) {
             this._axis = axis;
@@ -55,7 +53,31 @@ define(function(require) {
             };
             this._toA.on("change", this._onTimingUpdateWrapper, this);
             this._toB.on("change", this._onTimingUpdateWrapper, this);
+
+
+            // Change event
+            eventify.eventifyInstance(this, {init:false});
+            this.eventifyDefineEvent("change", {init:true});
         }
+
+        /* Eventify */
+        eventifyCallbackFormatter = function (type, e, eInfo) {
+            return [e, eInfo];
+        };
+
+
+        /*
+            Eventify: immediate events
+        */
+        eventifyMakeInitEvents = function (type) {
+            if (type === "change") {
+                // todo : create eventMap from active cues
+                return (this.isReady()) ? [undefined] : [];
+            }
+            return [];
+        };
+
+
 
 
         /*
@@ -85,7 +107,13 @@ define(function(require) {
         */
 
         _onTimingUpdate (eInfo) {
-            let to = eInfo.src;
+            const PosDelta = motionutils.MotionDelta.PosDelta;
+            const MoveDelta = motionutils.MotionDelta.MoveDelta;
+            const to = eInfo.src;
+            const other_to = (to == this._toA) ? this._toB : this._toA;
+            let new_vector, other_new_vector;
+
+
             if (to == this._toA) {
                 console.log("update toA");
             }
@@ -93,13 +121,60 @@ define(function(require) {
                 console.log("update toB");
 
             }
-            console.log(to.delta.toString());
 
-            // next up - figure out the new timing object state and
-            // what needs to be done.
+            /*
+                If update is the initial vector from the timing object,
+                we set current time as the official time for the update.
+                Else, the new vector is "live" and we use the timestamp
+                when it was created as the official time for the update.
+                This is represented by the new_vector.
+            */
+            if (eInfo.init) {
+                new_vector = motionutils.calculateVector(to.vector, to.clock.now());
+            } else {
+                new_vector = to.vector;
+            }
 
+            /*
+                Sample the state of the other timing object at same time.
+            */
+            let ts = new_vector.timestamp;
+            other_new_vector = motionutils.calculateVector(other_to.vector, ts);
+
+
+            /*
+                The nature of the vector change
+            */
+            let delta = new motionutils.MotionDelta(to.old_vector, new_vector);
+
+
+            console.log(delta.toString());
+            console.log(to.old_vector);
+            console.log(to.vector);
+            console.log(new_vector);
+
+            /*
+                Jump
+            */
+            let change;
+
+
+            if (delta.posDelta == PosDelta.CHANGE) {
+                // make position interval
+                let low = Math.min(new_vector.position, other_new_vector.position);
+                let high = Math.max(new_vector.position, other_new_vector.position);
+                let itv = new Interval(low, high, true, true);
+                console.log("jump");
+                console.log(itv.toString());
+                change = this.jumpTo(itv);
+            }
+
+            // event notification
+            this.eventifyTriggerEvent("change", change);
 
         };
+
+
 
 
 
@@ -110,6 +185,7 @@ define(function(require) {
         */
 
         jumpTo (interval) {
+
 
             let newActiveCues = new Map(this._axis.lookup(interval).map(cue => {
                 return [cue.key, cue];
@@ -145,7 +221,9 @@ define(function(require) {
 
     }
 
-    return ActiveCues;
+    eventify.eventifyPrototype(Sequencer.prototype);
+
+    return Sequencer;
 
 });
 

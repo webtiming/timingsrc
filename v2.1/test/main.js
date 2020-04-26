@@ -9,7 +9,7 @@ define(function(require) {
         Schedule: require("../sequencing/schedule"),
         TimingObject: require("../timingobject/timingobject").TimingObject,
         SkewConverter: require("../timingobject/skewconverter"),
-        ActiveCues: require("../sequencing/activecues")
+        Sequencer: require("../sequencing/activecues")
     };
 });
 

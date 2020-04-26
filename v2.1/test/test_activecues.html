@@ -12,10 +12,10 @@
     <!--  main -->
     <script text="javascript">
 
-        let toA, toB, axis, ac, Interval;
+        let toA, toB, axis, s, Interval;
 
 
-        function pprint(ev, ac) {
+        function pprint(ev, s) {
           console.log("exitCues");
             for (let cue of ev.exitCues.values()) {
                 console.log(cue.key, cue.interval.toString());
@@ -25,7 +25,7 @@
                 console.log(cue.key, cue.interval.toString());
             }
             console.log("activeCues");
-            for (let cue of ac.values()) {
+            for (let cue of s.values()) {
                 console.log(cue.key, cue.interval.toString());
             }
         };
@@ -34,24 +34,16 @@
 
             // Hook up buttons UI
             document.getElementById('a').onclick = function () {
-                let ev = ac.jumpTo(new Interval(1.0));
-                console.log("1.0");
-                pprint(ev, ac);
+                toA.update({position: 1.0});
             };
             document.getElementById('b').onclick = function () {
-                let ev = ac.jumpTo(new Interval(1.3));
-                console.log("1.3");
-                pprint(ev, ac);
+                toA.update({position: 1.3});
             };
             document.getElementById('c').onclick = function () {
-                let ev = ac.jumpTo(new Interval(1.7));
-                console.log("1.7");
-                pprint(ev, ac);
+                toA.update({position: 1.7});
             };
             document.getElementById('d').onclick = function () {
-                let ev = ac.jumpTo(new Interval(2.0));
-                console.log("2.0");
-                pprint(ev, ac);
+                toA.update({position: 2.0});
             };
 
             let value = document.getElementById("value");
@@ -71,7 +63,7 @@
             //toB = new timingsrc.SkewConverter(toA, 4);
             toB = new timingsrc.TimingObject({position:4});
             axis = new timingsrc.Axis();
-            ac = new timingsrc.ActiveCues(axis, toA, toB);
+            s = new timingsrc.Sequencer(axis, toA, toB);
 
             // fill axis with some cues
             let cues = [];
@@ -87,6 +79,14 @@
             }
             axis.update(cues);
 
+
+            // add change handler
+            s.on("change", function(ev, eInfo) {
+                console.log("ActiveCues init", eInfo.init);
+                for (let cue of s.values()) {
+                    console.log(cue.key, cue.interval.toString());
+                }
+            });
 
             if (document.readyState === "complete") {
                 run();

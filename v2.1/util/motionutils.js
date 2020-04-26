@@ -643,56 +643,61 @@ define(function (require) {
 
 
     /*
-        Figure the nature of the change when old_vector is
+        Figure the nature of the motion change when old_vector is
         replaced by new_vector. The time when this transition
         occured is given bey new_vector.timestamp, by definition.
 
         - was moving (boolean) - true if moving before change
         - is moving (boolean) - true if moving after change
         - pos changed (boolean) - true if position was changed instantaneously
-        - move changed (boolean) - true if movement was changed instanteneously
+        - move changed (boolean) - true if movement was changed instantaneously
 
         report changed in two independent aspects
         - change in position (i.e. discontinuity in position)
         - change in movement (i.e. starting, stopping, changed)
 
         These are represented as
-        - PosChangeType
-        - MoveChangeType
+        - PosDelta
+        - MoveDelta
 
-        return [PosChangeType, MoveChangeType]
+        return [PosDelta, MoveDelta]
     */
-
-    const PosChangeType = Object.freeze({
-        NOOP: 0,                // no change in position
-        CHANGE: 1               // change in position
-    });
-
-    const MoveChangeType = Object.freeze({
-        NOOP: 0,                // no change in movement, not moving
-        NOOP_MOVING: 1,         // no change in movement, moving
-        START: 2,               // not moving -> moving
-        CHANGE: 3,              // keep moving, movement changed
-        STOP: 4                 // moving -> not moving
-    });
 
 
     class MotionDelta {
+
+
+        static PosDelta = Object.freeze({
+            NOOP: 0,                // no change in position
+            CHANGE: 1               // change in position
+        });
+
+
+        static MoveDelta = Object.freeze({
+            NOOP: 0,                // no change in movement, not moving
+            NOOP_MOVING: 1,         // no change in movement, moving
+            START: 2,               // not moving -> moving
+            CHANGE: 3,              // keep moving, movement changed
+            STOP: 4                 // moving -> not moving
+        });
 
         constructor (old_vector, new_vector) {
             let ts = new_vector.timestamp;
             let is_moving = isMoving(new_vector)
             let init = (old_vector == undefined || old_vector.position == undefined);
+            const PosDelta = MotionDelta.PosDelta;
+            const MoveDelta = MotionDelta.MoveDelta;
+
             if (init) {
                 /*
                     Possible to introduce
-                    PosChangeType.INIT here instead of PosChangeType.CHANGE
+                    PosDelta.INIT here instead of PosDelta.CHANGE
                     Not sure if this is needed.
                 */
                 if (is_moving) {
-                    this._mc = [PosChangeType.CHANGE, MoveChangeType.START];
+                    this._mc = [PosDelta.CHANGE, MoveDelta.START];
                 } else {
-                    this._mc = [PosChangeType.CHANGE, MoveChangeType.NOOP];
+                    this._mc = [PosDelta.CHANGE, MoveDelta.NOOP];
                 }
             } else {
                 let was_moving = isMoving(old_vector);
@@ -703,7 +708,7 @@ define(function (require) {
                 // console.log(end_vector.position, start_vector.position);
                 // console.log(end_vector.position == start_vector.position);
                 let pos_changed = (end_vector.position != start_vector.position);
-                let pct = (pos_changed) ? PosChangeType.CHANGE : PosChangeType.NOOP;
+                let pct = (pos_changed) ? PosDelta.CHANGE : PosDelta.NOOP;
 
                 // movement change
                 let mct;
@@ -712,33 +717,43 @@ define(function (require) {
                     let acc_changed = (end_vector.acceleration != start_vector.acceleration);
                     let move_changed = (vel_changed || acc_changed);
                     if (move_changed) {
-                        mct = MoveChangeType.CHANGE;
+                        mct = MoveDelta.CHANGE;
                     } else {
-                        mct = MoveChangeType.NOOP_MOVING;
+                        mct = MoveDelta.NOOP_MOVING;
                     }
                 } else if (!was_moving && is_moving) {
-                    mct = MoveChangeType.START;
+                    mct = MoveDelta.START;
                 } else if (was_moving && !is_moving) {
-                    mct = MoveChangeType.STOP;
+                    mct = MoveDelta.STOP;
                 } else if (!was_moving && !is_moving) {
-                    mct = MoveChangeType.NOOP;
+                    mct = MoveDelta.NOOP;
                 }
                 this._mc = [pct, mct];
             }
         }
 
+        get posDelta () {
+            return this._mc[0];
+        }
+
+        get moveDelta () {
+            return this._mc[1]
+        }
+
+
         toString() {
-            let mc = this._mc;
-            let str = (mc[0] == PosChangeType.CHANGE) ? "jump, " : "";
-            if (mc[1] == MoveChangeType.START) {
+            const PosDelta = MotionDelta.PosDelta;
+            const MoveDelta = MotionDelta.MoveDelta;
+            let str = (this.posDelta == PosDelta.CHANGE) ? "jump, " : "";
+            if (this.moveDelta == MoveDelta.START) {
                 str += "movement started";
-            } else if (mc[1] == MoveChangeType.CHANGE) {
+            } else if (this.moveDelta == MoveDelta.CHANGE) {
                 str += "movement changed";
-            } else if (mc[1] == MoveChangeType.STOP) {
+            } else if (this.moveDelta == MoveDelta.STOP) {
                 str += "movement stopped";
-            } else if (mc[1] == MoveChangeType.NOOP_MOVING) {
+            } else if (this.moveDelta == MoveDelta.NOOP_MOVING) {
                 str += "movement noop - moving";
-            } else if (mc[1] == MoveChangeType.NOOP) {
+            } else if (this.moveDelta == MoveDelta.NOOP) {
                 str += "movement noop - not moving";
             }
             return str;
