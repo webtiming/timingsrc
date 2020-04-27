@@ -16,7 +16,7 @@ define(function(require) {
         static RUN_VECTOR = "vector";
         static RUN_TIMEOUT = "timeout";
 
-        constructor(clock, range, axis, options) {
+        constructor(clock, range, axis, callback, options) {
             // clock
             this.clock = clock;
             // timing object range
@@ -33,6 +33,8 @@ define(function(require) {
             this.axis = axis;
             // task queue
             this.queue = [];
+            // callback
+            this.callback = callback;
             // options
             options = options || {};
             options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
@@ -72,7 +74,8 @@ define(function(require) {
         /*
             update schedule with new motion vector
         */
-        setVector(now, vector) {
+        setVector(vector) {
+            let now = vector.timestamp;
             // clean up current motion
             let current_vector = this.vector;
             if (this.vector != undefined) {
@@ -80,6 +83,7 @@ define(function(require) {
                 this.tid = undefined;
                 this.timeInterval = undefined;
                 this.posInterval = undefined;
+                this.queue = [];
             }
             // update vector
             this.vector = vector;
@@ -222,30 +226,13 @@ define(function(require) {
             }, this);
         }
 
-        /*
-            process due cue events up until given timestamp
-        */
-        process(endpointEvents) {
-            let _ts = this.clock.now();
-            endpointEvents.forEach(function(item){
-                let delay = _ts - item.ts;
-                let toString = Interval.endpoint.toString;
-                let str = [
-                    `${toString(item.endpoint)}`,
-                    `key: ${item.cue.key}`,
-                    `delay: ${delay.toFixed(3)}`,
-                    `dir: ${item.direction}`
-                    ].join(" ");
-                console.log(str);
-            });
-        }
 
         /*
             run schedule
         */
         run(now, run_flag) {
             // process - due events
-            this.process(this.pop(now));
+            let dueEvents = this.pop(now);
             // advance schedule and load events if needed
             if (this.advance(now)) {
                 // fetch cue endpoints for posInterval
@@ -253,13 +240,15 @@ define(function(require) {
                 // load events and push on queue
                 this.push(this.load(endpoints));
                 // process - possibly new due events
-                this.process(this.pop(now));
+                dueEvents.push.apply(this.pop(now));
+            }
+            if (dueEvents) {
+                this.callback(dueEvents, this);
             }
             // timeout - until next due event
             let ts = this.next() || this.timeInterval.high;
             this.setTimeout(Math.min(ts, this.timeInterval.high));
         }
-
     }
 
     return Schedule;

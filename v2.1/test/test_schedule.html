@@ -12,10 +12,31 @@
     <!--  main -->
     <script text="javascript">
 
+      let to, s;
+
       require(['test/main'], function (timingsrc) {
 
         const isMoving = timingsrc.motionutils.isMoving;
         const Interval = timingsrc.Interval;
+
+        /*
+            process due cue events up until given timestamp
+        */
+        function process(endpointEvents) {
+            let _ts = to.clock.now();
+            endpointEvents.forEach(function(item){
+                let delay = _ts - item.ts;
+                let toString = Interval.endpoint.toString;
+                let str = [
+                    `${toString(item.endpoint)}`,
+                    `key: ${item.cue.key}`,
+                    `delay: ${delay.toFixed(3)}`,
+                    `dir: ${item.direction}`
+                    ].join(" ");
+                console.log(str);
+            });
+        }
+
 
         function run(){
 
@@ -36,11 +57,11 @@
           axis.update(cues);
 
 
-          let to = new timingsrc.TimingObject();
-          let s = new timingsrc.Schedule(to.clock, to.range, axis);
+          to = new timingsrc.TimingObject();
+          s = new timingsrc.Schedule(to.clock, to.range, axis, process);
 
           to.on("change", function() {
-            s.setVector(to.vector.timestamp, to.vector);
+            s.setVector(to.vector);
           });
 
           // Hook up buttons UI

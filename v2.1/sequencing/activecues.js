@@ -4,7 +4,7 @@ define(function(require) {
     const util = require("../util/util");
     const motionutils = require("../util/motionutils");
     const eventify = require("../util/eventify");
-
+    const Schedule = require("./schedule");
 
 
 
@@ -19,6 +19,10 @@ define(function(require) {
             this._ready = new eventify.EventBoolean(false, {init:true});
             this._toB_ready = false;
             this._toA_ready = false;
+
+            // schedules
+            this._scheduleA;
+            this._scheduleB;
 
             // activeCues
             this._activeCues = new Map(); // (key -> cue)
@@ -48,24 +52,47 @@ define(function(require) {
 
             this._onTimingUpdateWrapper = function (eInfo) {
                 let to = eInfo.src;
+                let new_vector;
                 // check and set sequencer readiness
                 if (!this._ready.value) {
                     if (to == this._toA) {
                         this._toA_ready = true;
+                        this._scheduleA = new Schedule(to.clock, to.range,
+                                                       this._axis, this._onCallback);
                     } else if (to == this._toB) {
                         this._toB_ready = true;
+                        this._scheduleB = new Schedule(to.clock, to.range,
+                                                       this._axis, this._onCallback);
                     }
                     if (this._toA_ready && this._toB_ready) {
                         this._ready.value = true;
-                    } else {
-                        return;
                     }
                 }
-                this._onTimingUpdate(eInfo);
+
+                /*
+                    If update is the initial vector from the timing object,
+                    we set current time as the official time for the update.
+                    Else, the new vector is "live" and we use the timestamp
+                    when it was created as the official time for the update.
+                    This is represented by the new_vector.
+                */
+                if (eInfo.init) {
+                    new_vector = motionutils.calculateVector(to.vector, to.clock.now());
+                } else {
+                    new_vector = to.vector;
+                }
+
+                if (this.isReady()) {
+                    this._onTimingUpdate(to, new_vector);
+                }
             };
             this._toA.on("change", this._onTimingUpdateWrapper, this);
             this._toB.on("change", this._onTimingUpdateWrapper, this);
 
+            // Schedule Callback
+            this._onCallback = function(eList, src) {
+                this._onScheduleCallback(eList, src);
+            }.bind(this);
 
             // Change event
             eventify.eventifyInstance(this, {init:false}); // no events type
@@ -121,13 +148,10 @@ define(function(require) {
         /*
             Handling Change Events from Timing Objects
         */
-        _onTimingUpdate (eInfo) {
+        _onTimingUpdate (to, new_vector) {
             const PosDelta = motionutils.MotionDelta.PosDelta;
             const MoveDelta = motionutils.MotionDelta.MoveDelta;
-            const to = eInfo.src;
             const other_to = (to == this._toA) ? this._toB : this._toA;
-            let new_vector, other_new_vector;
-
 
             if (to == this._toA) {
                 console.log("update toA");
@@ -137,24 +161,12 @@ define(function(require) {
 
             }
 
-            /*
-                If update is the initial vector from the timing object,
-                we set current time as the official time for the update.
-                Else, the new vector is "live" and we use the timestamp
-                when it was created as the official time for the update.
-                This is represented by the new_vector.
-            */
-            if (eInfo.init) {
-                new_vector = motionutils.calculateVector(to.vector, to.clock.now());
-            } else {
-                new_vector = to.vector;
-            }
 
             /*
                 Sample the state of the other timing object at same time.
             */
             let ts = new_vector.timestamp;
-            other_new_vector = motionutils.calculateVector(other_to.vector, ts);
+            let other_new_vector = motionutils.calculateVector(other_to.vector, ts);
 
 
             /*
@@ -191,6 +203,14 @@ define(function(require) {
                 Moving
             */
 
+            // kick off schedule
+
+            // TODO - need to kick off the other as well
+            if (to == this._toA) {
+                this._scheduleA.setVector(new_vector);
+            } else if (to == this._toB) {
+                this._scheduleB.setVector(new_vector);
+            }
 
 
 
@@ -211,6 +231,20 @@ define(function(require) {
             this.eventifyTriggerEvent("change", changeMap);
         };
 
+
+
+
+
+        /*
+            Handling due Events from Schedules
+        */
+        _onScheduleCallback = function(dueEvens, schedule) {
+            if (schedule == this._scheduleA) {
+                console.log("schedule A callback");
+            } else if (schedule == this._scheduleB) {
+                console.log("schedule B callback");
+            }
+        }
 
 
         /*
