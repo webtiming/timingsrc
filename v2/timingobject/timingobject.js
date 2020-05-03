@@ -92,7 +92,10 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 			acceleration : undefined,
 			timestamp : undefined
 		};
-		
+	
+		// support update promise
+		this._event_variables = [];
+
 		// cached range
 		this._range = [undefined,undefined];
 
@@ -329,6 +332,12 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 			this._vector = vector;
 			// trigger events
 			this._ready.value = true;
+			// unlock update promises
+			this._event_variables.forEach(function(event) {
+				event.set(true);
+			});
+			this._event_variables = [];
+			// post process
 			this._postProcess(this._vector);
 		}
 		// renew timeout
@@ -462,8 +471,12 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 	// update
 	InternalProvider.prototype.update = function (vector) {
 		var newVector = this.checkUpdateVector(vector);
+		var event = new eventify.EventBoolean();
+		this._event_variables.push(event);
 		this._preProcess(newVector);
-		return newVector;
+		// make promise from event variable
+		return eventify.makeEventPromise(event);
+		//return newVector;
 	};
 	
 

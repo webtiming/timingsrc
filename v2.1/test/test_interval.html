@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- requirejs config -->
+        <script>
+            var require = {
+                baseUrl : '../',
+            };
+        </script>
+        <!-- requirejs -->
+        <script type="text/javascript" src="../../docs/lib/require.js"></script>
+        <!--  main -->
+        <script text="javascript">
+            let itv;
+            require(['util/interval'], function (Interval) {
+                const endpoint = Interval.endpoint;
+                const IntervalRelation = Interval.IntervalRelation;
+
+                function assertEqual(val1, val2) {
+                    if (val1 !== val2) {
+                        console.log(val1, val2)
+                        throw new Error("fail")
+                    }
+                }
+
+                // endpoint properties
+                const left = false;
+                const right = true;
+                const open = false;
+                const closed = true;
+
+
+                function test_endpoint_order () {
+
+                    /*
+                        order
+                        right-open, left-closed, point, right-closed, left-open
+                    */
+
+                    const right_open = [4, right, open];
+                    const left_closed = [4, left, closed];
+                    const point = 4;
+                    const right_closed = [4, right, closed];
+                    const left_open = [4, left, open];
+                    const all = [right_open, left_closed, point, right_closed, left_open]
+
+                    function test_permutations (func, expectations) {
+                        let ok, expected, e1, e2;
+                        for (let i=0; i<all.length; i++) {
+                            for (let j=0; j<all.length; j++) {
+                                e1 = all[i];
+                                e2 = all[j];
+                                expected = expectations[i][j];
+                                // console.log(endpoint.toString(e1), endpoint.toString(e2), expected);
+                                // console.log(e1, e2, expected);
+                                ok = func(e1, e2);
+                                assertEqual(ok, expected);
+                            }
+                        }
+                    }
+
+                    const expected_leftof = [
+                        // (right-open, e)
+                        [false, true, true, true, true],
+                        // (left-closed, e)
+                        [false, false, true, true, true],
+                        // (point, e)
+                        [false, false, false, true, true],
+                        // (right-closed, e)
+                        [false, false, false, false, true],
+                        // (left-open, e)
+                        [false, false, false, false, false]
+                    ];
+
+                    console.log("test endpoint leftof")
+                    test_permutations(endpoint.leftof, expected_leftof);
+
+                    const expected_rightof = [
+                        // (right-open, e)
+                        [false, false, false, false, false],
+                        // (left-closed, e)
+                        [true, false, false, false, false],
+                        // (point, e)
+                        [true, true, false, false, false],
+                        // (right-closed, e)
+                        [true, true, true, false, false],
+                        // (left-open, e)
+                        [true, true, true, true, false]
+                    ];
+
+                    console.log("test endpoint rightof")
+                    test_permutations(endpoint.rightof, expected_rightof);
+
+                    const expected_equal = [
+                        // (right-open, e)
+                        [true, false, false, false, false],
+                        // (left-closed, e)
+                        [false, true, false, false, false],
+                        // (point, e)
+                        [false, false, true, false, false],
+                        // (right-closed, e)
+                        [false, false, false, true, false],
+                        // (left-open, e)
+                        [false, false, false, false, true]
+                    ];
+
+                    console.log("test endpoint equal")
+                    test_permutations(endpoint.equal, expected_equal);
+
+                    const expected_compare = [
+                        // (right-open, e)
+                        [0, -1, -1, -1, -1],
+                        // (left-closed, e)
+                        [1, 0, -1, -1, -1],
+                        // (point, e)
+                        [1, 1, 0, -1, -1],
+                        // (right-closed, e)
+                        [1, 1, 1, 0, -1],
+                        // (left-open, e)
+                        [1, 1, 1, 1, 0]
+                    ];
+
+                    console.log("test endpoint compare")
+                    test_permutations(endpoint.compare, expected_compare);
+                }
+
+                function test_inside() {
+
+                    console.log("test inside")
+
+                    // endpoints with value 4
+                    const right_open = [4, right, open];
+                    const left_closed = [4, left, closed];
+                    const point = 4;
+                    const right_closed = [4, right, closed];
+                    const left_open = [4, left, open];
+                    const all = [right_open, left_closed, point, right_closed, left_open]
+
+                    // different intervals relevant to point 4
+                    // left outside
+                    const i1 = new Interval(3, 3.5);
+                    // high endpoint match
+                    const i2 = new Interval(3, 4, true, true);
+                    const i3 = new Interval(3, 4, true, false);
+                    // singleton match
+                    const i4 = new Interval(4, 4);
+                    // both sides
+                    const i5 = new Interval(3, 5);
+                    // low endpoint match
+                    const i6 = new Interval(4, 5, true, false);
+                    const i7 = new Interval(4, 5, false, false);
+                    // right outside
+                    const i8 = new Interval(4.5, 5);
+
+                    let expectations;
+
+                    function test_endpoints(itv, expectations) {
+                        // test different endpoints with interval
+                        let ok;
+                        for (let i=0; i<all.length; i++) {
+                            //ok = inside(all[i], itv);
+                            ok = Interval.pointInside(all[i], itv);
+                            // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
+                            assertEqual(ok, expectations[i]);
+                        }
+                    }
+
+
+                    /*
+                        4) inside [3, 3.5) --  false
+                        [4 inside [3, 3.5) --  false
+                        4 inside  [3, 3.5) --  false
+                        4] inside [3, 3.5) --  false
+                        (4 inside [3, 3.5) --  false
+
+                    */
+                    expectations = [false, false, false, false, false];
+                    test_endpoints(i1, expectations);
+
+                    /*
+                        4) inside [3, 4] --  true
+                        [4 inside [3, 4] --  true
+                        4 inside  [3, 4] --  true
+                        4] inside [3, 4] --  true
+                        (4 inside [3, 4] --  false
+
+                    */
+                    expectations = [true, true, true, true, false];
+                    test_endpoints(i2, expectations);
+
+                    /*
+                        4) inside [3, 4) --  true
+                        [4 inside [3, 4) --  false
+                        4 inside  [3, 4) --  false
+                        4] inside [3, 4) --  false
+                        (4 inside [3, 4) --  false
+
+                    */
+                    expectations = [true, false, false, false, false];
+                    test_endpoints(i3, expectations);
+
+                    /*
+                        4) inside [4] --  false
+                        [4 inside [4] --  true
+                        4 inside  [4] --  true
+                        4] inside [4] --  true
+                        (4 inside [4] --  false
+
+                    */
+                    expectations = [false, true, true, true, false];
+                    test_endpoints(i4, expectations);
+
+                    /*
+                        4) inside [3, 5) --  true
+                        [4 inside [3, 5) --  true
+                        4 inside  [3, 5) --  true
+                        4] inside [3, 5) --  true
+                        (4 inside [3, 5) --  true
+
+                    */
+                    expectations = [true, true, true, true, true];
+                    test_endpoints(i5, expectations);
+
+                    /*
+                        4) inside [4, 5) --  false
+                        [4 inside [4, 5) --  true
+                        4 inside  [4, 5) --  true
+                        4] inside [4, 5) --  true
+                        (4 inside [4, 5) --  true
+
+                    */
+                    expectations = [false, true, true, true, true];
+                    test_endpoints(i6, expectations);
+
+                    /*
+                        4) inside (4, 5) --  false
+                        [4 inside (4, 5) --  false
+                        4 inside  (4, 5) --  false
+                        4] inside (4, 5) --  false
+                        (4 inside (4, 5) --  true
+
+                    */
+                    expectations = [false, false, false, false, true];
+                    test_endpoints(i7, expectations);
+
+                    /*
+                        4) inside [4.5, 5) --  false
+                        [4 inside [4.5, 5) --  false
+                        4 inside  [4.5, 5) --  false
+                        4] inside [4.5, 5) --  false
+                        (4 inside [4.5, 5) --  false
+
+                    */
+                    expectations = [false, false, false, false, false];
+                    test_endpoints(i8, expectations);
+                }
+
+
+                function test_compare() {
+
+                    console.log("test compare")
+
+                    let A, B;
+
+                    // [2,4)
+                    A = new Interval(2,4);
+
+                    // OUTSIDE RIGHT
+                    // [0,2)
+                    B = new Interval(0,2);
+                    assertEqual(A.compare(B), Interval.OUTSIDE_RIGHT);
+
+                    // OVERLAP RIGHT
+                    // [0,2]
+                    B = new Interval(0,2,true, true);
+                    assertEqual(A.compare(B), Interval.OVERLAP_RIGHT);
+                    // [0,3)
+                    B = new Interval(0,3);
+                    assertEqual(A.compare(B), Interval.OVERLAP_RIGHT);
+
+
+                    // OUTSIDE LEFT
+                    // [4,5)
+                    B = new Interval(4,5);
+                    assertEqual(A.compare(B), Interval.OUTSIDE_LEFT);
+
+                    // OVERLAP LEFT
+                    // [3,5)
+                    B = new Interval(3,5);
+                    assertEqual(A.compare(B), Interval.OVERLAP_LEFT);
+
+                    // EQUAL
+                    // [2,4)
+                    B = new Interval(2,4);
+                    assertEqual(A.compare(B), Interval.EQUAL);
+
+                    // COVERS
+                    // (2,4)
+                    B = new Interval(2,4, false, false);
+                    assertEqual(A.compare(B), Interval.COVERS);
+                    // [2,3]
+                    B = new Interval(2,3,true, true);
+                    assertEqual(A.compare(B), Interval.COVERS);
+                    // [3,3.5)
+                    B = new Interval(3,3.5);
+                    assertEqual(A.compare(B), Interval.COVERS);
+
+                    // COVERED
+                    // [2,4]
+                    B = new Interval(2,4, true, true);
+                    assertEqual(A.compare(B), Interval.COVERED);
+                    // [1,4)
+                    B = new Interval(1,4);
+                    assertEqual(A.compare(B), Interval.COVERED);
+                    // [2,5)
+                    B = new Interval(2,5);
+                    assertEqual(A.compare(B), Interval.COVERED);
+                }
+
+
+                function test_sort() {
+
+                    a = [
+                        new Interval(4,5),
+                        new Interval(2,3),
+                        new Interval(1,6)
+                    ];
+
+                    a.sort(Interval.cmpLow);
+
+                    a.forEach(function(i) {
+                        console.log(i.toString());
+                    })
+                }
+
+                var run = function () {
+                    test_endpoint_order();
+                    test_inside();
+                    test_compare();
+                    test_sort();
+                    console.log("done");
+                };
+
+                if (document.readyState === "complete") {
+                    run();
+                }
+                else {
+                    window.onload = run;
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Test Interval</h1>
+    </body>
+</html>

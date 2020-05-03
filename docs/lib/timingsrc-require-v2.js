@@ -1457,7 +1457,10 @@ define('timingobject/timingobject',['../util/eventify', '../util/motionutils', '
 			acceleration : undefined,
 			timestamp : undefined
 		};
-		
+	
+		// support update promise
+		this._event_variables = [];
+
 		// cached range
 		this._range = [undefined,undefined];
 
@@ -1694,6 +1697,12 @@ define('timingobject/timingobject',['../util/eventify', '../util/motionutils', '
 			this._vector = vector;
 			// trigger events
 			this._ready.value = true;
+			// unlock update promises
+			this._event_variables.forEach(function(event) {
+				event.set(true);
+			});
+			this._event_variables = [];
+			// post process
 			this._postProcess(this._vector);
 		}
 		// renew timeout
@@ -1827,8 +1836,12 @@ define('timingobject/timingobject',['../util/eventify', '../util/motionutils', '
 	// update
 	InternalProvider.prototype.update = function (vector) {
 		var newVector = this.checkUpdateVector(vector);
+		var event = new eventify.EventBoolean();
+		this._event_variables.push(event);
 		this._preProcess(newVector);
-		return newVector;
+		// make promise from event variable
+		return eventify.makeEventPromise(event);
+		//return newVector;
 	};
 	
 
@@ -5367,8 +5380,25 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
 		return new Interval(start, end, true, true);
 	};
 
+
+
+	var seqOpType = function (op) {
+		if (op === "init") return "init";
+		if (op === "none") return "motion";
+		if (op === "add") return "add";
+		if (op === "update" || op === "repeat") return "update";
+		if (op === "remove") return "remove";
+		return "";
+	};
+		
+	
+
+
+	/*
+		find operation related to given key within axisOpList
+	*/
 	WindowSequencer.prototype._getOpFromAxisOpList = function (axisOpList, key) {
-		var op = {};
+		var op;
 		if (axisOpList) {
 			for (var i=0; i<axisOpList.length; i++) {
 				var item = axisOpList[i];
@@ -5381,19 +5411,38 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
 		return op;
 	};
 
-	var seqOpType = function (op) {
-		if (op === "init") return "init";
-		if (op === "none") return "motion";
-		if (op === "add") return "add";
-		if (op === "update" || op === "repeat") return "update";
-		if (op === "remove") return "remove";
-		return "";
-	};
-		
+
+	/*
+		may ask for keys that do not exist in axisOpList
+		- added or removed from axis after the axisOpList was created
+		- if so, the corresponding update event should be on its way,
+		and should be handled by the next invokation with axisOpList
+		Signal this event by returning undefined
+	*/
 	WindowSequencer.prototype._getItem = function (axisOpList, key) {
-		var item;
+		var item = undefined;
     	if (axisOpList) {
     		item = this._getOpFromAxisOpList(axisOpList, key);
+
+    		if (item == undefined) {
+	    		// corner case - axisOpList specified, but key not in it
+    			// axis operation after axisOpList was defined
+    			item = this._axis.getItem(key);
+    			// if item is defined in axis, it was recently added
+    			// if item is not defined in axis, it was recently removed
+    			if (item == undefined) {
+    				// corner case - item just remove - no acess to item state
+    				// invent fake info for remove event
+    				item = {
+    					key: key,
+    					interval: undefined,
+    					data: undefined,
+    					type: "remove"
+    				}
+    			} else {
+    				item.type = "add";
+    			}
+    		}
     	} else {
     		item = this._axis.getItem(key);
     		item.type = "none";
@@ -5401,6 +5450,7 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
     	item.type = seqOpType(item.type);
     	return item;
 	};
+
 
 	/* 
 		Request reevaluate 
@@ -5424,6 +5474,40 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
 
 		Figure out what kind of events need to be triggered (if any)
 		in order to bring the WindowSequencer to the correct state.
+	*/
+
+	/*
+		ISSUE
+
+		- the state of the window sequencer is data driven as it is
+		triggered by modifications from the axis
+		- however, it is also driven by motion
+
+		- the execution model is organized around the idea that
+		we reevaluate the state on every event, i.e. when state may
+		have changed
+
+		- reevaluating the state searches directly on the 
+		live axis, thus the true state is the state of the axis
+		- however, update events from the axis are delayed, so
+		in some circumstances, upon receipt of axis updates, 
+		the axis may have been modified after the events were 
+		generated, thus causing the view of the axis to be out 
+		of sync with the updates
+
+		- one solution here is to treat the event from the axis as
+		hints, not the truth
+
+		- another option is to be sensitive to this race-condition
+		- this is likely hard - and error prone
+		
+		update-add, but not in axis
+			added earlier, but removed afterwords, corresponding 
+			update event will arrive later. report as still existing
+		update-remove, in axis
+			removed earlier, but added afterwards, corresponding 
+			update event will arrive later. report as remove
+
 	*/
 
 
@@ -5462,6 +5546,9 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
 		    }, this);
 		}    
 
+
+
+
 		// update active keys
 	    this._activeKeys = newKeys;
 
@@ -5469,6 +5556,8 @@ define('sequencing/windowsequencer',['../util/eventify', '../util/motionutils', 
 	    var item, eList = [];
 	    exitKeys.forEach(function (key) {
 	    	item = this._getItem(axisOpList, key);
+
+
 	    	eList.push({
 	    		type: "remove", 
 	    		e: {
