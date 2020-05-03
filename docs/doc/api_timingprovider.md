@@ -9,7 +9,7 @@ title: Timing Provider API
 
 This describes the API of the Timing Provider, as required by the timingsrc library (i.e. Timing Object).
 
-Timing Providers are implemented and instansiated by third party code. 
+Timing Providers are implemented and instansiated by third party code.
 Timing provider objects are given to the timing object as parameter in the constructor.
 
 
@@ -17,8 +17,8 @@ Timing provider objects are given to the timing object as parameter in the const
 
 #### TimingProviderState
 
-The following values are used as readystates for the timing provider. TimingProviderState is available in 
-timingsrc library. State *OPEN* indicates that properties *skew* and  *vector* are available. 
+The following values are used as readystates for the timing provider. TimingProviderState is available in
+timingsrc library. State *OPEN* indicates that properties *skew* and  *vector* are available.
 
 ```javascript
 var TimingProviderState = Object.freeze({
@@ -33,9 +33,9 @@ var TimingProviderState = Object.freeze({
 
 #### StateVector
 
-State vectors are communicated between timing provider and timing object. 
-Timestamp defines a point in time when values for position, velocity and acceleration were|are|will-be valid. 
-Timestamps (in seconds) are from the *timing provider clock*, i.e. <code>clock_timingprovider = performance.now() + skew</code>.
+State vectors are communicated between timing provider and timing object.
+Timestamp defines a point in time when values for position, velocity and acceleration were|are|will-be valid.
+Timestamps (in seconds) are from the *timing provider clock*, i.e. <code>clock_timingprovider = clock_client + skew</code>.
 
 ```javascript
 var vector = {
@@ -61,8 +61,10 @@ var state = timingProvider.readyState;
 <a name="skew"></a>
 
 #### .skew
-Getter property for current skew estimate of the timing provider. The skew estimate is defined as follows.
-<code>clock_timingprovider = performance.now() + skew</code> 
+Getter property for current skew estimate of the timing provider. The skew is defined as the difference between the clock used by the timing
+provider and the clock used by the client. The time unit used for the skew  is *seconds*.
+
+<code>clock_timingprovider = clock_client + skew</code>
 
 ```javascript
 var skew = timingProvider.skew;
@@ -73,7 +75,7 @@ var skew = timingProvider.skew;
 <a name="vector"></a>
 
 #### .vector
-Getter property for current vector of the timing provider. 
+Getter property for current vector of the timing provider.
 
 ```javascript
 var vector = timingProvider.vector;
@@ -93,7 +95,7 @@ var range = timingProvider.range;
 ---
 
 #### .update()
-Update is used by the timing object to request modification to the current vector. 
+Update is used by the timing object to request modification to the current vector.
 For online timing providers, this request is likely forwarded to an online timing provider service for processing.
 
 
@@ -101,7 +103,7 @@ For online timing providers, this request is likely forwarded to an online timin
 timingProvider.update(vector);
 ```
 
-- param:{[StateVector](#statevector)} [vector] request modification as specified by vector. 
+- param:{[StateVector](#statevector)} [vector] request modification as specified by vector.
 
 State vectors given to update operation may be only be partially complete. For instance, the below operation only requests
 the position of the vector to be changed (leaving velocity and acceleration unchanged).
@@ -114,8 +116,8 @@ timingProvider.update({position:14.0});
 #### Event types
 Timing provider objects supports three event types ["readystatechange", "skewchange", "vectorchange"].
 
-- Event type "skewchange" is emitted whenever the [skew](#skew) property takes a new value. 
-- Event type "vectorchange" is emitted whenever the [vector](#vector) property takes a new value. 
+- Event type "skewchange" is emitted whenever the [skew](#skew) property takes a new value.
+- Event type "vectorchange" is emitted whenever the [vector](#vector) property takes a new value.
 - Event type "readystatechange" is emmitted whenever the [readyState](#readystate) of the timing provider changes.
 
 Event handlers do not provide event arguments.
