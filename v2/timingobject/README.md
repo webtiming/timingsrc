@@ -6,9 +6,7 @@ This implements the *Timing Object* as well as a set of *Timing Converters*.
 
 ### Timing Object
 
-The [Timing Object](https://github.com/webtiming/timingobject) is defined by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/).
-
-- [timingobject.js](timingobject.js) Timing Object
+The [Timing Object](https://webtiming.github.io/timingobject/) is defined by [Multi-Device Timing Community Group](https://www.w3.org/community/webtiming/).
 
 
 ### Timing Converters
@@ -31,17 +29,15 @@ A Timing Converter provides an alternative representation for a Timing Object.
 So, a hierarchy/chain of Timing Converters can be created, where all Timing Converters ultimately depend on a common Timing Object as root.
 Timing Converters provide a simple modification. More complex modifications can be achieved by combining multiple Timing Converters. 
 
-Some Timing Converters of common utility are provided in this module:
+Some [Timing Converters](https://webtiming.github.io/timingsrc/doc/background_timingconverter.html) of common utility are provided in this module:
 
-- [skewconverter.js](skewconverter.js) skews the timeline.
-- [scaleconverter.js](scaleconverter.js) scales the timeline.
-- [loopconverter.js](loopconverter.js) transformes infinite timeline into looped timeline.
-- [delayconverter.js](delayconverter.js) delayed replay of *timingsrc*.
-- [timeshiftconverter.js](timeshiftconverter.js) time-shift ahead or after timingsrc.
-- [rangeconverter.js](rangeconverter.js) enforces a range on position.
+- *SkewConverter* skews timeline of *timingsrc*.
+- *ScaleConverter* scales the timeline of *timingsrc*.
+- *LoopConverter* transformes infinite timeline of *timingsrc* into looped timeline.
+- *DelayConverter* provides delayed replay of *timingsrc*.
+- *TimeshiftConverter* time-shifts ahead or after *timingsrc*.
+- *RangeConverter* enforces a range on position of *timingsrc*.
 
+### TimingBase and ConverterBase
 
-### Module
-
-- [timingbase.js](timingbase.js) implements base classes *TimingBase* and *ConverterBase* used to implement Timing Object and Timing Converters.
-- [main.js](main.js) module definition
+- *TimingBase* and *ConverterBase* are base classes used to implement Timing Object and Timing Converters.

@@ -7,10 +7,10 @@ appidmcorp: 8456579076771837888
 
 <style type="text/css">
 	.active {color:red}
-</style> 
+</style>
 
 - [Sequencer Background](background_sequencer.html)
-- [Sequencer API](api_sequencer.html) 
+- [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
 
 The Sequencer may also provide enter and exit events based on a moving window. Window endpoints are implemented by two timing objects.
@@ -26,7 +26,7 @@ The two endpoints may therefore be controlled independently, though in this demo
 #### Demo
 
 <p>
-  <!-- Timing Objects position --> 
+  <!-- Timing Objects position -->
   Active Window : [ <span style="font-weight:bold" id="posBefore"></span>, <span style="font-weight:bold" id="posAfter"></span> ]
 </p>
 <p>
@@ -48,9 +48,9 @@ The two endpoints may therefore be controlled independently, though in this demo
 var to = new TIMINGSRC.TimingObject({provider:timingProvider});
 var toA = new TIMINGSRC.SkewConverter(to, -5.0);
 var toB = new TIMINGSRC.SkewConverter(to, 4.0);
-      
+
 // Sequencer
-var s = new TIMINGSRC.Sequencer(toA, toB);    
+var s = new TIMINGSRC.Sequencer(toA, toB);
 
 // Load Data
 var r = s.request();
@@ -60,13 +60,13 @@ Object.keys(data).forEach(function (key) {
 r.submit();
 
 // Register Handlers
-s.on("enter", function (e) {
+s.on("change", function (e) {
   var el =  document.getElementById(e.key);
   el.classList.add("active");
 });
-s.on("exit", function (e) {
+s.on("remove", function (e) {
   var el = document.getElementById(e.key);
   el.classList.remove("active");
 });
 
-```    
+```

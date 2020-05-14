@@ -8,18 +8,12 @@ The timingsrc library is available under the LGPL licence.
 
 ### Timing Object
 
-[source/timingobject](source/timingobject)
+[timingobject](v2/timingobject)
 
 This implements the [Timing Object Draft Spec](https://github.com/webtiming/timingobject) as well as a set of Timing Converters.
 
 ### Sequencing
 
-[source/sequencing](source/sequencing)
+[sequencing](v2/sequencing)
 
 This implements tools for timed sequencing based on the Timing Object.
-
-### MediaSync
-
-[source/mediasync](source/mediasync)
-
-This implements timed playback of HTML5 Audio and Video based on the Timing Object.
