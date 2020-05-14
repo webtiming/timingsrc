@@ -8,7 +8,7 @@ define(function(require) {
 
 
 
-    class Sequencer {
+    class DoubleSequencer {
 
         constructor (axis, toA, toB) {
             this._axis = axis;
@@ -273,9 +273,9 @@ define(function(require) {
 
     }
 
-    eventify.eventifyPrototype(Sequencer.prototype);
+    eventify.eventifyPrototype(DoubleSequencer.prototype);
 
-    return Sequencer;
+    return DoubleSequencer;
 
 });
 

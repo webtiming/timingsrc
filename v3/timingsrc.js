@@ -5,35 +5,27 @@
 
 define(function(require, exports, module) {
 
-	const DefaultSequencer = require('sequencing/sequencer');
-	const WindowSequencer = require('sequencing/windowsequencer');
+	const SingleSequencer = require('sequencing/singlesequencer');
+	const DoubleSequencer = require('sequencing/doublesequencer');
 	const timingobject = require('timingobject/timingobject');
     const timingcallbacks = require('sequencing/timingcallbacks');
 
-    /* 
+    /*
 	    Common constructor DefaultSequencer and WindowSequencer
     */
-    const Sequencer = function (toA, toB, _axis) {
+    const Sequencer = function (_axis, toA, toB) {
     	if (toB === undefined) {
-        	return new DefaultSequencer(toA, _axis);
+        	return new SingleSequencer(_axis, toA);
       	} else {
-        	return new WindowSequencer(toA, toB, _axis); 
+        	return new DoubleSequencer(_axis, toA, toB);
       	}
     };
 
-    // Add clone prototype to both Sequencer and WindowSequencer
-    DefaultSequencer.prototype.clone = function (toA, toB) {
-      return Sequencer(toA, toB, this._axis);
-    };
-    WindowSequencer.prototype.clone = function (toA, toB) {
-      return Sequencer(toA, toB, this._axis);
-    };
-   
 	return {
-		version : "v2.1",
-		
+		version : "v3.0",
+
 		// util
-		Interval: require('util/interval'),	
+		Interval: require('util/interval'),
 		eventify: require('util/eventify'),
 
 		// Timing Object
@@ -48,14 +40,12 @@ define(function(require, exports, module) {
 		RangeConverter : require('timingobject/rangeconverter'),
 		TimeShiftConverter : require('timingobject/timeshiftconverter'),
 		DerivativeConverter : require('timingobject/derivativeconverter'),
-		
+
 		// Sequencing
 
 		Axis: require('sequencing/axis'),
 		Sequencer : Sequencer,
 		setPointCallback : timingcallbacks.setPointCallback,
-		setIntervalCallback : timingcallbacks.setIntervalCallback,
-		TimingInteger : require('sequencing/timinginteger'),
-		ActiveCue : require('sequencing/activecue')
+		setIntervalCallback : timingcallbacks.setIntervalCallback
 	};
 });
