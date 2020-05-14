@@ -10,7 +10,7 @@ appidmcorp: 8456579076771837888
 </style>
 
 - [Sequencer Background](background_sequencer.html)
-- [Sequencer API](api_sequencer.html) 
+- [Sequencer API](api_sequencer.html)
 - [Sequencer Usage](usage_sequencer.html)
 
 The Sequencer provides enter and exit events based on a moving point. This moving point is implemented and controlled by a timing object.
@@ -25,7 +25,7 @@ Sequencer events is used to control styling (red color).
 #### Demo
 
 <p>
-  <!-- Timing Objects position --> 
+  <!-- Timing Objects position -->
   Timing Object position <span id="pos" style="font-weight:bold"></span>
 </p>
 <p>
@@ -48,7 +48,7 @@ Sequencer events is used to control styling (red color).
 var to = new TIMINGSRC.TimingObject({provider:timingProvider});
 
 // Sequencer
-var s = new TIMINGSRC.Sequencer(to); 
+var s = new TIMINGSRC.Sequencer(to);
 
 // Load data
 var r = s.request();
@@ -58,12 +58,12 @@ Object.keys(data).forEach(function (key) {
 r.submit();
 
 // Register Handlers
-s.on("enter", function (e) {
+s.on("change", function (e) {
   var el =  document.getElementById(e.key);
   el.classList.add("active");
 });
-s.on("exit", function (e) {
+s.on("remove", function (e) {
   var el = document.getElementById(e.key);
   el.classList.remove("active");
 });
-```    
+```
