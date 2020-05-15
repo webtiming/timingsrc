@@ -2,10 +2,15 @@ define(function(require) {
 
     const motionutils = require("../util/motionutils");
     const Interval = require("../util/interval");
-    const leftof = Interval.endpoint.leftof;
+    const endpoint = Interval.endpoint;
+
     const isMoving = motionutils.isMoving;
 
-    function queueCmp(a,b) {return a.ts - b.ts;};
+    const ep2str = Interval.endpoint.toString;
+
+    function queueCmp(a,b) {
+        return endpoint.compare(a.tsEndpoint, b.tsEndpoint);
+    };
 
     class Schedule {
 
@@ -136,8 +141,10 @@ define(function(require) {
         */
         push(eventItems) {
             eventItems.forEach(function(item) {
-                if (this.timeInterval.inside(item.ts)) {
+                if (this.timeInterval.inside(item.tsEndpoint)) {
                     this.queue.push(item);
+                } else {
+                    console.log("push drop", ep2str(item.tsEndpoint));
                 }
             }, this);
             // maintain ordering
@@ -149,7 +156,7 @@ define(function(require) {
         */
         pop(now) {
             let eventItem, res = [];
-            while (this.queue.length > 0 && this.queue[0].ts <= now) {
+            while (this.queue.length > 0 && endpoint.leftof(this.queue[0].tsEndpoint, now)) {
                 res.push(this.queue.shift());
             }
             return res;
@@ -159,7 +166,7 @@ define(function(require) {
             return timestamp of next eventItem
         */
         next() {
-            return (this.queue.length > 0) ? this.queue[0].ts: undefined;
+            return (this.queue.length > 0) ? this.queue[0].tsEndpoint[0]: undefined;
         }
 
 
@@ -177,7 +184,7 @@ define(function(require) {
             if (this.timeInterval == undefined) {
                 start = now;
                 advance = true;
-            } else if (leftof(this.timeInterval.endpointHigh, now)) {
+            } else if (endpoint.leftof(this.timeInterval.endpointHigh, now)) {
                 start = this.timeInterval.high;
                 advance = true
             }
@@ -185,6 +192,7 @@ define(function(require) {
                 // advance intervals
                 this.timeInterval = new Interval(start, start + delta, true, false);
                 this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
+                // console.log(`advance pos ${this.posInterval.toString()}`)
                 // clear task queue
                 this.queue = [];
             }
@@ -200,7 +208,7 @@ define(function(require) {
             load events
         */
 
-        load(endpoints, minimum_ts) {
+        load(endpoints, minimum_tsEndpoint) {
             let endpointEvents = motionutils.getEndpointEvents(this.timeInterval,
                                                                this.posInterval,
                                                                this.vector,
@@ -209,7 +217,7 @@ define(function(require) {
                 ISSUE 1
 
                 Range violation might occur within timeInterval.
-                All endpointEvents with .ts later or equal to range
+                All endpointEvents with .tsEndpoint later or equal to range
                 violation will be cancelled.
             */
             let range_ts = motionutils.getRangeIntersect(this.vector, this.to.range)[0];
@@ -224,14 +232,14 @@ define(function(require) {
                 from the entire timeInterval might already be historic at time of
                 invocation.
 
-                Cancel endpointEvents with .ts < minimum_ts.
+                Cancel endpointEvents with .tsEndpoint < minimum_ts.
 
                 For regular loads this will have no effect since we
                 do not specify a minimum_ts, but instead let it assume the
                 default value of timeInterval.low.
             */
-            if (minimum_ts == undefined) {
-                minimum_ts = this.timeInterval.low;
+            if (minimum_tsEndpoint == undefined) {
+                minimum_tsEndpoint = this.timeInterval.endpointLow;
             }
 
             /*
@@ -253,16 +261,17 @@ define(function(require) {
 
             return endpointEvents.filter(function(item) {
                 // ISSUE 1
-                if (item.ts >= range_ts) {
+                if (range_ts <= item.tsEndpoint[0]) {
                     return false;
                 }
                 // ISSUE 2
-                if (item.ts < minimum_ts) {
+                if (endpoint.leftof(item.tsEndpoint, minimum_tsEndpoint)) {
                     return false;
                 }
                 // ISSUE 3
                 if (this.vector.acceleration != 0.0) {
-                    let v = motionutils.calculateVector(this.vector, item.ts);
+                    let ts = item.tsEndpoint[0];
+                    let v = motionutils.calculateVector(this.vector, ts);
                     if (v.position == item.endpoint[0] && v.velocity == 0) {
                         return false;
                     }
@@ -289,9 +298,9 @@ define(function(require) {
                 // load events and push on queue
                 this.push(this.load(endpoints));
                 // process - possibly new due events
-                dueEvents.push.apply(this.pop(now));
+                dueEvents.push(...this.pop(now));
             }
-            if (dueEvents) {
+            if (dueEvents.length > 0) {
                 this._notify_callbacks(dueEvents, this);
             }
             // timeout - until next due event

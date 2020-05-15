@@ -63,6 +63,31 @@
             to.on("timeupdate", function () {
                 value.innerHTML = to.query().position.toFixed(2);
             });
+
+
+            // Visualize list of timed data
+            let html = [...axis.values()]
+                .sort(function(cue_a, cue_b) {
+                    return Interval.cmpLow(cue_a.interval, cue_b.interval);
+                }).map(function(cue){
+                    return `<div id=${cue.key}>${cue.data}</div>`;
+                }).join("\n");
+            document.getElementById("data").innerHTML = html;
+
+
+            // add change handler
+            s.on("change", function(eventMap) {
+                for (let [key, item] of eventMap.entries()) {
+                    let el = document.getElementById(`${key}`);
+                    if (!item.new && item.old) {
+                        el.classList.remove("active");
+                    } else if (item.new && !item.old) {
+                        el.classList.add("active");
+                    } else if (item.new && item.old) {
+                        // noop
+                    }
+                }
+            });
         };
 
 
@@ -75,22 +100,34 @@
 
             // fill axis with some cues
             let cues = [];
-            for (let i=0; i<100; i++) {
+            for (let i=0; i<20; i++) {
                 let j0 = i;
                 let j1 = i + 1;
-                cues.push({key: i, interval: new Interval(j0, j1)});
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: i, interval:itv, data:data});
             }
-            for (let i=0; i<100; i++) {
+            for (let i=0; i<20; i++) {
                 let j0 = i + 0.5;
                 let j1 = j0 + 1;
-                cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: 1000 + i, interval:itv, data:data});
             }
+            // add a few singular cues
+            for (let i=0; i<20; i+=5) {
+                let itv = new Interval(i);
+                let data =  itv.toString();
+                cues.push({key: 2000 + i, interval:itv, data:data});
+            }
+
             axis.update(cues);
 
             // initialise
             to = new timingsrc.TimingObject();
             s = new timingsrc.SingleSequencer(axis, to);
 
+            /*
             // add change handler
             s.on("change", function(eventMap, eInfo) {
                 for (let [key, item] of eventMap.entries()) {
@@ -104,7 +141,7 @@
 
                 }
             });
-
+            */
 
             if (document.readyState === "complete") {
                 run();
@@ -114,8 +151,12 @@
 
         });
 
+    </script>
 
-</script>
+    <style type="text/css">
+        .active {color:red}
+    </style>
+
   </head>
   <body>
     <h1>Test Single Sequencer</h1>
@@ -132,7 +173,9 @@
     <button id="g">Reset</button>
     <button id="h">Backwards</button>
     </p>
-
+    <p>
+      <div id="data"></div>
+    </p>
 
   </body>
 </html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- requirejs config -->
+        <script>
+            var require = {
+                baseUrl : '../',
+            };
+        </script>
+        <!-- requirejs -->
+        <script type="text/javascript" src="../../docs/lib/require.js"></script>
+        <!--  main -->
+        <script text="javascript">
+            require(['util/endpoint'], function (endpoint) {
+
+                function assertEqual(val1, val2) {
+                    if (val1 !== val2) {
+                        console.log(val1, val2)
+                        throw new Error("fail")
+                    }
+                }
+
+                // endpoint properties
+                const left = false;
+                const right = true;
+                const open = false;
+                const closed = true;
+
+
+                function test_endpoint_order () {
+
+                    /*
+                        order
+                        right-open, left-closed, point, right-closed, left-open
+                    */
+
+                    const right_open = [4, right, open, false];
+                    const left_closed = [4, left, closed, false];
+                    const point = 4;
+                    const right_closed = [4, right, closed, false];
+                    const left_open = [4, left, open, false];
+                    const all = [right_open, left_closed, point, right_closed, left_open]
+
+                    function test_permutations (func, expectations) {
+                        let ok, expected, e1, e2;
+                        for (let i=0; i<all.length; i++) {
+                            for (let j=0; j<all.length; j++) {
+                                e1 = all[i];
+                                e2 = all[j];
+                                expected = expectations[i][j];
+                                // console.log(endpoint.toString(e1), endpoint.toString(e2), expected);
+                                // console.log(e1, e2, expected);
+                                ok = func(e1, e2);
+                                assertEqual(ok, expected);
+                            }
+                        }
+                    }
+
+                    const expected_leftof = [
+                        // (right-open, e)
+                        [false, true, true, true, true],
+                        // (left-closed, e)
+                        [false, false, true, true, true],
+                        // (point, e)
+                        [false, false, false, true, true],
+                        // (right-closed, e)
+                        [false, false, false, false, true],
+                        // (left-open, e)
+                        [false, false, false, false, false]
+                    ];
+
+                    console.log("test endpoint leftof")
+                    test_permutations(endpoint.leftof, expected_leftof);
+
+                    const expected_rightof = [
+                        // (right-open, e)
+                        [false, false, false, false, false],
+                        // (left-closed, e)
+                        [true, false, false, false, false],
+                        // (point, e)
+                        [true, true, false, false, false],
+                        // (right-closed, e)
+                        [true, true, true, false, false],
+                        // (left-open, e)
+                        [true, true, true, true, false]
+                    ];
+
+                    console.log("test endpoint rightof")
+                    test_permutations(endpoint.rightof, expected_rightof);
+
+                    const expected_equal = [
+                        // (right-open, e)
+                        [true, false, false, false, false],
+                        // (left-closed, e)
+                        [false, true, false, false, false],
+                        // (point, e)
+                        [false, false, true, false, false],
+                        // (right-closed, e)
+                        [false, false, false, true, false],
+                        // (left-open, e)
+                        [false, false, false, false, true]
+                    ];
+
+                    console.log("test endpoint equal")
+                    test_permutations(endpoint.equals, expected_equal);
+
+                    const expected_compare = [
+                        // (right-open, e)
+                        [0, -1, -1, -1, -1],
+                        // (left-closed, e)
+                        [1, 0, -1, -1, -1],
+                        // (point, e)
+                        [1, 1, 0, -1, -1],
+                        // (right-closed, e)
+                        [1, 1, 1, 0, -1],
+                        // (left-open, e)
+                        [1, 1, 1, 1, 0]
+                    ];
+
+                    console.log("test endpoint compare")
+                    test_permutations(endpoint.cmp, expected_compare);
+                }
+
+                var run = function () {
+                    test_endpoint_order();
+                    console.log("done");
+                };
+
+                if (document.readyState === "complete") {
+                    run();
+                }
+                else {
+                    window.onload = run;
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Test Interval</h1>
+    </body>
+</html>

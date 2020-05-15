@@ -22,7 +22,7 @@
         /*
             process due cue events up until given timestamp
         */
-        function process(endpointEvents) {
+        function print_endpoints(endpointEvents) {
             let _ts = to.clock.now();
             endpointEvents.forEach(function(item){
                 let delay = _ts - item.ts;
@@ -59,7 +59,7 @@
 
           to = new timingsrc.TimingObject();
           s = new timingsrc.Schedule(axis, to);
-          s.add_callback(process);
+          s.add_callback(print_endpoints);
 
           to.on("change", function() {
             s.setVector(to.vector);

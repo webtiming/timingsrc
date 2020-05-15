@@ -9,12 +9,11 @@ define(function(require) {
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
 
-
+    const endpoint = Interval.endpoint;
 
     class SingleSequencer {
 
         constructor (axis, to) {
-            let cb;
 
             // axis
             this._axis = axis;
@@ -29,7 +28,7 @@ define(function(require) {
             this._activeCues = new Map(); // (key -> cue)
 
             // Axis Callback
-            cb = this._onAxisCallback.bind(this)
+            let cb = this._onAxisCallback.bind(this)
             this._axis_cb = this._axis.add_callback(cb);
 
             // Schedule Callback
@@ -63,6 +62,11 @@ define(function(require) {
             this.eventifyDefineEvent("change", {init:true});
         }
 
+
+        /***************************************************************
+         EVENTS
+        ***************************************************************/
+
         /*
             Eventify: callback formatter
         */
@@ -86,6 +90,10 @@ define(function(require) {
         };
 
 
+        /***************************************************************
+         READINESS
+        ***************************************************************/
+
         /*
             Sequencer Ready Promise
         */
@@ -101,17 +109,20 @@ define(function(require) {
         }
 
 
-        /*
-            Handle callback from axis
-        */
+        /***************************************************************
+         AXIS CALLBACK
+        ***************************************************************/
+
         _onAxisCallback(batchMap) {
             // Do something
             console.log("onAxisCallback");
         }
 
-        /*
-            Handle callback from timingobject
-        */
+
+        /***************************************************************
+         TIMING OBJECT CALLBACK
+        ***************************************************************/
+
         _onTimingCallback (eInfo) {
             console.log("onTimingCallback");
 
@@ -139,13 +150,10 @@ define(function(require) {
                 Handle Timing Object Jump
             */
             if (delta.posDelta == PosDelta.CHANGE) {
-                console.log("jump");
                 // make position interval
                 let low = new_vector.position;
                 let high = new_vector.position;
                 let itv = new Interval(low, high, true, true);
-
-
                 // new active cues
                 let activeCues = new Map(this._axis.lookup(itv).map(cue => {
                     return [cue.key, cue];
@@ -154,47 +162,79 @@ define(function(require) {
                 let exitCues = util.map_difference(this._activeCues, activeCues);
                 // enter cues - not in old activeCues but in new activeCues
                 let enterCues = util.map_difference(activeCues, this._activeCues);
-
-
                 // update active cues
                 this._activeCues = activeCues;
-
-                // make change Map
-                let changeMap = new Map();
-                for (let cue of exitCues.values()) {
-                    changeMap.set(cue.key, {new:undefined, old:cue});
-                }
-                for (let cue of enterCues.values()) {
-                    changeMap.set(cue.key, {new:cue, old:undefined});
-                }
-
-                // event notification
-                this.eventifyTriggerEvent("change", changeMap);
-
+                // trigger events
+                this._triggerEvents(exitCues, enterCues);
             }
 
             /*
                 Handle Timing Object Moving
             */
-
-            // kick off schedule
             this._sched.setVector(new_vector);
-
         };
 
 
+        /***************************************************************
+         SCHEDULE CALLBACK
+        ***************************************************************/
 
-        /*
-            Handle callback from Schedule
-        */
-        _onScheduleCallback = function(dueEvents, schedule) {
-            console.log("onScheduleCallback");
+        _onScheduleCallback = function(endpointItems) {
+            let value, right, closed, enter;
+            let right_value;
+            let enterCues = new Map();
+            let exitCues = new Map();
+
+            endpointItems.forEach(function (item) {
+                [value, right, closed] = item.endpoint;
+                right_value = (right) ? -1 : 1;
+                enter = (item.direction * right_value) > 0;
+                let has_cue = this._activeCues.has(item.cue.key);
+                if (enter) {
+                    // add to active cues
+                    if (!has_cue) {
+                        enterCues.set(item.cue.key, item.cue)
+                        this._activeCues.set(item.cue.key, item.cue);
+                    } else {
+                        console.log("already entered");
+                    }
+                } else {
+                    // remove from active cues
+                    if (has_cue) {
+                        exitCues.set(item.cue.key, item.cue);
+                        this._activeCues.delete(item.cue.key);
+                    } else {
+                        console.log("elready exited");
+                    }
+                }
+            }, this);
+
+            // trigger events
+            this._triggerEvents(exitCues, enterCues);
+        };
+
+
+        /***************************************************************
+         TRIGGER EVENTS
+        ***************************************************************/
+
+        _triggerEvents(exitCues, enterCues, changeCues) {
+            // make change Map
+            let changeMap = new Map();
+            for (let cue of exitCues.values()) {
+                changeMap.set(cue.key, {new:undefined, old:cue});
+            }
+            for (let cue of enterCues.values()) {
+                changeMap.set(cue.key, {new:cue, old:undefined});
+            }
+            // event notification
+            this.eventifyTriggerEvent("change", changeMap);
         }
 
 
-        /*
-            Map accessors
-        */
+        /***************************************************************
+         MAP LIKE ACCESSORS
+        ***************************************************************/
 
         has(key) {
             return this._activeCues.has(key);
@@ -217,6 +257,16 @@ define(function(require) {
         }
 
     }
+
+    function print_endpoints(endpointEvents) {
+        let _ts = to.clock.now();
+        let toString = Interval.endpoint.toString;
+        let s = endpointEvents.map(function(item) {
+            return toString(item.endpoint);
+        }).join(" ");
+        console.log(s);
+    }
+
 
     eventify.eventifyPrototype(SingleSequencer.prototype);
 

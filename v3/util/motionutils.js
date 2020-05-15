@@ -24,7 +24,7 @@ define(function (require) {
 	'use strict';
 
     const Interval = require("./interval");
-
+    const endpoint = Interval.endpoint;
 
 
 	// Closure
@@ -275,7 +275,7 @@ define(function (require) {
 
 
     /*
-        Return ts of (first) range intersect if any.
+        Return tsEndpoint of (first) range intersect if any.
     */
     function getRangeIntersect(vector, range) {
         let t0 = vector.timestamp;
@@ -409,11 +409,31 @@ define(function (require) {
         }
 
         Creates eventItem by adding to endpointItem
-        - ts : timestamp (future) when motion will pass the endpoint
+        - tsEndpoint : timestamp endpoint (future) when motion will pass the endpoint
         - direction: true if motion passes endpoint while moving forward
 
         EventItems will be sorted by ts
 
+        Corner case:
+
+            timeInterval [t0, t1)
+            posinterval [p0, p1)
+
+            Consider event at time t1 concerning endpoint p1)
+            This will be outside the timeInterval, but inside
+            the posInterval.
+
+            Conversely, it will be inside the next timeInterval,
+            but not the next posInterval.
+
+            This is a problem - like falling between chairs.
+
+            Resolve this by including making sure timestamps
+            are also represented as endpoints: timeEndpont,
+            and that they inherit the endpoint characteristics from
+            posEndpoint
+
+            p1) -> t1)
 
     */
 
@@ -435,6 +455,7 @@ define(function (require) {
         let t0 = vector.timestamp;
 
         let value, ts, deltas;
+        let tsEndpoint;
         let eventItems = [];
 
         endpointItems.forEach(function(item) {
@@ -454,16 +475,20 @@ define(function (require) {
             // include any timestamp within the timeinterval
             deltas.forEach(function(delta) {
                 ts = t0 + delta;
-                if (timeInterval.inside(ts)){
-                    item.ts = ts;
+                tsEndpoint = [ts, item.endpoint[1], item.endpoint[2]];
+                if (timeInterval.inside(tsEndpoint)){
+                    item.tsEndpoint = tsEndpoint;
                     item.direction = calculateDirection(vector, ts);
                     eventItems.push(item);
                 }
             });
         });
 
-        // sort eventItems according to ts
-        let cmp = function (a,b) {return a.ts-b.ts;};
+        // sort eventItems according to tsEndpoints
+
+        let cmp = function (a,b) {
+            return endpoint.compare(a.tsEndpoint, b.tsEndpoint);
+        };
         eventItems.sort(cmp);
         return eventItems;
     };
