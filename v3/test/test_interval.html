@@ -12,8 +12,7 @@
         <!--  main -->
         <script text="javascript">
             let itv;
-            require(['util/interval'], function (Interval) {
-                const endpoint = Interval.endpoint;
+            require(['util/endpoint', 'util/interval'], function (endpoint, Interval) {
                 const Relation = Interval.Relation;
 
                 function assertEqual(val1, val2) {
@@ -29,111 +28,16 @@
                 const open = false;
                 const closed = true;
 
-
-                function test_endpoint_order () {
-
-                    /*
-                        order
-                        right-open, left-closed, point, right-closed, left-open
-                    */
-
-                    const right_open = [4, right, open];
-                    const left_closed = [4, left, closed];
-                    const point = 4;
-                    const right_closed = [4, right, closed];
-                    const left_open = [4, left, open];
-                    const all = [right_open, left_closed, point, right_closed, left_open]
-
-                    function test_permutations (func, expectations) {
-                        let ok, expected, e1, e2;
-                        for (let i=0; i<all.length; i++) {
-                            for (let j=0; j<all.length; j++) {
-                                e1 = all[i];
-                                e2 = all[j];
-                                expected = expectations[i][j];
-                                // console.log(endpoint.toString(e1), endpoint.toString(e2), expected);
-                                // console.log(e1, e2, expected);
-                                ok = func(e1, e2);
-                                assertEqual(ok, expected);
-                            }
-                        }
-                    }
-
-                    const expected_leftof = [
-                        // (right-open, e)
-                        [false, true, true, true, true],
-                        // (left-closed, e)
-                        [false, false, true, true, true],
-                        // (point, e)
-                        [false, false, false, true, true],
-                        // (right-closed, e)
-                        [false, false, false, false, true],
-                        // (left-open, e)
-                        [false, false, false, false, false]
-                    ];
-
-                    console.log("test endpoint leftof")
-                    test_permutations(endpoint.leftof, expected_leftof);
-
-                    const expected_rightof = [
-                        // (right-open, e)
-                        [false, false, false, false, false],
-                        // (left-closed, e)
-                        [true, false, false, false, false],
-                        // (point, e)
-                        [true, true, false, false, false],
-                        // (right-closed, e)
-                        [true, true, true, false, false],
-                        // (left-open, e)
-                        [true, true, true, true, false]
-                    ];
-
-                    console.log("test endpoint rightof")
-                    test_permutations(endpoint.rightof, expected_rightof);
-
-                    const expected_equal = [
-                        // (right-open, e)
-                        [true, false, false, false, false],
-                        // (left-closed, e)
-                        [false, true, false, false, false],
-                        // (point, e)
-                        [false, false, true, false, false],
-                        // (right-closed, e)
-                        [false, false, false, true, false],
-                        // (left-open, e)
-                        [false, false, false, false, true]
-                    ];
-
-                    console.log("test endpoint equal")
-                    test_permutations(endpoint.equal, expected_equal);
-
-                    const expected_compare = [
-                        // (right-open, e)
-                        [0, -1, -1, -1, -1],
-                        // (left-closed, e)
-                        [1, 0, -1, -1, -1],
-                        // (point, e)
-                        [1, 1, 0, -1, -1],
-                        // (right-closed, e)
-                        [1, 1, 1, 0, -1],
-                        // (left-open, e)
-                        [1, 1, 1, 1, 0]
-                    ];
-
-                    console.log("test endpoint compare")
-                    test_permutations(endpoint.compare, expected_compare);
-                }
-
                 function test_inside() {
 
                     console.log("test inside")
 
                     // endpoints with value 4
-                    const right_open = [4, right, open];
-                    const left_closed = [4, left, closed];
+                    const right_open = [4, right, open, false];
+                    const left_closed = [4, left, closed, false];
                     const point = 4;
-                    const right_closed = [4, right, closed];
-                    const left_open = [4, left, open];
+                    const right_closed = [4, right, closed, false];
+                    const left_open = [4, left, open, false];
                     const all = [right_open, left_closed, point, right_closed, left_open]
 
                     // different intervals relevant to point 4
@@ -158,9 +62,7 @@
                         // test different endpoints with interval
                         let ok;
                         for (let i=0; i<all.length; i++) {
-                            //ok = inside(all[i], itv);
-                            ok = itv.inside(all[i]);
-                            // console.log(endpoint.toString(all[i]), "inside", itv.toString(), ok);
+                            ok = itv.covers_endpoint(all[i]);
                             assertEqual(ok, expectations[i]);
                         }
                     }
@@ -334,7 +236,6 @@
                 }
 
                 var run = function () {
-                    test_endpoint_order();
                     test_inside();
                     test_compare();
                     test_sort();
