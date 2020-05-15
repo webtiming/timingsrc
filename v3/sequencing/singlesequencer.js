@@ -14,6 +14,7 @@ define(function(require) {
     class SingleSequencer {
 
         constructor (axis, to) {
+            let cb;
 
             // axis
             this._axis = axis;
@@ -21,23 +22,19 @@ define(function(require) {
             // timing object
             this._to = to;
 
-            // readiness
-            this._ready = new eventify.EventBoolean(false, {init:true});
-
             // schedule
-            this._schedule;
+            this._sched = new Schedule(this._axis, to);
 
             // activeCues
             this._activeCues = new Map(); // (key -> cue)
 
             // Axis Callback
-            let handle = this._axis.add_callback(this._onAxisCallback.bind(this));
-            this._axis_callback_hangle = handle;
+            cb = this._onAxisCallback.bind(this)
+            this._axis_cb = this._axis.add_callback(cb);
 
             // Schedule Callback
-            this._schedule = new Schedule(to.clock, to.range,
-                                          this._axis,
-                                          this._onScheduleCallback.bind(this));
+            cb = this._onScheduleCallback.bind(this);
+            this._sched_cb = this._sched.add_callback(cb)
 
 
             /*
@@ -59,7 +56,7 @@ define(function(require) {
             this._onTimingCallbackWrapper = function (eInfo) {
                 this._onTimingCallback(eInfo);
             };
-            this._to.on("change", this._onTimingCallbackWrapper, this);
+            this._to.on("change", this._onTimingCallbackWrapper.bind(this));
 
             // Change event
             eventify.eventifyInstance(this, {init:false}); // no events type
@@ -93,14 +90,14 @@ define(function(require) {
             Sequencer Ready Promise
         */
         get ready () {
-            return eventify.makeEventPromise(this._ready, true);
+            return this._to.ready;
         };
 
         /*
             Sequencer Read State
         */
         isReady() {
-            return this._ready.value;
+            return this._to.isReady();
         }
 
 
@@ -116,15 +113,8 @@ define(function(require) {
             Handle callback from timingobject
         */
         _onTimingCallback (eInfo) {
-            let new_vector;
-            let activeCues, enterCues, exitCues;
-
             console.log("onTimingCallback");
 
-            // check and set sequencer readiness
-            if (!this._ready.value) {
-                this._ready.value = true;
-            }
 
             /*
                 If update is the initial vector from the timing object,
@@ -133,6 +123,7 @@ define(function(require) {
                 when it was created as the official time for the update.
                 This is represented by the new_vector.
             */
+            let new_vector;
             if (eInfo.init) {
                 new_vector = motionutils.calculateVector(to.vector, to.clock.now());
             } else {
@@ -156,13 +147,30 @@ define(function(require) {
 
 
                 // new active cues
-                activeCues = new Map(this._axis.lookup(itv).map(cue => {
+                let activeCues = new Map(this._axis.lookup(itv).map(cue => {
                     return [cue.key, cue];
                 }));
                 // exit cues - in old activeCues but not in new activeCues
-                exitCues = util.map_difference(this._activeCues, activeCues);
+                let exitCues = util.map_difference(this._activeCues, activeCues);
                 // enter cues - not in old activeCues but in new activeCues
-                enterCues = util.map_difference(activeCues, this._activeCues);
+                let enterCues = util.map_difference(activeCues, this._activeCues);
+
+
+                // update active cues
+                this._activeCues = activeCues;
+
+                // make change Map
+                let changeMap = new Map();
+                for (let cue of exitCues.values()) {
+                    changeMap.set(cue.key, {new:undefined, old:cue});
+                }
+                for (let cue of enterCues.values()) {
+                    changeMap.set(cue.key, {new:cue, old:undefined});
+                }
+
+                // event notification
+                this.eventifyTriggerEvent("change", changeMap);
+
             }
 
             /*
@@ -170,23 +178,8 @@ define(function(require) {
             */
 
             // kick off schedule
-            this._schedule.setVector(new_vector);
+            this._sched.setVector(new_vector);
 
-
-            // update active cues
-            this._activeCues = activeCues;
-
-            // make change Map
-            let changeMap = new Map();
-            for (let cue of exitCues.values()) {
-                changeMap.set(cue.key, {new:undefined, old:cue});
-            }
-            for (let cue of enterCues.values()) {
-                changeMap.set(cue.key, {new:cue, old:undefined});
-            }
-
-            // event notification
-            this.eventifyTriggerEvent("change", changeMap);
         };
 
 

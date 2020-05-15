@@ -16,11 +16,9 @@ define(function(require) {
         static RUN_VECTOR = "vector";
         static RUN_TIMEOUT = "timeout";
 
-        constructor(clock, range, axis, callback, options) {
-            // clock
-            this.clock = clock;
-            // timing object range
-            this.range = range;
+        constructor(axis, to, options) {
+            // timingobject
+            this.to = to;
             // current timeout
             this.tid;
             // current vector
@@ -33,13 +31,44 @@ define(function(require) {
             this.axis = axis;
             // task queue
             this.queue = [];
-            // callback
-            this.callback = callback;
+            // callbacks
+            this.callbacks = [];
             // options
             options = options || {};
             options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
             this.options = options;
         }
+
+
+        /***************************************************************
+            CALLBACKS
+        ***************************************************************/
+
+        add_callback (handler) {
+            let handle = {
+                handler: handler
+            }
+            this.callbacks.push(handle);
+            return handle;
+        };
+
+        del_callback (handle) {
+            let index = this.callbacks.indexof(handle);
+            if (index > -1) {
+                this.callbacks.splice(index, 1);
+            }
+        };
+
+        _notify_callbacks (...args) {
+            this.callbacks.forEach(function(handle) {
+                handle.handler(...args);
+            });
+        };
+
+
+        /***************************************************************
+            TIMEOUTS
+        ***************************************************************/
 
         /*
             set timeout to point in time (seconds)
@@ -48,7 +77,7 @@ define(function(require) {
             if (this.tid != undefined) {
                 throw new Error("at most on timeout");
             }
-            let now = this.clock.now();
+            let now = this.to.clock.now();
             let delay = Math.max(target_ts - now, 0) * 1000;
             this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts);
         }
@@ -60,7 +89,7 @@ define(function(require) {
             if (this.tid != undefined) {
                 this.tid = undefined;
                 // check if timeout was too early
-                let now = this.clock.now()
+                let now = this.to.clock.now()
                 if (now < target_ts) {
                     // schedule new timeout
                     this.setTimeout(target_ts);
@@ -70,6 +99,10 @@ define(function(require) {
                 }
             }
         }
+
+        /***************************************************************
+            MOTION CHANGE
+        ***************************************************************/
 
         /*
             update schedule with new motion vector
@@ -94,31 +127,9 @@ define(function(require) {
         }
 
 
-        /*
-            advance timeInterval and posInterval if needed
-        */
-        advance(now) {
-            let start, delta = this.options.lookahead;
-            let advance = false;
-            if (this.timeInterval == undefined) {
-                start = now;
-                advance = true;
-            } else if (leftof(this.timeInterval.endpointHigh, now)) {
-                start = this.timeInterval.high;
-                advance = true
-            }
-            if (advance) {
-                // advance intervals
-                this.timeInterval = new Interval(start, start + delta, true, false);
-                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
-                // console.log("time:", this.timeInterval.toString());
-                // console.log("pos:", this.posInterval.toString());
-                // clear task queue
-                this.queue = [];
-            }
-            return advance;
-        }
-
+        /***************************************************************
+            TASK QUEUE
+        ***************************************************************/
 
         /*
             push eventItem onto queue
@@ -151,6 +162,40 @@ define(function(require) {
             return (this.queue.length > 0) ? this.queue[0].ts: undefined;
         }
 
+
+
+        /***************************************************************
+            ADVANCE TIMEINTERVAL/POSINTERVAL
+        ***************************************************************/
+
+        /*
+            advance timeInterval and posInterval if needed
+        */
+        advance(now) {
+            let start, delta = this.options.lookahead;
+            let advance = false;
+            if (this.timeInterval == undefined) {
+                start = now;
+                advance = true;
+            } else if (leftof(this.timeInterval.endpointHigh, now)) {
+                start = this.timeInterval.high;
+                advance = true
+            }
+            if (advance) {
+                // advance intervals
+                this.timeInterval = new Interval(start, start + delta, true, false);
+                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
+                // clear task queue
+                this.queue = [];
+            }
+            return advance;
+        }
+
+
+        /***************************************************************
+            LOAD
+        ***************************************************************/
+
         /*
             load events
         */
@@ -167,7 +212,7 @@ define(function(require) {
                 All endpointEvents with .ts later or equal to range
                 violation will be cancelled.
             */
-            let range_ts = motionutils.getRangeIntersect(this.vector, this.range)[0];
+            let range_ts = motionutils.getRangeIntersect(this.vector, this.to.range)[0];
 
             /*
                 ISSUE 2
@@ -193,8 +238,8 @@ define(function(require) {
                 ISSUE 3
 
                 With acceleration the motion might change direction at
-                some point, which might be the endpoint. In this
-                case, motion touches the endpoint but does not actually
+                some point, which might be a cue endpoint. In this
+                case, motion touches the cue endpoint but does not actually
                 cross over it.
 
                 For simplicity we say that this should not change the
@@ -203,7 +248,7 @@ define(function(require) {
                 simply drop such endpointEvents.
 
                 To detect this, note that velocity will be exactly 0
-                evaluated at the endpoint, but acceleration will be nonzero.
+                evaluated at the cue endpoint, but acceleration will be nonzero.
             */
 
             return endpointEvents.filter(function(item) {
@@ -227,6 +272,10 @@ define(function(require) {
         }
 
 
+        /***************************************************************
+            RUN
+        ***************************************************************/
+
         /*
             run schedule
         */
@@ -243,7 +292,7 @@ define(function(require) {
                 dueEvents.push.apply(this.pop(now));
             }
             if (dueEvents) {
-                this.callback(dueEvents, this);
+                this._notify_callbacks(dueEvents, this);
             }
             // timeout - until next due event
             let ts = this.next() || this.timeInterval.high;

@@ -45,6 +45,20 @@
                 to.update({position: 2.0});
             };
 
+            document.getElementById('e').onclick = function () {
+                to.update({velocity: 1.0});
+            };
+            document.getElementById('f').onclick = function () {
+                to.update({velocity: 0});
+            };
+            document.getElementById('g').onclick = function () {
+                to.update({position: 0});
+            };
+            document.getElementById('h').onclick = function () {
+                to.update({velocity: -1.0});
+            };
+
+
             let value = document.getElementById("value");
             to.on("timeupdate", function () {
                 value.innerHTML = to.query().position.toFixed(2);
@@ -106,9 +120,19 @@
   <body>
     <h1>Test Single Sequencer</h1>
     <div id="value"></div>
+    <p>
     <button id="a">1.0</button>
     <button id="b">1.3</button>
     <button id="c">1.7</button>
     <button id="d">2.0</button>
+    </p>
+    <p>
+    <button id="e">Play</button>
+    <button id="f">Pause</button>
+    <button id="g">Reset</button>
+    <button id="h">Backwards</button>
+    </p>
+
+
   </body>
 </html>
