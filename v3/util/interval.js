@@ -85,7 +85,8 @@ define(function(require) {
 		toString () {
 			const toString = endpoint.toString;
 			if (this.singular) {
-				return toString(this.endpointLow);
+				let p = this.endpointLow[0];
+				return `[${p}]`;
 			} else {
 				let low = endpoint.toString(this.endpointLow);
 				let high = endpoint.toString(this.endpointHigh);

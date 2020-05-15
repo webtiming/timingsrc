@@ -7,7 +7,7 @@ define (function (require) {
     const eventify = require('../util/eventify');
     const util = require("../util/util");
     const Relation = Interval.Relation;
-
+    const endpoint = require("../util/endpoint");
 
 
     /*
@@ -937,7 +937,7 @@ define (function (require) {
             const points = this._pointIndex.lookup(broader_interval);
             const result = [];
             const len = points.length;
-            let point, endpoint;
+            let point, _endpoint;
             for (let i=0; i<len; i++) {
                 point = points[i];
                 this._pointMap.get(point)
@@ -947,16 +947,16 @@ define (function (require) {
                             include cue if the endpoint is inside search interval
                         */
                         if (point == cue.interval.low) {
-                            endpoint = cue.interval.endpointLow;
+                            _endpoint = cue.interval.endpointLow;
                         } else if (point == cue.interval.high) {
-                            endpoint = cue.interval.endpointHigh;
+                            _endpoint = cue.interval.endpointHigh;
                         } else {
                             console.log(point)
                             console.log(cue)
                             throw new Error("fatal: point cue mismatch");
                         }
-                        if (interval.inside(endpoint)) {
-                            result.push({endpoint:endpoint, cue:cue});
+                        if (interval.covers_endpoint(_endpoint)) {
+                            result.push({endpoint:_endpoint, cue:cue});
                         }
                     });
             }

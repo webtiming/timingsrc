@@ -43,7 +43,7 @@ define(function () {
 	*/
 	const MODE_RIGHT_OPEN = 0;
 	const MODE_LEFT_CLOSED = 1;
-	const MODE_POINT = 2;
+	const MODE_SINGULAR = 2;
 	const MODE_RIGHT_CLOSED = 3;
 	const MODE_LEFT_OPEN = 4;
 
@@ -69,8 +69,8 @@ define(function () {
 	*/
 	function get_mode(e) {
 		let [val, right, closed, singular] = e;
-		if (right == undefined) {
-			return MODE_POINT;
+		if (singular) {
+			return MODE_SINGULAR;
 		} else if (right) {
 			if (closed) {
 				return MODE_RIGHT_CLOSED;
@@ -193,7 +193,7 @@ define(function () {
 				return `${val})`
 			} else if (mode == MODE_LEFT_CLOSED) {
 				return `[${val}`
-			} else if (mode == MODE_POINT){
+			} else if (mode == MODE_SINGULAR){
 				return `[${val}]`
 			} else if (mode == MODE_RIGHT_CLOSED) {
 				return `${val}]`

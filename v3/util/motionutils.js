@@ -24,7 +24,7 @@ define(function (require) {
 	'use strict';
 
     const Interval = require("./interval");
-    const endpoint = Interval.endpoint;
+    const endpoint = require("./endpoint");
 
 
 	// Closure
@@ -400,7 +400,7 @@ define(function (require) {
 
         endpointItem
         {
-            endpoint: [value, high, closed],
+            endpoint: [value, high, closed, singular],
             cue: {
                 key: "mykey",
                 interval: new Interval(...),
@@ -460,7 +460,7 @@ define(function (require) {
 
         endpointItems.forEach(function(item) {
             // check that endpoint is inside given posInterval
-            if (!posInterval.inside(item.endpoint)) {
+            if (!posInterval.covers_endpoint(item.endpoint)) {
                 return;
             }
             value = item.endpoint[0];
@@ -476,7 +476,7 @@ define(function (require) {
             deltas.forEach(function(delta) {
                 ts = t0 + delta;
                 tsEndpoint = [ts, item.endpoint[1], item.endpoint[2]];
-                if (timeInterval.inside(tsEndpoint)){
+                if (timeInterval.covers_endpoint(tsEndpoint)){
                     item.tsEndpoint = tsEndpoint;
                     item.direction = calculateDirection(vector, ts);
                     eventItems.push(item);
@@ -487,7 +487,7 @@ define(function (require) {
         // sort eventItems according to tsEndpoints
 
         let cmp = function (a,b) {
-            return endpoint.compare(a.tsEndpoint, b.tsEndpoint);
+            return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
         };
         eventItems.sort(cmp);
         return eventItems;
@@ -615,7 +615,7 @@ define(function (require) {
 
             */
             let t_extrem = -v0/a0 + t0;
-            if (timeInterval.inside(t_extrem)) {
+            if (timeInterval.covers_endpoint(t_extrem)) {
                 let p_extrem = -v0*vo/(2.0*a0) + p0;
                 // maximal point reached in time interval
                 if (a0 > 0.0) {

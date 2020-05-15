@@ -127,21 +127,21 @@
             to = new timingsrc.TimingObject();
             s = new timingsrc.SingleSequencer(axis, to);
 
-            /*
+
             // add change handler
             s.on("change", function(eventMap, eInfo) {
                 for (let [key, item] of eventMap.entries()) {
                     if (!item.new && item.old) {
                         console.log("remove", key, item.old.interval.toString());
                     } else if (item.new && !item.old) {
-                        console.log("add", key, item.new.interval.toString());
+                        console.log("change", key, item.new.interval.toString());
                     } else if (item.new && item.old) {
                         console.log("change", key);
                     }
 
                 }
             });
-            */
+
 
             if (document.readyState === "complete") {
                 run();

@@ -1,7 +1,8 @@
 define(function(require) {
 
-    const Interval = require("../util/interval");
     const util = require("../util/util");
+    const endpoint = require("../util/endpoint");
+    const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
     const eventify = require("../util/eventify");
     const Schedule = require("./schedule");
@@ -9,7 +10,6 @@ define(function(require) {
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
 
-    const endpoint = Interval.endpoint;
 
     class SingleSequencer {
 
@@ -164,8 +164,16 @@ define(function(require) {
                 let enterCues = util.map_difference(activeCues, this._activeCues);
                 // update active cues
                 this._activeCues = activeCues;
-                // trigger events
-                this._triggerEvents(exitCues, enterCues);
+                // make events
+                let eventMap = new Map();
+                for (let cue of exitCues.values()) {
+                    eventMap.set(cue.key, {new:undefined, old:cue});
+                }
+                for (let cue of enterCues.values()) {
+                    eventMap.set(cue.key, {new:cue, old:undefined});
+                }
+                // event notification
+                this.eventifyTriggerEvent("change", eventMap);
             }
 
             /*
@@ -180,56 +188,52 @@ define(function(require) {
         ***************************************************************/
 
         _onScheduleCallback = function(endpointItems) {
-            let value, right, closed, enter;
-            let right_value;
-            let enterCues = new Map();
-            let exitCues = new Map();
-
+            let eventMap = new Map();
             endpointItems.forEach(function (item) {
-                [value, right, closed] = item.endpoint;
-                right_value = (right) ? -1 : 1;
-                enter = (item.direction * right_value) > 0;
-                let has_cue = this._activeCues.has(item.cue.key);
-                if (enter) {
-                    // add to active cues
-                    if (!has_cue) {
-                        enterCues.set(item.cue.key, item.cue)
-                        this._activeCues.set(item.cue.key, item.cue);
+                let key = item.cue.key;
+                let cue = item.cue;
+                let has_cue = this._activeCues.has(key);
+                let [value, right, closed, singular] = item.endpoint;
+                if (singular) {
+                    if (has_cue) {
+                        // exit
+                        eventMap.set(key, {new:undefined, old:cue});
+                        this._activeCues.delete(key);
                     } else {
-                        console.log("already entered");
+                        // enter
+                        eventMap.set(key, {new:cue, old:undefined});
+                        // exit
+                        eventMap.set(key, {new:undefined, old:cue});
+                        // no need to both add and remove from activeCues
                     }
                 } else {
-                    // remove from active cues
-                    if (has_cue) {
-                        exitCues.set(item.cue.key, item.cue);
-                        this._activeCues.delete(item.cue.key);
+                    // enter or exit
+                    let right_value = (right) ? -1 : 1;
+                    let enter = (item.direction * right_value) > 0;
+                    if (enter) {
+                        if (!has_cue) {
+                            // enter
+                            eventMap.set(key, {new:cue, old:undefined});
+                            this._activeCues.set(key, cue);
+                        } else {
+                            console.log("already entered");
+                        }
                     } else {
-                        console.log("elready exited");
+                        if (has_cue) {
+                            // exit
+                            eventMap.set(key, {new:undefined, old:cue});
+                            this._activeCues.delete(key);
+                        } else {
+                            console.log("elready exited");
+                        }
                     }
                 }
             }, this);
 
-            // trigger events
-            this._triggerEvents(exitCues, enterCues);
+            // event notification
+            this.eventifyTriggerEvent("change", eventMap);
         };
 
-
-        /***************************************************************
-         TRIGGER EVENTS
-        ***************************************************************/
-
-        _triggerEvents(exitCues, enterCues, changeCues) {
-            // make change Map
-            let changeMap = new Map();
-            for (let cue of exitCues.values()) {
-                changeMap.set(cue.key, {new:undefined, old:cue});
-            }
-            for (let cue of enterCues.values()) {
-                changeMap.set(cue.key, {new:cue, old:undefined});
-            }
-            // event notification
-            this.eventifyTriggerEvent("change", changeMap);
-        }
 
 
         /***************************************************************
@@ -260,9 +264,8 @@ define(function(require) {
 
     function print_endpoints(endpointEvents) {
         let _ts = to.clock.now();
-        let toString = Interval.endpoint.toString;
         let s = endpointEvents.map(function(item) {
-            return toString(item.endpoint);
+            return endpoint.toString(item.endpoint);
         }).join(" ");
         console.log(s);
     }

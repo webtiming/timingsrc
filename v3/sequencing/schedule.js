@@ -1,15 +1,15 @@
 define(function(require) {
 
-    const motionutils = require("../util/motionutils");
+    const endpoint = require("../util/endpoint");
     const Interval = require("../util/interval");
-    const endpoint = Interval.endpoint;
+    const motionutils = require("../util/motionutils");
 
     const isMoving = motionutils.isMoving;
 
-    const ep2str = Interval.endpoint.toString;
+    const ep2str = endpoint.toString;
 
     function queueCmp(a,b) {
-        return endpoint.compare(a.tsEndpoint, b.tsEndpoint);
+        return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
     };
 
     class Schedule {
@@ -141,7 +141,7 @@ define(function(require) {
         */
         push(eventItems) {
             eventItems.forEach(function(item) {
-                if (this.timeInterval.inside(item.tsEndpoint)) {
+                if (this.timeInterval.covers_endpoint(item.tsEndpoint)) {
                     this.queue.push(item);
                 } else {
                     console.log("push drop", ep2str(item.tsEndpoint));
