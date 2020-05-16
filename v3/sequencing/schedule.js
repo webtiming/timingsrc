@@ -100,7 +100,7 @@ define(function(require) {
                     this.setTimeout(target_ts);
                 } else {
                     // handle timeout
-                    this.run(target_ts, Schedule.RUN_TIMEOUT);
+                    this.run(now, Schedule.RUN_TIMEOUT);
                 }
             }
         }
@@ -156,8 +156,19 @@ define(function(require) {
         */
         pop(now) {
             let eventItem, res = [];
-            while (this.queue.length > 0 && endpoint.leftof(this.queue[0].tsEndpoint, now)) {
-                res.push(this.queue.shift());
+            let len = this.queue.length;
+            while (this.queue.length > 0) {
+                if (this.queue[0].tsEndpoint[0] <= now) {
+                    res.push(this.queue.shift());
+                } else {
+                    break;
+                }
+            }
+            if (this.queue.length > 0) {
+                console.log(`pop ${res.length} of ${len}`);
+
+            } else if (res.length > 0) {
+                console.log(`pop ${res.length} of ${len}`);
             }
             return res;
         };
@@ -212,7 +223,12 @@ define(function(require) {
             let endpointEvents = motionutils.getEndpointEvents(this.timeInterval,
                                                                this.posInterval,
                                                                this.vector,
-                                                               endpoints);
+                                                                endpoints);
+
+            console.log("events")
+            console.log(endpointEvents.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
+
+
             /*
                 ISSUE 1
 
@@ -270,11 +286,15 @@ define(function(require) {
 
             return endpointEvents.filter(function(item) {
                 // ISSUE 1
+
                 if (range_ts <= item.tsEndpoint[0]) {
+                    console.log("issue1");
                     return false;
                 }
+
                 // ISSUE 2
                 if (endpoint.leftof(item.tsEndpoint, minimum_tsEndpoint)) {
+                    console.log("issue2");
                     return false;
                 }
                 // ISSUE 3
@@ -308,11 +328,31 @@ define(function(require) {
             // advance schedule and load events if needed
             if (this.advance(now)) {
                 // fetch cue endpoints for posInterval
-                let endpoints = this.axis.lookup_endpoints(this.posInterval);
+                console.log(this.posInterval.toString())
+                let endpointItems = this.axis.lookup_endpoints(this.posInterval);
+                console.log(endpointItems.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
+
                 // load events and push on queue
-                this.push(this.load(endpoints));
+                let loaded = this.load(endpointItems)
+                console.log("loaded");
+                console.log(loaded.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
+
+
+                this.push(loaded);
+
+                let popped = this.pop(now);
+
+                console.log("popped");
+                console.log(popped.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
+
+
                 // process - possibly new due events
-                dueEvents.push(...this.pop(now));
+                dueEvents.push(...popped);
+                console.log("dueEvents");
+                console.log(dueEvents.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
+
+
+
             }
             if (dueEvents.length > 0) {
                 this._notify_callbacks(dueEvents, this);

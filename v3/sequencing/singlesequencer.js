@@ -147,6 +147,13 @@ define(function(require) {
             let delta = new motionutils.MotionDelta(to.old_vector, new_vector);
 
             /*
+            console.log("posDelta");
+            console.log(delta.posDelta);
+            console.log("movingdelta");
+            console.log(delta.moveDelta);
+            */
+
+            /*
                 Handle Timing Object Jump
             */
             if (delta.posDelta == PosDelta.CHANGE) {
@@ -187,6 +194,8 @@ define(function(require) {
         ***************************************************************/
 
         _onScheduleCallback = function(endpointItems) {
+
+
             const events = [];
             endpointItems.forEach(function (item) {
                 let cue = item.cue;
@@ -236,7 +245,7 @@ define(function(require) {
 
 
         /***************************************************************
-         MAP LIKE ACCESSORS
+         MAP ACCESSORS
         ***************************************************************/
 
         has(key) {

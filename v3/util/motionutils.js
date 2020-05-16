@@ -390,6 +390,26 @@ define(function (require) {
 
 
     /*
+        time endpoint and pos endpoints.
+
+        time is always increasing even when position
+        is decreasing. When getting time endpoints from
+        pos endpoint we therefore have to flip the right/left
+        aspects of endpoints.
+    */
+
+    function timeEndpoint_from_posEndpoint(posEndpoint, ts, direction) {
+        let [pos, right, close, singular] = posEndpoint;
+        // flip right/left if direction is backwards
+        if (direction < 0 && right !== undefined) {
+            right = !right
+        }
+        return [ts, right, close, singular];
+    }
+
+
+
+    /*
         GET EVENTS
 
         Given
@@ -455,7 +475,7 @@ define(function (require) {
         let t0 = vector.timestamp;
 
         let value, ts, deltas;
-        let tsEndpoint;
+        let tsEndpoint, direction;
         let eventItems = [];
 
         endpointItems.forEach(function(item) {
@@ -475,10 +495,11 @@ define(function (require) {
             // include any timestamp within the timeinterval
             deltas.forEach(function(delta) {
                 ts = t0 + delta;
-                tsEndpoint = [ts, item.endpoint[1], item.endpoint[2]];
+                direction = calculateDirection(vector, ts);
+                tsEndpoint = timeEndpoint_from_posEndpoint(item.endpoint, ts, direction);
                 if (timeInterval.covers_endpoint(tsEndpoint)){
                     item.tsEndpoint = tsEndpoint;
-                    item.direction = calculateDirection(vector, ts);
+                    item.direction = direction;
                     eventItems.push(item);
                 }
             });
@@ -730,8 +751,6 @@ define(function (require) {
                 let start_vector = calculateVector(new_vector, ts);
 
                 // position change
-                // console.log(end_vector.position, start_vector.position);
-                // console.log(end_vector.position == start_vector.position);
                 let pos_changed = (end_vector.position != start_vector.position);
                 let pct = (pos_changed) ? PosDelta.CHANGE : PosDelta.NOOP;
 
