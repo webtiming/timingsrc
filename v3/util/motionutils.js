@@ -616,7 +616,7 @@ define(function (require) {
             */
             let t_extrem = -v0/a0 + t0;
             if (timeInterval.covers_endpoint(t_extrem)) {
-                let p_extrem = -v0*vo/(2.0*a0) + p0;
+                let p_extrem = -v0*v0/(2.0*a0) + p0;
                 // maximal point reached in time interval
                 if (a0 > 0.0) {
                     // p_extrem is minimum

@@ -192,6 +192,7 @@ define(function(require) {
                 let cue = item.cue;
                 let has_cue = this._activeCues.has(cue.key);
                 let [value, right, closed, singular] = item.endpoint;
+
                 if (singular) {
                     if (has_cue) {
                         // exit

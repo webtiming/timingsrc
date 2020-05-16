@@ -246,7 +246,7 @@ define(function(require) {
                 ISSUE 3
 
                 With acceleration the motion might change direction at
-                some point, which might be a cue endpoint. In this
+                some point, which might also be a cue endpoint. In this
                 case, motion touches the cue endpoint but does not actually
                 cross over it.
 
@@ -257,6 +257,15 @@ define(function(require) {
 
                 To detect this, note that velocity will be exactly 0
                 evaluated at the cue endpoint, but acceleration will be nonzero.
+
+                Importantly, there is one exception. Dropping such events
+                should only happen when 0 velocity is reached during motion,
+                not at the start of a motion. For instance, in the case of
+                starting with acceleration but no velocity, from a cue
+                endpoint, this event should not be dropped.
+                This is avoided by requiring that the tsEndpoint is not
+                equal to timeInterval.endpointLow
+
             */
 
             return endpointEvents.filter(function(item) {
@@ -269,11 +278,16 @@ define(function(require) {
                     return false;
                 }
                 // ISSUE 3
+                // checks every event. alternative approach would be
+                // to calculate the ts of this event once, and compare
+                // the result to the ts of all event
                 if (this.vector.acceleration != 0.0) {
                     let ts = item.tsEndpoint[0];
-                    let v = motionutils.calculateVector(this.vector, ts);
-                    if (v.position == item.endpoint[0] && v.velocity == 0) {
-                        return false;
+                    if (ts > this.timeInterval.endpointLow[0]) {
+                        let v = motionutils.calculateVector(this.vector, ts);
+                        if (v.position == item.endpoint[0] && v.velocity == 0) {
+                            return false;
+                        }
                     }
                 }
                 return true;

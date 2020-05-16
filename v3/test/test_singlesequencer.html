@@ -31,37 +31,73 @@
 
         function run() {
 
-            // Hook up buttons UI
+            // position controls
             document.getElementById('a').onclick = function () {
-                to.update({position: 1.0});
+                to.update({position: -1.0});
             };
             document.getElementById('b').onclick = function () {
-                to.update({position: 1.3});
-            };
-            document.getElementById('c').onclick = function () {
-                to.update({position: 1.7});
-            };
-            document.getElementById('d').onclick = function () {
-                to.update({position: 2.0});
-            };
-
-            document.getElementById('e').onclick = function () {
-                to.update({velocity: 1.0});
-            };
-            document.getElementById('f').onclick = function () {
-                to.update({velocity: 0});
-            };
-            document.getElementById('g').onclick = function () {
                 to.update({position: 0});
             };
-            document.getElementById('h').onclick = function () {
+            document.getElementById('c').onclick = function () {
+                to.update({position: 1.0});
+            };
+            document.getElementById('d').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos + 1.0});
+            };
+            document.getElementById('e').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos - 1.0});
+            };
+
+
+            // velocity controls
+            document.getElementById('f').onclick = function () {
                 to.update({velocity: -1.0});
+            };
+            document.getElementById('g').onclick = function () {
+                to.update({velocity: 0});
+            };
+            document.getElementById('h').onclick = function () {
+                to.update({velocity: 1.0});
+            };
+            document.getElementById('i').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel + 1.0});
+            };
+            document.getElementById('j').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel - 1.0});
+            };
+
+
+            // acceleration controls
+            document.getElementById('k').onclick = function () {
+                to.update({acceleration: -1.0});
+            };
+            document.getElementById('l').onclick = function () {
+                to.update({acceleration: 0.0});
+            };
+            document.getElementById('m').onclick = function () {
+                to.update({acceleration: 1.0});
+            };
+            document.getElementById('n').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc + 1.0});
+            };
+            document.getElementById('o').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc - 1.0});
             };
 
 
             let value = document.getElementById("value");
             to.on("timeupdate", function () {
-                value.innerHTML = to.query().position.toFixed(2);
+                let v = to.query();
+                let pos = v.position.toFixed(2)
+                let vel = v.velocity.toFixed(2)
+                let acc = v.acceleration.toFixed(2)
+                value.innerHTML = `P:${pos} V:${vel} A:${acc}`;
             });
 
 
@@ -159,19 +195,30 @@
   </head>
   <body>
     <h1>Test Single Sequencer</h1>
-    <div id="value"></div>
+    <div id="value" style="font-weight:bold;"></div>
     <p>
-    <button id="a">1.0</button>
-    <button id="b">1.3</button>
-    <button id="c">1.7</button>
-    <button id="d">2.0</button>
+    <button id="a">P=-1</button>
+    <button id="b">P=0</button>
+    <button id="c">P=1</button>
+    <button id="d">P.inc</button>
+    <button id="e">P.dec</button>
     </p>
     <p>
-    <button id="e">Play</button>
-    <button id="f">Pause</button>
-    <button id="g">Reset</button>
-    <button id="h">Backwards</button>
+    <button id="f">V=-1</button>
+    <button id="g">V=0</button>
+    <button id="h">V=1</button>
+    <button id="i">V.inc</button>
+    <button id="j">V.dec</button>
     </p>
+    <p>
+    <button id="k">A=-1</button>
+    <button id="l">A=0</button>
+    <button id="m">A=1</button>
+    <button id="n">A.inc</button>
+    <button id="o">A.dec</button>
+    </p>
+    <h3>Timed Data</h3>
+    <p>Active cues in red color</p>
     <p>
       <div id="data"></div>
     </p>
