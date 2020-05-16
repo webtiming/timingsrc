@@ -240,7 +240,7 @@
 
         var test_lookup_delete = function () {
           let ax = new Axis();
-          let batchMap, expect;
+          let events, expect;
 
           const INSIDE = 12;
           const OVERLAP = 29;
@@ -263,11 +263,14 @@
 
 
           // test evaluate
-          function evaluate (expect, batchMap) {
+          function evaluate (expect, events) {
             expect.forEach(function (key) {
-              assertTrue(batchMap.has(key));
+                let idx = events.findIndex(function (item) {
+                    return item.key == key;
+                });
+                assertTrue(idx > -1);
             });
-            for (let item of batchMap.values()) {
+            for (let item of events.values()) {
               assertTrue(expect.includes(item.old.key));
             }
             ax.integrity();
@@ -277,25 +280,25 @@
           console.log("remove inside");
           expect = [5,6,7,8,9,10,11,12,13,14,15,16];
           ax.update(cues);
-          batchMap = ax.lookup_delete(interval, INSIDE);
-          evaluate(expect, batchMap);
+          events = ax.lookup_delete(interval, INSIDE);
+          evaluate(expect, events);
           ax.clear();
 
           // remove partial
           console.log("remove partial")
           expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17];
           ax.update(cues);
-          batchMap = ax.lookup_delete(interval, OVERLAP);
+          events = ax.lookup_delete(interval, OVERLAP);
           ax.integrity();
-          evaluate(expect, batchMap);
+          evaluate(expect, events);
           ax.clear();
 
           // remove overlap
           console.log("remove overlap");
           expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17, "overlapping"];
           ax.update(cues);
-          batchMap = ax.lookup_delete(interval, COVERS);
-          evaluate(expect, batchMap);
+          events = ax.lookup_delete(interval, COVERS);
+          evaluate(expect, events);
           ax.clear();
 
           console.log("test lookup delete done");

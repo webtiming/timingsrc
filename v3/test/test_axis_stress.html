@@ -177,7 +177,7 @@
           let [res, t] = timeit(function () {
             return ax.update(batch_1, {chaining:false});
           });
-          console.log("insert sorted sorted cues ", res.size, " into empty axis", t);
+          console.log("insert sorted sorted cues ", res.length, " into empty axis", t);
 
 
           // insert small cue batch int non empty axis
@@ -186,14 +186,14 @@
           [res, t] = timeit(function () {
             return ax.update(batch_22, {chaining:false});
           });
-          console.log("insert small batch random cues ", res.size, " into non-empty axis ", t);
+          console.log("insert small batch random cues ", res.length, " into non-empty axis ", t);
 
 
           // clear axis
           [res, t] = timeit(function () {
             return ax.clear();
           })
-          console.log("clear ", res.size, " non-empty axis ", t);
+          console.log("clear ", res.length, " non-empty axis ", t);
 
           ax.clear();
 
@@ -203,7 +203,7 @@
           [res, t] = timeit(function () {
             return ax.update(batch_3, {chaining:false});
           });
-          console.log("insert random cues ", res.size, " into empty axis ", t);
+          console.log("insert random cues ", res.length, " into empty axis ", t);
 
           // insert sorted into non-empty axis
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
@@ -211,7 +211,7 @@
           [res, t] = timeit(function () {
             return ax.update(batch_2, {chaining:false});
           });
-          console.log("insert batch sorted cues ", res.size, " into non-empty axis ", t);
+          console.log("insert batch sorted cues ", res.length, " into non-empty axis ", t);
 
           ax.clear();
 
@@ -226,7 +226,7 @@
           [res, t] = timeit(function () {
             return ax.update(batch_4, {chaining:false});
           });
-          console.log("insert random cues ", res.size, " into non-empty axis ", t);
+          console.log("insert random cues ", res.length, " into non-empty axis ", t);
 
           /*
           console.log("cueMap", ax._cueMap.size);
@@ -267,13 +267,13 @@
           [res, t] = timeit(function () {
             return ax.lookup_delete(smallInterval);
           });
-          console.log("remove cues - small interval", smallInterval.toString(), " ", res.size, " ", t);
+          console.log("remove cues - small interval", smallInterval.toString(), " ", res.length, " ", t);
 
           // remove cues big interval
           [res, t] = timeit(function () {
             return ax.lookup_delete(interval);
           });
-          console.log("remove cues - big interval", interval.toString(), " ", res.size, " ", t);
+          console.log("remove cues - big interval", interval.toString(), " ", res.length, " ", t);
 
 
           ax.clear()
@@ -292,13 +292,13 @@
           [res, t] = timeit(function () {
             return ax.update(small_remove_batch, {chaining:false});
           });
-          console.log("remove small batch of random cues ", res.size, " ", t);
+          console.log("remove small batch of random cues ", res.length, " ", t);
 
 
           [res, t] = timeit(function () {
             return ax.update(big_remove_batch, {chaining:false});
           });
-          console.log("remove big batch of random cues ", res.size, " ", t);
+          console.log("remove big batch of random cues ", res.length, " ", t);
 
 
 

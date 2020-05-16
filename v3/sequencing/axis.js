@@ -304,9 +304,8 @@ define (function (require) {
             cue = {key:1, data: undefined}
 
 
-            Update returns a batchMap - describes the effects of an update.
-                batchMap is a Map() object
-                key -> {
+            Update returns a list of event items - describes the effects of an update.
+                {
                     new: new_cue,
                     old: old_cue,
                     delta: {
@@ -423,11 +422,12 @@ define (function (require) {
                 // flush all buckets so updates take effect
                 this._call_buckets("flush");
                 // callbacks
-                this._notify_callbacks(batchMap);
-                // event notification
-                this.eventifyTriggerEvent("change", batchMap);
+                let events = [...batchMap.values()];
+                this._notify_callbacks(events);
+                this.eventifyTriggerEvent("change", events);
+                return events;
             }
-            return batchMap;
+            return [];
         };
 
 
@@ -456,7 +456,7 @@ define (function (require) {
 
             // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
-                batchMap.set(cue.key, {new:current_cue, old:current_cue});
+                batchMap.set(cue.key, {key:cue.key, new:current_cue, old:current_cue});
                 return;
             }
 
@@ -484,7 +484,7 @@ define (function (require) {
                 new_cue.interval = cue.interval;
                 new_cue.data = cue.data;
             }
-            item = {new:new_cue, old:old_cue};
+            item = {cue:cue.key, new:new_cue, old:old_cue};
 
             /*
                 if this item has been set earlier in batchMap
@@ -651,18 +651,18 @@ define (function (require) {
         lookup_delete(interval, mode) {
             const cues = this._call_buckets("lookup_delete", interval, mode);
             // remove from cueMap and make events
-            const batchMap = new Map();
+            const events = [];
             let cue;
             for (let i=0; i<cues.length; i++) {
                 cue = cues[i];
                 this._cueMap.delete(cue.key);
                 // check for equality
-                batchMap.set(cue.key, {new: undefined, old: cue});
+                events.push({key:cue.key, new: undefined, old: cue});
             }
-            if (batchMap.size > 0) {
-                this.eventifyTriggerEvent("change", batchMap);
+            if (events.length > 0) {
+                this.eventifyTriggerEvent("change", events);
             }
-            return batchMap;
+            return events;
         };
 
         /*
@@ -675,14 +675,14 @@ define (function (require) {
             let cueMap = this._cueMap;
             this._cueMap = new Map();
             // create change events for all cues
-            const batchMap = new Map();
+            const events = [];
             for (let cue of cueMap.values()) {
-                batchMap.set(cue.key, {new: undefined, old: cue});
+                events.push({key: cue.key, new: undefined, old: cue});
             }
-            if (batchMap.size > 0) {
-                this.eventifyTriggerEvent("change", batchMap);
+            if (events.size > 0) {
+                this.eventifyTriggerEvent("change", events);
             }
-            return batchMap;
+            return events;
         };
 
 

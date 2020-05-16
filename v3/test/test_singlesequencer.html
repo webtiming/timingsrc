@@ -76,9 +76,9 @@
 
 
             // add change handler
-            s.on("change", function(eventMap) {
-                for (let [key, item] of eventMap.entries()) {
-                    let el = document.getElementById(`${key}`);
+            s.on("change", function(events) {
+                events.forEach(function(item){
+                    let el = document.getElementById(`${item.key}`);
                     if (!item.new && item.old) {
                         el.classList.remove("active");
                     } else if (item.new && !item.old) {
@@ -86,7 +86,7 @@
                     } else if (item.new && item.old) {
                         // noop
                     }
-                }
+                });
             });
         };
 
@@ -129,17 +129,16 @@
 
 
             // add change handler
-            s.on("change", function(eventMap, eInfo) {
-                for (let [key, item] of eventMap.entries()) {
+            s.on("change", function(events, eInfo) {
+                events.forEach(function(item){
                     if (!item.new && item.old) {
-                        console.log("remove", key, item.old.interval.toString());
+                        console.log("remove", item.key, item.old.interval.toString());
                     } else if (item.new && !item.old) {
-                        console.log("change", key, item.new.interval.toString());
+                        console.log("change", item.key, item.new.interval.toString());
                     } else if (item.new && item.old) {
-                        console.log("change", key);
+                        console.log("change", item.key);
                     }
-
-                }
+                });
             });
 
 

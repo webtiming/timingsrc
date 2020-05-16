@@ -125,7 +125,7 @@ define(function(require) {
 
         _onTimingCallback (eInfo) {
             console.log("onTimingCallback");
-
+            const events = [];
 
             /*
                 If update is the initial vector from the timing object,
@@ -165,15 +165,14 @@ define(function(require) {
                 // update active cues
                 this._activeCues = activeCues;
                 // make events
-                let eventMap = new Map();
                 for (let cue of exitCues.values()) {
-                    eventMap.set(cue.key, {new:undefined, old:cue});
+                    events.push({key:cue.key, new:undefined, old:cue});
                 }
                 for (let cue of enterCues.values()) {
-                    eventMap.set(cue.key, {new:cue, old:undefined});
+                    events.push({key:cue.key, new:cue, old:undefined});
                 }
                 // event notification
-                this.eventifyTriggerEvent("change", eventMap);
+                this.eventifyTriggerEvent("change", events);
             }
 
             /*
@@ -188,22 +187,21 @@ define(function(require) {
         ***************************************************************/
 
         _onScheduleCallback = function(endpointItems) {
-            let eventMap = new Map();
+            const events = [];
             endpointItems.forEach(function (item) {
-                let key = item.cue.key;
                 let cue = item.cue;
-                let has_cue = this._activeCues.has(key);
+                let has_cue = this._activeCues.has(cue.key);
                 let [value, right, closed, singular] = item.endpoint;
                 if (singular) {
                     if (has_cue) {
                         // exit
-                        eventMap.set(key, {new:undefined, old:cue});
-                        this._activeCues.delete(key);
+                        events.push({key:cue.key, new:undefined, old:cue});
+                        this._activeCues.delete(cue.key);
                     } else {
                         // enter
-                        eventMap.set(key, {new:cue, old:undefined});
+                        events.push({key:cue.key, new:cue, old:undefined});
                         // exit
-                        eventMap.set(key, {new:undefined, old:cue});
+                        events.push({key:cue.key, new:undefined, old:cue});
                         // no need to both add and remove from activeCues
                     }
                 } else {
@@ -213,16 +211,16 @@ define(function(require) {
                     if (enter) {
                         if (!has_cue) {
                             // enter
-                            eventMap.set(key, {new:cue, old:undefined});
-                            this._activeCues.set(key, cue);
+                            events.push({key:cue.key, new:cue, old:undefined});
+                            this._activeCues.set(cue.key, cue);
                         } else {
                             console.log("already entered");
                         }
                     } else {
                         if (has_cue) {
                             // exit
-                            eventMap.set(key, {new:undefined, old:cue});
-                            this._activeCues.delete(key);
+                            events.push({key:cue.key, new:undefined, old:cue});
+                            this._activeCues.delete(cue.key);
                         } else {
                             console.log("elready exited");
                         }
@@ -231,7 +229,7 @@ define(function(require) {
             }, this);
 
             // event notification
-            this.eventifyTriggerEvent("change", eventMap);
+            this.eventifyTriggerEvent("change", events);
         };
 
 
