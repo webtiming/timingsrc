@@ -1,12 +1,31 @@
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 define(function(require) {
 
     const endpoint = require("../util/endpoint");
     const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
-
     const isMoving = motionutils.isMoving;
-
-    const ep2str = endpoint.toString;
+    const pft = motionutils.posInterval_from_timeInterval;
 
     function queueCmp(a,b) {
         return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
@@ -16,10 +35,6 @@ define(function(require) {
 
         // Default lookahead in seconds
         static LOOKAHEAD = 5
-
-        // Run flags
-        static RUN_VECTOR = "vector";
-        static RUN_TIMEOUT = "timeout";
 
         constructor(axis, to, options) {
             // timingobject
@@ -100,7 +115,7 @@ define(function(require) {
                     this.setTimeout(target_ts);
                 } else {
                     // handle timeout
-                    this.run(now, Schedule.RUN_TIMEOUT);
+                    this.run(now);
                 }
             }
         }
@@ -127,7 +142,7 @@ define(function(require) {
             this.vector = vector;
             // start scheduler if moving
             if (isMoving(this.vector)) {
-                this.run(now, Schedule.RUN_VECTOR);
+                this.run(now);
             }
         }
 
@@ -143,8 +158,6 @@ define(function(require) {
             eventItems.forEach(function(item) {
                 if (this.timeInterval.covers_endpoint(item.tsEndpoint)) {
                     this.queue.push(item);
-                } else {
-                    console.log("push drop", ep2str(item.tsEndpoint));
                 }
             }, this);
             // maintain ordering
@@ -157,18 +170,8 @@ define(function(require) {
         pop(now) {
             let eventItem, res = [];
             let len = this.queue.length;
-            while (this.queue.length > 0) {
-                if (this.queue[0].tsEndpoint[0] <= now) {
-                    res.push(this.queue.shift());
-                } else {
-                    break;
-                }
-            }
-            if (this.queue.length > 0) {
-                console.log(`pop ${res.length} of ${len}`);
-
-            } else if (res.length > 0) {
-                console.log(`pop ${res.length} of ${len}`);
+            while (this.queue.length > 0 && this.queue[0].tsEndpoint[0] <= now) {
+                res.push(this.queue.shift());
             }
             return res;
         };
@@ -181,10 +184,10 @@ define(function(require) {
         }
 
 
-
         /***************************************************************
             ADVANCE TIMEINTERVAL/POSINTERVAL
         ***************************************************************/
+
 
         /*
             advance timeInterval and posInterval if needed
@@ -202,8 +205,7 @@ define(function(require) {
             if (advance) {
                 // advance intervals
                 this.timeInterval = new Interval(start, start + delta, true, false);
-                this.posInterval = motionutils.getPositionInterval(this.timeInterval, this.vector);
-                // console.log(`advance pos ${this.posInterval.toString()}`)
+                this.posInterval = pft(this.timeInterval, this.vector);
                 // clear task queue
                 this.queue = [];
             }
@@ -220,14 +222,10 @@ define(function(require) {
         */
 
         load(endpoints, minimum_tsEndpoint) {
-            let endpointEvents = motionutils.getEndpointEvents(this.timeInterval,
-                                                               this.posInterval,
-                                                               this.vector,
-                                                                endpoints);
-
-            console.log("events")
-            console.log(endpointEvents.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
-
+            let endpointEvents = motionutils.endpointEvents(this.timeInterval,
+                                                            this.posInterval,
+                                                            this.vector,
+                                                            endpoints);
 
             /*
                 ISSUE 1
@@ -236,7 +234,7 @@ define(function(require) {
                 All endpointEvents with .tsEndpoint later or equal to range
                 violation will be cancelled.
             */
-            let range_ts = motionutils.getRangeIntersect(this.vector, this.to.range)[0];
+            let range_ts = motionutils.rangeIntersect(this.vector, this.to.range)[0];
 
             /*
                 ISSUE 2
@@ -286,15 +284,14 @@ define(function(require) {
 
             return endpointEvents.filter(function(item) {
                 // ISSUE 1
-
                 if (range_ts <= item.tsEndpoint[0]) {
-                    console.log("issue1");
+                    // console.log("issue1");
                     return false;
                 }
 
                 // ISSUE 2
                 if (endpoint.leftof(item.tsEndpoint, minimum_tsEndpoint)) {
-                    console.log("issue2");
+                    // console.log("issue2");
                     return false;
                 }
                 // ISSUE 3
@@ -322,37 +319,17 @@ define(function(require) {
         /*
             run schedule
         */
-        run(now, run_flag) {
+        run(now) {
             // process - due events
             let dueEvents = this.pop(now);
             // advance schedule and load events if needed
             if (this.advance(now)) {
                 // fetch cue endpoints for posInterval
-                console.log(this.posInterval.toString())
                 let endpointItems = this.axis.lookup_endpoints(this.posInterval);
-                console.log(endpointItems.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
-
                 // load events and push on queue
-                let loaded = this.load(endpointItems)
-                console.log("loaded");
-                console.log(loaded.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
-
-
-                this.push(loaded);
-
-                let popped = this.pop(now);
-
-                console.log("popped");
-                console.log(popped.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
-
-
+                this.push(this.load(endpointItems));
                 // process - possibly new due events
-                dueEvents.push(...popped);
-                console.log("dueEvents");
-                console.log(dueEvents.map(e=>{return endpoint.toString(e.endpoint)}).join(" "));
-
-
-
+                dueEvents.push(...this.pop(now));
             }
             if (dueEvents.length > 0) {
                 this._notify_callbacks(dueEvents, this);

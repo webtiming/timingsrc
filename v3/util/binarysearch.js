@@ -1,21 +1,21 @@
 /*
-    Copyright 2015 Norut Northern Research Institute
-    Author : Ingar Mæhlum Arntzen
+    Copyright 2020
+    Author : Ingar Arntzen
 
-  This file is part of the Timingsrc module.
+    This file is part of the Timingsrc module.
 
-  Timingsrc is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-  Timingsrc is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public License
-  along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -30,11 +30,11 @@ define (['./interval'], function (Interval) {
     };
 
 
-    /* 
+    /*
         batch inserts and removes have two strategies
         1) change-sort
-        2) splice 
-    
+        2) splice
+
         simple rule by measurement
         splice is better for batchlength <= 100 for both insert and remove
     */
@@ -42,7 +42,7 @@ define (['./interval'], function (Interval) {
         if (arrayLength == 0) {
             return "sort";
         }
-        return (batchLength <= 100) ? "splice" : "sort"; 
+        return (batchLength <= 100) ? "splice" : "sort";
     };
 
 
@@ -62,7 +62,7 @@ define (['./interval'], function (Interval) {
 
     Public API
     - update (remove_elements, insert_elements)
-    - lookup (interval) - returns list for all elements  
+    - lookup (interval) - returns list for all elements
     - remove (interval) - removes elements within interval
     - has (element)     - returns true if element exists with value == element, else false
     - get (element)     - returns element with value if exists, else undefined
@@ -75,7 +75,7 @@ define (['./interval'], function (Interval) {
     */
 
     var cmp = function (a, b) {return a-b;};
-    
+
 
     var BinarySearch = function (options) {
         this.array = [];
@@ -106,22 +106,22 @@ define (['./interval'], function (Interval) {
         }
         // not found - indicate at what index the element should be inserted
     	return ~maxIndex;
-    	
+
         // NOTE : ambiguity
 
         /*
         search for for an element that is less than array[0]
-        should return a negative value indicating that the element 
+        should return a negative value indicating that the element
         was not found. Furthermore, as it escapes the while loop
-        the returned value should indicate the index that this element 
-        would have had - had it been there - as is the idea of this bitwise 
+        the returned value should indicate the index that this element
+        would have had - had it been there - as is the idea of this bitwise
         operator trick
 
         so, it follows that search for value of minimum element returns 0 if it exists, and 0 if it does not exists
         this ambiguity is compensated for in relevant methods
         */
     };
-    
+
 
     /*
         utility function for resolving ambiguity
@@ -129,7 +129,7 @@ define (['./interval'], function (Interval) {
     BinarySearch.prototype.isFound = function(index, x) {
         if (index > 0) {
             return true;
-        } 
+        }
         if (index == 0 && this.array.length > 0 && this.array[0] == x) {
             return true;
         }
@@ -161,7 +161,7 @@ define (['./interval'], function (Interval) {
         element exists with value
     */
     BinarySearch.prototype.has = function (x) {
-        return (this.indexOf(x) > -1) ? true : false; 
+        return (this.indexOf(x) > -1) ? true : false;
     };
 
     BinarySearch.prototype.get = function (index) {
@@ -201,9 +201,9 @@ define (['./interval'], function (Interval) {
     BinarySearch.prototype._update_splice = function (to_remove, to_insert, options) {
 
         // REMOVE
-        if (this.array.length > 0) {    
+        if (this.array.length > 0) {
             let indexes = this.indexOfElements(to_remove);
-            /* 
+            /*
                 sort indexes to make sure we are removing elements
                 in backwards order
                 optimization
@@ -244,7 +244,7 @@ define (['./interval'], function (Interval) {
     */
     BinarySearch.prototype._update_sort = function (to_remove, to_insert, options) {
         // REMOVE
-        if (this.array.length > 0 && to_remove.length > 0) {        
+        if (this.array.length > 0 && to_remove.length > 0) {
             // visit all elements and set their value to undefined
             // undefined values will be sorted to the end of the array
             let indexes = this.indexOfElements(to_remove);
@@ -272,8 +272,8 @@ define (['./interval'], function (Interval) {
     /*
         Update - removing and inserting elements in one operation
 
-        a single element should only be present once in the list, thus avoiding 
-        multiple operations to one element. This is presumed solved externally. 
+        a single element should only be present once in the list, thus avoiding
+        multiple operations to one element. This is presumed solved externally.
         - also objects must not be members of both lists.
 
         - internally selects the best method - searchsplice or concatsort
@@ -313,41 +313,41 @@ define (['./interval'], function (Interval) {
         Internal search functions
     */
 
-    /* 
+    /*
        Find index of largest value less than x
        Returns -1 if noe values exist that are less than x
      */
     BinarySearch.prototype.ltIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         if (this.isFound(i, x)) {
-            /* 
+            /*
                 found - x is found on index i
                 consider element to the left
-                if we are at the left end of the array nothing is found 
+                if we are at the left end of the array nothing is found
                 return -1
-            */ 
+            */
             if (i > 0) {
                 return i-1;
             } else {
                 return -1;
             }
         } else {
-            /* 
+            /*
                 not found - Math.abs(i) is index where x should be inserted
                 => Math.abs(i) - 1 is the largest value less than x
             */
             return Math.abs(i)-1;
-        } 
+        }
     };
 
-    /* 
-       Find index of rightmost value less than x or equal to x 
+    /*
+       Find index of rightmost value less than x or equal to x
        Returns -1 if noe values exist that are less than x or equal to x
      */
     BinarySearch.prototype.leIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         if (this.isFound(i, x)) {
-            /* 
+            /*
                 element found
             */
             return i;
@@ -358,7 +358,7 @@ define (['./interval'], function (Interval) {
         }
     };
 
-    /* 
+    /*
        	Find index of leftmost value greater than x
        	Returns -1 if no values exist that are greater than x
     */
@@ -369,14 +369,14 @@ define (['./interval'], function (Interval) {
             /*
                 found - x is found on index i
                 if there are no elements to the right return -1
-            */ 
+            */
             if (i < this.array.length -1) {
                 return i+1;
             } else {
                 return -1;
             }
         } else {
-            /* 
+            /*
                 not found - Math.abs(i) is index where x should be inserted
                 => Math.abs(i) is the smallest value greater than x
                 unless we hit the end of the array, in which cas no smalles value
@@ -388,15 +388,15 @@ define (['./interval'], function (Interval) {
     };
 
 
-    /* 
-       Find index of leftmost value which is greater than x or equal to x 
+    /*
+       Find index of leftmost value which is greater than x or equal to x
        Returns -1 if noe values exist that are greater than x or equal to x
      */
 
      BinarySearch.prototype.geIndexOf = function(x) {
         var i = this.binaryIndexOf(x);
         if (this.isFound(i, x)) {
-            /* 
+            /*
                 found element
             */
             return i;
@@ -413,9 +413,9 @@ define (['./interval'], function (Interval) {
         returns undefined if no elements are found
     */
     BinarySearch.prototype.lookupIndexes = function (interval) {
-        if (interval === undefined) 
+        if (interval === undefined)
             interval = new Interval(-Infinity, Infinity, true, true);
-        if (interval instanceof Interval === false) 
+        if (interval instanceof Interval === false)
             throw new BinarySearchError("lookup requires Interval argument");
 
         // interval represents a single point
@@ -455,7 +455,7 @@ define (['./interval'], function (Interval) {
     */
     BinarySearch.prototype.lookup = function (interval) {
         let [start, end] = this.lookupIndexes(interval);
-        return (start != undefined) ? this.array.slice(start, end) : [];       
+        return (start != undefined) ? this.array.slice(start, end) : [];
     };
 
     /*
@@ -463,7 +463,7 @@ define (['./interval'], function (Interval) {
     */
     BinarySearch.prototype.remove = function (interval) {
         let [start, end] = this.lookupIndexes(interval);
-        return (start != undefined) ? this.array.splice(start, end-start) : [];     
+        return (start != undefined) ? this.array.splice(start, end-start) : [];
     };
 
 
@@ -482,7 +482,7 @@ define (['./interval'], function (Interval) {
         - removeList is sorted
         - changes only affect the part of the index between first and last element
         - move remaining elements to the left, remove elements with a single splice
-        - efficent if removelist references elements that are close to eachother  
+        - efficent if removelist references elements that are close to eachother
     */
 
     BinarySearch.prototype.removeInSlice = function (removeList) {

@@ -1,6 +1,6 @@
 /*
 	Copyright 2020
-	Author : Ingar Mæhlum Arntzen
+	Author : Ingar Arntzen
 
 	This file is part of the Timingsrc module.
 

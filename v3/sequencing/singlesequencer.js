@@ -1,3 +1,23 @@
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 define(function(require) {
 
     const util = require("../util/util");
@@ -115,7 +135,7 @@ define(function(require) {
 
         _onAxisCallback(batchMap) {
             // Do something
-            console.log("onAxisCallback");
+            //console.log("onAxisCallback");
         }
 
 
@@ -124,7 +144,7 @@ define(function(require) {
         ***************************************************************/
 
         _onTimingCallback (eInfo) {
-            console.log("onTimingCallback");
+            //console.log("onTimingCallback");
             const events = [];
 
             /*
@@ -147,16 +167,12 @@ define(function(require) {
             let delta = new motionutils.MotionDelta(to.old_vector, new_vector);
 
             /*
-            console.log("posDelta");
-            console.log(delta.posDelta);
-            console.log("movingdelta");
-            console.log(delta.moveDelta);
+                Reevaluate active state.
+                This is required after any discontinuity of the position (jump),
+                or if the motion stopped without jumping (pause or halt at range
+                restriction)
             */
-
-            /*
-                Handle Timing Object Jump
-            */
-            if (delta.posDelta == PosDelta.CHANGE) {
+            if (delta.posDelta == PosDelta.CHANGE || delta.moveDelta == MoveDelta.STOP) {
                 // make position interval
                 let low = new_vector.position;
                 let high = new_vector.position;
@@ -194,14 +210,11 @@ define(function(require) {
         ***************************************************************/
 
         _onScheduleCallback = function(endpointItems) {
-
-
             const events = [];
             endpointItems.forEach(function (item) {
                 let cue = item.cue;
                 let has_cue = this._activeCues.has(cue.key);
                 let [value, right, closed, singular] = item.endpoint;
-
                 if (singular) {
                     if (has_cue) {
                         // exit
@@ -223,16 +236,12 @@ define(function(require) {
                             // enter
                             events.push({key:cue.key, new:cue, old:undefined});
                             this._activeCues.set(cue.key, cue);
-                        } else {
-                            console.log("already entered");
                         }
                     } else {
                         if (has_cue) {
                             // exit
                             events.push({key:cue.key, new:undefined, old:cue});
                             this._activeCues.delete(cue.key);
-                        } else {
-                            console.log("elready exited");
                         }
                     }
                 }
@@ -241,7 +250,6 @@ define(function(require) {
             // event notification
             this.eventifyTriggerEvent("change", events);
         };
-
 
 
         /***************************************************************
@@ -269,15 +277,6 @@ define(function(require) {
         }
 
     }
-
-    function print_endpoints(endpointEvents) {
-        let _ts = to.clock.now();
-        let s = endpointEvents.map(function(item) {
-            return endpoint.toString(item.endpoint);
-        }).join(" ");
-        console.log(s);
-    }
-
 
     eventify.eventifyPrototype(SingleSequencer.prototype);
 

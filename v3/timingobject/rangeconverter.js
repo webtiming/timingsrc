@@ -25,7 +25,7 @@
 	The converter enforce a range on position.
 
 	It only has effect if given range is a restriction on the range of the timingsrc.
-	Range converter will pause on range endpoints if timingsrc leaves the range. 
+	Range converter will pause on range endpoints if timingsrc leaves the range.
 	Range converters will continue mirroring timingsrc once it comes into the range.
 */
 
@@ -33,7 +33,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var TimingObjectBase = timingobject.TimingObjectBase;
 	var inherit = TimingObjectBase.inherit;
 	var RangeState = motionutils.RangeState;
 
@@ -50,7 +50,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		}
 		var get = function () {return _state;};
 		var set = function (new_state, new_range) {
-	
+
 			var absolute = false; // absolute change
 			var special = false;  // special change
 
@@ -60,8 +60,8 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 			}
 			// check special change
 			if (new_state !== _state) {
-				special = is_special_state_change(_state, new_state);			
-			}			
+				special = is_special_state_change(_state, new_state);
+			}
 			// range change
 			if (new_range !== _range) {
 				_range = new_range;
@@ -104,7 +104,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		}
 		// reevaluate state to handle range violation
 		var vector = motionutils.calculateVector(this._timingsrc.vector, this.clock.now());
-		var state = motionutils.getCorrectRangeState(vector, this._range);
+		var state = motionutils.correctRangeState(vector, this._range);
 		// detect range violation - only if timeout is set
 		if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
 			this._preProcess(vector);
@@ -112,7 +112,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		// re-evaluate query after state transition
 		return motionutils.calculateVector(this._vector, this.clock.now());
 	};
-	
+
 	// overridden
 	RangeConverter.prototype._calculateTimeoutVector = function () {
 		var freshVector = this._timingsrc.query();
@@ -143,7 +143,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 	};
 
 	// overrides
-	RangeConverter.prototype.onTimeout = function (vector) {	
+	RangeConverter.prototype.onTimeout = function (vector) {
 		return this.onVectorChange(vector);
 	};
 
@@ -151,14 +151,14 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 	RangeConverter.prototype.onVectorChange = function (vector) {
 		// console.log("onVectorChange vector", vector);
 		// console.log("onVectorChange range", this._range);
-		var new_state = motionutils.getCorrectRangeState(vector, this._range);
+		var new_state = motionutils.correctRangeState(vector, this._range);
 		// console.log("onVectorChange state", new_state);
 		var state_changed = this._state.set(new_state, this._range);
 		if (state_changed.special) {
 			// state transition between INSIDE and OUTSIDE
 			if (this._state.get() === RangeState.INSIDE) {
 				// OUTSIDE -> INSIDE, generate fake start event
-				// vector delivered by timeout 
+				// vector delivered by timeout
 				// forward event unchanged
 			} else {
 				// INSIDE -> OUTSIDE, generate fake stop event
@@ -171,7 +171,7 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 				// stay inside or first event inside
 				// forward event unchanged
 			} else {
-				// stay outside or first event outside 
+				// stay outside or first event outside
 				// forward if
 				// - first event outside
 				// - skip from outside-high to outside-low

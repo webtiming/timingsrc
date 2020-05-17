@@ -24,12 +24,12 @@
 
 	Delay Converter introduces a positive time delay on a source timing object.
 
-	Generally - if the source timing object has some value at time t, 
+	Generally - if the source timing object has some value at time t,
 	then the delayConverter will provide the same value at time t + delay.
 
 	Since the delay Converter is effectively replaying past events after the fact,
 	it is not LIVE and not open to interactivity (i.e. update)
-	
+
 */
 
 
@@ -37,7 +37,7 @@ define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
+	var TimingObjectBase = timingobject.TimingObjectBase;
 	var inherit = TimingObjectBase.inherit;
 
 	var DelayConverter = function (timingObject, delay) {
@@ -54,25 +54,25 @@ define(['./timingobject'], function (timingobject) {
 
 	// overrides
 	DelayConverter.prototype.onVectorChange = function (vector) {
-		/* 			
+		/*
 			Vector's timestamp always time-shifted (back-dated) by delay
 
 			Normal operation is to delay every incoming vector update.
 			This implies returning null to abort further processing at this time,
 			and instead trigger a later continuation.
 
-			However, delay is calculated based on the timestamp of the vector (age), not when the vector is 
+			However, delay is calculated based on the timestamp of the vector (age), not when the vector is
 			processed in this method. So, for small small delays the age of the vector could already be
 			greater than delay, indicating that the vector is immediately valid and do not require delayed processing.
 
-			This is particularly true for the first vector, which may be old. 
+			This is particularly true for the first vector, which may be old.
 
 			So we generally check the age to figure out whether to apply the vector immediately or to delay it.
 		*/
 
 		// age of incoming vector
 		var age = this.clock.now() - vector.timestamp;
-		
+
 		// time-shift vector timestamp
 		vector.timestamp += this._delay;
 
@@ -82,7 +82,7 @@ define(['./timingobject'], function (timingobject) {
 			var delayMillis = (this._delay - age) * 1000;
 			setTimeout(function () {
 				self._process(vector);
-			}, delayMillis);	
+			}, delayMillis);
 			return null;
 		}
 		// apply vector immediately - continue processing
