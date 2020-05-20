@@ -229,7 +229,7 @@ define (function (require) {
 
             // Change event
             eventify.eventifyInstance(this, {init:false});
-            this.eventifyDefineEvent("change", {init:false});
+            this.eventifyDefineEvent("change", {init:true});
         };
 
 
@@ -240,6 +240,22 @@ define (function (require) {
         get size () {
             return this._cueMap.size;
         }
+
+
+        /***************************************************************
+            EVENTIFY
+
+            Immediate events
+        */
+        eventifyMakeInitEvents = function (type) {
+            if (type === "change") {
+                let events = [...this.values()].map(cue => {
+                    return {key:cue.key, new:cue, old:undefined};
+                });
+                return [events];
+            }
+            return [];
+        };
 
 
 

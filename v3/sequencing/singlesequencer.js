@@ -133,9 +133,35 @@ define(function(require) {
          AXIS CALLBACK
         ***************************************************************/
 
-        _onAxisCallback(batchMap) {
+        _onAxisCallback(events) {
             // Do something
             //console.log("onAxisCallback");
+
+            let now = this._to.clock.now();
+            let nowVector = motionutils.calculateVector(this._to.vector, now);
+
+
+            /*
+                figure out changes to active events
+
+            */
+
+
+            /*
+                update scheduler - if no event affect schedule - let it be
+                - or simply always do a clear advance
+            */
+
+
+
+
+
+
+
+
+
+
+
         }
 
 

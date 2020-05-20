@@ -91,6 +91,35 @@
             };
 
 
+            document.getElementById('p').onclick = function () {
+                // insert
+                let key = "jalla";
+                let itv = new Interval(5,7)
+                let cue = {
+                    key: key,
+                    interval: itv,
+                    data: itv.toString()
+                };
+                axis.update(cue);
+            };
+            document.getElementById('q').onclick = function () {
+                // modify
+                let key = "jalla";
+                let itv = new Interval(5, 10)
+                let cue = {
+                    key: key,
+                    interval: itv,
+                    data: itv.toString()
+                };
+                axis.update(cue);
+            };
+            document.getElementById('r').onclick = function () {
+                // delete
+                let key = "jalla";
+                let cue = {key: key};
+                axis.update(cue);
+            };
+
             let value = document.getElementById("value");
             to.on("timeupdate", function () {
                 let v = to.query();
@@ -100,19 +129,27 @@
                 value.innerHTML = `P:${pos} V:${vel} A:${acc}`;
             });
 
-
             // Visualize list of timed data
-            let html = [...axis.values()]
-                .sort(function(cue_a, cue_b) {
-                    return Interval.cmpLow(cue_a.interval, cue_b.interval);
-                }).map(function(cue){
-                    return `<div id=${cue.key}>${cue.data}</div>`;
-                }).join("\n");
-            document.getElementById("data").innerHTML = html;
-
+            axis.on("change", function (events){
+                // refresh visuals by redrawing the list entirely
+                console.log("axis change");
+                let ready = s.isReady();
+                let html = [...axis.values()]
+                    .sort(function(cue_a, cue_b) {
+                        return Interval.cmpLow(cue_a.interval, cue_b.interval);
+                    }).map(function(cue){
+                        if (ready && s.has(cue.key)) {
+                            return `<div id=${cue.key} class="active">${cue.data}</div>`;
+                        } else {
+                            return `<div id=${cue.key}>${cue.data}</div>`;
+                        }
+                    }).join("\n");
+                document.getElementById("data").innerHTML = html;
+            });
 
             // add change handler
             s.on("change", function(events) {
+                console.log("sequencer change");
                 events.forEach(function(item){
                     let el = document.getElementById(`${item.key}`);
                     if (!item.new && item.old) {
@@ -197,25 +234,31 @@
     <h1>Test Single Sequencer</h1>
     <div id="value" style="font-weight:bold;"></div>
     <p>
-    <button id="a">P=-1</button>
-    <button id="b">P=0</button>
-    <button id="c">P=1</button>
-    <button id="d">P.inc</button>
-    <button id="e">P.dec</button>
+        <button id="a">P=-1</button>
+        <button id="b">P=0</button>
+        <button id="c">P=1</button>
+        <button id="d">P.inc</button>
+        <button id="e">P.dec</button>
     </p>
     <p>
-    <button id="f">V=-1</button>
-    <button id="g">V=0</button>
-    <button id="h">V=1</button>
-    <button id="i">V.inc</button>
-    <button id="j">V.dec</button>
+        <button id="f">V=-1</button>
+        <button id="g">V=0</button>
+        <button id="h">V=1</button>
+        <button id="i">V.inc</button>
+        <button id="j">V.dec</button>
     </p>
     <p>
-    <button id="k">A=-1</button>
-    <button id="l">A=0</button>
-    <button id="m">A=1</button>
-    <button id="n">A.inc</button>
-    <button id="o">A.dec</button>
+        <button id="k">A=-1</button>
+        <button id="l">A=0</button>
+        <button id="m">A=1</button>
+        <button id="n">A.inc</button>
+        <button id="o">A.dec</button>
+    </p>
+    <h3>Update</h3>
+    <p>
+        <button id="p">Insert</button>
+        <button id="q">Modify</button>
+        <button id="r">Delete</button>
     </p>
     <h3>Timed Data</h3>
     <p>Active cues in red color</p>
