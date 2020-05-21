@@ -199,7 +199,8 @@ define(function(require) {
 
             }, this);
 
-            let _events = exitEvents;
+            let _events = [];
+            _events.push(...exitEvents);
             _events.push(...changeEvents);
             _events.push(...enterEvents);
 
@@ -209,38 +210,50 @@ define(function(require) {
             }
 
             /*
-                Clear and advance schedule
-                there is no change in motion, so either we continut
-                moving or we continue paused.
+                Clear and reset schedule if necessary.
+
+                This is only necessary if any of the cues intervals
+                are changed, and that these changes are relevant
+                with respect to the posInterval of scheduler.
+                - new interval match posInterval
+                - old interval match posInterval
+
+                There is no change in motion at this time, so either we
+                continue moving or we continue paused.
 
                 corner case - if motion is available and moving -
-                yet the sheduler has not been started yet so
-                sched.posInterval is undefined. Not sure if this is
-                possible, but if it is the schedule will be started
+                yet the sheduler has not been started yet,
+                sched.posInterval will be undefined. Not sure if this is
+                possible, but if it were to occur we dont do anything
+                and trust that the schedule will be started shortly
                 by onTimingCallback.
             */
             if (isMoving(now_vector) && this._sched.posInterval) {
                 let sched_dirty = false;
                 let rel, item;
+                let delta;
                 for (let i=0; i<events.length; i++) {
                     item = events[i];
-                    // check if change introduced interval matching posInterval
-                    if ([Delta.INSERT, Delta.REPLACE].includes(delta.interval)) {
+                    delta = item.delta;
+                    if (delta.interval == Delta.NOOP) {
+                        continue;
+                    }
+                    // check item.new.interval
+                    if (item.new != undefined) {
                         rel = item.new.interval.compare(this._sched.posInterval);
                         if (Match.includes(rel)) {
-                            dirty = true;
+                            sched_dirty = true;
                             break;
                         }
                     }
-                    // check if change removed interval matching posInterval
-                    if ([Delta.REPLACE, Delta.DELETE].includes(delta.interval)) {
+                    // check item.old.interval
+                    if (item.old != undefined) {
                         rel = item.old.interval.compare(this._sched.posInterval);
                         if (Match.includes(rel)) {
-                            dirty = true;
+                            sched_dirty = true;
                             break;
                         }
                     }
-
                 }
                 if (sched_dirty) {
                     this._sched.setVector(now_vector);

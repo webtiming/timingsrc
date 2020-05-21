@@ -94,7 +94,7 @@
             document.getElementById('p').onclick = function () {
                 // insert
                 let key = "jalla";
-                let itv = new Interval(0,7)
+                let itv = new Interval(5,7)
                 let cue = {
                     key: key,
                     interval: itv,
@@ -103,7 +103,7 @@
                 axis.update(cue);
             };
             document.getElementById('q').onclick = function () {
-                // modify
+                // modify interval and data
                 let key = "jalla";
                 let itv = new Interval(5, 10)
                 let cue = {
@@ -114,6 +114,16 @@
                 axis.update(cue);
             };
             document.getElementById('r').onclick = function () {
+                // modify only data
+                let key = "jalla";
+                let cue = {
+                    key: key,
+                    data: "new data"
+                };
+                axis.update(cue);
+            };
+
+            document.getElementById('s').onclick = function () {
                 // delete
                 let key = "jalla";
                 let cue = {key: key};
@@ -148,18 +158,22 @@
 
             // add change handler
             s.on("change", function(events) {
+                let pos = to.pos.toFixed(2);
                 events.forEach(function(item){
                     let el = document.getElementById(`${item.key}`);
                     if (!item.new && item.old) {
                         if (el) {
                             el.classList.remove("active");
                         }
-                        console.log("exit", item.key, item.old.interval.toString());
+                        let itv_str = item.old.interval.toString();
+                        console.log(`exit ${item.key} ${itv_str} ${pos}`);
+
                     } else if (item.new && !item.old) {
                         if (el) {
                             el.classList.add("active");
                         }
-                        console.log("enter", item.key, item.new.interval.toString());
+                        let itv_str = item.new.interval.toString();
+                        console.log(`enter ${item.key} ${itv_str} ${pos}`);
                     } else if (item.new && item.old) {
                         // noop
                         console.log("change", item.key);
@@ -247,8 +261,9 @@
     <h3>Update</h3>
     <p>
         <button id="p">Insert</button>
-        <button id="q">Modify</button>
-        <button id="r">Delete</button>
+        <button id="q">Modify Interval</button>
+        <button id="r">Modify Data</button>
+        <button id="s">Delete</button>
     </p>
     <h3>Timed Data</h3>
     <p>Active cues in red color</p>
