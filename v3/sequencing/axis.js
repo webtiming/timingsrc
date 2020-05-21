@@ -460,6 +460,10 @@ define (function (require) {
                 // callbacks
                 let events = [...batchMap.values()];
                 this._notify_callbacks(events);
+                // remove delta
+                events = events.map(item => {
+                    return {key:item.key, new:item.new, old:item.old};
+                });
                 this.eventifyTriggerEvent("change", events);
                 return events;
             }
@@ -492,7 +496,11 @@ define (function (require) {
 
             // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
-                batchMap.set(cue.key, {key:cue.key, new:current_cue, old:current_cue});
+                item = {
+                    key:cue.key, new:current_cue,
+                    old:current_cue, delta: delta
+                }
+                batchMap.set(cue.key, item);
                 return;
             }
 
@@ -520,18 +528,24 @@ define (function (require) {
                 new_cue.interval = cue.interval;
                 new_cue.data = cue.data;
             }
-            item = {cue:cue.key, new:new_cue, old:old_cue};
+            item = {key:cue.key, new:new_cue, old:old_cue, delta:delta};
 
             /*
                 if this item has been set earlier in batchMap
                 restore the correct old_cue by getting it from
                 the previous batchMap item
-                also recalculate delta relative to old_cue
+
+                recalculate delta relative to old_cue
+                - this delta is only for sequencers
+                - continue processing with the original delta defined
+                above, as this is required to correctly change cueBuckets
+                which have already been affected by previous item.
             */
             if (chaining) {
                 _item = batchMap.get(cue.key);
                 if (_item != undefined) {
                     item.old = _item.old;
+                    item.delta = cue_delta(new_cue, item.old, equals);
                 }
             }
 
@@ -546,7 +560,9 @@ define (function (require) {
                     - low changed
                     - high changed
                     - low and high changed
-                - intervals may also go from
+                - changed intervals may stay in bucket or change bucket:
+                - changing to/from singular may require special consideration
+                  with respect to how many endpoints are being updated
                     - singular -> singular
                     - singular -> regular
                     - regular -> singular
