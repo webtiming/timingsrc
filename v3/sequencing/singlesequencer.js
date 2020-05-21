@@ -31,6 +31,15 @@ define(function(require) {
     const Delta = Axis.Delta;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
+    const Relation = Interval.Relation;
+    const isMoving = motionutils.isMoving;
+    const Match = [
+        Relation.OVERLAP_LEFT,
+        Relation.COVERED,
+        Relation.EQUAL,
+        Relation.COVERS,
+        Relation.OVERLAP_RIGHT
+    ]
 
     class SingleSequencer {
 
@@ -155,18 +164,20 @@ define(function(require) {
             const changeEvents = [];
             const exitEvents = [];
             const now = this._to.clock.now();
-            const nowVector = motionutils.calculateVector(this._to.vector, now);
+            const now_vector = motionutils.calculateVector(this._to.vector, now);
 
             let is_active, should_be_active, _item;
             events.forEach(function(item){
                 let delta = item.delta;
+                // filter out noops
                 if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
                     return;
                 }
+                // exit, change, enter events
                 is_active = this._activeCues.has(item.key);
                 should_be_active = false;
                 if (item.new != undefined) {
-                    if (item.new.interval.covers_endpoint(nowVector.position)) {
+                    if (item.new.interval.covers_endpoint(now_vector.position)) {
                         should_be_active = true;
                     }
                 }
@@ -185,6 +196,7 @@ define(function(require) {
                     _item = {key:item.key, new:item.new, old:item.old};
                     changeEvents.push(_item);
                 }
+
             }, this);
 
             let _events = exitEvents;
@@ -194,6 +206,45 @@ define(function(require) {
             // event notification
             if (_events.length > 0) {
                 this.eventifyTriggerEvent("change", _events);
+            }
+
+            /*
+                Clear and advance schedule
+                there is no change in motion, so either we continut
+                moving or we continue paused.
+
+                corner case - if motion is available and moving -
+                yet the sheduler has not been started yet so
+                sched.posInterval is undefined. Not sure if this is
+                possible, but if it is the schedule will be started
+                by onTimingCallback.
+            */
+            if (isMoving(now_vector) && this._sched.posInterval) {
+                let sched_dirty = false;
+                let rel, item;
+                for (let i=0; i<events.length; i++) {
+                    item = events[i];
+                    // check if change introduced interval matching posInterval
+                    if ([Delta.INSERT, Delta.REPLACE].includes(delta.interval)) {
+                        rel = item.new.interval.compare(this._sched.posInterval);
+                        if (Match.includes(rel)) {
+                            dirty = true;
+                            break;
+                        }
+                    }
+                    // check if change removed interval matching posInterval
+                    if ([Delta.REPLACE, Delta.DELETE].includes(delta.interval)) {
+                        rel = item.old.interval.compare(this._sched.posInterval);
+                        if (Match.includes(rel)) {
+                            dirty = true;
+                            break;
+                        }
+                    }
+
+                }
+                if (sched_dirty) {
+                    this._sched.setVector(now_vector);
+                }
             }
         }
 
