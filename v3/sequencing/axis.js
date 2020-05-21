@@ -166,8 +166,7 @@ define (function (require) {
             interval_delta = Delta.DELETE;
         } else {
             // check interval equality
-            eq = (cue_a.interval.low == cue_b.interval.low) && (cue_a.interval.high == cue_b.interval.high);
-            //eq = cue_a.interval.equals(cue_b.interval);
+            eq = cue_a.interval.equals(cue_b.interval);
             interval_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
         }
         // data delta
@@ -459,13 +458,18 @@ define (function (require) {
                 this._call_buckets("flush");
                 // callbacks
                 let events = [...batchMap.values()];
-                this._notify_callbacks(events);
                 // remove delta
-                events = events.map(item => {
+                let _events = events.map(item => {
                     return {key:item.key, new:item.new, old:item.old};
                 });
-                this.eventifyTriggerEvent("change", events);
-                return events;
+                this.eventifyTriggerEvent("change", _events);
+                /*
+                    notify sequencer last so that change events
+                    from the axis will be applied before change
+                    events from sequencers.
+                */
+                this._notify_callbacks(events);
+                return _events;
             }
             return [];
         };

@@ -94,7 +94,7 @@
             document.getElementById('p').onclick = function () {
                 // insert
                 let key = "jalla";
-                let itv = new Interval(5,7)
+                let itv = new Interval(0,7)
                 let cue = {
                     key: key,
                     interval: itv,
@@ -132,7 +132,6 @@
             // Visualize list of timed data
             axis.on("change", function (events){
                 // refresh visuals by redrawing the list entirely
-                console.log("axis change");
                 let ready = s.isReady();
                 let html = [...axis.values()]
                     .sort(function(cue_a, cue_b) {
@@ -149,15 +148,21 @@
 
             // add change handler
             s.on("change", function(events) {
-                console.log("sequencer change");
                 events.forEach(function(item){
                     let el = document.getElementById(`${item.key}`);
                     if (!item.new && item.old) {
-                        el.classList.remove("active");
+                        if (el) {
+                            el.classList.remove("active");
+                        }
+                        console.log("exit", item.key, item.old.interval.toString());
                     } else if (item.new && !item.old) {
-                        el.classList.add("active");
+                        if (el) {
+                            el.classList.add("active");
+                        }
+                        console.log("enter", item.key, item.new.interval.toString());
                     } else if (item.new && item.old) {
                         // noop
+                        console.log("change", item.key);
                     }
                 });
             });
@@ -199,21 +204,6 @@
             // initialise
             to = new timingsrc.TimingObject({range:[0,15]});
             s = new timingsrc.SingleSequencer(axis, to);
-
-
-            // add change handler
-            s.on("change", function(events, eInfo) {
-                events.forEach(function(item){
-                    if (!item.new && item.old) {
-                        console.log("remove", item.key, item.old.interval.toString());
-                    } else if (item.new && !item.old) {
-                        console.log("change", item.key, item.new.interval.toString());
-                    } else if (item.new && item.old) {
-                        console.log("change", item.key);
-                    }
-                });
-            });
-
 
             if (document.readyState === "complete") {
                 run();

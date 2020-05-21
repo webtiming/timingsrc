@@ -26,10 +26,11 @@ define(function(require) {
     const motionutils = require("../util/motionutils");
     const eventify = require("../util/eventify");
     const Schedule = require("./schedule");
+    const Axis = require("./axis");
 
+    const Delta = Axis.Delta;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
-
 
     class SingleSequencer {
 
@@ -134,34 +135,66 @@ define(function(require) {
         ***************************************************************/
 
         _onAxisCallback(events) {
-            // Do something
             //console.log("onAxisCallback");
-
-            let now = this._to.clock.now();
-            let nowVector = motionutils.calculateVector(this._to.vector, now);
-
-
             /*
-                figure out changes to active events
+                process axis events which are relevant to the set
+                of activeCues, or to the immediate future (schedule)
 
+                enterCues - inactive -> active
+                changeCues - active -> active, but changed
+                exitCues - active -> inactive
+
+                Two approaches
+                - 1) filter list of events - compare to current active cues
+                - 2) regenerate new activeCues from
+                     axis, compare it to current active cues
+
+                Preferred method depends on length of events.
             */
+            const enterEvents = [];
+            const changeEvents = [];
+            const exitEvents = [];
+            const now = this._to.clock.now();
+            const nowVector = motionutils.calculateVector(this._to.vector, now);
 
+            let is_active, should_be_active, _item;
+            events.forEach(function(item){
+                let delta = item.delta;
+                if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
+                    return;
+                }
+                is_active = this._activeCues.has(item.key);
+                should_be_active = false;
+                if (item.new != undefined) {
+                    if (item.new.interval.covers_endpoint(nowVector.position)) {
+                        should_be_active = true;
+                    }
+                }
+                if (is_active && !should_be_active) {
+                    // exit
+                    _item = {key:item.key, new:undefined, old:item.old};
+                    exitEvents.push(_item);
+                    this._activeCues.delete(item.key);
+                } else if (!is_active && should_be_active) {
+                    // enter
+                    _item = {key:item.key, new:item.new, old:undefined};
+                    enterEvents.push(_item);
+                    this._activeCues.set(_item.key, _item.new);
+                } else if (is_active && should_be_active) {
+                    // change
+                    _item = {key:item.key, new:item.new, old:item.old};
+                    changeEvents.push(_item);
+                }
+            }, this);
 
-            /*
-                update scheduler - if no event affect schedule - let it be
-                - or simply always do a clear advance
-            */
+            let _events = exitEvents;
+            _events.push(...changeEvents);
+            _events.push(...enterEvents);
 
-
-
-
-
-
-
-
-
-
-
+            // event notification
+            if (_events.length > 0) {
+                this.eventifyTriggerEvent("change", _events);
+            }
         }
 
 
