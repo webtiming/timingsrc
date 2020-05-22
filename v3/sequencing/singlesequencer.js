@@ -41,6 +41,9 @@ define(function(require) {
         Relation.OVERLAP_RIGHT
     ]
 
+    const EVENTMAP_THRESHOLD = 5000;
+    const ACTIVECUES_THRESHOLD = 5000;
+
     function isNoop(delta) {
         return (delta.interval == Delta.NOOP && delta.data == Delta.NOOP);
     }
@@ -52,7 +55,6 @@ define(function(require) {
 
             // axis
             this._axis = axis;
-            this._axis_size = this._axis.size;
 
             // timing object
             this._to = to;
@@ -156,7 +158,7 @@ define(function(require) {
             make exit, change and enter events
             - uses axis.lookup
         */
-        _get_events_from_axis_lookup(eventMap, position, approach1) {
+        _get_events_from_axis_lookup(eventMap, position) {
 
             /*
                 Active cues
@@ -164,22 +166,14 @@ define(function(require) {
                 find new set of active cues by querying the axis
             */
             const pos = new Interval(position);
-            let t0 = performance.now()
             const activeCues = new Map(this._axis.lookup(pos).map(function(cue) {
                 return [cue.key, cue];
             }));
-            let t1 = performance.now();
-            console.log("lookup active cues", t1-t0, activeCues.size, position);
-
-            let first = this._activeCues.size == 0;
 
             let changeEvents = [];
             let exitEvents = [];
-
-
+            let first = (this._activeCues.size == 0);
             if (!first){
-
-                let ta = performance.now()
 
                 /*
                     Change Events
@@ -187,8 +181,6 @@ define(function(require) {
                     change cues - cues which are modified, yet remain active cues
                 */
                 let remainCues = util.map_intersect(this._activeCues, activeCues);
-
-
                 if (remainCues.size > 0) {
                     /*
                         Two approaches
@@ -202,38 +194,18 @@ define(function(require) {
                         remainCues larger than eventMap
                         - iterate eventMap
                         - keep those that are found in remainCues
+
+                        measurement shows that 2) is better
                     */
-
-                    console.log("eventMap", eventMap.size, "remainCues", remainCues.size);
-
-                    if (approach1) {
-                        /*
-                            approach 1) - large eventMap
-                        */
-                        let item, _item;
-                        for (let cue of remainCues.values()) {
-                            item = eventMap.get(cue.key);
-                            if (item !== undefined && !isNoop(item.delta)) {
-                                _item = {key:item.key, new:item.new, old:item.old};
-                                changeEvents.push(_item);
-                            }
-                        }
-                    } else {
-                        /*
-                            approach 2) - large remainCues
-                        */
-                        let cue, _item;
-                        for (let item of eventMap.values()) {
-                            cue = remainCues.get(item.key);
-                            if (cue != undefined && !isNoop(item.delta)) {
-                                _item = {key:item.key, new:item.new, old:item.old};
-                                changeEvents.push(_item);
-                            }
+                    let cue, _item;
+                    for (let item of eventMap.values()) {
+                        cue = remainCues.get(item.key);
+                        if (cue != undefined && !isNoop(item.delta)) {
+                            _item = {key:item.key, new:item.new, old:item.old};
+                            changeEvents.push(_item);
                         }
                     }
                 }
-
-                let tb = performance.now();
 
                 /*
                     Exit Events
@@ -244,16 +216,7 @@ define(function(require) {
                     .map(cue => {
                         return {key:cue.key, new:undefined, old:cue};
                     });
-
-
-                let tc = performance.now();
-
-                //console.log("change", tb-ta);
-                //console.log("exit", tc-tb);
-
             }
-
-            let t2 = performance.now();
 
             /*
                 Enter Events
@@ -270,10 +233,6 @@ define(function(require) {
                     return {key:cue.key, new:cue, old:undefined};
                 });
 
-            let t3 = performance.now();
-
-
-            //console.log("enter", t3-t2);
             return [exitEvents, changeEvents, enterEvents];
         }
 
@@ -285,8 +244,8 @@ define(function(require) {
             const enterEvents = [];
             const changeEvents = [];
             const exitEvents = [];
-            let is_active, should_be_active, _item;
             const first = this._activeCues.size == 0;
+            let is_active, should_be_active, _item;
             for (let item of eventMap.values()) {
                 if (isNoop(item.delta)) {
                     return;
@@ -318,7 +277,6 @@ define(function(require) {
 
 
         _onAxisCallback(eventMap) {
-            //console.log("onAxisCallback");
             /*
                 process axis events which are relevant to the set
                 of activeCues, or to the immediate future (schedule)
@@ -333,12 +291,12 @@ define(function(require) {
                      active cues from axis, compare it to current active cues
 
 
-                EventMap.size < about 1K-10K == 5K
+                EventMap.size < about 1K-10K (5K)
                 - EVENTS better or equal
                 EventMap.size > about 5K
                 - LOOKUP better
                 - exception
-                    - If activeCues > 1K-10K - EVENTS BETTER
+                    - If activeCues.size > 1K-10K (5K) - EVENTS BETTER
 
                 If new cues are predominantly active cues, EVENTS are
                 always better - and more so for larger sets of events.
@@ -353,99 +311,29 @@ define(function(require) {
             const now = this._to.clock.now();
             const now_vector = motionutils.calculateVector(this._to.vector, now);
 
-            // choose method
-            let get_events;
-            if (eventMap.size > 5000 && this._activeCues.size < 5000) {
-                get_events = this._get_events_from_axis_lookup;
-            } else {
-                get_events = this._get_events_from_axis_events;
+            // choose approach to get events
+            let get_events = this._get_events_from_axis_events.bind(this);
+            if (EVENTMAP_THRESHOLD < eventMap.size) {
+                if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
+                    get_events = this._get_events_from_axis_lookup.bind(this);
+                }
             }
 
-            /*
             let pos = now_vector.position;
-            let [exit, change, enter] = get_events(eventMap, pos);
-            */
-
-            let t0, d1, d2, d3;
-
-
-
-            t0 = performance.now();
-            let res1 = this._get_events_from_axis_events(eventMap, now_vector.position);
-            d1 = (performance.now() - t0).toFixed(3);
-
-            /*
-            t0 = performance.now();
-            let res2 = this._get_events_from_axis_lookup(eventMap, now_vector.position, true);
-            d2 = (performance.now() - t0).toFixed(3);
-            */
-
-            t0 = performance.now();
-            let res3 = this._get_events_from_axis_lookup(eventMap, now_vector.position, false);
-            d3 = (performance.now() - t0).toFixed(3);
-
-            console.log(d1, d3)
-
-            // check correctness
-            let [exitEvents1, changeEvents1, enterEvents1] = res1;
-            let [exitEvents3, changeEvents3, enterEvents3] = res3;
-
-            let exitKeys1 = new Set([...exitEvents1].map(item => item.key))
-            let exitKeys3 = new Set([...exitEvents3].map(item => item.key))
-
-            let changeKeys1 = new Set([...changeEvents1].map(item => item.key))
-            let changeKeys3 = new Set([...changeEvents3].map(item => item.key))
-
-            let enterKeys1 = new Set([...enterEvents1].map(item => item.key))
-            let enterKeys3 = new Set([...enterEvents3].map(item => item.key))
-
-
-            let cmp_exit_1_3 = util.eqSet(exitKeys1, exitKeys3)
-            let cmp_change_1_3 = util.eqSet(changeKeys1, changeKeys3)
-            let cmp_enter_1_3 = util.eqSet(enterKeys1, enterKeys3)
-
-
-            if (!cmp_exit_1_3) {
-                console.log("exit 1 3 differs");
-                /*
-                console.log("exitKeys 1");
-                console.log(exitKeys1);
-                console.log("exitKeys 3");
-                console.log(exitKeys3);
-                */
-            }
-
-            if (!cmp_change_1_3) {
-                console.log("change 1 3 differs");
-            }
-
-            if (!cmp_enter_1_3) {
-                console.log("enter 1 3 differs");
-
-                /*
-                console.log("enterKeys 1");
-                console.log(enterKeys1);
-                console.log("enterKeys 3");
-                console.log(enterKeys3);
-                */
-            }
-
-
-
-            const [exitEvents, changeEvents, enterEvents] = res3;
+            const [exit, change, enter] = get_events(eventMap, pos);
 
             // update activeCues
-            exitEvents.forEach(item => {
+            exit.forEach(item => {
                 this._activeCues.delete(item.key);
             });
-            enterEvents.forEach(item => {
+            enter.forEach(item => {
                 this._activeCues.set(item.key, item.new);
             });
 
             // notifications
-            const events = exitEvents;
-            events.push(...changeEvents);
-            events.push(...enterEvents);
+            const events = exit;
+            events.push(...change);
+            events.push(...enter);
 
             // event notification
             if (events.length > 0) {
@@ -457,7 +345,10 @@ define(function(require) {
 
 
             /*
-                Clear and reset schedule if necessary.
+                POSSIBLE OPTIMIZATION
+                Likely NOT an optimization for large event batches.
+
+                Clear and reset schedule only if necessary.
 
                 This is only necessary if any of the cues intervals
                 are changed, and that these changes are relevant
@@ -516,7 +407,6 @@ define(function(require) {
         ***************************************************************/
 
         _onTimingCallback (eInfo) {
-            //console.log("onTimingCallback");
             const events = [];
 
             /*
