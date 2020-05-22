@@ -457,19 +457,18 @@ define (function (require) {
                 // flush all buckets so updates take effect
                 this._call_buckets("flush");
                 // callbacks
-                let events = [...batchMap.values()];
-                // remove delta
-                let _events = events.map(item => {
+                // create list of events and remove delta property
+                let events = [...batchMap.values()].map(item => {
                     return {key:item.key, new:item.new, old:item.old};
                 });
-                this.eventifyTriggerEvent("change", _events);
+                this.eventifyTriggerEvent("change", events);
                 /*
                     notify sequencer last so that change events
                     from the axis will be applied before change
                     events from sequencers.
                 */
-                this._notify_callbacks(events);
-                return _events;
+                this._notify_callbacks(batchMap);
+                return events;
             }
             return [];
         };

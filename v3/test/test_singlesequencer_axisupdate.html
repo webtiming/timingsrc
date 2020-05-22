@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- requirejs config -->
+    <script>
+      var require = {
+        baseUrl : '../',
+      };
+    </script>
+    <!-- requirejs -->
+    <script type="text/javascript" src="../../docs/lib/require.js"></script>
+    <!--  main -->
+    <script text="javascript">
+
+        let to, axis, s, Interval;
+
+        function make_random_floats (size, options) {
+          options = options || {};
+          scale = options['scale'] || 1;
+          offset = options['offset'] || 0;
+          return Array.from({length: size}, () => Math.random() * scale + offset);
+        };
+
+
+        function update(axis, N, position) {
+            // update axis with N random cues relevant for position
+            console.log(N);
+            let width = 10;
+            let spread = 5;
+            let starts = make_random_floats(N, {offset: position - width, scale:spread});
+            let ends = make_random_floats(N, {offset: position + width, scale:spread});
+            let cues = [];
+            for (let i=0; i<N; i++) {
+                cues.push({
+                    key: `${i}`,
+                    interval: new Interval(starts[i], ends[i]),
+                    data: `data-${i}`
+                });
+            }
+            axis.update(cues);
+        };
+
+
+
+        function run() {
+
+            // position controls
+            document.getElementById('a').onclick = function () {
+                to.update({position: -1.0});
+            };
+            document.getElementById('b').onclick = function () {
+                to.update({position: 0});
+            };
+            document.getElementById('c').onclick = function () {
+                to.update({position: 1.0});
+            };
+            document.getElementById('d').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos + 1.0});
+            };
+            document.getElementById('e').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos - 1.0});
+            };
+
+
+            // velocity controls
+            document.getElementById('f').onclick = function () {
+                to.update({velocity: -1.0});
+            };
+            document.getElementById('g').onclick = function () {
+                to.update({velocity: 0});
+            };
+            document.getElementById('h').onclick = function () {
+                to.update({velocity: 1.0});
+            };
+            document.getElementById('i').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel + 1.0});
+            };
+            document.getElementById('j').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel - 1.0});
+            };
+
+
+            // acceleration controls
+            document.getElementById('k').onclick = function () {
+                to.update({acceleration: -1.0});
+            };
+            document.getElementById('l').onclick = function () {
+                to.update({acceleration: 0.0});
+            };
+            document.getElementById('m').onclick = function () {
+                to.update({acceleration: 1.0});
+            };
+            document.getElementById('n').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc + 1.0});
+            };
+            document.getElementById('o').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc - 1.0});
+            };
+
+
+            // update
+            document.getElementById('p').onclick = function () {
+                update(axis, 1, to.pos);
+            };
+            document.getElementById('q').onclick = function () {
+                update(axis, 10, to.pos);
+            };
+            document.getElementById('r').onclick = function () {
+                update(axis, 100, to.pos);
+            };
+            document.getElementById('s').onclick = function () {
+                update(axis, 1000, to.pos);
+            };
+            document.getElementById('t').onclick = function () {
+                update(axis, 10000, to.pos);
+            };
+            document.getElementById('u').onclick = function () {
+                update(axis, 100000, to.pos);
+            };
+
+            let value = document.getElementById("value");
+            to.on("timeupdate", function () {
+                let v = to.query();
+                let pos = v.position.toFixed(2)
+                let vel = v.velocity.toFixed(2)
+                let acc = v.acceleration.toFixed(2)
+                value.innerHTML = `P:${pos} V:${vel} A:${acc}`;
+            });
+
+
+            // add change handler
+            s.on("change", function(events) {
+                console.log("sequencer change", events.length);
+            });
+        };
+
+
+        require(['test/main'], function (timingsrc) {
+
+            Interval = timingsrc.Interval;
+
+            // Axis
+            axis = new timingsrc.Axis();
+
+            // initialise
+            to = new timingsrc.TimingObject({range:[0,15]});
+            s = new timingsrc.SingleSequencer(axis, to);
+
+            if (document.readyState === "complete") {
+                run();
+            } else {
+                window.onload = run;
+            };
+
+        });
+
+    </script>
+
+
+  </head>
+  <body>
+    <h1>Test Single Sequencer Axis Update</h1>
+    <div id="value" style="font-weight:bold;"></div>
+    <p>
+        <button id="a">P=-1</button>
+        <button id="b">P=0</button>
+        <button id="c">P=1</button>
+        <button id="d">P.inc</button>
+        <button id="e">P.dec</button>
+    </p>
+    <p>
+        <button id="f">V=-1</button>
+        <button id="g">V=0</button>
+        <button id="h">V=1</button>
+        <button id="i">V.inc</button>
+        <button id="j">V.dec</button>
+    </p>
+    <p>
+        <button id="k">A=-1</button>
+        <button id="l">A=0</button>
+        <button id="m">A=1</button>
+        <button id="n">A.inc</button>
+        <button id="o">A.dec</button>
+    </p>
+    <p>
+        <button id="p">1</button>
+        <button id="q">10</button>
+        <button id="r">100</button>
+        <button id="s">1000</button>
+        <button id="t">10000</button>
+        <button id="u">100000</button>
+    </p>
+
+
+  </body>
+</html>

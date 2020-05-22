@@ -22,6 +22,23 @@ define (function () {
 
     'use strict';
 
+
+    /* Set Comparison */
+    function eqSet(as, bs) {
+        return as.size === bs.size && all(isIn(bs), as);
+    }
+
+    function all(pred, as) {
+        for (var a of as) if (!pred(a)) return false;
+        return true;
+    }
+
+    function isIn(as) {
+        return function (a) {
+            return as.has(a);
+        };
+    }
+
     /*
         get the difference of two Maps
         key in a but not in b
@@ -52,7 +69,6 @@ define (function () {
             return b.has(key)
         }));
     };
-
 
     function divmod (n, d) {
         let r = n % d;
@@ -131,7 +147,10 @@ define (function () {
         array_concat: array_concat,
         object_equals: object_equals,
         map_intersect: map_intersect,
-        map_difference: map_difference
+        map_difference: map_difference,
+        eqSet: eqSet,
+        all: all,
+        isIn: isIn
     };
 
 });
