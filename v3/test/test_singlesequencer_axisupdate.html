@@ -32,7 +32,7 @@
             let cues = [];
             for (let i=0; i<N; i++) {
                 cues.push({
-                    key: `${i}`,
+                    key: `${i}-${position}`,
                     interval: new Interval(starts[i], ends[i]),
                     data: `data-${i}`
                 });
@@ -106,23 +106,44 @@
 
             // update
             document.getElementById('p').onclick = function () {
-                update(axis, 1, to.pos);
+                update(axis, 1, 0);
             };
             document.getElementById('q').onclick = function () {
-                update(axis, 10, to.pos);
+                update(axis, 10, 0);
             };
             document.getElementById('r').onclick = function () {
-                update(axis, 100, to.pos);
+                update(axis, 100, 0);
             };
             document.getElementById('s').onclick = function () {
-                update(axis, 1000, to.pos);
+                update(axis, 1000, 0);
             };
             document.getElementById('t').onclick = function () {
-                update(axis, 10000, to.pos);
+                update(axis, 10000, 0);
             };
             document.getElementById('u').onclick = function () {
-                update(axis, 100000, to.pos);
+                update(axis, 100000, 0);
             };
+
+            document.getElementById('p1').onclick = function () {
+                update(axis, 1, 100);
+            };
+            document.getElementById('q1').onclick = function () {
+                update(axis, 10, 100);
+            };
+            document.getElementById('r1').onclick = function () {
+                update(axis, 100, 100);
+            };
+            document.getElementById('s1').onclick = function () {
+                update(axis, 1000, 100);
+            };
+            document.getElementById('t1').onclick = function () {
+                update(axis, 10000, 100);
+            };
+            document.getElementById('u1').onclick = function () {
+                update(axis, 100000, 100);
+            };
+
+
 
             let value = document.getElementById("value");
             to.on("timeupdate", function () {
@@ -188,6 +209,7 @@
         <button id="n">A.inc</button>
         <button id="o">A.dec</button>
     </p>
+    <h3>Add cuesaround 0</h3>
     <p>
         <button id="p">1</button>
         <button id="q">10</button>
@@ -196,6 +218,17 @@
         <button id="t">10000</button>
         <button id="u">100000</button>
     </p>
+    <h3>Add cues around 100</h3>
+    <p>
+        <button id="p1">1</button>
+        <button id="q1">10</button>
+        <button id="r1">100</button>
+        <button id="s1">1000</button>
+        <button id="t1">10000</button>
+        <button id="u1">100000</button>
+    </p>
+
+
 
 
   </body>

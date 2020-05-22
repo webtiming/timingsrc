@@ -129,9 +129,7 @@ define(function () {
 			return [e1[0], e2[0]];
 		} else {
 			// equal values
-			let e1_mode = get_mode(e1);
-			let e2_mode = get_mode(e2);
-			return [e1_mode, e2_mode];
+			return [get_mode(e1), get_mode(e2)];
 		}
 	}
 
