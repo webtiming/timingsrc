@@ -22,10 +22,10 @@
 	DERIVATIVE CONVERTER
 
 	this Converter implements the derivative of it source timing object.
-	
+
 	The velocity of timingsrc becomes the position of the Converter.
 
-	This means that the derivative Converter allows sequencing on velocity of a timing object, 
+	This means that the derivative Converter allows sequencing on velocity of a timing object,
 	by attatching a sequencer on the derivative Converter.
 */
 
@@ -33,36 +33,34 @@ define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
-	var inherit = TimingObjectBase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;
 
-	var DerivativeConverter = function (timingsrc) {
-		if (!(this instanceof DerivativeConverter)) {
-			throw new Error("Contructor function called without new operation");
-		}
-		TimingObjectBase.call(this, timingsrc);
-	};
-	inherit(DerivativeConverter, TimingObjectBase);
+	class DerivativeConverter extends TimingObjectBase {
 
-	// overrides
-	DerivativeConverter.prototype.onRangeChange = function (range) { 
-		return [-Infinity, Infinity];
-	};
+        constructor (timingsrc) {
+    		super(timingsrc);
+    	};
 
-	// overrides
-	DerivativeConverter.prototype.onVectorChange = function (vector) {
-		var newVector = {
-			position : vector.velocity,
-			velocity : vector.acceleration,
-			acceleration : 0,
-			timestamp : vector.timestamp
-		};
-		return newVector;
-	};
-	
-	DerivativeConverter.prototype.update = function (vector) {
-		throw new Error("updates illegal on derivative of timingobject");
-	};
+    	// overrides
+    	onRangeChange(range) {
+    		return [-Infinity, Infinity];
+    	};
+
+    	// overrides
+    	onVectorChange(vector) {
+    		var newVector = {
+    			position : vector.velocity,
+    			velocity : vector.acceleration,
+    			acceleration : 0,
+    			timestamp : vector.timestamp
+    		};
+    		return newVector;
+    	};
+
+	   update = function (vector) {
+		  throw new Error("updates illegal on derivative of timingobject");
+	   };
+    }
 
 	return DerivativeConverter;
 });

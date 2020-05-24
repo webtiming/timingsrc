@@ -23,8 +23,6 @@ define(function () {
 
 	'use strict';
 
-	const DEFAULT_INIT_EVENT_ARG = function(name){return;}
-
 	/*
 		Event
 		- name: event name
@@ -44,6 +42,29 @@ define(function () {
 			this.subscriptions = [];
 		}
 
+
+		/*
+			internal function
+
+			call eventifyInitEventArg of publisher
+			support result
+			- eArg or [ok, eArg]
+			- if eArg is undefined - there will be no event
+			- use [true, undefined] to force event event if
+			  eArg is undefined
+		*/
+		_initEventArg(name) {
+			const method = this.publisher.eventifyInitEventArg;
+			if (method != undefined) {
+				let res = method.call(this.publisher, name);
+				if (res != undefined) {
+					return res;
+				}
+			}
+			return [false, undefined];
+		}
+
+
 		/*
 			subscribe to event
 			- subscriber: subscribing object
@@ -57,25 +78,16 @@ define(function () {
 			}
 			const sub = new Subscription(this, callback, options);
 			this.subscriptions.push(sub);
-
 		    // Initiate init callback for this subscription
 		    if (this.init && sub.init) {
 		    	sub.init_pending = true;
-		    	let initEventArg;
-		    	if ("eventifyInitEventArg" in this.publisher) {
-		    		let pub = this.publisher;
-		    		initEventArg = pub.eventifyInitEventArg.bind(pub);
-		    	} else {
-		    		initEventArg = DEFAULT_INIT_EVENT_ARG;
-		    	}
 		    	let self = this;
 		    	Promise.resolve().then(function () {
-	    	    	const eArg = initEventArg(self.name);
-		    		if (eArg !== undefined) {
+		    		const [ok, eArg] = self._initEventArg(self.name);
+		    		if (ok) {
 		    			self._trigger(eArg, sub);
-		    		} else {
-		    			sub.init_pending = false;
-		    		};
+		    		}
+		    		sub.init_pending = false;
 		    	});
 		    }
 			return sub
@@ -118,14 +130,11 @@ define(function () {
 					if (_sub.init_pending) {
 						continue;
 					}
-				} else {
-					// not pending anymore
-					_sub.init_pending = false;
 				}
 				// callback
 				ctx = _sub.ctx || this.publisher;
 				try {
-					_sub.callback.apply(ctx, [eArg, eInfo]);
+					_sub.callback.call(ctx, eArg, eInfo);
 				} catch (err) {
 					console.log(`Error in ${this.name}: ${_sub.callback} ${err}`);
 				}
@@ -281,7 +290,7 @@ define(function () {
 
 		eventifyInitEventArg(name) {
 			if (name == "change") {
-				return this._value;
+				return [true, this._value];
 			}
 		}
 
@@ -310,11 +319,15 @@ define(function () {
 		make a promise which is resolved when EventBoolean changes
 		value.
 	*/
-	function makePromise(eventBoolean) {
+	function makePromise(eventBoolean, target) {
 		if (!eventBoolean instanceof EventBoolean) {
 			throw new Error("eventBoolean not instance of EventBolean");
 		}
-		const target = !eventBoolean.value;
+		if (target == undefined) {
+			target = !eventBoolean.value;
+		} else {
+			target = Boolean(target);
+		}
 		return new Promise (function (resolve, reject) {
 			let sub = eventBoolean.on("change", function (value) {
 				if (value === target) {

@@ -31,37 +31,34 @@ define(['./timingobject'], function (timingobject) {
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
-	var inherit = TimingObjectBase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;
 
-	var ScaleConverter = function (timingsrc, factor) {
-		if (!(this instanceof ScaleConverter)) {
-			throw new Error("Contructor function called without new operation");
-		}
-		this._factor = factor;
-		TimingObjectBase.call(this, timingsrc);
-	};
-	inherit(ScaleConverter, TimingObjectBase);
+	class ScaleConverter extends TimingObjectBase {
+        constructor (timingsrc, factor) {
+    		this._factor = factor;
+    		super(timingsrc);
+    	};
 
-	// overrides
-	ScaleConverter.prototype.onRangeChange = function (range) {
-		return [range[0]*this._factor, range[1]*this._factor];
-	};
+    	// overrides
+    	onRangeChange(range) {
+    		return [range[0]*this._factor, range[1]*this._factor];
+    	};
 
-	// overrides
-	ScaleConverter.prototype.onVectorChange = function (vector) {
-		vector.position = vector.position * this._factor;
-		vector.velocity = vector.velocity * this._factor;
-		vector.acceleration = vector.acceleration * this._factor;
-		return vector;
-	};
-	
-	ScaleConverter.prototype.update = function (vector) {
-		if (vector.position !== undefined && vector.position !== null) vector.position = vector.position / this._factor;
-		if (vector.velocity !== undefined && vector.velocity !== null) vector.velocity = vector.velocity / this._factor;
-		if (vector.acceleration !== undefined && vector.acceleration !== null) vector.acceleration = vector.acceleration / this._factor;
-		return this.timingsrc.update(vector);
-	};
+    	// overrides
+    	onVectorChange(vector) {
+    		vector.position = vector.position * this._factor;
+    		vector.velocity = vector.velocity * this._factor;
+    		vector.acceleration = vector.acceleration * this._factor;
+    		return vector;
+    	};
 
+    	update(vector) {
+    		if (vector.position !== undefined && vector.position !== null) vector.position = vector.position / this._factor;
+    		if (vector.velocity !== undefined && vector.velocity !== null) vector.velocity = vector.velocity / this._factor;
+    		if (vector.acceleration !== undefined && vector.acceleration !== null) vector.acceleration = vector.acceleration / this._factor;
+    		return this.timingsrc.update(vector);
+    	};
+
+    }
 	return ScaleConverter;
 });

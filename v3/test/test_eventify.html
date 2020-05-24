@@ -31,7 +31,7 @@
 
                     eventifyInitEventArg(name) {
                         if (name == "change") {
-                            return true;
+                            return [true, true];
                         }
                     }
                 };
@@ -54,13 +54,13 @@
 
                     onCallback(eArg, eInfo) {
                         if (eInfo.sub == this.sub1) {
-                            console.log("sub1");
+                            console.log("sub1", eInfo.init);
                         } else if (eInfo.sub == this.sub2) {
-                            console.log("sub2");
+                            console.log("sub2", eInfo.init);
                         } else if (eInfo.sub == this.sub3) {
-                            console.log("sub3");
+                            console.log("sub3", eInfo.init);
                         } else if (eInfo.sub == this.sub4) {
-                            console.log("sub4");
+                            console.log("sub4", eInfo.init);
                         }
                         // Initially we should see only sub2.
                     };

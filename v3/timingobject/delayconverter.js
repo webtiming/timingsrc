@@ -38,61 +38,58 @@ define(['./timingobject'], function (timingobject) {
 	'use strict';
 
 	var TimingObjectBase = timingobject.TimingObjectBase;
-	var inherit = TimingObjectBase.inherit;
 
-	var DelayConverter = function (timingObject, delay) {
-		if (!(this instanceof DelayConverter)) {
-			throw new Error("Contructor function called without new operation");
-		}
-		if (delay < 0) {throw new Error ("negative delay not supported");}
-		if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
-		TimingObjectBase.call(this, timingObject);
-		// fixed delay
-		this._delay = delay;
-	};
-	inherit(DelayConverter, TimingObjectBase);
+	class DelayConverter extends TimingObjectBase {
+		constructor (timingObject, delay) {
+			if (delay < 0) {throw new Error ("negative delay not supported");}
+			if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
+			super(timingObject);
+			// fixed delay
+			this._delay = delay;
+		};
 
-	// overrides
-	DelayConverter.prototype.onVectorChange = function (vector) {
-		/*
-			Vector's timestamp always time-shifted (back-dated) by delay
+		// overrides
+		onVectorChange(vector) {
+			/*
+				Vector's timestamp always time-shifted (back-dated) by delay
 
-			Normal operation is to delay every incoming vector update.
-			This implies returning null to abort further processing at this time,
-			and instead trigger a later continuation.
+				Normal operation is to delay every incoming vector update.
+				This implies returning null to abort further processing at this time,
+				and instead trigger a later continuation.
 
-			However, delay is calculated based on the timestamp of the vector (age), not when the vector is
-			processed in this method. So, for small small delays the age of the vector could already be
-			greater than delay, indicating that the vector is immediately valid and do not require delayed processing.
+				However, delay is calculated based on the timestamp of the vector (age), not when the vector is
+				processed in this method. So, for small small delays the age of the vector could already be
+				greater than delay, indicating that the vector is immediately valid and do not require delayed processing.
 
-			This is particularly true for the first vector, which may be old.
+				This is particularly true for the first vector, which may be old.
 
-			So we generally check the age to figure out whether to apply the vector immediately or to delay it.
-		*/
+				So we generally check the age to figure out whether to apply the vector immediately or to delay it.
+			*/
 
-		// age of incoming vector
-		var age = this.clock.now() - vector.timestamp;
+			// age of incoming vector
+			var age = this.clock.now() - vector.timestamp;
 
-		// time-shift vector timestamp
-		vector.timestamp += this._delay;
+			// time-shift vector timestamp
+			vector.timestamp += this._delay;
 
-		if (age < this._delay) {
-			// apply vector later - abort processing now
-			var self = this;
-			var delayMillis = (this._delay - age) * 1000;
-			setTimeout(function () {
-				self._process(vector);
-			}, delayMillis);
-			return null;
-		}
-		// apply vector immediately - continue processing
-		return vector;
-	};
+			if (age < this._delay) {
+				// apply vector later - abort processing now
+				var self = this;
+				var delayMillis = (this._delay - age) * 1000;
+				setTimeout(function () {
+					self._process(vector);
+				}, delayMillis);
+				return null;
+			}
+			// apply vector immediately - continue processing
+			return vector;
+		};
 
-	DelayConverter.prototype.update = function (vector) {
-		// Updates are prohibited on delayed timingobjects
-		throw new Error ("update is not legal on delayed (non-live) timingobject");
-	};
+		update(vector) {
+			// Updates are prohibited on delayed timingobjects
+			throw new Error ("update is not legal on delayed (non-live) timingobject");
+		};
+	}
 
 	return DelayConverter;
 });

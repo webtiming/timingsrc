@@ -157,7 +157,7 @@
             });
 
             // add change handler
-            s.on("change", function(events) {
+            s.on("change", function(events, eInfo) {
                 let pos = to.pos.toFixed(2);
                 events.forEach(function(item){
                     let el = document.getElementById(`${item.key}`);

@@ -24,12 +24,12 @@
 	Timeshift Converter timeshifts a timing object by timeoffset.
 	Positive timeoffset means that the timeshift Converter will run ahead of the source timing object.
 	Negative timeoffset means that the timeshift Converter will run behind the source timing object.
-	
+
 	Updates affect the converter immediately. This means that update vector must be re-calculated
 	to the value it would have at time-shifted time. Timestamps are not time-shifted, since the motion is still live.
-	For instance, (0, 1, ts) becomes (0+(1*timeshift), 1, ts) 
+	For instance, (0, 1, ts) becomes (0+(1*timeshift), 1, ts)
 
-	However, this transformation may cause range violation 
+	However, this transformation may cause range violation
 		- this happens only when timing object is moving.
 		- implementation requires range converter logic
 
@@ -41,33 +41,27 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
-	var inherit = TimingObjectBase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;
 
+	class TimeShiftConverter {
+        constructor (timingsrc, timeOffset) {
+    		super(timingsrc);
+    		this._timeOffset = timeOffset;
+    	};
 
-	var TimeShiftConverter = function (timingsrc, timeOffset) {
-		if (!(this instanceof TimeShiftConverter)) {
-			throw new Error("Contructor function called without new operation");
-		}
+    	// overrides
+    	onRangeChange(range) {
+    		return [-Infinity, Infinity];
+    	};
 
-		TimingObjectBase.call(this, timingsrc);
-		this._timeOffset = timeOffset;
-	};
-	inherit(TimeShiftConverter, TimingObjectBase);
-
-	// overrides
-	TimeShiftConverter.prototype.onRangeChange = function (range) {
-		return [-Infinity, Infinity];
-	};
-
-
-	// overrides
-	TimeShiftConverter.prototype.onVectorChange = function (vector) {
-		// calculate timeshifted vector
-		var newVector = motionutils.calculateVector(vector, vector.timestamp + this._timeOffset);
-		newVector.timestamp = vector.timestamp;
-		return newVector;
-	};
+    	// overrides
+    	onVectorChange(vector) {
+    		// calculate timeshifted vector
+    		var newVector = motionutils.calculateVector(vector, vector.timestamp + this._timeOffset);
+    		newVector.timestamp = vector.timestamp;
+    		return newVector;
+    	};
+    }
 
 	return TimeShiftConverter;
 });

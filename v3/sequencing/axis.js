@@ -24,7 +24,7 @@ define (function (require) {
 
     const BinarySearch = require("../util/binarysearch");
     const Interval = require("../util/interval");
-    const eventify = require('../util/eventify');
+    const eventify = require('../util/eventify2');
     const util = require("../util/util");
     const Relation = Interval.Relation;
     const endpoint = require("../util/endpoint");
@@ -227,7 +227,7 @@ define (function (require) {
             this._update_callbacks = [];
 
             // Change event
-            eventify.eventifyInstance(this, {init:false});
+            eventify.eventifyInstance(this);
             this.eventifyDefineEvent("change", {init:true});
         };
 
@@ -246,12 +246,12 @@ define (function (require) {
 
             Immediate events
         */
-        eventifyMakeInitEvents = function (type) {
+        eventifyInitEventArg = function (type) {
             if (type === "change") {
                 let events = [...this.values()].map(cue => {
                     return {key:cue.key, new:cue, old:undefined};
                 });
-                return [events];
+                return [true, events];
             }
             return [];
         };
@@ -802,7 +802,6 @@ define (function (require) {
         };
 
     }
-
 
     eventify.eventifyPrototype(Axis.prototype);
 

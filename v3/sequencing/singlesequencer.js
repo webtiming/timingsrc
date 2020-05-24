@@ -24,7 +24,7 @@ define(function(require) {
     const endpoint = require("../util/endpoint");
     const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
-    const eventify = require("../util/eventify");
+    const eventify = require("../util/eventify2");
     const Schedule = require("./schedule");
     const Axis = require("./axis");
 
@@ -73,30 +73,11 @@ define(function(require) {
             cb = this._onScheduleCallback.bind(this);
             this._sched_cb = this._sched.add_callback(cb)
 
-
-            /*
-
-            Wrap onTimingChange
-
-            To allow multiple instances of SingleSequencer to subscribe to
-            the same event source, the handler must be different objects.
-            If we use the class method directly as handler, it will
-            be on the prototype and therefor be shared between instances.
-
-            It is safe to use the same handler for multiple event sources.
-
-            Additionally we specify a context for the handler simply to
-            be able to use 'this' safely inside the wrapper implementation.
-
-            */
-
-            this._onTimingCallbackWrapper = function (eInfo) {
-                this._onTimingCallback(eInfo);
-            };
-            this._to.on("change", this._onTimingCallbackWrapper.bind(this));
+            // Timing Object Callback
+            this._sub = this._to.on("change", this._onTimingCallback.bind(this));
 
             // Change event
-            eventify.eventifyInstance(this, {init:false}); // no events type
+            eventify.eventifyInstance(this);
             this.eventifyDefineEvent("change", {init:true});
         }
 
@@ -106,30 +87,18 @@ define(function(require) {
         ***************************************************************/
 
         /*
-            Eventify: callback formatter
-        */
-        eventifyCallbackFormatter = function (type, e, eInfo) {
-            return [e, eInfo];
-        };
-
-        /*
             Eventify: immediate events
         */
-        eventifyMakeInitEvents = function (type) {
-            if (type === "change") {
-                if (this.isReady()) {
-                    if (this._activeCues.size == 0) {
-                        return [];
-                    }
-                    let changeMap = [...this._activeCues.values()].map(cue => {
-                        return [cue.key, {new:cue, old:undefined}];
+        eventifyInitEventArg(name) {
+            if (name == "change") {
+                if (this.isReady() && this._activeCues.size > 0) {
+                    let events = [...this._activeCues.values()].map(cue => {
+                        return {key:cue.key, new:cue, old:undefined};
                     });
-                    return [changeMap];
+                    return [true, events];
                 }
             }
-            return [];
-        };
-
+        }
 
         /***************************************************************
          READINESS
@@ -406,7 +375,7 @@ define(function(require) {
          TIMING OBJECT CALLBACK
         ***************************************************************/
 
-        _onTimingCallback (eInfo) {
+        _onTimingCallback (eArg, eInfo) {
             const events = [];
 
             /*

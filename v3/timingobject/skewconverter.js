@@ -31,51 +31,45 @@ define(['./timingobject'], function (timingobject) {
 	'use strict';
 
 	var TimingObjectBase = timingobject.TimingObjectBase;
-	var inherit = TimingObjectBase.inherit;
 
-	var SkewConverter = function (timingsrc, skew, options) {
-		if (!(this instanceof SkewConverter)) {
-			throw new Error("Contructor function called without new operation");
+	class SkewConverter extends TimingObjectBase {
+
+		constructor (timingsrc, skew, options) {
+			this._skew = skew;
+			super(timingsrc, options);
 		}
-		this._skew = skew;
-		TimingObjectBase.call(this, timingsrc, options);
-	};
-	inherit(SkewConverter, TimingObjectBase);
 
-	// overrides
-	SkewConverter.prototype.onRangeChange = function (range) {
-		range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
-		range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
-		return range;
-	};
-	
-	// overrides
-	SkewConverter.prototype.onVectorChange = function (vector) {
-		vector.position += this._skew;	
-		return vector;
-	};
+		// overrides
+		onRangeChange(range) {
+			range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
+			range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
+			return range;
+		};
 
-	SkewConverter.prototype.update = function (vector) {
-		if (vector.position !== undefined && vector.position !== null) {
-			vector.position = vector.position - this._skew;
-		}
-		return this.timingsrc.update(vector);
-	};
+		// overrides
+		onVectorChange(vector) {
+			vector.position += this._skew;
+			return vector;
+		};
+
+		update(vector) {
+			if (vector.position !== undefined && vector.position !== null) {
+				vector.position = vector.position - this._skew;
+			}
+			return this.timingsrc.update(vector);
+		};
 
 
-	Object.defineProperty(SkewConverter.prototype, 'skew', {
-		get : function () {
-			return this._skew;
-		},
-		set : function (skew) {
+		get skew() {return this._skew;};
+
+		set skew(skew) {
 			this._skew = skew;
 			// pick up vector from timingsrc
 			var src_vector = this.timingsrc.vector;
 			// use this vector to emulate new event from timingsrc
 			this._preProcess(src_vector);
 		}
-	});
-
+	};
 
 	return SkewConverter;
 });

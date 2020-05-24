@@ -23,7 +23,7 @@
 	LOOP CONVERTER
 
 	This is a modulo type transformation where the converter will be looping within
-	a given range. Potentially one could create an associated timing object keeping track of the 
+	a given range. Potentially one could create an associated timing object keeping track of the
 	loop number.
 */
 
@@ -32,10 +32,9 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 
 	'use strict';
 
-	var TimingObjectBase = timingobject.TimingObjectBase;	
-	var inherit = TimingObjectBase.inherit;
+	var TimingObjectBase = timingobject.TimingObjectBase;
 
-	/* 
+	/*
 		Coordinate system based on counting segments
 		skew + n*length + offset === x
 		skew : coordinate system is shifted by skew, so that segment 0 starts at offset.
@@ -49,14 +48,14 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		this.length = length;
 	};
 
-	/* 
+	/*
 		Static method
-		ovverride modulo to behave better for negative numbers 
+		ovverride modulo to behave better for negative numbers
 	*/
 	SegmentCoords.mod = function (n, m) {
 		return ((n % m) + m) % m;
 	};
-	
+
 	// get point representation from float
 	SegmentCoords.prototype.getPoint = function (x) {
 		return {
@@ -64,13 +63,13 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 			offset : SegmentCoords.mod(x-this.skew,this.length)
 		};
 	};
-	
+
 	// get float value from point representation
 	SegmentCoords.prototype.getFloat = function (p) {
 		return this.skew + (p.n * this.length) + p.offset;
 	};
 
-	// transform float x into segment defined by other float y 
+	// transform float x into segment defined by other float y
 	// if y isnt specified - transform into segment [skew, skew + length]
 	SegmentCoords.prototype.transformFloat = function (x, y) {
 		y = (y === undefined) ? this.skew : y;
@@ -84,103 +83,101 @@ define(['../util/motionutils', './timingobject'], function (motionutils, timingo
 		LOOP CONVERTER
 	*/
 
-	var LoopConverter = function (timingsrc, range) {
-		if (!(this instanceof LoopConverter)) {
-			throw new Error("Contructor function called without new operation");
-		}
-		TimingObjectBase.call(this, timingsrc, {timeout:true});
-		/*
-			note :
-			if a range point of the loop converter is the same as a range point of timingsrc,
-			then there will be duplicate events
-		*/
-		this._range = range;
-		this._coords = new SegmentCoords(range[0], range[1]-range[0]);
-	};
-	inherit(LoopConverter, TimingObjectBase);
-
-	// transform value from coordiantes X of timing source
-	// to looper coordinates Y
-	LoopConverter.prototype._transform = function (x) {
-		return this._coords.transformFloat(x);
-	};
-
-	// transform value from looper coordinates Y into 
-	// coordinates X of timing object - maintain relative diff 
-	LoopConverter.prototype._inverse = function (y) {
-		var current_y = this.query().position;
-		var current_x = this.timingsrc.query().position;
-		var diff = y - current_y;
-		var x = diff + current_x;
-		// verify that x is witin range
-		return x;
-	};
-
-	// overrides
-	LoopConverter.prototype.query = function () {
-		if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
-		var vector = motionutils.calculateVector(this.vector, this.clock.now());
-		// trigger state transition if range violation is detected
-		if (vector.position > this._range[1]) {
-			this._process(this._calculateInitialVector());
-		} else if (vector.position < this._range[0]) {
-			this._process(this._calculateInitialVector());
-		} else {
-			// no range violation
-			return vector;
-		}
-		// re-evaluate query after state transition
-		return motionutils.calculateVector(this.vector, this.clock.now());
-	};
-
-	// overrides
-	LoopConverter.prototype.update = function (vector) {
-		if (vector.position !== undefined && vector.position !== null) {
-			vector.position = this._inverse(vector.position);
-		}
-		return this.timingsrc.update(vector);
-	};
-
-	// overrides
-	LoopConverter.prototype._calculateTimeoutVector = function () {
-		var freshVector = this.query();
-		var res = motionutils.calculateDelta(freshVector, this.range);
-		var deltaSec = res[0];
-		if (deltaSec === null) return null;
-		var position = res[1];
-		var vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
-		vector.position = position; // avoid rounding errors
-		return vector;
-	};
-
-	// overrides
-	LoopConverter.prototype.onRangeChange = function(range) {
-		return this._range;
-	};
-
-	// overrides
-	LoopConverter.prototype.onTimeout = function (vector) {
-		return this._calculateInitialVector();
-	};
-
-	// overrides
-	LoopConverter.prototype.onVectorChange = function (vector) {
-		return this._calculateInitialVector();
-	};
-
-	LoopConverter.prototype._calculateInitialVector = function () {
-		// parent snapshot 
-		var parentVector = this.timingsrc.query();
-		// find correct position for looper
-		var position = this._transform(parentVector.position);
-		// find looper vector
-		return {
-			position: position,
-			velocity: parentVector.velocity,
-			acceleration: parentVector.acceleration,
-			timestamp: parentVector.timestamp
+	class LoopConverter extends TimingObjectBase {
+		constructor(timingsrc, range) {
+			super(timingsrc, {timeout:true});
+			/*
+				note :
+				if a range point of the loop converter is the same as a range point of timingsrc,
+				then there will be duplicate events
+			*/
+			this._range = range;
+			this._coords = new SegmentCoords(range[0], range[1]-range[0]);
 		};
-	};
 
+		// transform value from coordiantes X of timing source
+		// to looper coordinates Y
+		_transform(x) {
+			return this._coords.transformFloat(x);
+		};
+
+		// transform value from looper coordinates Y into
+		// coordinates X of timing object - maintain relative diff
+		_inverse(y) {
+			var current_y = this.query().position;
+			var current_x = this.timingsrc.query().position;
+			var diff = y - current_y;
+			var x = diff + current_x;
+			// verify that x is witin range
+			return x;
+		};
+
+		// overrides
+		query() {
+			if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
+			var vector = motionutils.calculateVector(this.vector, this.clock.now());
+			// trigger state transition if range violation is detected
+			if (vector.position > this._range[1]) {
+				this._process(this._calculateInitialVector());
+			} else if (vector.position < this._range[0]) {
+				this._process(this._calculateInitialVector());
+			} else {
+				// no range violation
+				return vector;
+			}
+			// re-evaluate query after state transition
+			return motionutils.calculateVector(this.vector, this.clock.now());
+		};
+
+		// overrides
+		update(vector) {
+			if (vector.position !== undefined && vector.position !== null) {
+				vector.position = this._inverse(vector.position);
+			}
+			return this.timingsrc.update(vector);
+		};
+
+		// overrides
+		_calculateTimeoutVector() {
+			var freshVector = this.query();
+			var res = motionutils.calculateDelta(freshVector, this.range);
+			var deltaSec = res[0];
+			if (deltaSec === null) return null;
+			var position = res[1];
+			var vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
+			vector.position = position; // avoid rounding errors
+			return vector;
+		};
+
+		// overrides
+		onRangeChange(range) {
+			return this._range;
+		};
+
+		// overrides
+		onTimeout(vector) {
+			return this._calculateInitialVector();
+		};
+
+		// overrides
+		onVectorChange(vector) {
+			return this._calculateInitialVector();
+		};
+
+		_calculateInitialVector() {
+			// parent snapshot
+			var parentVector = this.timingsrc.query();
+			// find correct position for looper
+			var position = this._transform(parentVector.position);
+			// find looper vector
+			return {
+				position: position,
+				velocity: parentVector.velocity,
+				acceleration: parentVector.acceleration,
+				timestamp: parentVector.timestamp
+			};
+		};
+
+	}
 	return LoopConverter;
 });
