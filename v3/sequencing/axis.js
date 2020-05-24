@@ -24,7 +24,7 @@ define (function (require) {
 
     const BinarySearch = require("../util/binarysearch");
     const Interval = require("../util/interval");
-    const eventify = require('../util/eventify2');
+    const eventify = require('../util/eventify');
     const util = require("../util/util");
     const Relation = Interval.Relation;
     const endpoint = require("../util/endpoint");

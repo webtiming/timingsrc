@@ -24,7 +24,7 @@ define(function(require) {
     const endpoint = require("../util/endpoint");
     const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
-    const eventify = require("../util/eventify2");
+    const eventify = require("../util/eventify");
     const Schedule = require("./schedule");
     const Axis = require("./axis");
 
