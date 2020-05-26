@@ -85,7 +85,7 @@ define(function () {
 		    	Promise.resolve().then(function () {
 		    		const [ok, eArg] = self._initEventArg(self.name);
 		    		if (ok) {
-		    			self._trigger(eArg, sub);
+		    			self._trigger(eArg, [sub], true);
 		    		}
 		    		sub.init_pending = false;
 		    	});
@@ -98,9 +98,10 @@ define(function () {
 		*/
 		trigger (eArg) {
 			if (this.subscriptions.length > 0) {
+				const subs = this.subscriptions.filter(sub => sub.init_pending == false);
 				const self = this;
 				Promise.resolve().then(function () {
-					self._trigger(eArg);
+					self._trigger(eArg, subs, false);
 				});
 			}
 		}
@@ -111,32 +112,24 @@ define(function () {
 			- if sub is undefined - publish to all subscriptions
 			- if sub is defined - publish only to given subscription
 		*/
-		_trigger (eArg, sub) {
-			const subscriptions = (sub == undefined) ? this.subscriptions : [sub];
+		_trigger (eArg, subs, init) {
 			let eInfo, ctx;
-			for (const _sub of subscriptions) {
+			for (const sub of subs) {
 				// ignore terminated subscriptions
-				if (_sub.terminated) {
+				if (sub.terminated) {
 					continue;
 				}
 				eInfo = {
 					src: this.publisher,
 					name: this.name,
-					sub: _sub,
-					init: (sub != undefined)
+					sub: sub,
+					init: init
 				}
-				if (sub == undefined) {
-					// publish to all, except those with pending init
-					if (_sub.init_pending) {
-						continue;
-					}
-				}
-				// callback
-				ctx = _sub.ctx || this.publisher;
+				ctx = sub.ctx || this.publisher;
 				try {
-					_sub.callback.call(ctx, eArg, eInfo);
+					sub.callback.call(ctx, eArg, eInfo);
 				} catch (err) {
-					console.log(`Error in ${this.name}: ${_sub.callback} ${err}`);
+					console.log(`Error in ${this.name}: ${sub.callback} ${err}`);
 				}
 			}
 		}

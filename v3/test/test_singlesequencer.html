@@ -131,6 +131,7 @@
             };
 
             let value = document.getElementById("value");
+
             to.on("timeupdate", function () {
                 let v = to.query();
                 let pos = v.position.toFixed(2)
@@ -138,6 +139,7 @@
                 let acc = v.acceleration.toFixed(2)
                 value.innerHTML = `P:${pos} V:${vel} A:${acc}`;
             });
+
 
             // Visualize list of timed data
             axis.on("change", function (events){
@@ -155,6 +157,7 @@
                     }).join("\n");
                 document.getElementById("data").innerHTML = html;
             });
+
 
             // add change handler
             s.on("change", function(events, eInfo) {

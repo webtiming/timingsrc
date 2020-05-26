@@ -377,7 +377,6 @@ define(function(require) {
 
         _onTimingCallback (eArg, eInfo) {
             const events = [];
-
             /*
                 If update is the initial vector from the timing object,
                 we set current time as the official time for the update.

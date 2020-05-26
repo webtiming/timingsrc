@@ -422,7 +422,12 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 				velocity : 0,
 				acceleration : 0
 			};
-			this.update(vector);
+			// initialise state
+			this._vector = this.checkUpdateVector(vector);
+			// trigger events
+			this._ready.value = true;
+			// renew timeout
+			this._renewTimeout();
 		};
 
 		// internal clock
@@ -452,10 +457,6 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		- handles some complexity that arises due to the very simple API of providers
 		- implements a clock for the provider
 	*/
-
-
-
-
 
 	class ExternalProvider extends TimingBase {
 
@@ -571,9 +572,9 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 			super(options);
 			this._version = 4;
 			this._timingsrc = undefined;
+			this._sub;
 			this.timingsrc = timingsrc;
 			// subscription
-			this.sub;
 		};
 
 
@@ -588,7 +589,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 
 
 		// timingsrc onchange handler
-		_internalOnChange = function () {
+		_internalOnChange = function (eArg, eInfo) {
 			let vector = this._timingsrc.vector;
 			this._preProcess(vector);
 		};
@@ -650,7 +651,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 		_doSwitch = function (timingsrc) {
 			// disconnect and clean up timingsrc
 			if (this._timingsrc) {
-				this._timingsrc.off(this.sub);
+				this._timingsrc.off(this._sub);
 				this.sub = undefined;
 			}
 			this._timingsrc = timingsrc;
@@ -658,7 +659,7 @@ define(['../util/eventify', '../util/motionutils', '../util/masterclock'], funct
 				this._range = this.onRangeChange(this._timingsrc.range);
 			}
 			this.onSwitch();
-			this.sub = this._timingsrc.on("change", this._internalOnChange.bind(this));
+			this._sub = this._timingsrc.on("change", this._internalOnChange.bind(this));
 		};
 
 
