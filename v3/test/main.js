@@ -7,7 +7,7 @@ define(function(require) {
         Interval: require("../util/interval"),
         Axis: require("../sequencing/axis"),
         Schedule: require("../sequencing/schedule"),
-        TimingObject: require("../timingobject/timingobject").TimingObject,
+        TimingObject: require("../timingobject/timingobject"),
         SkewConverter: require("../timingobject/skewconverter"),
         SingleSequencer: require("../sequencing/singlesequencer"),
         DoubleSequencer: require("../sequencing/doublesequencer")
