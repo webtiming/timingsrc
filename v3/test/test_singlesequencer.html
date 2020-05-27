@@ -14,20 +14,63 @@
 
         let to, axis, s, Interval;
 
-        function pprint(ev, s) {
-          console.log("exitCues");
-            for (let cue of ev.exitCues.values()) {
-                console.log(cue.key, cue.interval.toString());
+        function get_cues_ordering() {
+            // generate some queues for testing cue ordering
+            // different intervals relevant to point 4
+            // left outside
+            const i1 = new Interval(3, 3.5);
+            // high endpoint match
+            const i2 = new Interval(3, 4, true, true);
+            const i3 = new Interval(3, 4, true, false);
+            // singleton match
+            const i4 = new Interval(4, 4);
+            // both sides
+            const i5 = new Interval(3, 5);
+            // low endpoint match
+            const i6 = new Interval(4, 5, true, false);
+            const i7 = new Interval(4, 5, false, false);
+            // right outside
+            const i8 = new Interval(4.5, 5);
+
+            return [
+                {key: "1", interval: i1, data: i1.toString()},
+                {key: "2", interval: i2, data: i2.toString()},
+                {key: "3", interval: i3, data: i3.toString()},
+                {key: "4", interval: i4, data: i4.toString()},
+                {key: "5", interval: i5, data: i5.toString()},
+                {key: "6", interval: i6, data: i6.toString()},
+                {key: "7", interval: i7, data: i7.toString()},
+                {key: "8", interval: i8, data: i8.toString()}
+            ];
+        }
+
+        function get_cues() {
+            // generate some cues
+            let cues = [];
+            for (let i=0; i<20; i++) {
+                let j0 = i;
+                let j1 = i + 1;
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: i, interval:itv, data:data});
             }
-            console.log("enterCues");
-            for (let cue of ev.enterCues.values()) {
-                console.log(cue.key, cue.interval.toString());
+            for (let i=0; i<20; i++) {
+                let j0 = i + 0.5;
+                let j1 = j0 + 1;
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: 1000 + i, interval:itv, data:data});
             }
-            console.log("activeCues");
-            for (let cue of s.values()) {
-                console.log(cue.key, cue.interval.toString());
+            // add a few singular cues
+            for (let i=0; i<20; i+=5) {
+                let itv = new Interval(i);
+                let data =  itv.toString();
+                cues.push({key: 2000 + i, interval:itv, data:data});
             }
-        };
+            return cues;
+        }
+
+
 
         function run() {
 
@@ -193,28 +236,10 @@
             // Axis
             axis = new timingsrc.Axis();
 
-            // fill axis with some cues
-            let cues = [];
-            for (let i=0; i<20; i++) {
-                let j0 = i;
-                let j1 = i + 1;
-                let itv = new Interval(j0, j1);
-                let data =  itv.toString();
-                cues.push({key: i, interval:itv, data:data});
-            }
-            for (let i=0; i<20; i++) {
-                let j0 = i + 0.5;
-                let j1 = j0 + 1;
-                let itv = new Interval(j0, j1);
-                let data =  itv.toString();
-                cues.push({key: 1000 + i, interval:itv, data:data});
-            }
-            // add a few singular cues
-            for (let i=0; i<20; i+=5) {
-                let itv = new Interval(i);
-                let data =  itv.toString();
-                cues.push({key: 2000 + i, interval:itv, data:data});
-            }
+            // cues
+            let cues;
+            cues = get_cues();
+            // cues = get_cues_ordering();
 
             axis.update(cues);
 
