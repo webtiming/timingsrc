@@ -111,10 +111,12 @@ define(function(require) {
 		  	- overrides to add support for timeupdate events
 		*/
 		eventifyInitEventArg = function (name) {
-			if (name === "change") {
-				return [this._ready.value, undefined];
-			} else if (name === "timeupdate") {
-				return [this._ready.value, undefined];
+			if (this._ready.value) {
+				if (name === "change") {
+					return [true, {vector:this._vector, live:false}];
+				} else if (name === "timeupdate") {
+					return [true, undefined];
+				}
 			}
 		};
 
@@ -173,7 +175,8 @@ define(function(require) {
 			let state = motionutils.correctRangeState(vector, this._range);
 			// detect range violation - only if timeout is set
 			if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
-				this._preProcess(vector);
+				let eArg = {vector:vector, live:true};
+				this._preProcess(eArg);
 			}
 			// re-evaluate query after state transition
 			return motionutils.calculateVector(this._vector, this.clock.now());
@@ -201,7 +204,8 @@ define(function(require) {
 			let acc = vector.acceleration;
 
 			if (pos == undefined && vel == undefined && acc == undefined) {
-				throw new Error ("drop update, noop");
+				return vector;
+				//throw new Error ("drop update, noop");
 			}
 
 			// default values
@@ -240,9 +244,11 @@ define(function(require) {
 			onVectorChange is invoked allowing subclasses to specify transformation
 			on the incoming vector before processing.
 		*/
-		_preProcess(vector) {
-			vector = this.onVectorChange(vector);
-			this._process(vector);
+		_preProcess(eArg) {
+			if (eArg.vector) {
+				eArg.vector = this.onVectorChange(eArg.vector);
+			}
+			this._process(eArg);
 		};
 
 
@@ -269,11 +275,11 @@ define(function(require) {
 			core processing step after change event or timeout
 			assignes the internal vector
 		*/
-		_process(vector) {
-			if (vector !== null) {
+		_process(eArg) {
+			if (eArg.vector !== undefined) {
 				this._old_vector = this._vector;
 				// update internal vector
-				this._vector = vector;
+				this._vector = eArg.vector;
 				// trigger events
 				this._ready.value = true;
 				// unlock update promises
@@ -281,7 +287,7 @@ define(function(require) {
 					event.value = true;
 				});
 				this._event_variables = [];
-				this._postProcess(this._vector);
+				this._postProcess(eArg);
 			}
 			// renew timeout
 			this._renewTimeout();
@@ -292,12 +298,12 @@ define(function(require) {
 			overriding this is only necessary if external change events
 			need to be suppressed,
 		*/
-		_postProcess(vector) {
+		_postProcess(eArg) {
 			// trigger change events
-			this.eventifyTriggerEvent("change");
+			this.eventifyTriggerEvent("change", eArg);
 			// trigger timeupdate events
 			this.eventifyTriggerEvent("timeupdate");
-			let moving = vector.velocity !== 0.0 || vector.acceleration !== 0.0;
+			let moving = motionutils.isMoving(this._vector);
 			if (moving && this._tid === null) {
 				let self = this;
 				this._tid = setInterval(function () {
@@ -332,7 +338,11 @@ define(function(require) {
 		 		let secDelay = vector.timestamp - now;
 		 		let self = this;
 		 		this._timeout = this.clock.setTimeout(function () {
-					self._process(self.onTimeout(vector));
+		 			let eArg = {
+		 				vector: self.onTimeout(vector),
+		 				live: true
+		 			}
+					self._process(eArg);
 		      	}, secDelay, {anchor: now, early: 0.005});
 			}
 		};

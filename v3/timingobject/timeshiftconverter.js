@@ -43,7 +43,7 @@ define(function (require) {
 
     const TimingObjectBase = require('./timingobjectbase');
 
-	class TimeShiftConverter {
+	class TimeShiftConverter extends TimingObjectBase {
         constructor (timingsrc, timeOffset) {
     		super(timingsrc);
     		this._timeOffset = timeOffset;

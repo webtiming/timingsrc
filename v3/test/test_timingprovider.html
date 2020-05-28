@@ -11,56 +11,94 @@
   <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
   <script type="text/javascript" src="../../docs/lib/require.js"></script>
   <script type="text/javascript">
-    var app, motion, to;
-    
-    var ui = function () {    
-      console.log("document ready");
-      var sourcehandler = function () {
-        if (sourcehandler.init === false) {
-          console.log("source range", to.range);
-          sourcehandler.init = true;
+    let app, motion, to, toA, toB;
+
+    /* polyfill making document ready into a promise */
+    (function() {
+        document.ready = new Promise(function(resolve) {
+            if (document.readyState === 'complete') {
+                resolve();
+            } else {
+                let onReady = function () {
+                    resolve();
+                    document.removeEventListener('DOMContentLoaded', onReady, true);
+                    window.removeEventListener('load', onReady, true);
+                };
+                document.addEventListener('DOMContentLoaded', onReady, true);
+                window.addEventListener('load', onReady, true);
+            }
+        });
+    })();
+
+
+    function run() {
+        console.log("document ready");
+
+        // Hook up buttons UI
+        document.getElementById('srcplay').onclick = function () {
+            to.update({velocity:1.0});
+        };
+        document.getElementById('srcpause').onclick = function () {
+            to.update({velocity:0.0});
+        };
+        document.getElementById('srcreset').onclick = function () {
+            to.update({position: 0.0, velocity:0.0});
+        };
+        document.getElementById('srcback').onclick = function () {
+            to.update({velocity:-1.0});
+        };
+
+        document.getElementById('switch').onclick = function () {
+            if (to.timingsrc == toA) {
+                to.timingsrc = toB;
+            } else if (to.timingsrc == toB) {
+                to.timingsrc = toA;
+            }
         }
-        console.log("source onchange", to.vector);
-      };
-      sourcehandler.init = false;
 
-      to.on("change", sourcehandler);
-
-      // Hook up buttons UI
-      document.getElementById('srcplay').onclick = function () {to.update({velocity:1.0});};
-      document.getElementById('srcpause').onclick = function () {to.update({velocity:0.0});};
-      document.getElementById('srcreset').onclick = function () {to.update({position: 0.0, velocity:0.0});};
-      document.getElementById('srcback').onclick = function () {to.update({velocity:-1.0});};
-
-      // Hook up text UI
-      var srcvalue = document.getElementById('srcvalue');
-      to.on("timeupdate", function () {
-        srcvalue.innerHTML = to.query().position.toFixed(2); 
-      });
+        // Hook up text UI
+        let srcvalue = document.getElementById('srcvalue');
+        to.on("timeupdate", function () {
+            srcvalue.innerHTML = to.query().position.toFixed(2);
+        });
     };
 
+    require(['test/main'], function (timingsrc) {
 
-    require(['timingsrc'], function (timingsrc) {
-      // timing object
-      to = new timingsrc.TimingObject();
-      console.log("timingobject init");
-      to.ready.then(function () {
-        console.log("timingobject ready");
-        if (document.readyState === "complete") {ui();}
-        else {window.onload = function () {ui();};}
-      });
+        // app
+        app = MCorp.app("8456579076771837888", {anon:true});
+        app.ready.then(function() {
+            console.log("motion ready");
+            motion = app.motions.shared;
+            toA.timingsrc = motion;
+        });
 
-   
+        /*
+            Test live flag in event args.
+            Test switching between timingsources
+        */
 
+        // timing object
+        toA = new timingsrc.TimingObject();
+        toB = new timingsrc.TimingObject();
 
-      app = MCorp.app("8456579076771837888", {anon:true});
-      app.run = function () {
-        console.log("motion ready");
-        motion = app.motions.shared;
-        to.timingsrc = motion;
-      };
-      app.init();
-    });        
+        to = new timingsrc.TimingObject({timingsrc:toA});
+
+        // timing object
+        to.on("change", function (eArg) {
+            console.log("onchange", to.vector, to.range);
+            console.log(eArg);
+        });
+
+        to.ready.then(function(){
+            console.log("to ready");
+        });
+
+        // run
+        document.ready.then(function(){
+            run();
+        })
+    });
 
 </script>
 </head>
@@ -73,6 +111,8 @@
 <button id="srcpause">Pause</button>
 <button id="srcreset">Reset</button>
 <button id="srcback">Back</button>
-
+<p>
+   <button id="switch">Switch</button>
+</p>
 </body>
 </html>

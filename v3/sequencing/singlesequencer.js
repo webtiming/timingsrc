@@ -375,7 +375,7 @@ define(function(require) {
          TIMING OBJECT CALLBACK
         ***************************************************************/
 
-        _onTimingCallback (eArg, eInfo) {
+        _onTimingCallback (eArg) {
             const events = [];
             /*
                 If update is the initial vector from the timing object,
@@ -385,10 +385,12 @@ define(function(require) {
                 This is represented by the new_vector.
             */
             let new_vector;
-            if (eInfo.init) {
-                new_vector = motionutils.calculateVector(to.vector, to.clock.now());
-            } else {
+
+            if (eArg.live) {
                 new_vector = to.vector;
+            } else {
+                // make a live vector from to vector
+                new_vector = motionutils.calculateVector(to.vector, to.clock.now());
             }
 
             /*

@@ -49,7 +49,10 @@ define(function (require) {
 
 			this._provider = provider;
 
-			this._provider_clock; // provider clock (may fluctuate based on live skew estimates)
+			/*
+				provider clock (may fluctuate based on live skew estimates)
+			*/
+			this._provider_clock;
 			/*
 				local clock
 				provider clock normalised to values of performance now
@@ -59,8 +62,8 @@ define(function (require) {
 
 
 			// register event handlers
-			this._provider.on("vectorchange", this._onVectorChange().bind(this));
-			this._provider.on("skewchange", this._onSkewChange().bind(this));
+			this._provider.on("vectorchange", this._onVectorChange.bind(this));
+			this._provider.on("skewchange", this._onSkewChange.bind(this));
 
 			// check if provider is ready
 			let self = this;
@@ -95,7 +98,11 @@ define(function (require) {
 			if (!this.isReady() && this._provider.vector != undefined) {
 				// just became ready (onVectorChange has fired earlier)
 				this._range = this._provider.range;
-				this._preProcess(this._provider.vector);
+				let eArg = {
+					vector: this._provider.vector,
+					live: false
+				}
+				this._preProcess(eArg);
 			}
 		};
 
@@ -105,7 +112,11 @@ define(function (require) {
 				if (!this._range) {
 					this._range = this._provider.range;
 				}
-				this._preProcess(this._provider.vector);
+				let eArg = {
+					vector: this._provider.vector,
+					live:true
+				}
+				this._preProcess(eArg);
 			}
 		};
 
@@ -138,6 +149,10 @@ define(function (require) {
 		update(vector) {
 			return this._provider.update(vector);
 		};
+
+		/*
+			TODO - support onRangeChange from provider
+		*/
 
 	}
 

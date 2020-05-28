@@ -63,8 +63,11 @@ define(function (require) {
 
 		// update
 		update(vector) {
-			let newVector = this.checkUpdateVector(vector);
-			this._preProcess(newVector);
+			let eArg = {
+				vector: this.checkUpdateVector(vector),
+				live: true
+			};
+			this._preProcess(eArg);
 		};
 	}
 

@@ -38,10 +38,20 @@ define(function (require) {
 		constructor (timingsrc, options) {
 			super(options);
 			this._version = 4;
-			this._timingsrc = undefined;
-			this._sub;
-			this.timingsrc = timingsrc;
-			// subscription
+
+			// initialise timingsrc
+			if (timingsrc == undefined) {
+				// no given timingsrc
+				// create InternalProvider from options
+				let _options = {
+					vector : this._options.vector,
+					range : this._options.range
+				}
+				this._timingsrc = new InternalProvider(_options);
+			} else {
+				this._timingsrc = timingsrc;
+			}
+			this._sub = this._timingsrc.on("change", this._internalOnChange.bind(this));
 		};
 
 
@@ -56,9 +66,9 @@ define(function (require) {
 
 
 		// timingsrc onchange handler
-		_internalOnChange(eArg, eInfo) {
-			let vector = this._timingsrc.vector;
-			this._preProcess(vector);
+		_internalOnChange(eArg) {
+			//let vector = this._timingsrc.vector;
+			this._preProcess(eArg);
 		};
 
 		/*
@@ -78,22 +88,13 @@ define(function (require) {
 
 		set timingsrc (timingsrc) {
 			// new timingsrc undefined
-			if (!timingsrc) {
-				let options;
-				if (!this._timingsrc) {
-					// first time - use options
-					options = {
-						vector : this._options.vector,
-						range : this._options.range
-					}
-				} else {
-					// not first time - use current state
-					options = {
-						vector : this._vector,
-						range : this._range
-					}
+			if (timingsrc == undefined) {
+				// create InternalProvider from current state
+				let _options = {
+					vector : this._vector,
+					range : this._range
 				}
-				timingsrc = new InternalProvider(options);
+				timingsrc = new InternalProvider(_options);
 			}
 			else if ((timingsrc instanceof TimingObjectBase) === false) {
 				// external provider - try to wrap it
@@ -101,6 +102,7 @@ define(function (require) {
 					timingsrc = new ExternalProvider(timingsrc);
 				} catch (e) {
 					console.log(timingsrc);
+					console.log(e);
 					throw new Error ("illegal timingsrc - not instance of timing object base and not timing provider");
 				}
 			}
@@ -119,9 +121,10 @@ define(function (require) {
 			// disconnect and clean up timingsrc
 			if (this._timingsrc) {
 				this._timingsrc.off(this._sub);
-				this.sub = undefined;
+				this._sub = undefined;
 			}
 			this._timingsrc = timingsrc;
+			// TODO : build this into preProcess instead?
 			if (this._timingsrc.range !== this._range) {
 				this._range = this.onRangeChange(this._timingsrc.range);
 			}

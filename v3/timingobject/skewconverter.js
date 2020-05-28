@@ -35,8 +35,8 @@ define(function (require) {
 	class SkewConverter extends TimingObjectBase {
 
 		constructor (timingsrc, skew, options) {
-			this._skew = skew;
 			super(timingsrc, options);
+			this._skew = skew;
 		}
 
 		// overrides
