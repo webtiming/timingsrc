@@ -23,6 +23,7 @@ define(function(require) {
 
     const endpoint = require("../util/endpoint");
     const Interval = require("../util/interval");
+    const Timeout = require("../util/timeout");
     const motionutils = require("../util/motionutils");
     const isMoving = motionutils.isMoving;
     const pft = motionutils.posInterval_from_timeInterval;
@@ -40,7 +41,7 @@ define(function(require) {
             // timingobject
             this.to = to;
             // current timeout
-            this.tid;
+            this.timeout = new Timeout(to.clock, this.run.bind(this));
             // current vector
             this.vector;
             // current time interval
@@ -85,41 +86,6 @@ define(function(require) {
             });
         };
 
-
-        /***************************************************************
-            TIMEOUTS
-        ***************************************************************/
-
-        /*
-            set timeout to point in time (seconds)
-        */
-        setTimeout(target_ts) {
-            if (this.tid != undefined) {
-                throw new Error("at most on timeout");
-            }
-            let now = this.to.clock.now();
-            let delay = Math.max(target_ts - now, 0) * 1000;
-            this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts);
-        }
-
-        /*
-            handle timeout intended for point in time (seconds)
-        */
-        onTimeout(target_ts) {
-            if (this.tid != undefined) {
-                this.tid = undefined;
-                // check if timeout was too early
-                let now = this.to.clock.now()
-                if (now < target_ts) {
-                    // schedule new timeout
-                    this.setTimeout(target_ts);
-                } else {
-                    // handle timeout
-                    this.run(now);
-                }
-            }
-        }
-
         /***************************************************************
             MOTION CHANGE
         ***************************************************************/
@@ -132,8 +98,7 @@ define(function(require) {
             // clean up current motion
             let current_vector = this.vector;
             if (this.vector != undefined) {
-                clearTimeout(this.tid);
-                this.tid = undefined;
+                this.timeout.clear();
                 this.timeInterval = undefined;
                 this.posInterval = undefined;
                 this.queue = [];
@@ -336,10 +301,9 @@ define(function(require) {
             }
             // timeout - until next due event
             let ts = this.next() || this.timeInterval.high;
-            this.setTimeout(Math.min(ts, this.timeInterval.high));
+            this.timeout.setTimeout(Math.min(ts, this.timeInterval.high));
         }
     }
 
     return Schedule;
 });
-
