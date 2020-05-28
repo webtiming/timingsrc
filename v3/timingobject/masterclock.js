@@ -56,7 +56,6 @@ define(function (require) {
 	'use strict';
 
 	const eventify = require('../util/eventify');
-	const timeoututils = require('../util/timeoututils');
 	const motionutils = require('../util/motionutils');
 
 
@@ -138,13 +137,6 @@ define(function (require) {
 		*/
 		query(now) {
 			return calculateVector(this._vector, now);
-		};
-
-		/*
-			Timeout support
-		*/
-		setTimeout(callback, delay, options) {
-			return timeoututils.setTimeout(this, callback, delay, options);
 		};
 
 	}

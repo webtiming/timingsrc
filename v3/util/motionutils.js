@@ -146,16 +146,16 @@ define(function (require) {
         // Time delta to hit rangeRight
         let deltaRight = calculateMinPositiveRealSolution(vector, range[1]);
         // Pick the appropriate solution
-        if (deltaLeft !== null && deltaRight !== null) {
+        if (deltaLeft !== undefined && deltaRight !== undefined) {
             if (deltaLeft < deltaRight) {
                 return [t0 + deltaLeft, range[0]];
             }
             else
                 return [t0 + deltaRight, range[1]];
         }
-        else if (deltaLeft !== null)
+        else if (deltaLeft !== undefined)
             return [t0 + deltaLeft, range[0]];
-        else if (deltaRight !== null)
+        else if (deltaRight !== undefined)
             return [t0 + deltaRight, range[1]];
         else return [undefined, undefined];
     }
@@ -249,7 +249,9 @@ define(function (require) {
     function calculateMinPositiveRealSolution(vector, x) {
         const {position: p, velocity: v, acceleration: a} = vector;
 		const res = calculatePositiveRealSolutions(p,v,a,x);
-		if (res.length === 0) return null;
+		if (res.length === 0) {
+            return;
+        }
 		else return res[0];
     };
 
@@ -275,17 +277,17 @@ define(function (require) {
 		// Time delta to hit posAfter
 		const deltaAfterSec = calculateMinPositiveRealSolution(vector, range[1]);
 		// Pick the appropriate solution
-		if (deltaBeforeSec !== null && deltaAfterSec !== null) {
+		if (deltaBeforeSec !== undefined && deltaAfterSec !== undefined) {
 		    if (deltaBeforeSec < deltaAfterSec)
 				return [deltaBeforeSec, range[0]];
 		    else
 				return [deltaAfterSec, range[1]];
 		}
-		else if (deltaBeforeSec !== null)
+		else if (deltaBeforeSec !== undefined)
 		    return [deltaBeforeSec, range[0]];
-		else if (deltaAfterSec !== null)
+		else if (deltaAfterSec !== undefined)
 		    return [deltaAfterSec, range[1]];
-		else return [null,null];
+		else return [undefined, undefined];
     };
 
 

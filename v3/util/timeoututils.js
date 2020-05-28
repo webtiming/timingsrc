@@ -2,20 +2,20 @@
 	Copyright 2015 Norut Northern Research Institute
 	Author : Ingar Mæhlum Arntzen
 
-  This file is part of the Timingsrc module.
+	This file is part of the Timingsrc module.
 
-  Timingsrc is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+	Timingsrc is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-  Timingsrc is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
+	Timingsrc is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public License
-  along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Lesser General Public License
+	along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -28,14 +28,14 @@ define(function () {
 
 	  Wraps setTimeout() to implement improved version
 	  - guarantee that timeout does not wake up too early
-	  - offers precise timeout by "busy"-looping just before timeout 
+	  - offers precise timeout by "busy"-looping just before timeout
 	  - wraps a single timeout
 	  - clock operates in seconds
 	  - parameters expected in seconds - breaking conformance with setTimeout
 	  - wakes up 3 seconds before on long timeouts to readjust
 	*/
 
-	var Timeout = function (clock, callback, delay, options) {	
+	var Timeout = function (clock, callback, delay, options) {
 		// clock
 		this._clock = clock; // seconds
 		var now = this._clock.now(); // seconds
@@ -64,7 +64,7 @@ define(function () {
 	};
 
 	Object.defineProperty(Timeout.prototype, 'target', {
-		get : function () { 
+		get : function () {
 			return this._target;
 		}
 	});
@@ -87,7 +87,7 @@ define(function () {
 			}
 	    }
 	};
-	
+
 	// Internal function - handler for small delays
 	Timeout.prototype.handleEvent = function (event) {
 	    if (event.source === window && event.data.indexOf("smalldelaymsg_") === 0) {
@@ -114,7 +114,7 @@ define(function () {
 			window.removeEventListener("message", this, true);
 	    }
 	};
-	
+
 	// return module object
 	return {
 		setTimeout: function (clock, callback, delay, options) {
@@ -122,4 +122,3 @@ define(function () {
 		}
 	};
 });
-

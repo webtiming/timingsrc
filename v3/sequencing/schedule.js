@@ -41,7 +41,7 @@ define(function(require) {
             // timingobject
             this.to = to;
             // current timeout
-            this.timeout = new Timeout(to.clock, this.run.bind(this));
+            this.timeout = new Timeout(to, this.run.bind(this));
             // current vector
             this.vector;
             // current time interval

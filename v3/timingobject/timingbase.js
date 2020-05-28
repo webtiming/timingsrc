@@ -24,6 +24,7 @@ define(function(require) {
 	'use strict';
 
 	const eventify = require('../util/eventify');
+	const Timeout = require('../util/timeout');
 	const motionutils = require('../util/motionutils');
 
 	/*
@@ -89,8 +90,11 @@ define(function(require) {
 			this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 
 			// timeout support
-			this._timeout = null; // timeoutid for range violation etc.
-			this._tid = null; // timeoutid for timeupdate
+			//this._timeout = null; // timeoutid for range violation etc.
+			this.timeout = new Timeout(this, this._onTimeout.bind(this));
+
+
+			this._tid = undefined; // timeoutid for timeupdate
 			if (!this._options.hasOwnProperty("timeout")) {
 				// range timeouts off by default
 				this._options.timeout = false;
@@ -98,12 +102,12 @@ define(function(require) {
 		};
 
 
-
-		/*
+		/***************************************************************
 
 			EVENTS
 
-		*/
+		***************************************************************/
+
 
 		/*
 		  	overrides how immediate events are constructed
@@ -120,11 +124,12 @@ define(function(require) {
 			}
 		};
 
-		/*
 
-			API
+		/***************************************************************
 
-		*/
+			ACCESSORS
+
+		***************************************************************/
 
 		// version
 		get version () {return this._version;};
@@ -165,6 +170,13 @@ define(function(require) {
         	throw new Error ("not implemented");
         }
 
+
+		/***************************************************************
+
+			QUERY
+
+		***************************************************************/
+
 		// query
 		query() {
 			if (this._ready.value === false)  {
@@ -174,7 +186,9 @@ define(function(require) {
 			let vector = motionutils.calculateVector(this._vector, this.clock.now());
 			let state = motionutils.correctRangeState(vector, this._range);
 			// detect range violation - only if timeout is set
-			if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
+			//if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
+			if (state !== motionutils.RangeState.INSIDE && this.timeout.isSet()) {
+
 				let eArg = {vector:vector, live:true};
 				this._preProcess(eArg);
 			}
@@ -186,6 +200,13 @@ define(function(require) {
 		get pos() {return this.query().position;};
 		get vel() {return this.query().velocity;};
 		get acc() {return this.query().acceleration;};
+
+
+		/***************************************************************
+
+			UPDATE
+
+		***************************************************************/
 
 		// update - to be ovverridden
 		update(vector) {
@@ -204,6 +225,7 @@ define(function(require) {
 			let acc = vector.acceleration;
 
 			if (pos == undefined && vel == undefined && acc == undefined) {
+				console.log("update noop");
 				return vector;
 				//throw new Error ("drop update, noop");
 			}
@@ -230,11 +252,11 @@ define(function(require) {
 			};
 		}
 
-		/*
+		/***************************************************************
 
-			INTERNAL METHODS
+			CORE UPDATE PROCESSING
 
-		*/
+		***************************************************************/
 
 		/*
 			do not override
@@ -251,25 +273,6 @@ define(function(require) {
 			this._process(eArg);
 		};
 
-
-		// may be overridden by subclsaa
-		onRangeChange(range) {
-			return range;
-		};
-
-		/*
-			specify transformation
-			on the incoming vector before processing.
-			useful for Converters that do mathematical transformations,
-			or as a way to enforse range restrictions.
-			invoming vectors from external change events or internal
-			timeout events
-
-			returning null stops further processing, exept renewtimeout
-		*/
-		onVectorChange(vector) {
-			return motionutils.checkRange(vector, this._range);
-		};
 
 		/*
 			core processing step after change event or timeout
@@ -304,77 +307,45 @@ define(function(require) {
 			// trigger timeupdate events
 			this.eventifyTriggerEvent("timeupdate");
 			let moving = motionutils.isMoving(this._vector);
-			if (moving && this._tid === null) {
+			if (moving && this._tid === undefined) {
 				let self = this;
 				this._tid = setInterval(function () {
 					self.eventifyTriggerEvent("timeupdate");
 				}, 200);
-			} else if (!moving && this._tid !== null) {
+			} else if (!moving && this._tid !== undefined) {
 				clearTimeout(this._tid);
-				this._tid = null;
+				this._tid = undefined;
 			}
 		};
 
 
-		/*
+		/***************************************************************
 
-			TIMEOUTS
+			SUBCLASS MAY OVERRIDE
 
-		*/
+		***************************************************************/
 
-		/*
-			do not override
-			renew timeout is called during evenry processing step
-			in order to recalculate timeouts.
-			the calculation may be specialized in
-			_calculateTimeoutVector
-		*/
-		_renewTimeout() {
-			if (this._options.timeout === true) {
-				this._clearTimeout();
-				let vector = this._calculateTimeoutVector();
-				if (vector === null) {return;}
-				let now = this.clock.now();
-		 		let secDelay = vector.timestamp - now;
-		 		let self = this;
-		 		this._timeout = this.clock.setTimeout(function () {
-		 			let eArg = {
-		 				vector: self.onTimeout(vector),
-		 				live: true
-		 			}
-					self._process(eArg);
-		      	}, secDelay, {anchor: now, early: 0.005});
-			}
+
+		// may be overridden by subclsaa
+		onRangeChange(range) {
+			return range;
 		};
 
 		/*
-			to be overridden
-			must be implemented by subclass if range timeouts are required
-			calculate a vector that will be delivered to _process().
-			the timestamp in the vector determines when it is delivered.
+			specify transformation
+			on the incoming vector before processing.
+			useful for Converters that do mathematical transformations,
+			or as a way to enforse range restrictions.
+			invoming vectors from external change events or internal
+			timeout events
+
+			returning null stops further processing, exept renewtimeout
 		*/
-		_calculateTimeoutVector() {
-			let freshVector = this.query();
-			let res = motionutils.calculateDelta(freshVector, this._range);
-			let deltaSec = res[0];
-			if (deltaSec === null) return null;
-			if (deltaSec === Infinity) return null;
-			let position = res[1];
-			let vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
-			vector.position = position; // avoid rounding errors
-			return vector;
+		onVectorChange(vector) {
+			return motionutils.checkRange(vector, this._range);
 		};
 
-		/*
-			do not override
-			internal utility function for clearing vector timeout
-		*/
-		_clearTimeout() {
-			if (this._timeout !== null) {
-				this._timeout.cancel();
-				this._timeout = null;
-			}
-		};
+
 
 		/*
 			to be overridden
@@ -385,6 +356,71 @@ define(function(require) {
 		onTimeout(vector) {
 			return motionutils.checkRange(vector, this._range);
 		};
+
+
+
+		/***************************************************************
+
+			TIMEOUTS
+
+		***************************************************************/
+
+		/*
+			do not override
+			renew timeout is called during evenry processing step
+			in order to recalculate timeouts.
+			the calculation may be specialized in
+			_calculateTimeoutVector
+		*/
+		_renewTimeout() {
+			if (this._options.timeout === true) {
+				this.timeout.clear();
+				let vector = this._calculateTimeoutVector();
+				if (vector === undefined) {
+					return;
+				}
+				this.timeout.setTimeout(vector.timestamp, vector);
+			}
+		};
+
+		/*
+			do not override
+			internal handle timeout
+		*/
+
+		_onTimeout(now, vector) {
+ 			vector = this.onTimeout(vector);
+			let eArg = {
+ 				live: true,
+ 				vector: vector
+ 			}
+			this._process(eArg);
+		}
+
+
+		/*
+			to be overridden
+			must be implemented by subclass if range timeouts are required
+			calculate a vector that will be delivered to _process().
+			the timestamp in the vector determines when it is delivered.
+		*/
+		_calculateTimeoutVector() {
+			let freshVector = this.query();
+			let res = motionutils.calculateDelta(freshVector, this._range);
+			let [deltaSec, position] = res;
+			if (deltaSec === undefined) {
+				return;
+			}
+			if (deltaSec === Infinity) {
+				return;
+			}
+			let vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
+			// avoid rounding errors
+			vector.position = position;
+			return vector;
+		};
+
+
 	}
 
 	eventify.eventifyPrototype(TimingBase.prototype);

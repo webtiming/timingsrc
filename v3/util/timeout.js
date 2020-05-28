@@ -36,38 +36,42 @@ define(function() {
 
     class Timeout {
 
-        constructor (clock, callback) {
+        constructor (timingObject, callback) {
             this.tid = undefined;
-            this.clock = clock;
+            this.to = timingObject;
             this.callback = callback;
+        }
+
+        isSet() {
+            return this.tid != undefined;
         }
 
         /*
             set timeout to point in time (seconds)
         */
-        setTimeout(target_ts) {
+        setTimeout(target_ts, arg) {
             if (this.tid != undefined) {
                 throw new Error("at most on timeout");
             }
-            let now = this.clock.now();
+            let now = this.to.clock.now();
             let delay = Math.max(target_ts - now, 0) * 1000;
-            this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts);
+            this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts, arg);
         }
 
         /*
             handle timeout intended for point in time (seconds)
         */
-        onTimeout(target_ts) {
+        onTimeout(target_ts, arg) {
             if (this.tid != undefined) {
                 this.tid = undefined;
                 // check if timeout was too early
-                let now = this.clock.now()
+                let now = this.to.clock.now()
                 if (now < target_ts) {
                     // schedule new timeout
-                    this.setTimeout(target_ts);
+                    this.setTimeout(target_ts, arg);
                 } else {
                     // handle timeout
-                    this.callback(now);
+                    this.callback(now, arg);
                 }
             }
         }
