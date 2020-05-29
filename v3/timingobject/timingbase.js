@@ -89,16 +89,15 @@ define(function(require) {
 			this.eventifyDefineEvent("change", {init:true}); // define change event (supporting init-event)
 			this.eventifyDefineEvent("timeupdate", {init:true}); // define timeupdate event (supporting init-event)
 
-			// timeout support
-			//this._timeout = null; // timeoutid for range violation etc.
-			this.timeout = new Timeout(this, this._onTimeout.bind(this));
-
-
-			this._tid = undefined; // timeoutid for timeupdate
-			if (!this._options.hasOwnProperty("timeout")) {
-				// range timeouts off by default
-				this._options.timeout = false;
+			// range restriction timeout
+			// off by default
+			if (this._options.timeout == undefined) {
+				this._options.timeout = false
 			}
+			this._timeout = new Timeout(this, this._handleTimeout.bind(this));
+
+			// timeoutid for timeupdate event
+			this._tid = undefined;
 		};
 
 
@@ -108,7 +107,6 @@ define(function(require) {
 
 		***************************************************************/
 
-
 		/*
 		  	overrides how immediate events are constructed
 		  	specific to eventutils
@@ -117,7 +115,12 @@ define(function(require) {
 		eventifyInitEventArg = function (name) {
 			if (this._ready.value) {
 				if (name === "change") {
-					return [true, {vector:this._vector, live:false}];
+					let eArg = {
+						vector: this._vector,
+						range: this._range,
+						live:false
+					}
+					return [true, eArg];
 				} else if (name === "timeupdate") {
 					return [true, undefined];
 				}
@@ -185,10 +188,8 @@ define(function(require) {
 			// reevaluate state to handle range violation
 			let vector = motionutils.calculateVector(this._vector, this.clock.now());
 			let state = motionutils.correctRangeState(vector, this._range);
-			// detect range violation - only if timeout is set
-			//if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
-			if (state !== motionutils.RangeState.INSIDE && this.timeout.isSet()) {
-
+			// detect range violation - only if timeout is set {
+			if (state !== motionutils.RangeState.INSIDE && this._timeout.isSet()) {
 				let eArg = {vector:vector, live:true};
 				this._preProcess(eArg);
 			}
@@ -208,7 +209,7 @@ define(function(require) {
 
 		***************************************************************/
 
-		// update - to be ovverridden
+		// update - to be overridden
 		update(vector) {
 			throw new Error ("not implemented");
 		};
@@ -260,37 +261,75 @@ define(function(require) {
 
 		/*
 			do not override
-			Handle incoming vector, from "change" from external object
-			or from an internal timeout.
+			handle incoming change event
+			eArg = {vector:vector, range:range, live:true}
 
-			onVectorChange is invoked allowing subclasses to specify transformation
-			on the incoming vector before processing.
+			subclasses may specialise behaviour by overriding
+			onVectorChange
+
 		*/
-		_preProcess(eArg) {
-			if (eArg.vector) {
-				eArg.vector = this.onVectorChange(eArg.vector);
+		_preProcess(arg) {
+			if (arg.vector != undefined) {
+				arg.vector = this.onVectorChange(arg.vector);
 			}
-			this._process(eArg);
+			if (arg.range != undefined) {
+				arg.range = this.onRangeChange(arg.range);
+			}
+			this._process(arg);
 		};
 
+
+		/*
+			do not override
+			handle timeout
+		*/
+		_handleTimeout(now, vector) {
+ 			vector = this.onTimeout(vector);
+			this._process({live:true, vector: vector});
+		}
 
 		/*
 			core processing step after change event or timeout
 			assignes the internal vector
 		*/
-		_process(eArg) {
-			if (eArg.vector !== undefined) {
-				this._old_vector = this._vector;
-				// update internal vector
-				this._vector = eArg.vector;
-				// trigger events
-				this._ready.value = true;
-				// unlock update promises
-				this._event_variables.forEach(function(event) {
-					event.value = true;
-				});
-				this._event_variables = [];
-				this._postProcess(eArg);
+		_process(arg) {
+			// handle range change
+			let range = arg.range;
+			if (range != undefined) {
+				if (range !== this._range) {
+					this._range = range
+					arg.range = range;
+				} else {
+					// no change
+					delete arg.range;
+				}
+			}
+
+			// handle vector change
+			let vector = arg.vector;
+			if (vector != undefined) {
+				// make sure vector is consistent with range
+				vector = motionutils.checkRange(vector, this._range);
+				if (!motionutils.equalVectors(vector, this._vector)) {
+					// save old vector
+					this._old_vector = this._vector;
+					// update vector
+					this._vector = vector;
+					arg.vector = vector;
+				} else {
+					// no change
+					delete arg.vector;
+				}
+			}
+			// trigger events
+			this._ready.value = true;
+			// unlock update promises
+			this._event_variables.forEach(function(event) {
+				event.value = true;
+			});
+			this._event_variables = [];
+			if (arg.range != undefined || arg.vector != undefined) {
+				this._postProcess(arg);
 			}
 			// renew timeout
 			this._renewTimeout();
@@ -301,9 +340,9 @@ define(function(require) {
 			overriding this is only necessary if external change events
 			need to be suppressed,
 		*/
-		_postProcess(eArg) {
+		_postProcess(arg) {
 			// trigger change events
-			this.eventifyTriggerEvent("change", eArg);
+			this.eventifyTriggerEvent("change", arg);
 			// trigger timeupdate events
 			this.eventifyTriggerEvent("timeupdate");
 			let moving = motionutils.isMoving(this._vector);
@@ -327,9 +366,7 @@ define(function(require) {
 
 
 		// may be overridden by subclsaa
-		onRangeChange(range) {
-			return range;
-		};
+		onRangeChange(range) {return range;};
 
 		/*
 			specify transformation
@@ -341,11 +378,7 @@ define(function(require) {
 
 			returning null stops further processing, exept renewtimeout
 		*/
-		onVectorChange(vector) {
-			return motionutils.checkRange(vector, this._range);
-		};
-
-
+		onVectorChange(vector) {return vector;};
 
 		/*
 			to be overridden
@@ -353,11 +386,7 @@ define(function(require) {
 			before it is given to process.
 			returning null stops further processing, except renewtimeout
 		*/
-		onTimeout(vector) {
-			return motionutils.checkRange(vector, this._range);
-		};
-
-
+		onTimeout(vector) {return vector;};
 
 		/***************************************************************
 
@@ -374,28 +403,16 @@ define(function(require) {
 		*/
 		_renewTimeout() {
 			if (this._options.timeout === true) {
-				this.timeout.clear();
+				this._timeout.clear();
 				let vector = this._calculateTimeoutVector();
 				if (vector === undefined) {
 					return;
 				}
-				this.timeout.setTimeout(vector.timestamp, vector);
+				this._timeout.setTimeout(vector.timestamp, vector);
 			}
 		};
 
-		/*
-			do not override
-			internal handle timeout
-		*/
 
-		_onTimeout(now, vector) {
- 			vector = this.onTimeout(vector);
-			let eArg = {
- 				live: true,
- 				vector: vector
- 			}
-			this._process(eArg);
-		}
 
 
 		/*

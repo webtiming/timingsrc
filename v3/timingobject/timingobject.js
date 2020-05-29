@@ -32,8 +32,13 @@ define(function (require) {
 	class TimingObject extends TimingObjectBase {
 		constructor (options) {
 			options = options || {};
-			let timingsrc = options.timingsrc || options.provider;
-			super(timingsrc, options);
+			// support timing object instead of options
+			if (options instanceof TimingObjectBase){
+				super(options);
+			} else {
+				let timingsrc = options.timingsrc || options.provider;
+				super(timingsrc, options);
+			}
 		};
 
 		update(vector) {

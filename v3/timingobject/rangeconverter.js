@@ -105,7 +105,7 @@ define(function (require) {
 			var vector = motionutils.calculateVector(this._timingsrc.vector, this.clock.now());
 			var state = motionutils.correctRangeState(vector, this._range);
 			// detect range violation - only if timeout is set
-			if (state !== motionutils.RangeState.INSIDE && this._timeout !== null) {
+			if (state !== motionutils.RangeState.INSIDE && this._timeout.isSet()) {
 				this._preProcess(vector);
 			}
 			// re-evaluate query after state transition

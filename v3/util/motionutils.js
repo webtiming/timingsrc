@@ -33,6 +33,16 @@ define(function (require) {
      BASIC
     *******************************************************************/
 
+    function equalVectors(vector_a, vector_b) {
+        let pos = vector_a.position == vector_b.position;
+        let vel = vector_a.velocity == vector_b.velocity;
+        let acc = vector_a.acceleration == vector_b.acceleration;
+        let ts = vector_a.timestamp == vector_b.timestamp;
+        return pos && vel && acc && ts;
+    };
+
+
+
     /*
         Calculate vector snapshot for motion defined by vector at time ts
 
@@ -652,6 +662,7 @@ define(function (require) {
 	// return module object
 	return {
         isMoving: isMoving,
+        equalVectors: equalVectors,
 		calculateVector : calculateVector,
 		calculateDirection : calculateDirection,
 		calculateMinPositiveRealSolution : calculateMinPositiveRealSolution,
