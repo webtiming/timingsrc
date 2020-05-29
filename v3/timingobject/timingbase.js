@@ -269,13 +269,17 @@ define(function(require) {
 
 		*/
 		_preProcess(arg) {
-			if (arg.vector != undefined) {
-				arg.vector = this.onVectorChange(arg.vector);
+			arg = arg || {};
+			let {vector, range, live} = arg;
+			if (vector != undefined) {
+				vector = motionutils.copyVector(vector);
+				vector = this.onVectorChange(vector);
 			}
-			if (arg.range != undefined) {
-				arg.range = this.onRangeChange(arg.range);
+			if (range != undefined) {
+				range = [range[0], range[1]];
+				range = this.onRangeChange(range);
 			}
-			this._process(arg);
+			this._process({vector:vector, range:range, live:live});
 		};
 
 
@@ -293,22 +297,21 @@ define(function(require) {
 			assignes the internal vector
 		*/
 		_process(arg) {
+			let {vector, range, live} = arg;
+			live = (live == undefined) ? true : live;
+			arg = {live:live};
 			// handle range change
-			let range = arg.range;
 			if (range != undefined) {
 				if (range !== this._range) {
+					range = [range[0], range[1]];
 					this._range = range
 					arg.range = range;
-				} else {
-					// no change
-					delete arg.range;
 				}
 			}
-
 			// handle vector change
-			let vector = arg.vector;
 			if (vector != undefined) {
 				// make sure vector is consistent with range
+				vector = motionutils.copyVector(vector);
 				vector = motionutils.checkRange(vector, this._range);
 				if (!motionutils.equalVectors(vector, this._vector)) {
 					// save old vector
@@ -316,9 +319,6 @@ define(function(require) {
 					// update vector
 					this._vector = vector;
 					arg.vector = vector;
-				} else {
-					// no change
-					delete arg.vector;
 				}
 			}
 			// trigger events

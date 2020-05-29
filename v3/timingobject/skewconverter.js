@@ -49,11 +49,12 @@ define(function (require) {
 		// overrides
 		onVectorChange(vector) {
 			vector.position += this._skew;
-			return vector;
+            return vector;
+
 		};
 
 		update(vector) {
-			if (vector.position !== undefined && vector.position !== null) {
+			if (vector.position !== undefined) {
 				vector.position = vector.position - this._skew;
 			}
 			return this.timingsrc.update(vector);
@@ -64,10 +65,11 @@ define(function (require) {
 
 		set skew(skew) {
 			this._skew = skew;
-			// pick up vector from timingsrc
-			var src_vector = this.timingsrc.vector;
-			// use this vector to emulate new event from timingsrc
-			this._preProcess(src_vector);
+			// pick up state from timingsrc
+			let src_vector = this.timingsrc.vector;
+            let src_range = this.timingsrc.range;
+			// emulate new event from timingsrc
+			this._preProcess({vector: src_vector, range: src_range});
 		}
 	};
 

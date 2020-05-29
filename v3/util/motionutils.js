@@ -42,6 +42,14 @@ define(function (require) {
     };
 
 
+    function copyVector(vector) {
+        return {
+            position: vector.position,
+            velocity: vector.velocity,
+            acceleration: vector.acceleration,
+            timestamp: vector.timestamp
+        }
+    };
 
     /*
         Calculate vector snapshot for motion defined by vector at time ts
@@ -663,6 +671,7 @@ define(function (require) {
 	return {
         isMoving: isMoving,
         equalVectors: equalVectors,
+        copyVector: copyVector,
 		calculateVector : calculateVector,
 		calculateDirection : calculateDirection,
 		calculateMinPositiveRealSolution : calculateMinPositiveRealSolution,
