@@ -37,7 +37,17 @@ define(function (require) {
 		constructor (timingsrc, skew, options) {
 			super(timingsrc, options);
 			this._skew = skew;
+            this.eventifyDefineEvent("skewchange", {init:true});
 		}
+
+        // extend
+        eventifyInitEventArg(name) {
+            if (this._ready.value && name == "skewchange") {
+                return [true, this._skew];
+            } else {
+                return super.eventifyInitEventArg(name)
+            }
+        }
 
 		// overrides
 		onRangeChange(range) {
@@ -53,23 +63,31 @@ define(function (require) {
 
 		};
 
-		update(vector) {
-			if (vector.position !== undefined) {
-				vector.position = vector.position - this._skew;
-			}
-			return this.timingsrc.update(vector);
+		update(vector, range) {
+            if (vector != undefined) {
+    			if (vector.position !== undefined) {
+    				vector.position = vector.position - this._skew;
+    			}
+            }
+            if (range != undefined) {
+                let [low, high] = range;
+                range = [low - this._skew, high - this._skew];
+            }
+			return super.update(vector, range);
 		};
-
 
 		get skew() {return this._skew;};
 
 		set skew(skew) {
-			this._skew = skew;
-			// pick up state from timingsrc
-			let src_vector = this.timingsrc.vector;
-            let src_range = this.timingsrc.range;
-			// emulate new event from timingsrc
-			this._preProcess({vector: src_vector, range: src_range});
+            if (skew != this._skew) {
+                // set skew and emulate new event from timingsrc
+    			this._skew = skew;
+    			this.__handleEvent({
+                    vector: this.timingsrc.vector,
+                    range: this.timingsrc.range
+                });
+                this.eventifyTriggerEvent("skewchange", skew);
+            }
 		}
 	};
 

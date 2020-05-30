@@ -102,7 +102,7 @@ define(function (require) {
 					vector: this._provider.vector,
 					live: false
 				}
-				this._preProcess(eArg);
+				this.__handleEvent(eArg);
 			}
 		};
 
@@ -116,7 +116,7 @@ define(function (require) {
 					vector: this._provider.vector,
 					live:true
 				}
-				this._preProcess(eArg);
+				this.__handleEvent(eArg);
 			}
 		};
 
@@ -146,14 +146,19 @@ define(function (require) {
 		};
 
 		// update
-		update(vector) {
-			return this._provider.update(vector);
+		__update(arg) {
+			if (arg.vector != undefined) {
+				let res = this._provider.update(arg.vector);
+			}
+			// return success
+			return true;
 		};
 
 		/*
+			TODO - support setting range on provider
+			TODO - suppport tunnel
 			TODO - support onRangeChange from provider
 		*/
-
 	}
 
 	return ExternalProvider;

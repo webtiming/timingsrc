@@ -26,6 +26,14 @@ define(function (require) {
 	const TimingBase = require('./timingbase');
 	const InternalProvider = require('./internalprovider');
 	const ExternalProvider = require('./externalprovider');
+	const eventify = require('../util/eventify');
+
+	const MAX_NONCE = 10000;
+
+	function getRandomInt() {
+	 	return Math.floor(Math.random() * MAX_NONCE);
+	};
+
 
 	/*
 
@@ -37,7 +45,10 @@ define(function (require) {
 
 		constructor (timingsrc, options) {
 			super(options);
-			this._version = 4;
+			this.__version = 4;
+
+			// update
+			this.__update_events = new Map();
 
 			// initialise timingsrc
 			if (timingsrc == undefined) {
@@ -51,25 +62,16 @@ define(function (require) {
 			} else {
 				this._timingsrc = timingsrc;
 			}
-			this._sub = this._timingsrc.on("change", this._internalOnChange.bind(this));
+			this._sub = this._timingsrc.on("timingsrc", this.__handleEvent.bind(this));
 		};
 
 
 		// internal clock
 		get clock() {return this._timingsrc.clock;};
 
+		// version
+		get version () {return this.__version;};
 
-		onRangeChange(range) {return range;};
-
-		// invoked just after timingsrc switch
-		onSwitch() {};
-
-
-		// timingsrc onchange handler
-		_internalOnChange(eArg) {
-			//let vector = this._timingsrc.vector;
-			this._preProcess(eArg);
-		};
 
 		/*
 
@@ -129,18 +131,42 @@ define(function (require) {
 				this._range = this.onRangeChange(this._timingsrc.range);
 			}
 			this.onSwitch();
-			this._sub = this._timingsrc.on("change", this._internalOnChange.bind(this));
+			this._sub = this._timingsrc.on("timingsrc", this.__handleEvent.bind(this));
 		};
 
-		// update
-		update(vector) {
-			return this._timingsrc.update(vector);
+		// internal update
+		__update(arg) {
+			return this._timingsrc.__update(arg);
 		};
+
+		// external update
+		update(vector, range) {
+			let nonce = getRandomInt();
+			this.__update({vector:vector, range:range, tunnel:nonce});
+			let event = new eventify.EventVariable();
+			this.__update_events.set(nonce, event);
+			const conditionFunc = function (val) {return val != undefined};
+			return eventify.makePromise(event, conditionFunc);
+		}
+
+		onUpdateDone(arg) {
+			// unlock update promises
+			if (arg.tunnel != undefined) {
+				let event = this.__update_events.get(arg.tunnel);
+				if (event) {
+					this.__update_events.delete(arg.tunnel);
+					event.value = arg.vector;
+				}
+			}
+			// since externalprovider does not support tunnel yet
+			// free all remaining promises
+			for (let event of this.__update_events.values()) {
+				event.value = {};
+			}
+		}
 	}
 
-
 	return TimingObjectBase;
-
 });
 
 

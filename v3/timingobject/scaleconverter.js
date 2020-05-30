@@ -34,8 +34,8 @@ define(function (require) {
 
 	class ScaleConverter extends TimingObjectBase {
         constructor (timingsrc, factor) {
-    		this._factor = factor;
     		super(timingsrc);
+    		this._factor = factor;
     	};
 
     	// overrides
@@ -52,9 +52,15 @@ define(function (require) {
     	};
 
     	update(vector) {
-    		if (vector.position !== undefined && vector.position !== null) vector.position = vector.position / this._factor;
-    		if (vector.velocity !== undefined && vector.velocity !== null) vector.velocity = vector.velocity / this._factor;
-    		if (vector.acceleration !== undefined && vector.acceleration !== null) vector.acceleration = vector.acceleration / this._factor;
+    		if (vector.position !== undefined) {
+                vector.position = vector.position / this._factor;
+            }
+    		if (vector.velocity !== undefined) {
+                vector.velocity = vector.velocity / this._factor;
+            }
+    		if (vector.acceleration !== undefined) {
+                vector.acceleration = vector.acceleration / this._factor;
+            }
     		return this.timingsrc.update(vector);
     	};
 

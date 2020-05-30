@@ -86,18 +86,17 @@
             function run() {
 
                 to = new timingsrc.TimingObject({range:[0,10]});
-                setup_timingobject(0, "Source", to);
+                setup_timingobject(0, "source", to);
 
-                w = new timingsrc.SkewConverter(to, 2.0);
-                setup_timingobject(1, "Skew", w);
+                //w = new timingsrc.SkewConverter(to, 2.0);
                 //w = new timingsrc.DelayConverter(to, 1.0);
-                //w = new timingsrc.ScaleConverter(to, 2);
+                w = new timingsrc.ScaleConverter(to, 2);
                 //w = new timingsrc.LoopConverter(to, [0, 10]);
                 //w = new timingsrc.RangeConverter(to, [2,8]);
                 //w = new timingsrc.TimeShiftConverter(to, -1.0);
                 //w = new timingsrc.LocalConverter(to);
-
                 //w = new timingsrc.DerivativeConverter(to);
+                setup_timingobject(1, "converter", w);
 
 
                 //w = setup_converter1(to);

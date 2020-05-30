@@ -23,7 +23,6 @@ define(function (require) {
 
 	'use strict';
 
-	const eventify = require('../util/eventify');
 	const TimingObjectBase = require('./timingobjectbase');
 
 	/*
@@ -40,15 +39,6 @@ define(function (require) {
 				super(timingsrc, options);
 			}
 		};
-
-		update(vector) {
-			// create promise
-			let event = new eventify.EventBoolean();
-			let promise = eventify.makePromise(event);
-			this._event_variables.push(event);
-			super.update(vector);
-			return promise;
-		}
 	}
 
 	return TimingObject;

@@ -74,7 +74,7 @@ define(function(require) {
             this._sched_cb = this._sched.add_callback(cb)
 
             // Timing Object Callback
-            this._sub = this._to.on("change", this._onTimingCallback.bind(this));
+            this._sub = this._to.on("timingsrc", this._onTimingCallback.bind(this));
 
             // Change event
             eventify.eventifyInstance(this);

@@ -261,23 +261,16 @@ define(function () {
 
 
 	/*
-		EVENT BOOLEAN
+		Event Variable
 
-		Single boolean variable, its value accessible through get and toggle methods.
-		Defines an event 'change' whenever the value of the variable is changed.
-
-		initialised to false if initValue is not specified
-
-		Note : implementation uses falsiness of input parameter to constructor and set() operation,
-		so eventBoolean(-1) will actually set it to true because
-		(-1) ? true : false -> true !
+		Objects with a single "change" event
 	*/
 
-	class EventBoolean {
+	class EventVariable {
 
-		constructor(initValue) {
+		constructor (value) {
 			eventifyInstance(this);
-			this._value = Boolean(initValue);
+			this._value = value;
 			this.eventifyDefineEvent("change", {init:true});
 		}
 
@@ -288,44 +281,47 @@ define(function () {
 		}
 
 		get value () {return this._value};
-		set value (newValue) {return this.set(newValue);};
-
-		get () {return this._value};;
-		set (newValue) {
-			newValue = Boolean(newValue);
-			if (newValue !== this._value) {
-				this._value = newValue;
-				this.eventifyTriggerEvent("change", newValue);
-				return true;
+		set value (value) {
+			if (value != this._value) {
+				this._value = value;
+				this.eventifyTriggerEvent("change", value);
 			}
-			return false;
+		}
+	}
+	eventifyPrototype(EventVariable.prototype);
+
+	/*
+		Event Boolean
+
+
+		Note : implementation uses falsiness of input parameter to constructor and set() operation,
+		so eventBoolean(-1) will actually set it to true because
+		(-1) ? true : false -> true !
+	*/
+
+	class EventBoolean extends EventVariable {
+		constructor(value) {
+			super(Boolean(value));
 		}
 
-		toggle () {
-			this.value = !this.value;
+		set value (value) {
+			super.value = Boolean(value);
 		}
-	};
-	eventifyPrototype(EventBoolean.prototype);
+		get value () {return super.value};
+	}
 
 
 	/*
 		make a promise which is resolved when EventBoolean changes
 		value.
 	*/
-	function makePromise(eventBoolean, target) {
-		if (!eventBoolean instanceof EventBoolean) {
-			throw new Error("eventBoolean not instance of EventBolean");
-		}
-		if (target == undefined) {
-			target = !eventBoolean.value;
-		} else {
-			target = Boolean(target);
-		}
+	function makePromise(eventObject, conditionFunc) {
+		conditionFunc == conditionFunc || function(val) {return val == true};
 		return new Promise (function (resolve, reject) {
-			let sub = eventBoolean.on("change", function (value) {
-				if (value === target) {
-					resolve();
-					eventBoolean.off(sub);
+			let sub = eventObject.on("change", function (value) {
+				if (conditionFunc(value)) {
+					resolve(value);
+					eventObject.off(sub);
 				}
 			});
 		});
@@ -335,6 +331,7 @@ define(function () {
 	return {
 		eventifyPrototype : eventifyPrototype,
 		eventifyInstance : eventifyInstance,
+		EventVariable: EventVariable,
 		EventBoolean: EventBoolean,
 		makePromise: makePromise
 	};
