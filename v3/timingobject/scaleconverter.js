@@ -41,7 +41,7 @@ define(function (require) {
 
         // extend
         eventifyInitEventArg(name) {
-            if (this._ready.value && name == "scalechange") {
+            if (name == "scalechange") {
                 return [true, this._factor];
             } else {
                 return super.eventifyInitEventArg(name)

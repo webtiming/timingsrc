@@ -42,7 +42,7 @@ define(function (require) {
 
         // extend
         eventifyInitEventArg(name) {
-            if (this._ready.value && name == "skewchange") {
+            if (name == "skewchange") {
                 return [true, this._skew];
             } else {
                 return super.eventifyInitEventArg(name)
