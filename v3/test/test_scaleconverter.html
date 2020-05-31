@@ -58,19 +58,19 @@
             function run() {
                 to = new timingsrc.TimingObject({range:[0,10]});
                 setup_timingobject(0, "source", to);
-                c = new timingsrc.SkewConverter(to, 2.0);
+                c = new timingsrc.ScaleConverter(to, 2.0);
                 setup_timingobject(1, "converter", c);
 
-                // skew converter
-                const skew_elem = document.getElementById("skew");
-                c.on("skewchange", function (skew) {
-                    skew_elem.innerHTML = skew;
+                // scale converter
+                const scale_elem = document.getElementById("scale");
+                c.on("scalechange", function (scale) {
+                    scale_elem.innerHTML = scale;
                 });
-                document.getElementById(`skew_3`).onclick = function () {
-                    c.skew = 3;
+                document.getElementById(`scale_1`).onclick = function () {
+                    c.scale = 1;
                 };
-                document.getElementById(`skew_4`).onclick = function () {
-                    c.skew = 4;
+                document.getElementById(`scale_2`).onclick = function () {
+                    c.scale = 2;
                 };
 
             };
@@ -84,7 +84,7 @@
     </script>
     </head>
 <body>
-    <h1>Test Skew Converter</h1>
+    <h1>Test Scale Converter</h1>
     <p>
         <h3>Source</h3>
         <p >
@@ -108,7 +108,7 @@
 
 
     <p>
-        <h3>Skew Converter</h3>
+        <h3>Scale Converter</h3>
         <p>
         Pos : <span style="font-weight:bold;" id="pos_1" ></span>
         </p>
@@ -128,12 +128,12 @@
 
     </p>
     <p>
-        <h3>Set Skew</h3>
+        <h3>Set Scale</h3>
         <p>
-        Skew : <span style="font-weight:bold;" id="skew" ></span>
+        Scale : <span style="font-weight:bold;" id="scale" ></span>
         </p>
-        <button id="skew_3">Skew 3</button>
-        <button id="skew_4">Skew 4</button>
+        <button id="scale_1">Scale 1.0</button>
+        <button id="scale_2">Scale 2.0</button>
     </p>
 
 </body>

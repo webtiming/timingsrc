@@ -36,34 +36,61 @@ define(function (require) {
         constructor (timingsrc, factor) {
     		super(timingsrc);
     		this._factor = factor;
+            this.eventifyDefineEvent("scalechange", {init:true});
     	};
+
+        // extend
+        eventifyInitEventArg(name) {
+            if (this._ready.value && name == "scalechange") {
+                return [true, this._factor];
+            } else {
+                return super.eventifyInitEventArg(name)
+            }
+        }
 
     	// overrides
-    	onRangeChange(range) {
-    		return [range[0]*this._factor, range[1]*this._factor];
+        onUpdateStart(arg) {
+            if (arg.range != undefined) {
+                arg.range = [arg.range[0]*this._factor, arg.range[1]*this._factor];
+            }
+            if (arg.position != undefined) {
+                arg.position *= this._factor;
+            }
+            if (arg.velocity != undefined) {
+                arg.velocity *= this._factor;
+            }
+            if (arg.acceleration != undefined) {
+                arg.acceleration *= this._factor;
+            }
+            return arg;
+        }
+
+    	update(arg) {
+    		if (arg.position != undefined) {
+                arg.position /= this._factor;
+            }
+    		if (arg.velocity != undefined) {
+                arg.velocity /= this._factor;
+            }
+    		if (arg.acceleration != undefined) {
+                arg.acceleration /= this._factor;
+            }
+    		return super.update(arg);
     	};
 
-    	// overrides
-    	onVectorChange(vector) {
-    		vector.position = vector.position * this._factor;
-    		vector.velocity = vector.velocity * this._factor;
-    		vector.acceleration = vector.acceleration * this._factor;
-    		return vector;
-    	};
+        get scale() {return this._factor;};
 
-    	update(vector) {
-    		if (vector.position !== undefined) {
-                vector.position = vector.position / this._factor;
+        set scale(factor) {
+            if (factor != this._factor) {
+                // set scale and emulate new event from timingsrc
+                this._factor = factor;
+                this.__handleEvent({
+                    ...this.timingsrc.vector,
+                    range: this.timingsrc.range
+                });
+                this.eventifyTriggerEvent("scalechange", factor);
             }
-    		if (vector.velocity !== undefined) {
-                vector.velocity = vector.velocity / this._factor;
-            }
-    		if (vector.acceleration !== undefined) {
-                vector.acceleration = vector.acceleration / this._factor;
-            }
-    		return this.timingsrc.update(vector);
-    	};
-
+        }
     }
 	return ScaleConverter;
 });

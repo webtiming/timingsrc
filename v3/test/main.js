@@ -18,9 +18,7 @@ define(function(require) {
         ScaleConverter : require('timingobject/scaleconverter'),
         LoopConverter : require('timingobject/loopconverter'),
         RangeConverter : require('timingobject/rangeconverter'),
-        TimeShiftConverter : require('timingobject/timeshiftconverter'),
-        DerivativeConverter : require('timingobject/derivativeconverter'),
-
+        TimeShiftConverter : require('timingobject/timeshiftconverter')
     };
 });
 

@@ -140,13 +140,15 @@ define(function (require) {
 		};
 
 		// external update
-		update(vector, range) {
-			let nonce = getRandomInt();
-			this.__update({vector:vector, range:range, tunnel:nonce});
+		update(arg) {
+			arg.tunnel = getRandomInt();
+			if (arg.timestamp == undefined) {
+				arg.timestamp = this.clock.now();
+			}
+			this.__update(arg);
 			let event = new eventify.EventVariable();
-			this.__update_events.set(nonce, event);
-			const conditionFunc = function (val) {return val != undefined};
-			return eventify.makePromise(event, conditionFunc);
+			this.__update_events.set(arg.tunnel, event);
+			return eventify.makePromise(event, val => (val != undefined));
 		}
 
 		onUpdateDone(arg) {
@@ -155,7 +157,8 @@ define(function (require) {
 				let event = this.__update_events.get(arg.tunnel);
 				if (event) {
 					this.__update_events.delete(arg.tunnel);
-					event.value = arg.vector;
+					delete arg.tunnel;
+					event.value = arg;
 				}
 			}
 			// since externalprovider does not support tunnel yet

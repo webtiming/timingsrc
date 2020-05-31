@@ -50,30 +50,27 @@ define(function (require) {
         }
 
 		// overrides
-		onRangeChange(range) {
-			range[0] = (range[0] === -Infinity) ? range[0] : range[0] + this._skew;
-			range[1] = (range[1] === Infinity) ? range[1] : range[1] + this._skew;
-			return range;
+		onUpdateStart(arg) {
+            if (arg.range != undefined) {
+                arg.range[0] += this._skew;
+                arg.range[1] += this._skew;
+            }
+            if (arg.position != undefined) {
+    			arg.position += this._skew;
+            }
+            return arg;
 		};
 
 		// overrides
-		onVectorChange(vector) {
-			vector.position += this._skew;
-            return vector;
-
-		};
-
-		update(vector, range) {
-            if (vector != undefined) {
-    			if (vector.position !== undefined) {
-    				vector.position = vector.position - this._skew;
-    			}
+		update(arg) {
+            if (arg.position != undefined) {
+				arg.position -= this._skew;
             }
-            if (range != undefined) {
-                let [low, high] = range;
-                range = [low - this._skew, high - this._skew];
+            if (arg.range != undefined) {
+                let [low, high] = arg.range;
+                arg.range = [low - this._skew, high - this._skew];
             }
-			return super.update(vector, range);
+			return super.update(arg);
 		};
 
 		get skew() {return this._skew;};
@@ -83,7 +80,7 @@ define(function (require) {
                 // set skew and emulate new event from timingsrc
     			this._skew = skew;
     			this.__handleEvent({
-                    vector: this.timingsrc.vector,
+                    ...this.timingsrc.vector,
                     range: this.timingsrc.range
                 });
                 this.eventifyTriggerEvent("skewchange", skew);

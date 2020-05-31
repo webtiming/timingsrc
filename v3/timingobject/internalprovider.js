@@ -43,25 +43,12 @@ define(function (require) {
 			super(options);
 			// initialise internal state
 			this._clock = new MasterClock({skew:0});
-			// range
-			let range = this._options.range || [-Infinity, Infinity];
-			if (range == undefined) {
-				throw new Error ("illegal range", range);
-			}
-			this._range = range;
-			// vector
-			let vector = this._options.vector || {
-				position : 0,
-				velocity : 0,
-				acceleration : 0
-			};
-			// initialise state
-			vector = this.__check_update_vector(vector);
-			if (vector == undefined) {
-				throw new Error ("illegal update vector", vector);
-			}
-			this._vector = vector;
-
+			this._range;
+			this._vector;
+			// options
+			options.timestamp = options.timestamp || this._clock.now();
+			options.range = options.range || [-Infinity, Infinity];
+			this.__process_update(options);
 			// trigger events
 			this._ready.value = true;
 			// renew timeout
@@ -71,78 +58,61 @@ define(function (require) {
 		// internal clock
 		get clock() {return this._clock;};
 
-		// check update vector, complete if necessary
-		__check_update_vector(vector) {
-			if (vector == undefined) {
-				return;
-			}
-			vector.timestamp = vector.timestamp || this._clock.now();
-			let {
-				position:pos,
-				velocity:vel,
-				acceleration:acc,
-				timestamp:now} = vector;
 
-			// preserving values form current motion if vector elements
-			// are undefined
+		// update
+		__process_update(arg) {
+			// process arg
+			let {
+				position: pos,
+				velocity: vel,
+				acceleration: acc,
+				timestamp: ts,
+				range: range
+			} = arg;
+
+			// record state from current motion
 			let p = 0, v = 0, a = 0;
-			if (this._vector) {
-				let nowVector = motionutils.calculateVector(this._vector, now);
+			if (this._vector != undefined) {
+				let nowVector = motionutils.calculateVector(this._vector, ts);
 				nowVector = motionutils.checkRange(nowVector, this._range);
 				p = nowVector.position;
 				v = nowVector.velocity;
 				a = nowVector.acceleration;
 			}
 
-			vector = {
+			// fill in from current motion, for missing properties
+			let vector = {
 				position : (pos != undefined) ? pos : p,
 				velocity : (vel != undefined) ? vel : v,
 				acceleration : (acc != undefined) ? acc : a,
-				timestamp : now
+				timestamp : ts
 			};
 
-			// check range
-			vector = motionutils.checkRange(vector, this._range);
-
-			// check noop
-			if (this._vector) {
-				if (motionutils.equalVectors(vector, this._vector)){
-					console.log("update noop");
-					return;
+			// update range
+			if (range != undefined) {
+				let [low, high] = range;
+				if (low < high) {
+					if (low != this._range[0] || high != this._range[1]) {
+						this._range = [low, high];
+					}
 				}
 			}
-			return vector;
-		}
 
-		// check range
-		__check_range(range) {
-			if (range == undefined) {
-				return;
-			}
-			let [low, high] = range;
-			if (low < high) {
-				return range;
-			}
-			return;
-		}
-
+			// check vector with respect to range
+			vector = motionutils.checkRange(vector, this._range);
+			// save old vector
+			this._old_vector = this._vector;
+			// update vector
+			this._vector = vector;
+			return {range, ...vector};
+		};
 
 		// update
 		__update(arg) {
-			let eArg = {live:true};
-			// vector
-			let vector = this.__check_update_vector(arg.vector);
-			if (vector != undefined) {
-				eArg.vector = vector;
-			}
-			let range = this.__check_range(arg.range);
-			if (range != undefined) {
-				eArg.range = range;
-			}
-			eArg.tunnel = arg.tunnel;
+			arg = this.__process_update(arg);
 			// emulate event
-			return this.__handleEvent(eArg);
-		};
+			return this.__handleEvent(arg);
+		}
 	}
 
 	return InternalProvider;

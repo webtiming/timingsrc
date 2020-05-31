@@ -69,12 +69,16 @@ define(function(require) {
 
 			// cached vectors
 			this._old_vector;
-			this._vector = {
+			this._vector;
+
+			/*
+			 = {
 				position : undefined,
 				velocity : undefined,
 				acceleration : undefined,
 				timestamp : undefined
 			};
+			*/
 
 			// cached range
 			this._range = [undefined,undefined];
@@ -115,7 +119,7 @@ define(function(require) {
 			if (this._ready.value) {
 				if (name == "timingsrc") {
 					let eArg = {
-						vector: this._vector,
+						...this._vector,
 						range: this._range,
 						live:false
 					}
@@ -215,22 +219,26 @@ define(function(require) {
 			onVectorChange
 
 		*/
-		__handleEvent(eArg) {
-			eArg = eArg || {};
-			// create new object arg
-			let arg = {
-				live : (eArg.live == undefined) ? true : eArg.live,
-				tunnel: eArg.tunnel
+		__handleEvent(arg) {
+			let {
+				range,
+				live = true,
+				...rest
+			} = arg;
+			// copy range object
+			if (range != undefined) {
+				range = [range[0], range[1]];
+			}
+			// new arg object
+			let _arg = {
+				range,
+				live,
+				...rest,
 			};
-			if (eArg.vector != undefined) {
-				arg.vector = motionutils.copyVector(eArg.vector);
-				arg.vector = this.onVectorChange(arg.vector);
+			_arg = this.onUpdateStart(_arg);
+			if (_arg != undefined) {
+				return this.__process(_arg);
 			}
-			if (eArg.range != undefined) {
-				arg.range = [eArg.range[0], eArg.range[1]];
-				arg.range = this.onRangeChange(arg.range);
-			}
-			return this.__process(arg);
 		};
 
 		/*
@@ -239,7 +247,7 @@ define(function(require) {
 		*/
 		__handleTimeout(now, vector) {
  			vector = this.onTimeout(vector);
-			this.__process({live:true, vector: vector});
+			this.__process({...vector});
 		}
 
 		/*
@@ -247,41 +255,64 @@ define(function(require) {
 			assignes the internal vector
 		*/
 		__process(arg) {
-			// handle range change
-			if (arg.range != undefined) {
-				if (arg.range != this._range) {
-					this._range = arg.range
+			let {
+				range,
+				position,
+				velocity,
+				acceleration,
+				timestamp,
+				live=true,
+				...rest
+			} = arg;
+
+			// update range
+			let range_changed = false;
+			if (range != undefined) {
+				let [low, high] = range;
+				if (low < high) {
+					if (low != this._range[0] || high != this._range[1]) {
+						this._range = [low, high];
+						range = [low, high];
+						range_changed = true;
+					}
 				}
 			}
 
+			// prepare update vector
+			let vector = {position, velocity, acceleration, timestamp};
 			// make sure vector is consistent with range
-			if (arg.vector != undefined) {
-				arg.vector = motionutils.checkRange(arg.vector, this._range);
-			} else {
-				let vector = motionutils.checkRange(this._vector, this._range);
-				if (vector.position != this._vector.position) {
-					// update vector
-					arg.vector = vector;
-				}
+			if (vector != undefined) {
+				vector = motionutils.checkRange(vector, this._range);
+			} else if (range_changed) {
+				// there is no vector change, but range was changed,
+				// so the current vector must be checked for new range.
+				vector = motionutils.checkRange(this._vector, this._range);
 			}
 
-			// handle vector change
-			if (arg.vector != undefined) {
-				if (!motionutils.equalVectors(arg.vector, this._vector)) {
-					// save old vector
-					this._old_vector = this._vector;
-					// update vector
-					this._vector = arg.vector;
-				}
+			// update vector
+			if (vector != undefined) {
+				// save old vector
+				this._old_vector = this._vector;
+				// update vector
+				this._vector = vector;
 			}
+
+			// new arg
+			let _arg = {
+				range,
+				...vector,
+				live,
+				...rest
+			}
+
 			// trigger events
 			this._ready.value = true;
-			this.__dispatchEvents(arg);
+			this.__dispatchEvents(_arg);
 			// renew timeout
 			this.__renewTimeout();
 			// return success
-			this.onUpdateDone(arg);
-			return arg;
+			this.onUpdateDone(_arg);
+			return _arg;
 		};
 
 		/*
@@ -290,7 +321,14 @@ define(function(require) {
 			need to be suppressed,
 		*/
 		__dispatchEvents(arg) {
-			let {range, vector, live} = arg;
+			let {
+				range,
+				position,
+				velocity,
+				acceleration,
+				timestamp
+			} = arg;
+			let vector = {position, velocity, acceleration, timestamp};
 			// trigger timingsrc events
 			this.eventifyTriggerEvent("timingsrc", arg);
 			// trigger public change events
@@ -322,8 +360,10 @@ define(function(require) {
 		***************************************************************/
 
 
+
+
 		// may be overridden by subclsaa
-		onRangeChange(range) {return range;};
+		// onRangeChange(range) {return range;};
 
 		/*
 			specify transformation
@@ -335,7 +375,7 @@ define(function(require) {
 
 			returning null stops further processing, exept renewtimeout
 		*/
-		onVectorChange(vector) {return vector;};
+		// onVectorChange(vector) {return vector;};
 
 		/*
 			to be overridden
@@ -344,6 +384,11 @@ define(function(require) {
 			returning null stops further processing, except renewtimeout
 		*/
 		onTimeout(vector) {return vector;};
+
+		/*
+			may be overridden
+		*/
+		onUpdateStart(arg) {return arg;}
 
 		/*
 			may be overridden
