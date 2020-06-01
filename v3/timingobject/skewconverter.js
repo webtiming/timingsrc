@@ -30,9 +30,9 @@ define(function (require) {
 
 	'use strict';
 
-    const TimingObjectBase = require('./timingobjectbase');
+    const TimingObject = require('./timingobject');
 
-	class SkewConverter extends TimingObjectBase {
+	class SkewConverter extends TimingObject {
 
 		constructor (timingsrc, skew, options) {
 			super(timingsrc, options);

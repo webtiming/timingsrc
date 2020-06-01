@@ -37,9 +37,9 @@ define(function (require) {
     'use strict';
 
     const Timeout = require('../util/timeout');
-    const TimingObjectBase = require('./timingobjectbase');
+    const TimingObject = require('./timingobject');
 
-	class DelayConverter extends TimingObjectBase {
+	class DelayConverter extends TimingObject {
 		constructor (timingObject, delay) {
 			if (delay < 0) {throw new Error ("negative delay not supported");}
 			if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
