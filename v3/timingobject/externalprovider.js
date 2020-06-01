@@ -25,7 +25,16 @@ define(function (require) {
 	'use strict';
 
 	const MasterClock = require('./masterclock');
-	const TimingBase = require('./timingbase');
+
+	function checkTimingProvider(obj){
+		let required = ["on", "skew", "vector", "range", "update"];
+		for (let prop of required) {
+			if (!prop in obj) {
+				throw new Error(`TimingProvider ${obj} missing property ${prop}`);
+			}
+		}
+	}
+
 
 	/*
 		EXTERNAL PROVIDER
@@ -40,14 +49,17 @@ define(function (require) {
 		- implements a clock for the provider
 	*/
 
-	class ExternalProvider extends TimingBase {
+	class ExternalProvider {
 
-		constructor(provider, options) {
+		constructor(provider, callback, options) {
+			checkTimingProvider(provider);
 			options = options || {};
-			options.timeout = true;
-			super(options);
 
 			this._provider = provider;
+			this._callback = callback;
+			this._range;
+			this._vector;
+			this._ready = false
 
 			/*
 				provider clock (may fluctuate based on live skew estimates)
@@ -75,8 +87,35 @@ define(function (require) {
 			}
 		};
 
+		isReady() {return this._ready;};
+
 		// internal clock
 		get clock() {return this._clock;};
+		get range() {return this._range;};
+
+
+		/*
+			- local timestamp of vector is set for each new vector, using the skew available at that time
+			- the vector then remains unchanged
+			- skew changes affect local clock, thereby affecting the result of query operations
+
+			- one could imagine reevaluating the vector as well when the skew changes,
+				but then this should be done without triggering change events
+
+			- ideally the vector timestamp should be a function of the provider clock
+		*/
+
+		get vector() {
+			// local_ts = provider_ts - skew
+			let local_ts = this._vector.timestamp - this._provider.skew;
+			return {
+				position : this._vector.position,
+				velocity : this._vector.velocity,
+				acceleration : this._vector.acceleration,
+				timestamp : local_ts
+			}
+		}
+
 
 		// internal provider object
 		get provider() {return this._provider;};
@@ -96,69 +135,58 @@ define(function (require) {
 				this._clock.adjust({skew: skew_delta});
 			}
 			if (!this.isReady() && this._provider.vector != undefined) {
-				// just became ready (onVectorChange has fired earlier)
+				// just became ready
+				this._ready = true;
 				this._range = this._provider.range;
+				this._vector = this._provider.vector;
 				let eArg = {
-					vector: this._provider.vector,
+					range: this.range,
+					...this.vector,
 					live: false
 				}
-				this.__handleEvent(eArg);
+				this._callback(eArg);
 			}
 		};
 
 		_onVectorChange() {
 			if (this._clock) {
 				// is ready (onSkewChange has fired earlier)
+				if (!this._ready) {
+					this._ready = true;
+				}
 				if (!this._range) {
 					this._range = this._provider.range;
 				}
+				this._vector = this._provider.vector;
 				let eArg = {
-					vector: this._provider.vector,
-					live:true
+					range: this.range,
+					...this.vector
 				}
-				this.__handleEvent(eArg);
+				this._callback(eArg);
 			}
 		};
 
-
-		/*
-			- local timestamp of vector is set for each new vector, using the skew available at that time
-			- the vector then remains unchanged
-			- skew changes affect local clock, thereby affecting the result of query operations
-
-			- one could imagine reevaluating the vector as well when the skew changes,
-				but then this should be done without triggering change events
-
-			- ideally the vector timestamp should be a function of the provider clock
-
-		*/
-
-		// 	override timing base to recalculate timestamp
-		onVectorChange(provider_vector) {
-			// local_ts = provider_ts - skew
-			let local_ts = provider_vector.timestamp - this._provider.skew;
-			return {
-				position : provider_vector.position,
-				velocity : provider_vector.velocity,
-				acceleration : provider_vector.acceleration,
-				timestamp : local_ts
-			}
-		};
 
 		// update
-		__update(arg) {
-			if (arg.vector != undefined) {
-				let res = this._provider.update(arg.vector);
-			}
-			// return success
-			return true;
-		};
-
 		/*
 			TODO - support setting range on provider
 			TODO - suppport tunnel
 			TODO - support onRangeChange from provider
 		*/
+		update(arg) {
+			let vector = {
+				position: arg.position,
+				velocity: arg.velocity,
+				acceleration: arg.acceleration,
+				timestamp: arg.timestamp
+			};
+			// calc back to provider ts
+			// local_ts = provider_ts - skew
+			vector.timestamp = vector.timestamp + this._provider.skew;
+			let res = this._provider.update(vector);
+			// return success
+			return true;
+		};
 	}
 
 	return ExternalProvider;

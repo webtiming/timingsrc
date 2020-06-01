@@ -34,7 +34,6 @@ define(function (require) {
 	 	return Math.floor(Math.random() * MAX_NONCE);
 	};
 
-
 	/*
 
 		TIMING OBJECT BASE
@@ -46,97 +45,86 @@ define(function (require) {
 		constructor (timingsrc, options) {
 			super(options);
 			this.__version = 4;
+			this.__timingsrc;
+			this.__sub;
 
 			// update
 			this.__update_events = new Map();
 
 			// initialise timingsrc
-			if (timingsrc == undefined) {
-				// no given timingsrc
-				// create InternalProvider from options
-				let _options = {
-					vector : this._options.vector,
-					range : this._options.range
-				}
-				this._timingsrc = new InternalProvider(_options);
-			} else {
-				this._timingsrc = timingsrc;
-			}
-			this._sub = this._timingsrc.on("timingsrc", this.__handleEvent.bind(this));
+			this.__set_timingsrc(timingsrc, options);
 		};
 
-
-		// internal clock
-		get clock() {return this._timingsrc.clock;};
+		// clock - from timingsrc or provider
+		get clock() {return this.__timingsrc.clock};
 
 		// version
 		get version () {return this.__version;};
-
 
 		/*
 
 			timingsrc property and switching on assignment
 
 		*/
-		get timingsrc () {
-			if (this._timingsrc instanceof InternalProvider) {
-				return undefined
-			} else if (this._timingsrc instanceof ExternalProvider) {
-				return this._timingsrc.provider;
-			} else {
-				return this._timingsrc;
+		__clear_timingsrc() {
+			// clear timingsrc
+			if (this.__timingsrc != undefined) {
+				if (this.__timingsrc instanceof TimingObjectBase) {
+					this.__timingsrc.off(this.__sub);
+					this.__sub = undefined;
+					this.__timingsrc = undefined;
+				} else {
+					// provider
+					this.__timingsrc.close();
+					this.__timingsrc = undefined;
+				}
 			}
 		}
 
-		set timingsrc (timingsrc) {
-			// new timingsrc undefined
-			if (timingsrc == undefined) {
-				// create InternalProvider from current state
-				let _options = {
-					vector : this._vector,
-					range : this._range
-				}
-				timingsrc = new InternalProvider(_options);
-			}
-			else if ((timingsrc instanceof TimingObjectBase) === false) {
-				// external provider - try to wrap it
-				try {
-					timingsrc = new ExternalProvider(timingsrc);
-				} catch (e) {
-					console.log(timingsrc);
-					console.log(e);
-					throw new Error ("illegal timingsrc - not instance of timing object base and not timing provider");
-				}
-			}
-			// transformation when new timingsrc is ready
-			if (timingsrc.isReady()) {
-				this._doSwitch(timingsrc);
+		__set_timingsrc(timingsrc, options) {
+			// set timingsrc
+			let callback = this.__handleEvent.bind(this);
+			if (timingsrc instanceof TimingObjectBase) {
+				// timingsrc
+				this.__timingsrc = timingsrc;
+				this.__sub = this.__timingsrc.on("timingsrc", callback);
 			} else {
-				let self = this;
-				timingsrc.ready.then(function (){
-					self._doSwitch(timingsrc);
-				});
+				// provider
+				if (timingsrc == undefined) {
+					// Internal Provider
+					this.__timingsrc = new InternalProvider(callback, options);
+				} else {
+					// External Provider
+					this.__timingsrc = new ExternalProvider(timingsrc, callback, options);
+				}
+				// emulating initial event from provider, causing
+				// this timingobject to initialise
+				if (this.__timingsrc.isReady()) {
+					let arg = {
+						range: this.__timingsrc.range,
+						...this.__timingsrc.vector,
+						live: false
+					}
+					// generate initial event
+					callback(arg);
+				}
 			}
 		}
 
-		_doSwitch(timingsrc) {
-			// disconnect and clean up timingsrc
-			if (this._timingsrc) {
-				this._timingsrc.off(this._sub);
-				this._sub = undefined;
-			}
-			this._timingsrc = timingsrc;
-			// TODO : build this into preProcess instead?
-			if (this._timingsrc.range !== this._range) {
-				this._range = this.onRangeChange(this._timingsrc.range);
-			}
-			this.onSwitch();
-			this._sub = this._timingsrc.on("timingsrc", this.__handleEvent.bind(this));
-		};
+		get timingsrc () {return this.__timingsrc;};
+		set timingsrc(timingsrc) {
+			this.__clear_timingsrc();
+			this.__set_timingsrc(timingsrc);
+		}
 
 		// internal update
 		__update(arg) {
-			return this._timingsrc.__update(arg);
+			if (this.__timingsrc instanceof TimingObjectBase) {
+				return this.__timingsrc.__update(arg);
+			} else {
+				// provider
+				return this.__timingsrc.update(arg);
+			}
 		};
 
 		// external update

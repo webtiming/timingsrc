@@ -316,7 +316,7 @@ define(function () {
 		value.
 	*/
 	function makePromise(eventObject, conditionFunc) {
-		conditionFunc == conditionFunc || function(val) {return val == true};
+		conditionFunc = conditionFunc || function(val) {return val == true};
 		return new Promise (function (resolve, reject) {
 			let sub = eventObject.on("change", function (value) {
 				if (conditionFunc(value)) {

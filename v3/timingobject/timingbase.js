@@ -66,6 +66,7 @@ define(function(require) {
 		constructor (options) {
 
 			this._options = options || {};
+			this._options.timeout = true;
 
 			// cached vectors
 			this._old_vector;

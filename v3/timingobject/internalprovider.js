@@ -24,7 +24,6 @@ define(function (require) {
 	'use strict';
 
 	const MasterClock = require('./masterclock');
-	const TimingBase = require('./timingbase');
 	const motionutils = require('../util/motionutils');
 
 	/*
@@ -35,32 +34,30 @@ define(function (require) {
 		Used by timing objects as timingsrc if no timingsrc is specified.
 	*/
 
-	class InternalProvider extends TimingBase {
+	class InternalProvider {
 
-		constructor (options) {
+		constructor (callback, options) {
 			options = options || {};
-			options.timeout = true;
-			super(options);
 			// initialise internal state
 			this._clock = new MasterClock({skew:0});
-			this._range;
+			this._range = [-Infinity, Infinity];
 			this._vector;
+			this._callback = callback;
 			// options
 			options.timestamp = options.timestamp || this._clock.now();
-			options.range = options.range || [-Infinity, Infinity];
-			this.__process_update(options);
-			// trigger events
-			this._ready.value = true;
-			// renew timeout
-			this.__renewTimeout();
+			this._process_update(options);
 		};
 
 		// internal clock
 		get clock() {return this._clock;};
+		get range() {return this._range;};
+		get vector() {return this._vector;};
+
+		isReady() {return true;};
 
 
 		// update
-		__process_update(arg) {
+		_process_update(arg) {
 			// process arg
 			let {
 				position: pos,
@@ -108,11 +105,16 @@ define(function (require) {
 		};
 
 		// update
-		__update(arg) {
-			arg = this.__process_update(arg);
-			// emulate event
-			return this.__handleEvent(arg);
+		update(arg) {
+			arg = this._process_update(arg);
+			return this._callback(arg);
 		}
+
+
+		close() {
+			this._callback = undefined;
+		}
+
 	}
 
 	return InternalProvider;
