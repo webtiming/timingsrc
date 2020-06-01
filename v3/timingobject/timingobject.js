@@ -1,5 +1,5 @@
 /*
-	Copyright 2015 Norut Northern Research Institute
+	Copyright 2020
 	Author : Ingar Mæhlum Arntzen
 
 	This file is part of the Timingsrc module.
@@ -28,7 +28,6 @@ define(function (require) {
 	const motionutils = require('../util/motionutils');
 	const InternalProvider = require('./internalprovider');
 	const ExternalProvider = require('./externalprovider');
-
 
 	const MAX_NONCE = 10000;
 
@@ -564,8 +563,6 @@ define(function (require) {
 	eventify.eventifyPrototype(TimingObject.prototype);
 
 	return TimingObject;
-
-
 });
 
 

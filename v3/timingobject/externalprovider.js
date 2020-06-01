@@ -29,7 +29,7 @@ define(function (require) {
 	function checkTimingProvider(obj){
 		let required = ["on", "skew", "vector", "range", "update"];
 		for (let prop of required) {
-			if (!prop in obj) {
+			if (!(prop in obj)) {
 				throw new Error(`TimingProvider ${obj} missing property ${prop}`);
 			}
 		}

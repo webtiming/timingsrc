@@ -32,7 +32,6 @@ define(function(require, exports, module) {
 		TimingObject : timingobject.TimingObject,
 
 		// Timing Converters
-		ConverterBase : timingobject.ConverterBase,
 		SkewConverter : require('timingobject/skewconverter'),
 		DelayConverter : require('timingobject/delayconverter'),
 		ScaleConverter : require('timingobject/scaleconverter'),
