@@ -45,6 +45,16 @@ define(function (require) {
 		return true;
 	}
 
+	function checkRange(live, now, vector, range) {
+		if (live) {
+			return motionutils.checkRange(vector, range);
+		} else {
+			let now_vector = motionutils.calculateVector(vector, now);
+			return motionutils.checkRange(now_vector, range);
+		}
+	}
+
+
 
 	/*
 		TIMING BASE
@@ -218,20 +228,21 @@ define(function (require) {
 
 		// query
 		query() {
-			if (this.__ready.value === false)  {
-				return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
+			if (this.__ready.value == false)  {
+				throw new Error("query before timing object is ready");
 			}
 			// reevaluate state to handle range violation
 			let vector = motionutils.calculateVector(this.__vector, this.clock.now());
-			let state = motionutils.correctRangeState(vector, this.__range);
 			// detect range violation - only if timeout is set {
-			if (state !== motionutils.RangeState.INSIDE && this.__timeout.isSet()) {
-				// emulate event
-				let eArg = {vector:vector, live:true};
-				this.__handleEvent(eArg);
+			if (this.__timeout.isSet()) {
+				if (vector.position < this.__range[0] || this.__range[1] < vector.position) {
+					// emulate update event to trigger range restriction
+					this.__process({...this.onRangeViolation(vector)});
+				}
+				// re-evaluate query after state transition
+				return motionutils.calculateVector(this.__vector, this.clock.now());
 			}
-			// re-evaluate query after state transition
-			return motionutils.calculateVector(this.__vector, this.clock.now());
+			return vector;
 		};
 
 		// shorthand query
@@ -258,14 +269,23 @@ define(function (require) {
 
 		// external update
 		update(arg) {
+			// check if noop
+			let ok = (arg.range != undefined);
+			ok = ok || (arg.position != undefined);
+			ok = ok || (arg.velocity != undefined);
+			ok = ok || (arg.acceleration != undefined);
+			if (!ok) {
+				return Promise.resolve(arg);
+			}
 			arg.tunnel = getRandomInt();
 			if (arg.timestamp == undefined) {
 				arg.timestamp = this.clock.now();
 			}
-			this.__update(arg);
 			let event = new eventify.EventVariable();
 			this.__update_events.set(arg.tunnel, event);
-			return eventify.makePromise(event, val => (val != undefined));
+			let promise = eventify.makePromise(event, val => (val != undefined));
+			this.__update(arg);
+			return promise;
 		}
 
 
@@ -311,8 +331,7 @@ define(function (require) {
 			handle timeout
 		*/
 		__handleTimeout(now, vector) {
- 			vector = this.onTimeout(vector);
-			this.__process({...vector});
+			this.__process({...this.onRangeViolation(vector)});
 		}
 
 		/*
@@ -330,49 +349,68 @@ define(function (require) {
 				...rest
 			} = arg;
 
+
 			// update range
-			let range_changed = false;
+			let range_change = false;
 			if (range != undefined) {
 				let [low, high] = range;
 				if (low < high) {
 					if (low != this.__range[0] || high != this.__range[1]) {
 						this.__range = [low, high];
 						range = [low, high];
-						range_changed = true;
+						range_change = true;
 					}
 				}
 			}
 
-			// prepare update vector
-			let vector = {position, velocity, acceleration, timestamp};
-			// make sure vector is consistent with range
-			if (vector != undefined) {
-				vector = motionutils.checkRange(vector, this.__range);
-			} else if (range_changed) {
-				// there is no vector change, but range was changed,
-				// so the current vector must be checked for new range.
-				vector = motionutils.checkRange(this.__vector, this.__range);
-			}
-
 			// update vector
-			if (vector != undefined) {
-				// save old vector
-				this.__old_vector = this.__vector;
-				// update vector
-				this.__vector = vector;
+			let vector;
+			let vector_change = false;
+			let now = this.clock.now();
+
+			// make sure vector is consistent with range
+			if (position != undefined) {
+				// vector change
+				vector = {position, velocity, acceleration, timestamp};
+				// make sure vector is consistent with range
+				vector = checkRange(live, now, vector, this.__range);
+			} else {
+				// there is no vector change, but if range was changed,
+				// the current vector must be checked for new range.
+				if (range_change) {
+					vector = checkRange(false, now, this.__vector, this.__range);
+				}
 			}
 
-			// new arg
-			let _arg = {
-				range,
-				...vector,
-				live,
-				...rest
+			if (vector != undefined) {
+				// update vector
+				if (this.__vector != undefined) {
+					vector_change = !motionutils.equalVectors(vector, this.__vector);
+				} else {
+					vector_change = true;
+				}
+				if (vector_change) {
+					// save old vector
+					this.__old_vector = this.__vector;
+					// update vector
+					this.__vector = vector;
+				}
+			}
+
+			let _arg;
+			if (range_change && vector_change) {
+				_arg = {range, ...vector, live, ...rest};
+			} else if (range_change) {
+				_arg = {range, live, ...rest};
+			} else if (vector_change) {
+				_arg = {...vector, live, ...rest};
+			} else {
+				_arg = {live, ...rest};
 			}
 
 			// trigger events
 			this.__ready.value = true;
-			this.__dispatchEvents(_arg);
+			this.__dispatchEvents(_arg, range_change, vector_change);
 			// renew timeout
 			this.__renewTimeout();
 			// release update promises
@@ -390,7 +428,7 @@ define(function (require) {
 			for (let event of this.__update_events.values()) {
 				event.value = {};
 			}
-
+			this.onUpdateDone(_arg);
 			return _arg;
 		};
 
@@ -399,7 +437,7 @@ define(function (require) {
 			overriding this is only necessary if external change events
 			need to be suppressed,
 		*/
-		__dispatchEvents(arg) {
+		__dispatchEvents(arg, range_change, vector_change) {
 			let {
 				range,
 				position,
@@ -407,14 +445,14 @@ define(function (require) {
 				acceleration,
 				timestamp
 			} = arg;
-			let vector = {position, velocity, acceleration, timestamp};
 			// trigger timingsrc events
 			this.eventifyTriggerEvent("timingsrc", arg);
 			// trigger public change events
-			if (vector !== undefined) {
+			if (vector_change) {
+				let vector = {position, velocity, acceleration, timestamp};
 				this.eventifyTriggerEvent("change", vector);
 			}
-			if (range !== undefined) {
+			if (range_change) {
 				this.eventifyTriggerEvent("rangechange", range);
 			}
 			// trigger timeupdate events
@@ -441,12 +479,17 @@ define(function (require) {
 		/*
 			may be overridden
 		*/
-		onTimeout(vector) {return vector;};
+		onRangeViolation(vector) {return vector;};
 
 		/*
 			may be overridden
 		*/
-		onUpdateStart(arg) {return arg;}
+		onUpdateStart(arg) {return arg;};
+
+		/*
+			may be overridden
+		*/
+		onUpdateDone(arg) {};
 
 
 		/***************************************************************
@@ -465,7 +508,7 @@ define(function (require) {
 			if (this.__options.timeout === true) {
 				this.__timeout.clear();
 				let vector = this.__calculateTimeoutVector();
-				if (vector === undefined) {
+				if (vector == undefined) {
 					return;
 				}
 				this.__timeout.setTimeout(vector.timestamp, vector);
@@ -474,24 +517,20 @@ define(function (require) {
 
 
 		/*
-			to be overridden ??
-			must be implemented by subclass if range timeouts are required
 			calculate a vector that will be delivered to _process().
 			the timestamp in the vector determines when it is delivered.
 		*/
 		__calculateTimeoutVector() {
-			let freshVector = this.query();
-			let res = motionutils.calculateDelta(freshVector, this.__range);
-			let [deltaSec, position] = res;
-			if (deltaSec === undefined) {
+			let now = this.clock.now();
+			let now_vector = motionutils.calculateVector(this.__vector, now);
+			let [delta, pos] = motionutils.calculateDelta(now_vector, this.__range);
+			if (delta == undefined || delta == Infinity) {
 				return;
 			}
-			if (deltaSec === Infinity) {
-				return;
-			}
-			let vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
-			// avoid rounding errors
-			vector.position = position;
+			// vector when range restriction will be reached
+			let vector = motionutils.calculateVector(this.__vector, now + delta);
+			// possibly avoid rounding errors
+			vector.position = pos;
 			return vector;
 		};
 

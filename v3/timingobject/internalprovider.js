@@ -64,7 +64,8 @@ define(function (require) {
 				velocity: vel,
 				acceleration: acc,
 				timestamp: ts,
-				range: range
+				range: range,
+				...rest
 			} = arg;
 
 			// record state from current motion
@@ -101,7 +102,7 @@ define(function (require) {
 			this._old_vector = this._vector;
 			// update vector
 			this._vector = vector;
-			return {range, ...vector};
+			return {range, ...vector, ...rest};
 		};
 
 		// update

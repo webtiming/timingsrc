@@ -32,150 +32,81 @@ define(function (require) {
 	'use strict';
 
 	const motionutils = require('../util/motionutils');
-    const TimingObjectBase = require('./timingobjectbase');
+    const TimingObject = require('./timingobject');
 
-	/*
-		Coordinate system based on counting segments
-		skew + n*length + offset === x
-		skew : coordinate system is shifted by skew, so that segment 0 starts at offset.
-		n : segment counter
-		length : segment length
-		offset : offset of value x into the segment where it lies
-		x: float point value
-	*/
-	var SegmentCoords = function (skew, length) {
-		this.skew = skew;
-		this.length = length;
-	};
-
-	/*
-		Static method
-		ovverride modulo to behave better for negative numbers
-	*/
-	SegmentCoords.mod = function (n, m) {
+	// ovverride modulo to behave better for negative numbers
+	function mod(n, m) {
 		return ((n % m) + m) % m;
 	};
 
-	// get point representation from float
-	SegmentCoords.prototype.getPoint = function (x) {
-		return {
-			n : Math.floor((x-this.skew)/this.length),
-			offset : SegmentCoords.mod(x-this.skew,this.length)
-		};
-	};
-
-	// get float value from point representation
-	SegmentCoords.prototype.getFloat = function (p) {
-		return this.skew + (p.n * this.length) + p.offset;
-	};
-
-	// transform float x into segment defined by other float y
-	// if y isnt specified - transform into segment [skew, skew + length]
-	SegmentCoords.prototype.transformFloat = function (x, y) {
-		y = (y === undefined) ? this.skew : y;
-		var xPoint = this.getPoint(x);
-		var yPoint = this.getPoint(y);
-		return this.getFloat({n:yPoint.n, offset:xPoint.offset});
-	};
+	function transform(x, range) {
+		let skew = range[0];
+		let length = range[1] - range[0];
+		return skew + mod(x-skew, length);
+	}
 
 
 	/*
 		LOOP CONVERTER
 	*/
 
-	class LoopConverter extends TimingObjectBase {
+	class LoopConverter extends TimingObject {
 		constructor(timingsrc, range) {
 			super(timingsrc, {timeout:true});
-			/*
-				note :
-				if a range point of the loop converter is the same as a range point of timingsrc,
-				then there will be duplicate events
-			*/
-			this._range = range;
-			this._coords = new SegmentCoords(range[0], range[1]-range[0]);
+			this.__range = range;
 		};
 
-		// transform value from coordiantes X of timing source
-		// to looper coordinates Y
-		_transform(x) {
-			return this._coords.transformFloat(x);
-		};
-
-		// transform value from looper coordinates Y into
-		// coordinates X of timing object - maintain relative diff
-		_inverse(y) {
-			var current_y = this.query().position;
-			var current_x = this.timingsrc.query().position;
-			var diff = y - current_y;
-			var x = diff + current_x;
-			// verify that x is witin range
-			return x;
-		};
-
-		// overrides
-		query() {
-			if (this.vector === null) return {position:undefined, velocity:undefined, acceleration:undefined};
-			var vector = motionutils.calculateVector(this.vector, this.clock.now());
-			// trigger state transition if range violation is detected
-			if (vector.position > this._range[1]) {
-				this._process(this._calculateInitialVector());
-			} else if (vector.position < this._range[0]) {
-				this._process(this._calculateInitialVector());
-			} else {
-				// no range violation
-				return vector;
+		update(arg) {
+			// range change - only a local operation
+			if (arg.timestamp == undefined) {
+				arg.timestamp = this.clock.now();
 			}
-			// re-evaluate query after state transition
-			return motionutils.calculateVector(this.vector, this.clock.now());
-		};
-
-		// overrides
-		update(vector) {
-			if (vector.position !== undefined && vector.position !== null) {
-				vector.position = this._inverse(vector.position);
+			if (arg.range != undefined) {
+				// implement local range update
+				this.__range = arg.range;
+				// should trigger vector change
+				let _arg = {range: this.__range, ...this.timingsrc.query(), live:true};
+				_arg.position = transform(_arg.position, this.__range);
+				this.__dispatchEvents(_arg, true, true);
+				delete arg.range;
 			}
-			return this.timingsrc.update(vector);
+			// vector change
+			if (arg.position != undefined) {
+				// inverse transformation of position, from looper
+				// coordinates to timingsrc coordinates
+				// preserve relative position diff
+				let now = this.clock.now();
+				let now_vector = motionutils.calculateVector(this.vector, now);
+				let diff = now_vector.position - arg.position;
+				let now_vector_src = motionutils.calculateVector(this.timingsrc.vector, now);
+				arg.position = now_vector_src.position - diff;
+			}
+			return super.update(arg);
 		};
 
 		// overrides
-		_calculateTimeoutVector() {
-			var freshVector = this.query();
-			var res = motionutils.calculateDelta(freshVector, this.range);
-			var deltaSec = res[0];
-			if (deltaSec === null) return null;
-			var position = res[1];
-			var vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
-			vector.position = position; // avoid rounding errors
+		onRangeViolation(vector) {
+			// vector is moving
+			if (vector.position <= this.__range[0]) {
+				vector.position = this.__range[1];
+			} else if (this.__range[1] <= vector.position) {
+				vector.position = this.__range[0];
+			}
 			return vector;
 		};
 
 		// overrides
-		onRangeChange(range) {
-			return this._range;
-		};
-
-		// overrides
-		onTimeout(vector) {
-			return this._calculateInitialVector();
-		};
-
-		// overrides
-		onVectorChange(vector) {
-			return this._calculateInitialVector();
-		};
-
-		_calculateInitialVector() {
-			// parent snapshot
-			var parentVector = this.timingsrc.query();
-			// find correct position for looper
-			var position = this._transform(parentVector.position);
-			// find looper vector
-			return {
-				position: position,
-				velocity: parentVector.velocity,
-				acceleration: parentVector.acceleration,
-				timestamp: parentVector.timestamp
-			};
+		onUpdateStart(arg) {
+            if (arg.range != undefined) {
+                // ignore range change from timingsrc
+                // instead, insist that this._range is correct
+                arg.range = this.__range;
+            }
+            if (arg.position != undefined) {
+            	// vector change
+            	arg.position = transform(arg.position, this.__range);
+            }
+            return arg;
 		};
 
 	}

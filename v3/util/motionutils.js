@@ -83,7 +83,12 @@ define(function (require) {
           Return Forwards:1, Backwards -1 or No-direction (i.e. no-motion) 0.
           If t is undefined - t is assumed to be now.
         */
-        const freshVector = calculateVector(vector, ts);
+        let freshVector;
+        if (ts == undefined) {
+            freshVector = vector;
+        } else {
+            freshVector = calculateVector(vector, ts);
+        }
         // check velocity
         const direction = cmp(freshVector.velocity, 0.0);
         if (direction === 0) {

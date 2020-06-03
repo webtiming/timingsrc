@@ -9,7 +9,7 @@ define(function(require) {
         SkewConverter : require('timingobject/skewconverter'),
         DelayConverter : require('timingobject/delayconverter'),
         ScaleConverter : require('timingobject/scaleconverter'),
-        // LoopConverter : require('timingobject/loopconverter'),
+        LoopConverter : require('timingobject/loopconverter'),
         // RangeConverter : require('timingobject/rangeconverter'),
         // TimeShiftConverter : require('timingobject/timeshiftconverter')
 
