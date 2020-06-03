@@ -58,16 +58,21 @@ define(function (require) {
 
 		update(arg) {
 			// range change - only a local operation
-			if (arg.timestamp == undefined) {
-				arg.timestamp = this.clock.now();
-			}
 			if (arg.range != undefined) {
 				// implement local range update
-				this.__range = arg.range;
-				// should trigger vector change
-				let _arg = {range: this.__range, ...this.timingsrc.query(), live:true};
-				_arg.position = transform(_arg.position, this.__range);
-				this.__dispatchEvents(_arg, true, true);
+				let [low, high] = arg.range;
+				if (low >= high) {
+					throw new Error("illegal range", arg.range)
+				}
+				if (low != this.__range[0] || high != this.__range[1]) {
+					this.__range = [low, high];
+					let vector = this.timingsrc.query();
+					vector.position = transform(vector.position, this.__range);
+					this.__vector = vector;
+					// trigger vector change
+					let _arg = {range: this.__range, ...this.__vector, live:true};
+					this.__dispatchEvents(_arg, true, true);
+				}
 				delete arg.range;
 			}
 			// vector change
