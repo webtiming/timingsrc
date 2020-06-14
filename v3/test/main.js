@@ -10,8 +10,8 @@ define(function(require) {
         DelayConverter : require('timingobject/delayconverter'),
         ScaleConverter : require('timingobject/scaleconverter'),
         LoopConverter : require('timingobject/loopconverter'),
-        // RangeConverter : require('timingobject/rangeconverter'),
-        // TimeShiftConverter : require('timingobject/timeshiftconverter')
+        TimeshiftConverter : require('timingobject/timeshiftconverter'),
+        RangeConverter : require('timingobject/rangeconverter'),
 
 
         Interval: require("../util/interval"),

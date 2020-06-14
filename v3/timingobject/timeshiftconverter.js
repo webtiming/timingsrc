@@ -22,11 +22,13 @@
 	TIMESHIFT CONVERTER
 
 	Timeshift Converter timeshifts a timing object by timeoffset.
-	Positive timeoffset means that the timeshift Converter will run ahead of the source timing object.
-	Negative timeoffset means that the timeshift Converter will run behind the source timing object.
+	Positive timeoffset means that the converter will run ahead of the source timing object.
+	Negative timeoffset means that the converter will run behind the source timing object.
 
-	Updates affect the converter immediately. This means that update vector must be re-calculated
-	to the value it would have at time-shifted time. Timestamps are not time-shifted, since the motion is still live.
+	Updates affect the converter immediately.
+    This means that update vector must be re-calculated
+	to the value it would have at time-shifted time.
+    Timestamps are not time-shifted, since the motion is still live.
 	For instance, (0, 1, ts) becomes (0+(1*timeshift), 1, ts)
 
 	However, this transformation may cause range violation
@@ -41,27 +43,58 @@ define(function (require) {
 
     'use strict';
 
-    const TimingObjectBase = require('./timingobjectbase');
+    const motionutils = require('../util/motionutils');
+    const TimingObject = require('./timingobject');
 
-	class TimeShiftConverter extends TimingObjectBase {
-        constructor (timingsrc, timeOffset) {
+	class TimeshiftConverter extends TimingObject {
+
+        constructor (timingsrc, offset) {
     		super(timingsrc);
-    		this._timeOffset = timeOffset;
+    		this._offset = offset;
+            this.eventifyDefineEvent("offsetchange", {init:true});
     	};
 
-    	// overrides
-    	onRangeChange(range) {
-    		return [-Infinity, Infinity];
-    	};
+        // extend
+        eventifyInitEventArg(name) {
+            if (name == "offsetchange") {
+                return [true, this._offset];
+            } else {
+                return super.eventifyInitEventArg(name)
+            }
+        }
 
-    	// overrides
-    	onVectorChange(vector) {
-    		// calculate timeshifted vector
-    		var newVector = motionutils.calculateVector(vector, vector.timestamp + this._timeOffset);
-    		newVector.timestamp = vector.timestamp;
-    		return newVector;
-    	};
+        // overrides
+        onUpdateStart(arg) {
+            if (arg.range != undefined) {
+                arg.range = [-Infinity, Infinity];
+            }
+            if (arg.position != undefined) {
+                // calculate timeshifted vector
+                let ts = arg.timestamp;
+                let new_vector = motionutils.calculateVector(arg, ts + this._offset);
+                arg.position = new_vector.position;
+                arg.velocity = new_vector.velocity;
+                arg.acceleration = new_vector.acceleration;
+                arg.timestamp = ts;
+            }
+            return arg;
+        };
+
+        get offset() {return this._offset;};
+
+        set offset(offset) {
+            if (offset != this._offset) {
+                // set offset and emulate new event from timingsrc
+                this._offset = offset;
+                this.__handleEvent({
+                    ...this.timingsrc.vector,
+                    range: this.timingsrc.range
+                });
+                this.eventifyTriggerEvent("offsetchange", offset);
+            }
+        }
+
     }
 
-	return TimeShiftConverter;
+	return TimeshiftConverter;
 });

@@ -51,6 +51,7 @@ define(function (require) {
 	*/
 
 	class LoopConverter extends TimingObject {
+
 		constructor(timingsrc, range) {
 			super(timingsrc, {timeout:true});
 			this.__range = range;

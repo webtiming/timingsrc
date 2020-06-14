@@ -142,7 +142,24 @@ define (function () {
     }
 
 
+    /* document readypromise */
+    const document_ready = new Promise(function(resolve) {
+        if (document.readyState === 'complete') {
+            resolve();
+        } else {
+            let onReady = function () {
+                resolve();
+                document.removeEventListener('DOMContentLoaded', onReady, true);
+                window.removeEventListener('load', onReady, true);
+            };
+            document.addEventListener('DOMContentLoaded', onReady, true);
+            window.addEventListener('load', onReady, true);
+        }
+    });
+
+
     return {
+        document_ready: document_ready,
         isIterable: isIterable,
         array_concat: array_concat,
         object_equals: object_equals,

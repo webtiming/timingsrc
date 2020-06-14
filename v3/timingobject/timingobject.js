@@ -412,7 +412,9 @@ define(function (require) {
 			this.__ready.value = true;
 			this.__dispatchEvents(_arg, range_change, vector_change);
 			// renew timeout
-			this.__renewTimeout();
+			if (this.__options.timeout) {
+				this.__renewTimeout();
+			}
 			// release update promises
 			if (_arg.tunnel != undefined) {
 				let event = this.__update_events.get(_arg.tunnel);
@@ -501,37 +503,41 @@ define(function (require) {
 		/*
 			renew timeout is called during every processing step
 			in order to recalculate timeouts.
-			the calculation may be specialized in
-			_calculateTimeoutVector
+
+			- optional vector - default is own vector
+			- optional range - default is own range
 		*/
-		__renewTimeout() {
-			if (this.__options.timeout === true) {
-				this.__timeout.clear();
-				let vector = this.__calculateTimeoutVector();
-				if (vector == undefined) {
-					return;
-				}
-				this.__timeout.setTimeout(vector.timestamp, vector);
+		__renewTimeout(vector, range) {
+			this.__timeout.clear();
+			let timeout_vector = this.__calculateTimeoutVector(vector);
+			if (timeout_vector == undefined) {
+				return;
 			}
+			this.__timeout.setTimeout(timeout_vector.timestamp, timeout_vector);
 		};
 
 
 		/*
 			calculate a vector that will be delivered to _process().
 			the timestamp in the vector determines when it is delivered.
+
+			- optional vector - default is own vector
+			- optional range - default is own range
 		*/
-		__calculateTimeoutVector() {
+		__calculateTimeoutVector(vector, range) {
+			vector = vector || this.__vector;
+			range = range || this.__range;
 			let now = this.clock.now();
-			let now_vector = motionutils.calculateVector(this.__vector, now);
-			let [delta, pos] = motionutils.calculateDelta(now_vector, this.__range);
+			let now_vector = motionutils.calculateVector(vector, now);
+			let [delta, pos] = motionutils.calculateDelta(now_vector, range);
 			if (delta == undefined || delta == Infinity) {
 				return;
 			}
 			// vector when range restriction will be reached
-			let vector = motionutils.calculateVector(this.__vector, now + delta);
+			let timeout_vector = motionutils.calculateVector(vector, now + delta);
 			// possibly avoid rounding errors
-			vector.position = pos;
-			return vector;
+			timeout_vector.position = pos;
+			return timeout_vector;
 		};
 
 

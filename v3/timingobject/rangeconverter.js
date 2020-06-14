@@ -34,7 +34,7 @@ define(function (require) {
 	'use strict';
 
     const motionutils = require('../util/motionutils');
-    const TimingObjectBase = require('./timingobjectbase');
+    const TimingObject = require('./timingobject');
 
 	const RangeState = motionutils.RangeState;
 
@@ -80,23 +80,23 @@ define(function (require) {
 
 	/*
 		Range converter allows a new (smaller) range to be specified.
+
+		- ignores the range of its timingsrc
+		- need to renew timeouts based on the vector of timingsrc,
+		  instead of its own, but its own timeout
+
 	*/
 
-	class RangeConverter extends TimingObjectBase {
+	class RangeConverter extends TimingObject {
 
 		constructor (timingObject, range) {
-			super(timingObject, {timeout:true});
-			/*
-				note :
-				if a range point of the loop converter is the same as a range point of timingsrc,
-				then there will be duplicate events
-			*/
-			this._state = state();
-			// todo - check range
-			this._range = range;
+			super(timingObject, {timeout:false});
+			this.__state = state();
+			this.__range = range;
 		};
 
 		// overrides
+		/*
 		query() {
 			if (this._ready.value === false)  {
 				return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
@@ -112,6 +112,7 @@ define(function (require) {
 			return motionutils.calculateVector(this._vector, this.clock.now());
 		};
 
+
 		// overridden
 		_calculateTimeoutVector() {
 			var freshVector = this._timingsrc.query();
@@ -124,45 +125,80 @@ define(function (require) {
 			return vector;
 		};
 
+
+
 		// override range
-		get range() {return [this._range[0], this._range[1]];};
+
 		set range(range) {
 			this._range = range;
 			// use vector from timingsrc to emulate new event from timingsrc
 			this._preProcess(this.timingsrc.vector);
 		}
 
-		// overrides
-		onRangeChange(range) {
-			return this._range;
-		};
 
 		// overrides
 		onTimeout(vector) {
 			return this.onVectorChange(vector);
 		};
 
+		*/
+
+
+		// overrides
+		onRangeViolation(vector) {
+			console.log("timeout", vector);
+		};
+
+
+		// overrides
+		onUpdateStart(arg) {
+            if (arg.range != undefined) {
+                // ignore range change from timingsrc
+                // instead, insist that this.__range is correct
+                arg.range = this.__range;
+            }
+            if (arg.position != undefined) {
+            	// vector change
+            	let {position, velocity, acceleration, timestamp} = arg;
+            	let vector = {position, velocity, acceleration, timestamp};
+            	console.log(vector)
+            	vector = this.onVectorChange(vector);
+            	if (vector == undefined) {
+            		arg.position = undefined;
+            		arg.velocity = undefined;
+            		arg.acceleration = undefined;
+            	} else {
+            		arg.position = vector.position;
+            		arg.velocity = vector.velocity;
+            		arg.acceleration = vector.acceleration;
+            		arg.timestamp = vector.timestamp;
+            	}
+            }
+            return arg;
+		};
+
+
 		// overrides
 		onVectorChange(vector) {
 			// console.log("onVectorChange vector", vector);
 			// console.log("onVectorChange range", this._range);
-			var new_state = motionutils.correctRangeState(vector, this._range);
+			var new_state = motionutils.correctRangeState(vector, this.__range);
 			// console.log("onVectorChange state", new_state);
-			var state_changed = this._state.set(new_state, this._range);
+			var state_changed = this.__state.set(new_state, this.__range);
 			if (state_changed.special) {
 				// state transition between INSIDE and OUTSIDE
-				if (this._state.get() === RangeState.INSIDE) {
+				if (this.__state.get() === RangeState.INSIDE) {
 					// OUTSIDE -> INSIDE, generate fake start event
 					// vector delivered by timeout
 					// forward event unchanged
 				} else {
 					// INSIDE -> OUTSIDE, generate fake stop event
-					vector = motionutils.checkRange(vector, this._range);
+					vector = motionutils.checkRange(vector, this.__range);
 				}
 			}
 			else {
 				// no state transition between INSIDE and OUTSIDE
-				if (this._state.get() === RangeState.INSIDE) {
+				if (this.__state.get() === RangeState.INSIDE) {
 					// stay inside or first event inside
 					// forward event unchanged
 				} else {
@@ -176,10 +212,14 @@ define(function (require) {
 					// - outside-high to outside-high (no range change)
 					// - outside-low to outside-low (no range change)
 					if (state_changed.absolute) {
-						vector = motionutils.checkRange(vector, this._range);
+						vector = motionutils.checkRange(vector, this.__range);
 					} else {
+						console.log("drop event");
 						// drop event
-						return null;
+						// reevaluate timeout
+						this.__renewTimeout(this.timingsrc.vector, this.__range);
+
+						return;
 					}
 				}
 			}
