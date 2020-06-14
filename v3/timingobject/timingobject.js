@@ -111,8 +111,15 @@ define(function (require) {
 				};
 			}
 
-			this.__options = options || {};
-			this.__options.timeout = true;
+			// options
+			options = options || {};
+			this.__options = options;
+
+
+			// default timeout option
+			if (options.timeout == undefined) {
+				options.timeout = true;
+			}
 
 			// cached vectors and range
 			this.__old_vector;
@@ -509,7 +516,7 @@ define(function (require) {
 		*/
 		__renewTimeout(vector, range) {
 			this.__timeout.clear();
-			let timeout_vector = this.__calculateTimeoutVector(vector);
+			let timeout_vector = this.__calculateTimeoutVector(vector, range);
 			if (timeout_vector == undefined) {
 				return;
 			}

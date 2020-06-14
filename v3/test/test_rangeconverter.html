@@ -39,10 +39,10 @@
 
             // range
             document.getElementById(`range_a_${key}`).onclick = function () {
-                to.update({range:[0,10]});
+                to.update({range:[2,8]});
             };
             document.getElementById(`range_b_${key}`).onclick = function () {
-                to.update({range:[5,15]});
+                to.update({range:[3,7]});
             };
 
             const range_elem = document.getElementById(`range_${key}`);
@@ -109,8 +109,8 @@
         <p>
         Range : <span style="font-weight:bold;" id="range_1" ></span>
         </p>
-            <button id="range_a_1">Range [0,10]</button>
-            <button id="range_b_1">Range [5, 15]</button>
+            <button id="range_a_1">Range [2,8]</button>
+            <button id="range_b_1">Range [3,7]</button>
         </p>
 
     </p>

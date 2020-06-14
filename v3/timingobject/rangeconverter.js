@@ -82,92 +82,83 @@ define(function (require) {
 		Range converter allows a new (smaller) range to be specified.
 
 		- ignores the range of its timingsrc
-		- need to renew timeouts based on the vector of timingsrc,
-		  instead of its own, but its own timeout
+		- vector change from timingsrc
+		  - outside own range - drop - set timeout to inside
+		  - inside own range - normal processing
+		- extra vector changes (compared to timingsrc)
+			- enter inside
+			- range violation own range
+		- range updated locally
 
 	*/
 
 	class RangeConverter extends TimingObject {
 
 		constructor (timingObject, range) {
-			super(timingObject, {timeout:false});
+			super(timingObject, {timeout:true});
 			this.__state = state();
 			this.__range = range;
 		};
 
-		// overrides
-		/*
-		query() {
-			if (this._ready.value === false)  {
-				return {position:undefined, velocity:undefined, acceleration:undefined, timestamp:undefined};
+
+
+		update(arg) {
+			/*
+				range change - only a local operation
+
+					- need to trigger local processing of new range,
+					so that range is changed and events triggered
+					- also need to trigger a reevaluation of
+					vector from timingsrc vector, for instance, if
+					range grows while timingsrc is outside, the
+					position of the vector needs to change
+					- cannot do both these things via emulation
+					of timingsrc event - because rangeconverter
+					is supposed to ignore range change from timingsrc
+					- could do both locally, but this would effectively
+					require reimplementation of logic in __process
+					- in addition, this could be a request to update
+					both range and vector at the same time, in which case
+					it would be good to do them both at the same time
+
+				- possible solution - somehow let range converter
+				  discriminate range changes based on origin?
+
+			*/
+			if (arg.range != undefined) {
+
+				// local processing of range change
+				// to trigger range change event
+				let _arg = {range: arg.range, ...this.timingsrc.vector, live:true};
+				this.__process(_arg);
+				// avoid that range change affects timingsrc
+				delete arg.range;
+
 			}
-			// reevaluate state to handle range violation
-			var vector = motionutils.calculateVector(this._timingsrc.vector, this.clock.now());
-			var state = motionutils.correctRangeState(vector, this._range);
-			// detect range violation - only if timeout is set
-			if (state !== motionutils.RangeState.INSIDE && this._timeout.isSet()) {
-				this._preProcess(vector);
-			}
-			// re-evaluate query after state transition
-			return motionutils.calculateVector(this._vector, this.clock.now());
+			return super.update(arg);
 		};
 
-
-		// overridden
-		_calculateTimeoutVector() {
-			var freshVector = this._timingsrc.query();
-			var res = motionutils.calculateDelta(freshVector, this.range);
-			var deltaSec = res[0];
-			if (deltaSec === null) return null;
-			var position = res[1];
-			var vector = motionutils.calculateVector(freshVector, freshVector.timestamp + deltaSec);
-			vector.position = position; // avoid rounding errors
-			return vector;
-		};
-
-
-
-		// override range
-
-		set range(range) {
-			this._range = range;
-			// use vector from timingsrc to emulate new event from timingsrc
-			this._preProcess(this.timingsrc.vector);
-		}
-
-
-		// overrides
-		onTimeout(vector) {
-			return this.onVectorChange(vector);
-		};
-
-		*/
-
-
-		// overrides
-		onRangeViolation(vector) {
-			console.log("timeout", vector);
-		};
 
 
 		// overrides
 		onUpdateStart(arg) {
             if (arg.range != undefined) {
-                // ignore range change from timingsrc
-                // instead, insist that this.__range is correct
-                arg.range = this.__range;
+            	// ignore range change from timingsrc
+            	// delete causes update to be dropped
+                delete arg.range;
             }
             if (arg.position != undefined) {
-            	// vector change
+            	// vector change from timingsrc
             	let {position, velocity, acceleration, timestamp} = arg;
             	let vector = {position, velocity, acceleration, timestamp};
-            	console.log(vector)
             	vector = this.onVectorChange(vector);
             	if (vector == undefined) {
-            		arg.position = undefined;
-            		arg.velocity = undefined;
-            		arg.acceleration = undefined;
+            		// drop because motion is outside
+					// create new timeout for entering inside
+					this.__renewTimeout(this.timingsrc.vector, this.__range);
+					return;
             	} else {
+            		// regular
             		arg.position = vector.position;
             		arg.velocity = vector.velocity;
             		arg.acceleration = vector.acceleration;
@@ -178,12 +169,8 @@ define(function (require) {
 		};
 
 
-		// overrides
 		onVectorChange(vector) {
-			// console.log("onVectorChange vector", vector);
-			// console.log("onVectorChange range", this._range);
 			var new_state = motionutils.correctRangeState(vector, this.__range);
-			// console.log("onVectorChange state", new_state);
 			var state_changed = this.__state.set(new_state, this.__range);
 			if (state_changed.special) {
 				// state transition between INSIDE and OUTSIDE
@@ -214,11 +201,6 @@ define(function (require) {
 					if (state_changed.absolute) {
 						vector = motionutils.checkRange(vector, this.__range);
 					} else {
-						console.log("drop event");
-						// drop event
-						// reevaluate timeout
-						this.__renewTimeout(this.timingsrc.vector, this.__range);
-
 						return;
 					}
 				}
