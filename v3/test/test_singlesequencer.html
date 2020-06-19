@@ -187,12 +187,11 @@
             // Visualize list of timed data
             axis.on("change", function (events){
                 // refresh visuals by redrawing the list entirely
-                let ready = s.isReady();
                 let html = [...axis.values()]
                     .sort(function(cue_a, cue_b) {
                         return Interval.cmpLow(cue_a.interval, cue_b.interval);
                     }).map(function(cue){
-                        if (ready && s.has(cue.key)) {
+                        if (s.has(cue.key)) {
                             return `<div id=${cue.key} class="active">${cue.data}</div>`;
                         } else {
                             return `<div id=${cue.key}>${cue.data}</div>`;

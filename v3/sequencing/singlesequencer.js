@@ -53,28 +53,22 @@ define(function(require) {
 
         constructor (axis, to) {
 
-            // axis
-            this._axis = axis;
-
-            // timing object
-            this._to = to;
-
-            // schedule
-            this._sched = new Schedule(this._axis, to);
-
             // activeCues
             this._activeCues = new Map(); // (key -> cue)
 
-            // Axis Callback
+            // Axis
+            this._axis = axis;
             let cb = this._onAxisCallback.bind(this)
             this._axis_cb = this._axis.add_callback(cb);
 
-            // Schedule Callback
+            // Timing Object
+            this._to = to;
+            this._sub = this._to.on("timingsrc", this._onTimingCallback.bind(this));
+
+            // Schedule
+            this._sched = new Schedule(this._axis, to);
             cb = this._onScheduleCallback.bind(this);
             this._sched_cb = this._sched.add_callback(cb)
-
-            // Timing Object Callback
-            this._sub = this._to.on("timingsrc", this._onTimingCallback.bind(this));
 
             // Change event
             eventify.eventifyInstance(this);
@@ -91,31 +85,13 @@ define(function(require) {
         */
         eventifyInitEventArg(name) {
             if (name == "change") {
-                if (this.isReady() && this._activeCues.size > 0) {
+                if (this._activeCues.size > 0) {
                     let events = [...this._activeCues.values()].map(cue => {
                         return {key:cue.key, new:cue, old:undefined};
                     });
                     return [true, events];
                 }
             }
-        }
-
-        /***************************************************************
-         READYNESS
-        ***************************************************************/
-
-        /*
-            Sequencer Ready Promise
-        */
-        get ready () {
-            return this._to.ready;
-        };
-
-        /*
-            Sequencer Read State
-        */
-        isReady() {
-            return this._to.isReady();
         }
 
 
@@ -276,6 +252,10 @@ define(function(require) {
                 So, the simple policy above works for typical workloads,
                 where the majority of added cues are inactive.
             */
+
+            if (!this._to.isReady()) {
+                return;
+            }
 
             const now = this._to.clock.now();
             const now_vector = motionutils.calculateVector(this._to.vector, now);
@@ -444,6 +424,10 @@ define(function(require) {
         ***************************************************************/
 
         _onScheduleCallback = function(endpointItems) {
+            if (!this._to.isReady()) {
+                return;
+            }
+
             const events = [];
             endpointItems.forEach(function (item) {
                 let cue = item.cue;

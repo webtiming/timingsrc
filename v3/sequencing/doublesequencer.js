@@ -73,7 +73,7 @@ define(function(require) {
         */
         eventifyMakeInitEvents = function (type) {
             if (type === "change") {
-                if (this.isReady() && this._activeCues.size > 0) {
+                if (this._activeCues.size > 0) {
                     let events = [...this._activeCues.values()].map(cue => {
                         return {key:cue.key, new:cue, old:undefined};
                     });
@@ -224,7 +224,6 @@ define(function(require) {
                 }
             }
         };
-
 
 
         /***************************************************************
