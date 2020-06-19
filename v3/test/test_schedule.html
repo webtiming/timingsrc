@@ -18,17 +18,16 @@
 
         const isMoving = timingsrc.motionutils.isMoving;
         const Interval = timingsrc.Interval;
+        const endpoint = timingsrc.endpoint;
 
         /*
             process due cue events up until given timestamp
         */
-        function print_endpoints(endpointEvents) {
-            let _ts = to.clock.now();
+        function print_endpoints(now, endpointEvents) {
             endpointEvents.forEach(function(item){
-                let delay = _ts - item.ts;
-                let toString = Interval.endpoint.toString;
+                let delay = now - item.tsEndpoint[0];
                 let str = [
-                    `${toString(item.endpoint)}`,
+                    `${endpoint.toString(item.endpoint)}`,
                     `key: ${item.cue.key}`,
                     `delay: ${delay.toFixed(3)}`,
                     `dir: ${item.direction}`
@@ -59,7 +58,9 @@
 
           to = new timingsrc.TimingObject();
           s = new timingsrc.Schedule(axis, to);
-          s.add_callback(print_endpoints);
+          s.add_callback(function(now, endpointEvents) {
+            print_endpoints(now, endpointEvents);
+          });
 
           to.on("change", function() {
             s.setVector(to.vector);

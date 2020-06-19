@@ -4,6 +4,7 @@ define(function(require) {
         util: require("../util/util"),
         motionutils: require("../util/motionutils"),
         eventify: require("../util/eventify"),
+        endpoint: require("../util/endpoint"),
 
         TimingObject: require("../timingobject/timingobject"),
         SkewConverter : require('timingobject/skewconverter'),

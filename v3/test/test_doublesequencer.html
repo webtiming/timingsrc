@@ -243,8 +243,8 @@
             axis.update(cues);
 
             // initialise
-            toA = new timingsrc.TimingObject();
-            to = new timingsrc.TimingObject({position:10.0});
+            to = new timingsrc.TimingObject({position:5.0});
+            toA = new timingsrc.SkewConverter(to, 4);
 
             s = new timingsrc.DoubleSequencer(axis, toA, to);
 

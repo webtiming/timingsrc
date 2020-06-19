@@ -423,7 +423,7 @@ define(function(require) {
          SCHEDULE CALLBACK
         ***************************************************************/
 
-        _onScheduleCallback = function(endpointItems) {
+        _onScheduleCallback = function(now, endpointItems, schedule) {
             if (!this._to.isReady()) {
                 return;
             }

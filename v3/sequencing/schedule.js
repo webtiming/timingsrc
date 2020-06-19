@@ -297,7 +297,7 @@ define(function(require) {
                 dueEvents.push(...this.pop(now));
             }
             if (dueEvents.length > 0) {
-                this._notify_callbacks(dueEvents, this);
+                this._notify_callbacks(now, dueEvents, this);
             }
             // timeout - until next due event
             let ts = this.next() || this.timeInterval.high;
