@@ -45,7 +45,9 @@ define(function(require) {
 
             // Timing objects
             this._toA = toA;
+            this._toA_ready = false;
             this._toB = toB;
+            this._toB_ready = false;
             let to_cb = this._onTimingCallback.bind(this);
             this._subA = this._toA.on("timingsrc", to_cb);
             this._subB = this._toB.on("timingsrc", to_cb);
@@ -86,52 +88,62 @@ define(function(require) {
          READYNESS
         ***************************************************************/
 
-        /*
-            Sequencer Ready Promise
-        */
-        get ready () {
-            return Promise.all(this._toA.ready, this._toB_ready);
-        };
 
         /*
             Sequencer Read State
         */
-        isReady() {
-            return this._toA.isReady() && this._toB.isReady();
+        _isReady() {
+            return this._toA_ready && this._toB_ready;
         }
 
+
+        /***************************************************************
+         AXIS CALLBACK
+        ***************************************************************/
 
         /*
             Handling Axis Update Callbacks
         */
         _onAxisCallback(batchMap) {
+            if (!this._isReady()) {
+                return;
+            }
             // Do something
             console.log("onAxisUpdate");
         }
+
+
+        /***************************************************************
+         TIMING OBJECT CALLBACK
+        ***************************************************************/
 
         /*
             Handling Change Events from Timing Objects
         */
         _onTimingCallback (eArg, eInfo) {
 
-            const events = [];
-
-            if (!this.isReady()) {
-                return;
+            /*
+                make sure both timingobjects are ready
+            */
+            let init = false;
+            if (!this._isReady()) {
+                if (eInfo.src == this._toA) {
+                    this._toA_ready = true;
+                } else {
+                    this._toB_ready = true;
+                }
+                if (this._isReady()) {
+                    init = true;
+                } else {
+                    return;
+                }
             }
 
-            // TODO - avoid processing ready signal from both timing objects
-            // initially.
-
-
-            /* figure out which timing object was firing */
+            /*
+                figure out which timing object was firing
+            */
             const to = eInfo.src;
             const other_to = (to == this._toA) ? this._toB : this._toA;
-            if (eInfo.src == this._toA) {
-                console.log("update toA");
-            } else {
-                console.log("update toB");
-            }
 
             /*
                 If update is the initial vector from the timing object,
@@ -152,13 +164,11 @@ define(function(require) {
             */
             const delta = new motionutils.MotionDelta(to.old_vector, new_vector);
 
-
             /*
                 Sample the state of the other timing object at same time.
             */
             let ts = new_vector.timestamp;
             let other_new_vector = motionutils.calculateVector(other_to.vector, ts);
-
 
             /*
                 Reevaluate active state.
@@ -166,6 +176,7 @@ define(function(require) {
                 or if the motion stopped without jumping (pause or halt at range
                 restriction)
             */
+            const events = [];
             if (delta.posDelta == PosDelta.CHANGE || delta.MoveDelta == MoveDelta.STOP) {
 
                 // make position interval
@@ -196,33 +207,37 @@ define(function(require) {
                 }
             }
 
-
-
             /*
-                Moving
+                Handle Timing Object Moving
+                - on init both shedules must be updated
             */
-
-            // kick off schedule
-
-            /*
-            // TODO - need to kick off the other as well
             if (to == this._toA) {
-                this._scheduleA.setVector(new_vector);
+                this._schedA.setVector(new_vector);
             } else if (to == this._toB) {
-                this._scheduleB.setVector(new_vector);
+                this._schedB.setVector(new_vector);
             }
-            */
-
+            if (init) {
+                if (other_to == this._toA) {
+                    this._schedA.setVector(other_new_vector);
+                } else if (other_to == this._toB) {
+                    this._schedB.setVector(other_new_vector);
+                }
+            }
         };
 
 
 
-
+        /***************************************************************
+         SCHEDULE CALLBACK
+        ***************************************************************/
 
         /*
             Handling due Events from Schedules
         */
-        _onScheduleCallback = function(dueEvens, schedule) {
+        _onScheduleCallback = function(dueEvents, schedule) {
+            if (!this._isReady()) {
+                return;
+            }
             if (schedule == this._scheduleA) {
                 console.log("schedule A callback");
             } else if (schedule == this._scheduleB) {
@@ -230,6 +245,10 @@ define(function(require) {
             }
         }
 
+
+        /***************************************************************
+         MAP ACCESSORS
+        ***************************************************************/
 
         /*
             Map accessors
