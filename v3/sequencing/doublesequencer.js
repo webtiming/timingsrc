@@ -31,6 +31,19 @@ define(function(require) {
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
 
+
+    function isNoop(delta) {
+        return (delta.interval == Axis.Delta.NOOP && delta.data == Axis.Delta.NOOP);
+    }
+
+    const IntervalLookupMask = [
+        Interval.Relation.OVERLAP_LEFT,
+        Interval.Relation.COVERED,
+        Interval.Relation.EQUALS,
+        Interval.Relation.COVERS,
+        Interval.Relation.OVERLAP_RIGHT
+    ];
+
     /*
         // enter or exit
 
@@ -165,15 +178,109 @@ define(function(require) {
          AXIS CALLBACK
         ***************************************************************/
 
+
+        /*
+            make exit, change and enter events
+            - uses axis eventMap
+        */
+        _get_events_from_axis_events(eventMap, interval) {
+            const enterEvents = [];
+            const changeEvents = [];
+            const exitEvents = [];
+            const first = this._activeCues.size == 0;
+            let is_active, should_be_active, _item;
+            for (let item of eventMap.values()) {
+                if (isNoop(item.delta)) {
+                    continue;
+                }
+                // exit, change, enter events
+                is_active = (first) ? false : this._activeCues.has(item.key);
+                should_be_active = false;
+                if (item.new != undefined) {
+                    let relation = item.new.interval.compare(interval);
+                    if (IntervalLookupMask.includes(relation)) {
+                        should_be_active = true;
+                    }
+                }
+                if (is_active && !should_be_active) {
+                    // exit
+                    _item = {key:item.key, new:undefined, old:item.old};
+                    exitEvents.push(_item);
+                } else if (!is_active && should_be_active) {
+                    // enter
+                    _item = {key:item.key, new:item.new, old:undefined};
+                    enterEvents.push(_item);
+                } else if (is_active && should_be_active) {
+                    // change
+                    _item = {key:item.key, new:item.new, old:item.old};
+                    changeEvents.push(_item);
+                }
+            };
+            return [exitEvents, changeEvents, enterEvents];
+        }
+
+
         /*
             Handling Axis Update Callbacks
         */
-        _onAxisCallback(batchMap) {
+        _onAxisCallback(eventMap) {
             if (!this._isReady()) {
                 return;
             }
-            // Do something
-            console.log("onAxisUpdate");
+
+            // assuming both timing objects have the same clock
+            const now = this._toA.clock.now();
+            const now_vector_A = motionutils.calculateVector(this._toA.vector, now);
+            const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
+
+            // choose approach to get events
+            let get_events = this._get_events_from_axis_events.bind(this);
+            /*
+            if (EVENTMAP_THRESHOLD < eventMap.size) {
+                if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
+                    get_events = this._get_events_from_axis_lookup.bind(this);
+                }
+            }
+            */
+
+            let [pos_A, pos_B] = [now_vector_A.position, now_vector_B.position];
+            let [low, high] = (pos_A <= pos_B) ? [pos_A, pos_B] : [pos_B, pos_A];
+            let activeInterval = new Interval(low, high, true, true);
+            const [exit, change, enter] = get_events(eventMap, activeInterval);
+
+            // update activeCues
+            exit.forEach(item => {
+                this._activeCues.delete(item.key);
+            });
+            enter.forEach(item => {
+                this._activeCues.set(item.key, item.new);
+            });
+
+            // notifications
+            const events = exit;
+            events.push(...change);
+            events.push(...enter);
+
+            // event notification
+            if (events.length > 0) {
+                this.eventifyTriggerEvent("change", events);
+            }
+
+            /*
+                clear schedules
+                this is only necessary if a cue interval is changed,
+                and the change is relevant within the posInterval of
+                one of the schedules.
+
+                Instead of checking all, it is much cheaper to
+                simply refresh the schedule every time.
+
+                Note: it is quite possible that cue interval changes
+                affect schedule posInterva even if it does not affect
+                active cues
+            */
+            this._schedA.setVector(now_vector_A);
+            this._schedB.setVector(now_vector_B);
         }
 
 

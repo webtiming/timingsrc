@@ -28,7 +28,6 @@ define(function(require) {
     const Schedule = require("./schedule");
     const Axis = require("./axis");
 
-    const Delta = Axis.Delta;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
     const Relation = Interval.Relation;
@@ -45,7 +44,7 @@ define(function(require) {
     const ACTIVECUES_THRESHOLD = 5000;
 
     function isNoop(delta) {
-        return (delta.interval == Delta.NOOP && delta.data == Delta.NOOP);
+        return (delta.interval == Axis.Delta.NOOP && delta.data == Axis.Delta.NOOP);
     }
 
 
@@ -193,7 +192,7 @@ define(function(require) {
             let is_active, should_be_active, _item;
             for (let item of eventMap.values()) {
                 if (isNoop(item.delta)) {
-                    return;
+                    continue;
                 }
                 // exit, change, enter events
                 is_active = (first) ? false : this._activeCues.has(item.key);
