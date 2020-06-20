@@ -27,85 +27,13 @@ define(function(require) {
     const eventify = require("../util/eventify");
     const Schedule = require("./schedule");
     const Axis = require("./axis");
+    const sequenceutils = require("./sequenceutils");
 
+    const Active = sequenceutils.Active;
+    const ACTIVE_MAP = sequenceutils.ACTIVE_MAP;
+    const get_events_from_axis_events = sequenceutils.get_events_from_axis_events;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
-
-
-    function isNoop(delta) {
-        return (delta.interval == Axis.Delta.NOOP && delta.data == Axis.Delta.NOOP);
-    }
-
-    const IntervalLookupMask = [
-        Interval.Relation.OVERLAP_LEFT,
-        Interval.Relation.COVERED,
-        Interval.Relation.EQUALS,
-        Interval.Relation.COVERS,
-        Interval.Relation.OVERLAP_RIGHT
-    ];
-
-    /*
-        // enter or exit
-
-        low, forward, endpoint low -> stay active
-        low, forward, endpoint high -> exit
-        low, forward, singular -> exit
-
-        low, backward, endpoint low -> stay actuve
-        low, backward, endpoint high -> enter
-        low, backward, singular -> enter
-
-        high, forward, endpoint low -> enter
-        high, forward, endpoint high -> stay active
-        high, forward, singular -> enter
-
-        high, backward, endpoint low -> exit
-        high, backward, endpoint high -> stay active
-        high, backward, singular -> exit
-
-        // cornercase - timing objects are the same
-
-        singular, forward, endpoint low -> enter
-        singular, forward, endpoint high -> exit
-        singular, forward, singular -> enter, exit
-
-        singular, backward, endpoint low -> exit
-        singular, backward, endpoint high -> enter
-        singular, backward, singular -> enter, exit
-
-    */
-
-    const ENTER = 1;
-    const STAY = 0;
-    const EXIT = -1;
-    const ENTER_EXIT = 2;
-
-    const EVENT_MAP = new Map([
-
-        ["LFL", STAY],
-        ["LFH", EXIT],
-        ["LFS", EXIT],
-
-        ["LBL", STAY],
-        ["LBH", ENTER],
-        ["LBS", ENTER],
-
-        ["HFL", ENTER],
-        ["HFH", STAY],
-        ["HFS", ENTER],
-
-        ["HBL", EXIT],
-        ["HBH", STAY],
-        ["HBS", EXIT],
-
-        ["SFL", ENTER],
-        ["SFH", EXIT],
-        ["SFS", ENTER_EXIT],
-
-        ["SBL", EXIT],
-        ["SBH", ENTER],
-        ["SBS", ENTER_EXIT]
-    ]);
 
 
     class DoubleSequencer {
@@ -165,7 +93,6 @@ define(function(require) {
          READYNESS
         ***************************************************************/
 
-
         /*
             Sequencer Read State
         */
@@ -177,48 +104,6 @@ define(function(require) {
         /***************************************************************
          AXIS CALLBACK
         ***************************************************************/
-
-
-        /*
-            make exit, change and enter events
-            - uses axis eventMap
-        */
-        _get_events_from_axis_events(eventMap, interval) {
-            const enterEvents = [];
-            const changeEvents = [];
-            const exitEvents = [];
-            const first = this._activeCues.size == 0;
-            let is_active, should_be_active, _item;
-            for (let item of eventMap.values()) {
-                if (isNoop(item.delta)) {
-                    continue;
-                }
-                // exit, change, enter events
-                is_active = (first) ? false : this._activeCues.has(item.key);
-                should_be_active = false;
-                if (item.new != undefined) {
-                    let relation = item.new.interval.compare(interval);
-                    if (IntervalLookupMask.includes(relation)) {
-                        should_be_active = true;
-                    }
-                }
-                if (is_active && !should_be_active) {
-                    // exit
-                    _item = {key:item.key, new:undefined, old:item.old};
-                    exitEvents.push(_item);
-                } else if (!is_active && should_be_active) {
-                    // enter
-                    _item = {key:item.key, new:item.new, old:undefined};
-                    enterEvents.push(_item);
-                } else if (is_active && should_be_active) {
-                    // change
-                    _item = {key:item.key, new:item.new, old:item.old};
-                    changeEvents.push(_item);
-                }
-            };
-            return [exitEvents, changeEvents, enterEvents];
-        }
-
 
         /*
             Handling Axis Update Callbacks
@@ -234,7 +119,7 @@ define(function(require) {
             const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
 
             // choose approach to get events
-            let get_events = this._get_events_from_axis_events.bind(this);
+            let get_events = get_events_from_axis_events;
             /*
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
@@ -246,7 +131,7 @@ define(function(require) {
             let [pos_A, pos_B] = [now_vector_A.position, now_vector_B.position];
             let [low, high] = (pos_A <= pos_B) ? [pos_A, pos_B] : [pos_B, pos_A];
             let activeInterval = new Interval(low, high, true, true);
-            const [exit, change, enter] = get_events(eventMap, activeInterval);
+            const [exit, change, enter] = get_events(this._activeCues, eventMap, activeInterval);
 
             // update activeCues
             exit.forEach(item => {
@@ -429,13 +314,13 @@ define(function(require) {
                 let other_vector = motionutils.calculateVector(other_to.vector, ts);
                 let pos_other = other_vector.position;
                 // to role
-                let to_role = (pos < pos_other) ? "L" : (pos == pos_other) ? "S" : "H";
+                let to_role = (pos < pos_other) ? "L" : (pos == pos_other) ? "S" : "R";
                 // movement direction
-                let to_dir = (item.direction > 0) ? "F" : "B";
-                // endpoint role
-                let ep_role = (singular) ? "S": (right) ? "H" : "L";
+                let to_dir = (item.direction > 0) ? "R" : "L";
+                // endpoint type
+                let ep_type = (singular) ? "S": (right) ? "R" : "L";
                 // action code, enter, exit, stay, enter-exit
-                let action_code = EVENT_MAP.get(`${to_role}${to_dir}${ep_role}`);
+                let action_code = ACTIVE_MAP.get(`${to_role}${to_dir}${ep_type}`);
 
                 /*
                     state of cue
@@ -444,12 +329,12 @@ define(function(require) {
                 let has_cue = this._activeCues.has(cue.key);
 
                 // filter action code
-                if (action_code == ENTER_EXIT) {
+                if (action_code == Active.ENTER_EXIT) {
                     /*
                         both timing objects evaluated to same position
                         either
-                        1) to is moving and other is paused on this point,
-                           implying that the cue stays active
+                        1) to is moving and other_to is paused at this point,
+                           implying that the cue STAYS active
                         or,
                         2) both are moving. if both are moving in the same
                         direction - EXIT
@@ -458,29 +343,29 @@ define(function(require) {
                     let other_moving = motionutils.isMoving(other_vector);
                     if (!other_moving) {
                         // other not moving
-                        action_code = ENTER;
+                        action_code = Active.ENTER;
                     } else {
                         // both moving
                         let direction = motionutils.calculateDirection(other_vector);                        // movement direction
-                        action_code = (direction != item.direction) ? ENTER : EXIT;
+                        action_code = (direction != item.direction) ? Active.ENTER : Active.EXIT;
                     }
                 }
-                if (action_code == STAY) {
-                    action_code = ENTER;
+                if (action_code == Active.STAY) {
+                    action_code = Active.ENTER;
                 }
-                if (action_code == ENTER && has_cue) {
+                if (action_code == Active.ENTER && has_cue) {
                     return;
                 }
-                if (action_code == EXIT && !has_cue) {
+                if (action_code == Active.EXIT && !has_cue) {
                     return;
                 }
 
                 // enter or exit
-                if (action_code == ENTER) {
+                if (action_code == Active.ENTER) {
                     // enter
                     events.push({key:cue.key, new:cue, old:undefined});
                     this._activeCues.set(cue.key, cue);
-                } else if (action_code == EXIT) {
+                } else if (action_code == Active.EXIT) {
                     // exit
                     events.push({key:cue.key, new:undefined, old:cue});
                     this._activeCues.delete(cue.key);
