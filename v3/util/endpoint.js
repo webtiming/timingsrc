@@ -68,8 +68,10 @@ define(function () {
 		resolve endpoint mode
 	*/
 	function get_mode(e) {
+		// if right, closed is given
+		// use that instead of singular
 		let [val, right, closed, singular] = e;
-		if (singular) {
+		if (right == undefined) {
 			return MODE_SINGULAR;
 		} else if (right) {
 			if (closed) {

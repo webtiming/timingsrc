@@ -115,6 +115,15 @@ define(function(require) {
 		covers (other) {
 			return compare(this, other) == Relation.COVERS;
 		}
+
+		/*
+			default mode - all except outside
+			2+4+8+16+32 = 62
+		*/
+		match (other, mask=62) {
+			let relation = compare(this, other);
+			return mask & relation;
+		}
 	}
 
 
@@ -155,11 +164,11 @@ define(function(require) {
     const Relation = Object.freeze({
 		OUTSIDE_LEFT: 1,
 		OVERLAP_LEFT: 2,
-		COVERED: 3,
-		EQUALS: 4,
-		COVERS: 5,
-		OVERLAP_RIGHT: 6,
-		OUTSIDE_RIGHT: 7
+		COVERED: 4,
+		EQUALS: 8,
+		COVERS: 16,
+		OVERLAP_RIGHT: 32,
+		OUTSIDE_RIGHT: 64
     });
 
 
@@ -209,7 +218,6 @@ define(function(require) {
 			}
 		}
 	}
-
 
 	/*********************************************************
 	COMPARE INTERVALS BY ENDPOINT

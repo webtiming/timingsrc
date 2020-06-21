@@ -62,6 +62,7 @@
                         // test different endpoints with interval
                         let ok;
                         for (let i=0; i<all.length; i++) {
+                            // console.log(itv.toString(), endpoint.toString(all[i]));
                             ok = itv.covers_endpoint(all[i]);
                             assertEqual(ok, expectations[i]);
                         }
