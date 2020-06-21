@@ -20,6 +20,7 @@
 
 define(function(require) {
 
+    const util = require("../util/util");
     const Interval = require("../util/interval");
     const Axis = require("./axis");
 
@@ -143,9 +144,9 @@ define(function(require) {
 
     /*
         make exit, change and enter events
-        - uses axis eventMap
+        - based on eventMap
     */
-    function get_events_from_axis_events(activeCues, eventMap, interval) {
+    function events_from_axis_events(axis, activeCues, eventMap, interval) {
         const enterEvents = [];
         const changeEvents = [];
         const exitEvents = [];
@@ -181,12 +182,94 @@ define(function(require) {
         return [exitEvents, changeEvents, enterEvents];
     }
 
+    /*
+        make exit, change and enter events
+        - based on axis.lookup
+    */
+    function events_from_axis_lookup(axis, activeCues, eventMap, interval) {
+
+        /*
+            Active cues
+
+            find new set of active cues by querying the axis
+        */
+        const _activeCues = new Map(axis.lookup(interval).map(function(cue) {
+            return [cue.key, cue];
+        }));
+
+        let changeEvents = [];
+        let exitEvents = [];
+        let first = (activeCues.size == 0);
+        if (!first){
+
+            /*
+                Change Events
+
+                change cues - cues which are modified, yet remain active cues
+            */
+            let remainCues = util.map_intersect(activeCues, _activeCues);
+            if (remainCues.size > 0) {
+                /*
+                    Two approaches
+
+                    1) large eventMap
+                    eventMap larger than remainCues
+                    - iterate remainCues
+                    - keep those that are found in eventMap
+
+                    2) large remainCues
+                    remainCues larger than eventMap
+                    - iterate eventMap
+                    - keep those that are found in remainCues
+
+                    measurement shows that 2) is better
+                */
+                let cue, _item;
+                for (let item of eventMap.values()) {
+                    cue = remainCues.get(item.key);
+                    if (cue != undefined && !isNoop(item.delta)) {
+                        _item = {key:item.key, new:item.new, old:item.old};
+                        changeEvents.push(_item);
+                    }
+                }
+            }
+
+            /*
+                Exit Events
+                exit cues were in old active cues - but not in new
+            */
+            let exitCues = util.map_difference(activeCues, _activeCues);
+            exitEvents = [...exitCues.values()]
+                .map(cue => {
+                    return {key:cue.key, new:undefined, old:cue};
+                });
+        }
+
+        /*
+            Enter Events
+            enter cues were not in old active cues - but are in new
+        */
+        let enterCues;
+        if (first) {
+            enterCues = _activeCues
+        } else {
+            enterCues = util.map_difference(_activeCues, activeCues);
+        }
+        let enterEvents = [...enterCues.values()]
+            .map(cue => {
+                return {key:cue.key, new:cue, old:undefined};
+            });
+
+        return [exitEvents, changeEvents, enterEvents];
+    }
+
 
 
     return {
         Active,
         ACTIVE_MAP,
-        get_events_from_axis_events
+        events_from_axis_events,
+        events_from_axis_lookup
     };
 });
 

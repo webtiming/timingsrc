@@ -27,25 +27,19 @@ define(function(require) {
     const eventify = require("../util/eventify");
     const Schedule = require("./schedule");
     const Axis = require("./axis");
+    const sequenceutils = require("./sequenceutils");
 
+
+    const Active = sequenceutils.Active;
+    const ACTIVE_MAP = sequenceutils.ACTIVE_MAP;
+    const events_from_axis_events = sequenceutils.events_from_axis_events;
+    const events_from_axis_lookup = sequenceutils.events_from_axis_lookup;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
-    const Relation = Interval.Relation;
-    const isMoving = motionutils.isMoving;
-    const Match = [
-        Relation.OVERLAP_LEFT,
-        Relation.COVERED,
-        Relation.EQUAL,
-        Relation.COVERS,
-        Relation.OVERLAP_RIGHT
-    ]
+
 
     const EVENTMAP_THRESHOLD = 5000;
     const ACTIVECUES_THRESHOLD = 5000;
-
-    function isNoop(delta) {
-        return (delta.interval == Axis.Delta.NOOP && delta.data == Axis.Delta.NOOP);
-    }
 
 
     class SingleSequencer {
@@ -99,126 +93,8 @@ define(function(require) {
         ***************************************************************/
 
         /*
-            make exit, change and enter events
-            - uses axis.lookup
+            Handling Axis Update Callbacks
         */
-        _get_events_from_axis_lookup(eventMap, position) {
-
-            /*
-                Active cues
-
-                find new set of active cues by querying the axis
-            */
-            const pos = new Interval(position);
-            const activeCues = new Map(this._axis.lookup(pos).map(function(cue) {
-                return [cue.key, cue];
-            }));
-
-            let changeEvents = [];
-            let exitEvents = [];
-            let first = (this._activeCues.size == 0);
-            if (!first){
-
-                /*
-                    Change Events
-
-                    change cues - cues which are modified, yet remain active cues
-                */
-                let remainCues = util.map_intersect(this._activeCues, activeCues);
-                if (remainCues.size > 0) {
-                    /*
-                        Two approaches
-
-                        1) large eventMap
-                        eventMap larger than remainCues
-                        - iterate remainCues
-                        - keep those that are found in eventMap
-
-                        2) large remainCues
-                        remainCues larger than eventMap
-                        - iterate eventMap
-                        - keep those that are found in remainCues
-
-                        measurement shows that 2) is better
-                    */
-                    let cue, _item;
-                    for (let item of eventMap.values()) {
-                        cue = remainCues.get(item.key);
-                        if (cue != undefined && !isNoop(item.delta)) {
-                            _item = {key:item.key, new:item.new, old:item.old};
-                            changeEvents.push(_item);
-                        }
-                    }
-                }
-
-                /*
-                    Exit Events
-                    exit cues were in old active cues - but not in new
-                */
-                let exitCues = util.map_difference(this._activeCues, activeCues);
-                exitEvents = [...exitCues.values()]
-                    .map(cue => {
-                        return {key:cue.key, new:undefined, old:cue};
-                    });
-            }
-
-            /*
-                Enter Events
-                enter cues were not in old active cues - but are in new
-            */
-            let enterCues;
-            if (first) {
-                enterCues = activeCues
-            } else {
-                enterCues = util.map_difference(activeCues, this._activeCues);
-            }
-            let enterEvents = [...enterCues.values()]
-                .map(cue => {
-                    return {key:cue.key, new:cue, old:undefined};
-                });
-
-            return [exitEvents, changeEvents, enterEvents];
-        }
-
-        /*
-            make exit, change and enter events
-            - uses axis eventMap
-        */
-        _get_events_from_axis_events(eventMap, position) {
-            const enterEvents = [];
-            const changeEvents = [];
-            const exitEvents = [];
-            const first = this._activeCues.size == 0;
-            let is_active, should_be_active, _item;
-            for (let item of eventMap.values()) {
-                if (isNoop(item.delta)) {
-                    continue;
-                }
-                // exit, change, enter events
-                is_active = (first) ? false : this._activeCues.has(item.key);
-                should_be_active = false;
-                if (item.new != undefined) {
-                    if (item.new.interval.covers_endpoint(position)) {
-                        should_be_active = true;
-                    }
-                }
-                if (is_active && !should_be_active) {
-                    // exit
-                    _item = {key:item.key, new:undefined, old:item.old};
-                    exitEvents.push(_item);
-                } else if (!is_active && should_be_active) {
-                    // enter
-                    _item = {key:item.key, new:item.new, old:undefined};
-                    enterEvents.push(_item);
-                } else if (is_active && should_be_active) {
-                    // change
-                    _item = {key:item.key, new:item.new, old:item.old};
-                    changeEvents.push(_item);
-                }
-            };
-            return [exitEvents, changeEvents, enterEvents];
-        }
-
 
         _onAxisCallback(eventMap) {
             /*
@@ -260,15 +136,16 @@ define(function(require) {
             const now_vector = motionutils.calculateVector(this._to.vector, now);
 
             // choose approach to get events
-            let get_events = this._get_events_from_axis_events.bind(this);
+            let get_events = events_from_axis_events;
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._get_events_from_axis_lookup.bind(this);
+                    get_events = events_from_axis_lookup;
                 }
             }
 
-            let pos = now_vector.position;
-            const [exit, change, enter] = get_events(eventMap, pos);
+            // get events
+            let activeInterval = new Interval(now_vector.position);
+            const [exit, change, enter] = get_events(this._axis, this._activeCues, eventMap, activeInterval);
 
             // update activeCues
             exit.forEach(item => {
@@ -288,65 +165,32 @@ define(function(require) {
                 this.eventifyTriggerEvent("change", events);
             }
 
-            // clear schedule
+            /*
+                clear schedule
+
+                This is only necessary if a cue interval is changed,
+                and the change is relevant within the posInterval of
+                of the schedule.
+
+                Instead of checking all cues, it is likely cheaper to
+                simply refresh the schedule every time, i.e. a single
+                lookup from axis on 5 second interval. At least for
+                large event batches it should be more efficient.
+
+                Also, simply refreshing the schedule is a much simpler
+                solution in terms of code complexity.
+
+                TODO: cue interval changes may affect schedule
+                posInterval even if it does not affect active cues,
+                so just looking at changes in active cues is not an option.
+
+                NOTE: if axis delivered a "union" interval for the
+                batch, it would be very quick to see if this was
+                relevant for the posInterval.
+
+            */
+
             this._sched.setVector(now_vector);
-
-
-            /*
-                POSSIBLE OPTIMIZATION
-                Likely NOT an optimization for large event batches.
-
-                Clear and reset schedule only if necessary.
-
-                This is only necessary if any of the cues intervals
-                are changed, and that these changes are relevant
-                with respect to the posInterval of scheduler.
-                - new interval match posInterval
-                - old interval match posInterval
-
-                There is no change in motion at this time, so either we
-                continue moving or we continue paused.
-
-                corner case - if motion is available and moving -
-                yet the sheduler has not been started yet,
-                sched.posInterval will be undefined. Not sure if this is
-                possible, but if it were to occur we dont do anything
-                and trust that the schedule will be started shortly
-                by onTimingCallback.
-            */
-            /*
-            if (isMoving(now_vector) && this._sched.posInterval) {
-                let sched_dirty = false;
-                let rel, item;
-                let delta;
-                for (let i=0; i<events.length; i++) {
-                    item = events[i];
-                    delta = item.delta;
-                    if (delta.interval == Delta.NOOP) {
-                        continue;
-                    }
-                    // check item.new.interval
-                    if (item.new != undefined) {
-                        rel = item.new.interval.compare(this._sched.posInterval);
-                        if (Match.includes(rel)) {
-                            sched_dirty = true;
-                            break;
-                        }
-                    }
-                    // check item.old.interval
-                    if (item.old != undefined) {
-                        rel = item.old.interval.compare(this._sched.posInterval);
-                        if (Match.includes(rel)) {
-                            sched_dirty = true;
-                            break;
-                        }
-                    }
-                }
-                if (sched_dirty) {
-                    this._sched.setVector(now_vector);
-                }
-            }
-            */
         }
 
 
@@ -432,7 +276,20 @@ define(function(require) {
                 let cue = item.cue;
                 let has_cue = this._activeCues.has(cue.key);
                 let [value, right, closed, singular] = item.endpoint;
-                if (singular) {
+
+                /*
+                    Action Code - see sequenceutils
+                */
+                // to role
+                let to_role = "S";
+                // movement direction
+                let to_dir = (item.direction > 0) ? "R" : "L";
+                // endpoint type
+                let ep_type = (singular) ? "S": (right) ? "R" : "L";
+                // action code, enter, exit, stay, enter-exit
+                let action_code = ACTIVE_MAP.get(`${to_role}${to_dir}${ep_type}`);
+
+                if (action_code == Active.ENTER_EXIT) {
                     if (has_cue) {
                         // exit
                         events.push({key:cue.key, new:undefined, old:cue});
@@ -444,22 +301,17 @@ define(function(require) {
                         events.push({key:cue.key, new:undefined, old:cue});
                         // no need to both add and remove from activeCues
                     }
-                } else {
-                    // enter or exit
-                    let right_value = (right) ? -1 : 1;
-                    let enter = (item.direction * right_value) > 0;
-                    if (enter) {
-                        if (!has_cue) {
-                            // enter
-                            events.push({key:cue.key, new:cue, old:undefined});
-                            this._activeCues.set(cue.key, cue);
-                        }
-                    } else {
-                        if (has_cue) {
-                            // exit
-                            events.push({key:cue.key, new:undefined, old:cue});
-                            this._activeCues.delete(cue.key);
-                        }
+                } else if (action_code == Active.ENTER) {
+                    if (!has_cue) {
+                        // enter
+                        events.push({key:cue.key, new:cue, old:undefined});
+                        this._activeCues.set(cue.key, cue);
+                    }
+                } else if (action_code == Active.EXIT) {
+                    if (has_cue) {
+                        // exit
+                        events.push({key:cue.key, new:undefined, old:cue});
+                        this._activeCues.delete(cue.key);
                     }
                 }
             }, this);

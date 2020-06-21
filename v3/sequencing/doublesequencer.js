@@ -31,9 +31,13 @@ define(function(require) {
 
     const Active = sequenceutils.Active;
     const ACTIVE_MAP = sequenceutils.ACTIVE_MAP;
-    const get_events_from_axis_events = sequenceutils.get_events_from_axis_events;
+    const events_from_axis_events = sequenceutils.events_from_axis_events;
+    const events_from_axis_lookup = sequenceutils.events_from_axis_lookup;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
+
+    const EVENTMAP_THRESHOLD = 5000;
+    const ACTIVECUES_THRESHOLD = 5000;
 
 
     class DoubleSequencer {
@@ -119,19 +123,18 @@ define(function(require) {
             const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
 
             // choose approach to get events
-            let get_events = get_events_from_axis_events;
-            /*
+            let get_events = events_from_axis_events;
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._get_events_from_axis_lookup.bind(this);
+                    get_events = events_from_axis_lookup;
                 }
             }
-            */
 
+            // get events
             let [pos_A, pos_B] = [now_vector_A.position, now_vector_B.position];
             let [low, high] = (pos_A <= pos_B) ? [pos_A, pos_B] : [pos_B, pos_A];
             let activeInterval = new Interval(low, high, true, true);
-            const [exit, change, enter] = get_events(this._activeCues, eventMap, activeInterval);
+            const [exit, change, enter] = get_events(this._axis, this._activeCues, eventMap, activeInterval);
 
             // update activeCues
             exit.forEach(item => {
@@ -151,19 +154,32 @@ define(function(require) {
                 this.eventifyTriggerEvent("change", events);
             }
 
+
             /*
                 clear schedules
-                this is only necessary if a cue interval is changed,
+
+                This is only necessary if a cue interval is changed,
                 and the change is relevant within the posInterval of
                 one of the schedules.
 
-                Instead of checking all, it is much cheaper to
-                simply refresh the schedule every time.
+                Instead of checking all cues, it is likely cheaper to
+                simply refresh the schedule every time, i.e. a single
+                lookup from axis on 5 second interval. At least for
+                large event batches it should be more efficient.
 
-                Note: it is quite possible that cue interval changes
-                affect schedule posInterva even if it does not affect
-                active cues
+                Also, simply refreshing the schedule is a much simpler
+                solution in terms of code complexity.
+
+                Note: cue interval changes may affect schedule
+                posInterval even if it does not affect active cues,
+                so just looking at changes in active cues is not an option.
+
+                TODO: if axis delivered a "union" interval for the
+                batch, it would be very quick to see if this was
+                relevant for either of the posIntervals.
             */
+
+
             this._schedA.setVector(now_vector_A);
             this._schedB.setVector(now_vector_B);
         }
@@ -313,6 +329,10 @@ define(function(require) {
                 let ts = item.tsEndpoint[0];
                 let other_vector = motionutils.calculateVector(other_to.vector, ts);
                 let pos_other = other_vector.position;
+
+                /*
+                    Action Code - see sequenceutils
+                */
                 // to role
                 let to_role = (pos < pos_other) ? "L" : (pos == pos_other) ? "S" : "R";
                 // movement direction
