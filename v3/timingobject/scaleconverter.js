@@ -40,11 +40,11 @@ define(function (require) {
     	};
 
         // extend
-        eventifyInitEventArg(name) {
+        eventifyInitEventArgs(name) {
             if (name == "scalechange") {
-                return [true, this._factor];
+                return [this._factor];
             } else {
-                return super.eventifyInitEventArg(name)
+                return super.eventifyInitEventArgs(name)
             }
         }
 
@@ -88,7 +88,7 @@ define(function (require) {
                     ...this.timingsrc.vector,
                     range: this.timingsrc.range
                 });
-                this.eventifyTriggerEvent("scalechange", factor);
+                this.eventifyTrigger("scalechange", factor);
             }
         }
     }

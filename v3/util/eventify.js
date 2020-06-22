@@ -47,29 +47,6 @@ define(function () {
 			return this.subscriptions.length;
 		}
 
-
-		/*
-			internal function
-
-			call eventifyInitEventArg of publisher
-			support result
-			- eArg or [ok, eArg]
-			- if eArg is undefined - there will be no event
-			- use [true, undefined] to force event event if
-			  eArg is undefined
-		*/
-		_initEventArg(name) {
-			const method = this.publisher.eventifyInitEventArg;
-			if (method != undefined) {
-				let res = method.call(this.publisher, name);
-				if (res != undefined) {
-					return res;
-				}
-			}
-			return [false, undefined];
-		}
-
-
 		/*
 			subscribe to event
 			- subscriber: subscribing object
@@ -88,8 +65,8 @@ define(function () {
 		    	sub.init_pending = true;
 		    	let self = this;
 		    	Promise.resolve().then(function () {
-		    		const [ok, eArg] = self._initEventArg(self.name);
-		    		if (ok) {
+		    		const eArgs = self.publisher.eventifyInitEventArgs(self.name) || [];
+		    		for (let eArg of eArgs) {
 		    			self._trigger(eArg, [sub], true);
 		    		}
 		    		sub.init_pending = false;
@@ -110,6 +87,23 @@ define(function () {
 				});
 			}
 		}
+
+
+		/*
+			trigger event repeatedly for each eArg in list
+		*/
+		triggerAll (eArgList) {
+			if (this.subscriptions.length > 0 && eArgList.length > 0) {
+				const subs = this.subscriptions.filter(sub => sub.init_pending == false);
+				const self = this;
+				Promise.resolve().then(function () {
+					for (let eArg of eArgList) {
+						self._trigger(eArg, subs, false);
+					}
+				});
+			}
+		}
+
 
 		/*
 			internal function
@@ -187,9 +181,9 @@ define(function () {
 		In particular, eventify supports the initial-event pattern.
 		Opt-in for initial events per event type.
 
-		eventifyInitEventArg(name) {
+		eventifyInitEventArgs(name) {
 			if (name == "change") {
-				return this._value;
+				return [this._value];
 			}
 		}
 
@@ -223,7 +217,7 @@ define(function () {
 			- name: name of event
 			- options: {init:true} specifies init-event semantics for event
 		*/
-		function eventifyDefineEvent(name, options) {
+		function eventifyDefine(name, options) {
 			// check that event does not already exist
 			if (this.__eventify_eventMap.has(name)) {
 				throw new Error("Event already defined", name);
@@ -253,19 +247,23 @@ define(function () {
 			Trigger event
 			- used only by event source
 		*/
-		function eventifyTriggerEvent(name, eArg) {
+		function eventifyTrigger(name, eArg) {
 			return eventifyGetEvent(this, name).trigger(eArg);
 		}
 
-		function subscribers(name) {
-			return eventifyGetEvent(this, name).subscribers;
+		/*
+			Trigger event for each eArg in list
+			- used only by event source
+		*/
+		function eventifyTriggerAll(name, eArgList) {
+			return eventifyGetEvent(this, name).triggerAll(eArgList);
 		}
 
-		_prototype.eventifyDefineEvent = eventifyDefineEvent;
-		_prototype.eventifyTriggerEvent = eventifyTriggerEvent;
+		_prototype.eventifyDefine = eventifyDefine;
+		_prototype.eventifyTrigger = eventifyTrigger;
+		_prototype.eventifyTriggerAll = eventifyTriggerAll;
 		_prototype.on = on;
 		_prototype.off = off;
-		_prototype.subscribers = subscribers;
 	};
 
 
@@ -280,12 +278,12 @@ define(function () {
 		constructor (value) {
 			eventifyInstance(this);
 			this._value = value;
-			this.eventifyDefineEvent("change", {init:true});
+			this.eventifyDefine("change", {init:true});
 		}
 
-		eventifyInitEventArg(name) {
+		eventifyInitEventArgs(name) {
 			if (name == "change") {
-				return [true, this._value];
+				return [this._value];
 			}
 		}
 
@@ -293,7 +291,7 @@ define(function () {
 		set value (value) {
 			if (value != this._value) {
 				this._value = value;
-				this.eventifyTriggerEvent("change", value);
+				this.eventifyTrigger("change", value);
 			}
 		}
 	}

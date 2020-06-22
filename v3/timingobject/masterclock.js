@@ -95,7 +95,7 @@ define(function (require) {
 			this._vector  = {position: now, velocity: 1.0, timestamp: now};
 			// event support
 			eventify.eventifyInstance(this);
-			this.eventifyDefineEvent("change"); // define change event (no init-event)
+			this.eventifyDefine("change"); // define change event (no init-event)
 			// adjust
 			this.adjust(options);
 		};
@@ -118,7 +118,7 @@ define(function (require) {
 				velocity : (options.rate !== undefined) ? options.rate : nowVector.velocity,
 				timestamp : nowVector.timestamp
 			}
-			this.eventifyTriggerEvent("change");
+			this.eventifyTrigger("change");
 		};
 
 		/*

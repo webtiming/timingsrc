@@ -65,7 +65,9 @@ define(function(require) {
 
             // Change event
             eventify.eventifyInstance(this);
-            this.eventifyDefineEvent("update", {init:true});
+            this.eventifyDefine("update", {init:true});
+            this.eventifyDefine("change", {init:true});
+            this.eventifyDefine("remove", {init:false});
         }
 
 
@@ -76,14 +78,12 @@ define(function(require) {
         /*
             Eventify: immediate events
         */
-        eventifyInitEventArg(name) {
-            if (name == "update") {
-                if (this._activeCues.size > 0) {
-                    let events = [...this._activeCues.values()].map(cue => {
-                        return {key:cue.key, new:cue, old:undefined};
-                    });
-                    return [true, events];
-                }
+        eventifyInitEventArgs(name) {
+            if (name == "update" || name == "change") {
+                let events = [...this._activeCues.values()].map(cue => {
+                    return {key:cue.key, new:cue, old:undefined};
+                });
+                return (name == "update") ? [events] : events;
             }
         }
 
@@ -156,13 +156,11 @@ define(function(require) {
             });
 
             // notifications
-            const events = exit;
-            events.push(...change);
-            events.push(...enter);
+            const events = util.array_concat([exit, enter, change], {copy:true, order:true});
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("update", events);
+                this.eventifyTrigger("update", events);
             }
 
             /*
@@ -251,7 +249,7 @@ define(function(require) {
                 }
                 // event notification
                 if (events.length > 0 ) {
-                    this.eventifyTriggerEvent("update", events);
+                    this.eventifyTrigger("update", events);
                 }
             }
 
@@ -318,7 +316,7 @@ define(function(require) {
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("update", events);
+                this.eventifyTrigger("update", events);
             }
         };
 

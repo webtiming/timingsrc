@@ -41,11 +41,11 @@ define(function (require) {
 		}
 
         // extend
-        eventifyInitEventArg(name) {
+        eventifyInitEventArgs(name) {
             if (name == "skewchange") {
-                return [true, this._skew];
+                return [this._skew];
             } else {
-                return super.eventifyInitEventArg(name)
+                return super.eventifyInitEventArgs(name)
             }
         }
 
@@ -83,7 +83,7 @@ define(function (require) {
                     ...this.timingsrc.vector,
                     range: this.timingsrc.range
                 });
-                this.eventifyTriggerEvent("skewchange", skew);
+                this.eventifyTrigger("skewchange", skew);
             }
 		}
 	};

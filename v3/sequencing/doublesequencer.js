@@ -70,7 +70,7 @@ define(function(require) {
 
             // Change event
             eventify.eventifyInstance(this);
-            this.eventifyDefineEvent("change", {init:true});
+            this.eventifyDefine("update", {init:true});
         }
 
         /***************************************************************
@@ -80,14 +80,12 @@ define(function(require) {
         /*
             Eventify: immediate events
         */
-        eventifyMakeInitEvents = function (type) {
-            if (type === "change") {
-                if (this._activeCues.size > 0) {
-                    let events = [...this._activeCues.values()].map(cue => {
-                        return {key:cue.key, new:cue, old:undefined};
-                    });
-                    return [true, events];
-                }
+        eventifyInitEventArgs = function (type) {
+            if (type === "update") {
+                let events = [...this._activeCues.values()].map(cue => {
+                    return {key:cue.key, new:cue, old:undefined};
+                });
+                return [events];
             }
             return [];
         };
@@ -151,7 +149,7 @@ define(function(require) {
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTrigger("update", events);
             }
 
 
@@ -275,7 +273,7 @@ define(function(require) {
                 }
                 // event notification
                 if (events.length > 0 ) {
-                    this.eventifyTriggerEvent("change", events);
+                    this.eventifyTrigger("update", events);
                 }
             }
 
@@ -394,7 +392,7 @@ define(function(require) {
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTrigger("update", events);
             }
         }
 

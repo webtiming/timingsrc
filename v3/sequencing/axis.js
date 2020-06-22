@@ -26,8 +26,8 @@ define (function (require) {
     const Interval = require("../util/interval");
     const eventify = require('../util/eventify');
     const util = require("../util/util");
-    const Relation = Interval.Relation;
     const endpoint = require("../util/endpoint");
+    const Relation = Interval.Relation;
 
 
     /*
@@ -228,7 +228,9 @@ define (function (require) {
 
             // Change event
             eventify.eventifyInstance(this);
-            this.eventifyDefineEvent("update", {init:true});
+            this.eventifyDefine("update", {init:true});
+            this.eventifyDefine("change", {init:true});
+            this.eventifyDefine("remove", {init:false});
         };
 
 
@@ -246,16 +248,19 @@ define (function (require) {
 
             Immediate events
         */
-        eventifyInitEventArg = function (type) {
-            if (type === "update") {
+        eventifyInitEventArgs = function (name) {
+            if (name == "update" || name == "change") {
                 let events = [...this.values()].map(cue => {
                     return {key:cue.key, new:cue, old:undefined};
                 });
-                return [true, events];
+                if (name == "update") {
+                    return [events];
+                } else {
+                    // change - as individual event callbacks
+                    return events;
+                }
             }
-            return [];
         };
-
 
 
         /***************************************************************
@@ -461,7 +466,7 @@ define (function (require) {
                 let events = [...batchMap.values()].map(item => {
                     return {key:item.key, new:item.new, old:item.old};
                 });
-                this.eventifyTriggerEvent("update", events);
+                this.eventifyTrigger("update", events);
                 /*
                     notify sequencer last so that change events
                     from the axis will be applied before change
@@ -674,7 +679,7 @@ define (function (require) {
                     arrays.push(cues);
                 }
             }
-            return util.array_concat(...arrays);
+            return util.array_concat(arrays);
         };
 
         /*
@@ -715,7 +720,7 @@ define (function (require) {
                 events.push({key:cue.key, new: undefined, old: cue});
             }
             if (events.length > 0) {
-                this.eventifyTriggerEvent("update", events);
+                this.eventifyTrigger("update", events);
             }
             return events;
         };
@@ -735,7 +740,7 @@ define (function (require) {
                 events.push({key: cue.key, new: undefined, old: cue});
             }
             if (events.size > 0) {
-                this.eventifyTriggerEvent("update", events);
+                this.eventifyTrigger("update", events);
             }
             return events;
         };

@@ -50,15 +50,15 @@ define(function (require) {
 			this._buffer = [];
 			// timeoutid
 			this._timeout = new Timeout(this, this.__handleDelayed.bind(this));
-	        this.eventifyDefineEvent("delaychange", {init:true});
+	        this.eventifyDefine("delaychange", {init:true});
 		};
 
         // extend
-        eventifyInitEventArg(name) {
+        eventifyInitEventArgs(name) {
             if (name == "delaychange") {
-                return [true, this._delay];
+                return [this._delay];
             } else {
-                return super.eventifyInitEventArg(name)
+                return super.eventifyInitEventArgs(name)
             }
         }
 
@@ -123,7 +123,7 @@ define(function (require) {
                 this._delay = delay;
                 this._timeout.clear();
                 this.__handleDelayed();
-                this.eventifyTriggerEvent("delaychange", delay);
+                this.eventifyTrigger("delaychange", delay);
             }
         }
 	}

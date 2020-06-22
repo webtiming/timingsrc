@@ -144,10 +144,10 @@ define(function (require) {
 
 			// exported events
 			eventify.eventifyInstance(this);
-			this.eventifyDefineEvent("timingsrc", {init:true});
-			this.eventifyDefineEvent("change", {init:true});
-			this.eventifyDefineEvent("rangechange", {init:true});
-			this.eventifyDefineEvent("timeupdate", {init:true});
+			this.eventifyDefine("timingsrc", {init:true});
+			this.eventifyDefine("change", {init:true});
+			this.eventifyDefine("rangechange", {init:true});
+			this.eventifyDefine("timeupdate", {init:true});
 
 			// initialise timingsrc
 			this.__set_timingsrc(timingsrc, options);
@@ -165,7 +165,7 @@ define(function (require) {
 		  	specific to eventutils
 		  	- overrides to add support for timeupdate events
 		*/
-		eventifyInitEventArg(name) {
+		eventifyInitEventArgs(name) {
 			if (this.__ready.value) {
 				if (name == "timingsrc") {
 					let eArg = {
@@ -173,13 +173,13 @@ define(function (require) {
 						range: this.__range,
 						live:false
 					}
-					return [true, eArg];
+					return [eArg];
 				} else if (name == "timeupdate") {
-					return [true, undefined];
+					return [undefined];
 				} else if (name == "change") {
-					return [true, this.__vector];
+					return [this.__vector];
 				} else if (name == "rangechange") {
-					return [true, this.__range];
+					return [this.__range];
 				}
 			}
 		};
@@ -455,22 +455,22 @@ define(function (require) {
 				timestamp
 			} = arg;
 			// trigger timingsrc events
-			this.eventifyTriggerEvent("timingsrc", arg);
+			this.eventifyTrigger("timingsrc", arg);
 			// trigger public change events
 			if (vector_change) {
 				let vector = {position, velocity, acceleration, timestamp};
-				this.eventifyTriggerEvent("change", vector);
+				this.eventifyTrigger("change", vector);
 			}
 			if (range_change) {
-				this.eventifyTriggerEvent("rangechange", range);
+				this.eventifyTrigger("rangechange", range);
 			}
 			// trigger timeupdate events
-			this.eventifyTriggerEvent("timeupdate");
+			this.eventifyTrigger("timeupdate");
 			let moving = motionutils.isMoving(this.__vector);
 			if (moving && this.__tid === undefined) {
 				let self = this;
 				this.__tid = setInterval(function () {
-					self.eventifyTriggerEvent("timeupdate");
+					self.eventifyTrigger("timeupdate");
 				}, 200);
 			} else if (!moving && this.__tid !== undefined) {
 				clearTimeout(this.__tid);

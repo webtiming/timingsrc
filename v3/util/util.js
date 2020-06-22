@@ -87,10 +87,17 @@ define (function () {
 
     /*
         effective concatenation of multiple arrays
-        longest array is extended by values from
-        the other arrays
+        - order - if true preserves ordering of input arrays
+                - else sorts input arrays (longest first)
+                - default false is more effective
+        - copy  - if true leaves input arrays unchanged, copy
+                  values into new array
+                - if false copies remainder arrays into the first
+                  array
+                - default false is more effective
     */
-    function array_concat(...arrays) {
+    function array_concat(arrays, options = {}) {
+        let {copy=false, order=false} = options;
         if (arrays.length == 0) {
             return [];
         }
@@ -98,9 +105,13 @@ define (function () {
             return arrays[0];
         }
         let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
-        // sort arrays according to length - longest first
-        arrays.sort((a, b) => b.length - a.length);
-        let first = arrays.shift();
+        // order
+        if (!order) {
+            // sort arrays according to length - longest first
+            arrays.sort((a, b) => b.length - a.length);
+        }
+        // copy
+        let first = (copy) ? [] : arrays.shift();
         let start = first.length;
         // reserve memory total length
         first.length = total_len;

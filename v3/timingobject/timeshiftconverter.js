@@ -51,15 +51,15 @@ define(function (require) {
         constructor (timingsrc, offset) {
     		super(timingsrc);
     		this._offset = offset;
-            this.eventifyDefineEvent("offsetchange", {init:true});
+            this.eventifyDefine("offsetchange", {init:true});
     	};
 
         // extend
-        eventifyInitEventArg(name) {
+        eventifyInitEventArgs(name) {
             if (name == "offsetchange") {
-                return [true, this._offset];
+                return [this._offset];
             } else {
-                return super.eventifyInitEventArg(name)
+                return super.eventifyInitEventArgs(name)
             }
         }
 
@@ -90,7 +90,7 @@ define(function (require) {
                     ...this.timingsrc.vector,
                     range: this.timingsrc.range
                 });
-                this.eventifyTriggerEvent("offsetchange", offset);
+                this.eventifyTrigger("offsetchange", offset);
             }
         }
 
