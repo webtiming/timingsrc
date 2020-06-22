@@ -43,6 +43,11 @@ define(function () {
 		}
 
 
+		get subscribers () {
+			return this.subscriptions.length;
+		}
+
+
 		/*
 			internal function
 
@@ -252,11 +257,15 @@ define(function () {
 			return eventifyGetEvent(this, name).trigger(eArg);
 		}
 
+		function subscribers(name) {
+			return eventifyGetEvent(this, name).subscribers;
+		}
 
 		_prototype.eventifyDefineEvent = eventifyDefineEvent;
 		_prototype.eventifyTriggerEvent = eventifyTriggerEvent;
 		_prototype.on = on;
 		_prototype.off = off;
+		_prototype.subscribers = subscribers;
 	};
 
 

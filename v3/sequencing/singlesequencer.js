@@ -65,7 +65,7 @@ define(function(require) {
 
             // Change event
             eventify.eventifyInstance(this);
-            this.eventifyDefineEvent("change", {init:true});
+            this.eventifyDefineEvent("update", {init:true});
         }
 
 
@@ -77,7 +77,7 @@ define(function(require) {
             Eventify: immediate events
         */
         eventifyInitEventArg(name) {
-            if (name == "change") {
+            if (name == "update") {
                 if (this._activeCues.size > 0) {
                     let events = [...this._activeCues.values()].map(cue => {
                         return {key:cue.key, new:cue, old:undefined};
@@ -162,7 +162,7 @@ define(function(require) {
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTriggerEvent("update", events);
             }
 
             /*
@@ -251,7 +251,7 @@ define(function(require) {
                 }
                 // event notification
                 if (events.length > 0 ) {
-                    this.eventifyTriggerEvent("change", events);
+                    this.eventifyTriggerEvent("update", events);
                 }
             }
 
@@ -318,7 +318,7 @@ define(function(require) {
 
             // event notification
             if (events.length > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTriggerEvent("update", events);
             }
         };
 

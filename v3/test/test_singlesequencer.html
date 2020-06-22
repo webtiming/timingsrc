@@ -185,7 +185,7 @@
 
 
             // Visualize list of timed data
-            axis.on("change", function (events){
+            axis.on("update", function (events){
                 // refresh visuals by redrawing the list entirely
                 let html = [...axis.values()]
                     .sort(function(cue_a, cue_b) {
@@ -202,7 +202,7 @@
 
 
             // add change handler
-            s.on("change", function(events, eInfo) {
+            s.on("update", function(events, eInfo) {
                 let pos = to.pos.toFixed(2);
                 events.forEach(function(item){
                     let el = document.getElementById(`${item.key}`);

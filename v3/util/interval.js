@@ -162,16 +162,14 @@ define(function(require) {
 
 	// Interval Relations
     const Relation = Object.freeze({
-		OUTSIDE_LEFT: 1,
-		OVERLAP_LEFT: 2,
-		COVERED: 4,
+		OUTSIDE_LEFT: 64,
+		OVERLAP_LEFT: 32,
+		COVERED: 16,
 		EQUALS: 8,
-		COVERS: 16,
-		OVERLAP_RIGHT: 32,
-		OUTSIDE_RIGHT: 64
+		COVERS: 4,
+		OVERLAP_RIGHT: 2,
+		OUTSIDE_RIGHT: 1
     });
-
-
 
 	function compare(a, b) {
 		if (! a instanceof Interval) {
@@ -243,7 +241,6 @@ define(function(require) {
 			return endpoint.cmp(e1, e2);
 		}
 	}
-
 
 	/*
 		Add static variables to Interval class.

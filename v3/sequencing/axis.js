@@ -228,7 +228,7 @@ define (function (require) {
 
             // Change event
             eventify.eventifyInstance(this);
-            this.eventifyDefineEvent("change", {init:true});
+            this.eventifyDefineEvent("update", {init:true});
         };
 
 
@@ -247,7 +247,7 @@ define (function (require) {
             Immediate events
         */
         eventifyInitEventArg = function (type) {
-            if (type === "change") {
+            if (type === "update") {
                 let events = [...this.values()].map(cue => {
                     return {key:cue.key, new:cue, old:undefined};
                 });
@@ -461,7 +461,7 @@ define (function (require) {
                 let events = [...batchMap.values()].map(item => {
                     return {key:item.key, new:item.new, old:item.old};
                 });
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTriggerEvent("update", events);
                 /*
                     notify sequencer last so that change events
                     from the axis will be applied before change
@@ -715,7 +715,7 @@ define (function (require) {
                 events.push({key:cue.key, new: undefined, old: cue});
             }
             if (events.length > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTriggerEvent("update", events);
             }
             return events;
         };
@@ -735,7 +735,7 @@ define (function (require) {
                 events.push({key: cue.key, new: undefined, old: cue});
             }
             if (events.size > 0) {
-                this.eventifyTriggerEvent("change", events);
+                this.eventifyTriggerEvent("update", events);
             }
             return events;
         };
