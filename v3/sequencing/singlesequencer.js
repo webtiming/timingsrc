@@ -20,39 +20,25 @@
 
 define(function(require) {
 
-    const util = require("../util/util");
-    const endpoint = require("../util/endpoint");
+    const utils = require("../util/util");
     const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
-    const eventify = require("../util/eventify");
-    const Schedule = require("./schedule");
-    const Axis = require("./axis");
-    const sequenceutils = require("./sequenceutils");
-
-
-    const Active = sequenceutils.Active;
-    const ACTIVE_MAP = sequenceutils.ACTIVE_MAP;
-    const events_from_axis_events = sequenceutils.events_from_axis_events;
-    const events_from_axis_lookup = sequenceutils.events_from_axis_lookup;
     const PosDelta = motionutils.MotionDelta.PosDelta;
     const MoveDelta = motionutils.MotionDelta.MoveDelta;
-
+    const Schedule = require("./schedule");
+    const BaseSequencer = require("./basesequencer");
+    const Active = BaseSequencer.Active;
+    const ActiveMap = BaseSequencer.ActiveMap;
 
     const EVENTMAP_THRESHOLD = 5000;
     const ACTIVECUES_THRESHOLD = 5000;
 
 
-    class SingleSequencer {
+    class SingleSequencer extends BaseSequencer {
 
         constructor (axis, to) {
 
-            // activeCues
-            this._activeCues = new Map(); // (key -> cue)
-
-            // Axis
-            this._axis = axis;
-            let cb = this._onAxisCallback.bind(this)
-            this._axis_cb = this._axis.add_callback(cb);
+            super(axis);
 
             // Timing Object
             this._to = to;
@@ -60,54 +46,9 @@ define(function(require) {
 
             // Schedule
             this._sched = new Schedule(this._axis, to);
-            cb = this._onScheduleCallback.bind(this);
+            let cb = this._onScheduleCallback.bind(this);
             this._sched_cb = this._sched.add_callback(cb)
-
-            // Change event
-            eventify.eventifyInstance(this);
-            this.eventifyDefine("update", {init:true});
-            this.eventifyDefine("change", {init:true});
-            this.eventifyDefine("remove", {init:false});
         }
-
-
-        /***************************************************************
-         EVENTS
-        ***************************************************************/
-
-        /*
-            Eventify: immediate events
-        */
-        eventifyInitEventArgs(name) {
-            if (name == "update" || name == "change") {
-                let events = [...this._activeCues.values()].map(cue => {
-                    return {key:cue.key, new:cue, old:undefined};
-                });
-                return (name == "update") ? [events] : events;
-            }
-        }
-
-
-        /*
-            Event Notification
-
-        */
-        _notifyEvents(events) {
-            // event notification
-            if (events.length == 0) {
-                return;
-            }
-            this.eventifyTrigger("update", events);
-            for (let item of events) {
-                if (item.new == undefined) {
-                    this.eventifyTrigger("remove", item);
-                } else {
-                    this.eventifyTrigger("change", item);
-                }
-            }
-        }
-
-
 
         /***************************************************************
          AXIS CALLBACK
@@ -157,16 +98,16 @@ define(function(require) {
             const now_vector = motionutils.calculateVector(this._to.vector, now);
 
             // choose approach to get events
-            let get_events = events_from_axis_events;
+            let get_events = this._events_from_axis_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = events_from_axis_lookup;
+                    get_events = this._events_from_axis_lookup.bind(this);
                 }
             }
 
             // get events
             let activeInterval = new Interval(now_vector.position);
-            const [exit, change, enter] = get_events(this._axis, this._activeCues, eventMap, activeInterval);
+            const [exit, change, enter] = get_events(eventMap, activeInterval);
 
             // update activeCues
             exit.forEach(item => {
@@ -177,7 +118,7 @@ define(function(require) {
             });
 
             // notifications
-            const events = util.array_concat([exit, enter, change], {copy:true, order:true});
+            const events = utils.array_concat([exit, enter, change], {copy:true, order:true});
 
             // event notification
             this._notifyEvents(events);
@@ -254,9 +195,9 @@ define(function(require) {
                     return [cue.key, cue];
                 }));
                 // exit cues - in old activeCues but not in new activeCues
-                let exitCues = util.map_difference(this._activeCues, activeCues);
+                let exitCues = utils.map_difference(this._activeCues, activeCues);
                 // enter cues - not in old activeCues but in new activeCues
-                let enterCues = util.map_difference(activeCues, this._activeCues);
+                let enterCues = utils.map_difference(activeCues, this._activeCues);
                 // update active cues
                 this._activeCues = activeCues;
                 // make events
@@ -302,7 +243,7 @@ define(function(require) {
                 // endpoint type
                 let ep_type = (singular) ? "S": (right) ? "R" : "L";
                 // action code, enter, exit, stay, enter-exit
-                let action_code = ACTIVE_MAP.get(`${to_role}${to_dir}${ep_type}`);
+                let action_code = ActiveMap.get(`${to_role}${to_dir}${ep_type}`);
 
                 if (action_code == Active.ENTER_EXIT) {
                     if (has_cue) {
@@ -334,37 +275,7 @@ define(function(require) {
             // event notification
             this._notifyEvents(events);
         };
-
-
-        /***************************************************************
-         MAP ACCESSORS
-        ***************************************************************/
-
-        has(key) {
-            return this._activeCues.has(key);
-        };
-
-        get(key) {
-            return this._activeCues.get(key);
-        };
-
-        keys() {
-            return this._activeCues.keys();
-        };
-
-        values() {
-            return this._activeCues.values();
-        };
-
-        entries() {
-            return this._activeCues.entries();
-        }
-
     }
 
-    eventify.eventifyPrototype(SingleSequencer.prototype);
-
     return SingleSequencer;
-
 });
-

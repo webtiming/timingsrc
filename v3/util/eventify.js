@@ -220,6 +220,12 @@ define(function () {
 		};
 
 
+		function eventifySubscriptions(name) {
+			return eventifyGetEvent(this, name).subscriptions;
+		}
+
+
+
 		/*
 			Trigger list of eventItems on object
 
@@ -274,6 +280,7 @@ define(function () {
 		_prototype.eventifyTrigger = eventifyTrigger;
 		_prototype.eventifyTriggerAlike = eventifyTriggerAlike;
 		_prototype.eventifyTriggerAll = eventifyTriggerAll;
+		_prototype.eventifySubscriptions = eventifySubscriptions;
 		_prototype.on = on;
 		_prototype.off = off;
 	};
