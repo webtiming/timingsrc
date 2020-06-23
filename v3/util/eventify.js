@@ -42,11 +42,6 @@ define(function () {
 			this.subscriptions = [];
 		}
 
-
-		get subscribers () {
-			return this.subscriptions.length;
-		}
-
 		/*
 			subscribe to event
 			- subscriber: subscribing object
@@ -81,29 +76,9 @@ define(function () {
 		trigger (eArg) {
 			if (this.subscriptions.length > 0) {
 				const subs = this.subscriptions.filter(sub => sub.init_pending == false);
-				const self = this;
-				Promise.resolve().then(function () {
-					self._trigger(eArg, subs, false);
-				});
+				this._trigger(eArg, subs, false);
 			}
 		}
-
-
-		/*
-			trigger event repeatedly for each eArg in list
-		*/
-		triggerAll (eArgList) {
-			if (this.subscriptions.length > 0 && eArgList.length > 0) {
-				const subs = this.subscriptions.filter(sub => sub.init_pending == false);
-				const self = this;
-				Promise.resolve().then(function () {
-					for (let eArg of eArgList) {
-						self._trigger(eArg, subs, false);
-					}
-				});
-			}
-		}
-
 
 		/*
 			internal function
@@ -191,6 +166,7 @@ define(function () {
 
 	function eventifyInstance (object) {
 		object.__eventify_eventMap = new Map();
+		object.__eventify_buffer = [];
 		return object;
 	};
 
@@ -243,24 +219,60 @@ define(function () {
 			return eventifyGetEvent(this, sub.name).unsubscribe(sub);
 		};
 
+
 		/*
-			Trigger event
-			- used only by event source
+			Trigger list of eventItems on object
+
+			eventItem:  {name:.., eArg:..}
+
+			copy all eventItems into buffer.
+			request emptying the buffer, i.e. actually triggering events,
+			every time the buffer goes from empty to non-empty
 		*/
-		function eventifyTrigger(name, eArg) {
-			return eventifyGetEvent(this, name).trigger(eArg);
+		function eventifyTriggerAll(eventItemList) {
+			if (eventItemList.length == 0) {
+				return;
+			}
+			const len = eventItemList.length;
+			const buf = this.__eventify_buffer;
+			const buf_len = this.__eventify_buffer.length;
+			// reserve memory - set new length
+			this.__eventify_buffer.length = buf_len + len;
+			// copy eventItems to buffer
+			for (let i=0; i<len; i++) {
+				buf[buf_len+i] = eventItemList[i];
+			}
+			// request emptying of the buffer
+			if (buf_len == 0) {
+				let self = this;
+				Promise.resolve().then(function() {
+					for (let {name, eArg} of self.__eventify_buffer) {
+						eventifyGetEvent(self, name).trigger(eArg);
+					}
+					self.__eventify_buffer = [];
+				});
+			}
 		}
 
 		/*
-			Trigger event for each eArg in list
-			- used only by event source
+			Trigger multiple events of same type (name)
 		*/
-		function eventifyTriggerAll(name, eArgList) {
-			return eventifyGetEvent(this, name).triggerAll(eArgList);
+		function eventifyTriggerAlike(name, eArgs) {
+			return this.eventifyTriggerAll(eArgs.map(eArg => {
+				return {name, eArg};
+			}));
+		}
+
+		/*
+			Trigger single event
+		*/
+		function eventifyTrigger(name, eArg) {
+			return this.eventifyTriggerAll([{name, eArg}]);
 		}
 
 		_prototype.eventifyDefine = eventifyDefine;
 		_prototype.eventifyTrigger = eventifyTrigger;
+		_prototype.eventifyTriggerAlike = eventifyTriggerAlike;
 		_prototype.eventifyTriggerAll = eventifyTriggerAll;
 		_prototype.on = on;
 		_prototype.off = off;

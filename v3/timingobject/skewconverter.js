@@ -37,7 +37,7 @@ define(function (require) {
 		constructor (timingsrc, skew, options) {
 			super(timingsrc, options);
 			this._skew = skew;
-            this.eventifyDefineEvent("skewchange", {init:true});
+            this.eventifyDefine("skewchange", {init:true});
 		}
 
         // extend

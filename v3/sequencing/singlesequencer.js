@@ -88,6 +88,27 @@ define(function(require) {
         }
 
 
+        /*
+            Event Notification
+
+        */
+        _notifyEvents(events) {
+            // event notification
+            if (events.length == 0) {
+                return;
+            }
+            this.eventifyTrigger("update", events);
+            for (let item of events) {
+                if (item.new == undefined) {
+                    this.eventifyTrigger("remove", item);
+                } else {
+                    this.eventifyTrigger("change", item);
+                }
+            }
+        }
+
+
+
         /***************************************************************
          AXIS CALLBACK
         ***************************************************************/
@@ -159,9 +180,7 @@ define(function(require) {
             const events = util.array_concat([exit, enter, change], {copy:true, order:true});
 
             // event notification
-            if (events.length > 0) {
-                this.eventifyTrigger("update", events);
-            }
+            this._notifyEvents(events);
 
             /*
                 clear schedule
@@ -248,9 +267,7 @@ define(function(require) {
                     events.push({key:cue.key, new:cue, old:undefined});
                 }
                 // event notification
-                if (events.length > 0 ) {
-                    this.eventifyTrigger("update", events);
-                }
+                this._notifyEvents(events);
             }
 
             /*
@@ -315,9 +332,7 @@ define(function(require) {
             }, this);
 
             // event notification
-            if (events.length > 0) {
-                this.eventifyTrigger("update", events);
-            }
+            this._notifyEvents(events);
         };
 
 

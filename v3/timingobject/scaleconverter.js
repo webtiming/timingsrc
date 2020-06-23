@@ -36,7 +36,7 @@ define(function (require) {
         constructor (timingsrc, factor) {
     		super(timingsrc);
     		this._factor = factor;
-            this.eventifyDefineEvent("scalechange", {init:true});
+            this.eventifyDefine("scalechange", {init:true});
     	};
 
         // extend
