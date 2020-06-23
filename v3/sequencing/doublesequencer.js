@@ -109,10 +109,7 @@ define(function(require) {
             events.push(...enter);
 
             // event notification
-            if (events.length > 0) {
-                this.eventifyTrigger("update", events);
-            }
-
+            this._notifyEvents(events);
 
             /*
                 clear schedules
@@ -233,9 +230,7 @@ define(function(require) {
                     events.push({key:cue.key, new:cue, old:undefined});
                 }
                 // event notification
-                if (events.length > 0 ) {
-                    this.eventifyTrigger("update", events);
-                }
+                this._notifyEvents(events);
             }
 
             /*
@@ -352,9 +347,7 @@ define(function(require) {
             }, this);
 
             // event notification
-            if (events.length > 0) {
-                this.eventifyTrigger("update", events);
-            }
+            this._notifyEvents(events);
         }
     }
 

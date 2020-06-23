@@ -25,7 +25,7 @@ define (function (require) {
     const BinarySearch = require("../util/binarysearch");
     const Interval = require("../util/interval");
     const eventify = require('../util/eventify');
-    const util = require("../util/util");
+    const utils = require("../util/util");
     const endpoint = require("../util/endpoint");
     const Relation = Interval.Relation;
 
@@ -183,7 +183,7 @@ define (function (require) {
             if (equals) {
                 eq = equals(cue_a.data, cue_b.data);
             } else {
-                eq = util.object_equals(cue_a.data, cue_b.data);
+                eq = utils.object_equals(cue_a.data, cue_b.data);
             }
             data_delta = (eq) ? Delta.NOOP : Delta.REPLACE;
         }
@@ -248,19 +248,48 @@ define (function (require) {
 
             Immediate events
         */
+
         eventifyInitEventArgs = function (name) {
             if (name == "update" || name == "change") {
                 let events = [...this.values()].map(cue => {
                     return {key:cue.key, new:cue, old:undefined};
                 });
-                if (name == "update") {
-                    return [events];
-                } else {
-                    // change - as individual event callbacks
-                    return events;
-                }
+                return (name == "update") ? [events] : events;
             }
         };
+
+
+        /*
+            Event Notification
+
+        */
+        _notifyEvents(events) {
+            // event notification
+            if (events.length == 0) {
+                return;
+            }
+            const has_update_subs = this.eventifySubscriptions("update").length > 0;
+            const has_remove_subs = this.eventifySubscriptions("remove").length > 0;
+            const has_change_subs = this.eventifySubscriptions("change").length > 0;
+            // update
+            if (has_update_subs) {
+                this.eventifyTrigger("update", events);
+            }
+            // change, remove
+            if (has_remove_subs || has_change_subs) {
+                for (let item of events) {
+                    if (item.new == undefined) {
+                        if (has_remove_subs) {
+                            this.eventifyTrigger("remove", item);
+                        }
+                    } else {
+                        if (has_change_subs) {
+                            this.eventifyTrigger("change", item);
+                        }
+                    }
+                }
+            }
+        }
 
 
         /***************************************************************
@@ -392,7 +421,7 @@ define (function (require) {
                 options.chaining = true;
             }
 
-            if (!util.isIterable(cues)) {
+            if (!utils.isIterable(cues)) {
                 cues = [cues];
             }
 
@@ -466,7 +495,8 @@ define (function (require) {
                 let events = [...batchMap.values()].map(item => {
                     return {key:item.key, new:item.new, old:item.old};
                 });
-                this.eventifyTrigger("update", events);
+                // event notification
+                this._notifyEvents(events);
                 /*
                     notify sequencer last so that change events
                     from the axis will be applied before change
@@ -679,7 +709,7 @@ define (function (require) {
                     arrays.push(cues);
                 }
             }
-            return util.array_concat(arrays);
+            return utils.array_concat(arrays);
         };
 
         /*
@@ -719,9 +749,8 @@ define (function (require) {
                 // check for equality
                 events.push({key:cue.key, new: undefined, old: cue});
             }
-            if (events.length > 0) {
-                this.eventifyTrigger("update", events);
-            }
+            // event notification
+            this._notifyEvents(events);
             return events;
         };
 
@@ -739,9 +768,8 @@ define (function (require) {
             for (let cue of cueMap.values()) {
                 events.push({key: cue.key, new: undefined, old: cue});
             }
-            if (events.size > 0) {
-                this.eventifyTrigger("update", events);
-            }
+            // event notification
+            this._notifyEvents(events);
             return events;
         };
 
