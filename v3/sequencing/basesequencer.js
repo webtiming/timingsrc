@@ -20,7 +20,7 @@
 
 define(function(require) {
 
-    const util = require("../util/util");
+    const utils = require("../util/utils");
     const eventify = require("../util/eventify");
     const Axis = require("./axis");
 
@@ -284,7 +284,7 @@ define(function(require) {
 
                     change cues - cues which are modified, yet remain active cues
                 */
-                let remainCues = util.map_intersect(this._activeCues, _activeCues);
+                let remainCues = utils.map_intersect(this._activeCues, _activeCues);
                 if (remainCues.size > 0) {
                     /*
                         Two approaches
@@ -315,7 +315,7 @@ define(function(require) {
                     Exit Events
                     exit cues were in old active cues - but not in new
                 */
-                let exitCues = util.map_difference(this._activeCues, _activeCues);
+                let exitCues = utils.map_difference(this._activeCues, _activeCues);
                 exitEvents = [...exitCues.values()]
                     .map(cue => {
                         return {key:cue.key, new:undefined, old:cue};
@@ -330,7 +330,7 @@ define(function(require) {
             if (first) {
                 enterCues = _activeCues
             } else {
-                enterCues = util.map_difference(_activeCues, this._activeCues);
+                enterCues = utils.map_difference(_activeCues, this._activeCues);
             }
             let enterEvents = [...enterCues.values()]
                 .map(cue => {

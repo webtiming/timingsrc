@@ -20,7 +20,7 @@
 
 define(function(require) {
 
-    const utils = require("../util/util");
+    const utils = require("../util/utils");
     const Interval = require("../util/interval");
     const motionutils = require("../util/motionutils");
     const PosDelta = motionutils.MotionDelta.PosDelta;
