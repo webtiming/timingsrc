@@ -62,7 +62,7 @@ define(function () {
 		    	Promise.resolve().then(function () {
 		    		const eArgs = self.publisher.eventifyInitEventArgs(self.name) || [];
 		    		for (let eArg of eArgs) {
-		    			self._trigger(eArg, [sub], true);
+		    			self.trigger(eArg, [sub], true);
 		    		}
 		    		sub.init_pending = false;
 		    	});
@@ -72,21 +72,11 @@ define(function () {
 
 		/*
 			trigger event
-		*/
-		trigger (eArg) {
-			if (this.subscriptions.length > 0) {
-				const subs = this.subscriptions.filter(sub => sub.init_pending == false);
-				this._trigger(eArg, subs, false);
-			}
-		}
 
-		/*
-			internal function
-			trigger single event
 			- if sub is undefined - publish to all subscriptions
 			- if sub is defined - publish only to given subscription
 		*/
-		_trigger (eArg, subs, init) {
+		trigger (eArg, subs, init) {
 			let eInfo, ctx;
 			for (const sub of subs) {
 				// ignore terminated subscriptions
@@ -235,25 +225,40 @@ define(function () {
 			request emptying the buffer, i.e. actually triggering events,
 			every time the buffer goes from empty to non-empty
 		*/
-		function eventifyTriggerAll(eventItemList) {
-			if (eventItemList.length == 0) {
+		function eventifyTriggerAll(eventItems) {
+			if (eventItems.length == 0) {
 				return;
 			}
-			const len = eventItemList.length;
+
+			// make trigger items
+			// resolve non-pending subscriptions now
+			// else subscriptions may change from pending to non-pending
+			// between here and actual triggering
+			// make list of [ev, eArg, subs] tuples
+			let triggerItems = eventItems.map((item) => {
+				let {name, eArg} = item;
+				let ev = eventifyGetEvent(this, name);
+				let subs = ev.subscriptions.filter(sub => sub.init_pending == false);
+				return [ev, eArg, subs];
+			}, this);
+
+			// append trigger Items to buffer
+			const len = triggerItems.length;
 			const buf = this.__eventify_buffer;
 			const buf_len = this.__eventify_buffer.length;
 			// reserve memory - set new length
 			this.__eventify_buffer.length = buf_len + len;
-			// copy eventItems to buffer
+			// copy triggerItems to buffer
 			for (let i=0; i<len; i++) {
-				buf[buf_len+i] = eventItemList[i];
+				buf[buf_len+i] = triggerItems[i];
 			}
 			// request emptying of the buffer
 			if (buf_len == 0) {
 				let self = this;
 				Promise.resolve().then(function() {
-					for (let {name, eArg} of self.__eventify_buffer) {
-						eventifyGetEvent(self, name).trigger(eArg);
+					for (let [ev, eArg, subs] of self.__eventify_buffer) {
+						// actual event triggering
+						ev.trigger(eArg, subs, false);
 					}
 					self.__eventify_buffer = [];
 				});
