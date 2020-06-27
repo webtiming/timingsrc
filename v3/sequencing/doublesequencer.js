@@ -34,6 +34,22 @@ define(function(require) {
     const ACTIVECUES_THRESHOLD = 5000;
 
 
+    /*
+        calculate general movement direction for double sequencer
+        define movement direction as the aggregate movement direction
+        for both timing objects
+    */
+    function movement_direction (now_vector_A, now_vector_B) {
+        let direction_A = motionutils.calculateDirection(now_vector_A);
+        let direction_B = motionutils.calculateDirection(now_vector_B);
+        let direction = direction_A + direction_B;
+        return (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
+    }
+
+
+
+
+
     class DoubleSequencer extends BaseSequencer {
 
         constructor (axis, toA, toB) {
@@ -63,6 +79,12 @@ define(function(require) {
             return (this._toA_ready && this._toB_ready);
         }
 
+        get_movement_direction() {
+            const now = this._toA.clock.now();
+            const now_vector_A = motionutils.calculateVector(this._toA.vector, now);
+            const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
+            return movement_direction(now_vector_A, now_vector_B);
+        }
 
         /***************************************************************
          AXIS CALLBACK
@@ -104,12 +126,14 @@ define(function(require) {
             });
 
             // notifications
-            const events = exit;
-            events.push(...change);
-            events.push(...enter);
+            const events = utils.array_concat([exit, change, enter], {copy:true, order:true});
+
+            // sort events according to general movement direction
+            let direction = movement_direction(new_vector, other_new_vector);
+            BaseSequencer.sort_events(events, direction);
 
             // event notification
-            this._notifyEvents(events);
+            this._notifyEvents(events, direction);
 
             /*
                 clear schedules
@@ -229,6 +253,11 @@ define(function(require) {
                 for (let cue of enterCues.values()) {
                     events.push({key:cue.key, new:cue, old:undefined});
                 }
+
+                // sort events according to general movement direction
+                let direction = movement_direction(new_vector, other_new_vector);
+                BaseSequencer.sort_events(events, direction);
+
                 // event notification
                 this._notifyEvents(events);
             }
@@ -345,6 +374,8 @@ define(function(require) {
                     this._activeCues.delete(cue.key);
                 }
             }, this);
+
+            // Events already sorted
 
             // event notification
             this._notifyEvents(events);

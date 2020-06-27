@@ -50,6 +50,13 @@ define(function(require) {
             this._sched_cb = this._sched.add_callback(cb)
         }
 
+
+        get_movement_direction() {
+            const now = this._to.clock.now();
+            return motionutils.calculateDirection(this._to.vector, now);
+        }
+
+
         /***************************************************************
          AXIS CALLBACK
         ***************************************************************/
@@ -118,7 +125,11 @@ define(function(require) {
             });
 
             // notifications
-            const events = utils.array_concat([exit, enter, change], {copy:true, order:true});
+            const events = utils.array_concat([exit, change, enter], {copy:true, order:true});
+
+            // sort events according to general movement direction
+            let direction = motionutils.calculateDirection(now_vector);
+            BaseSequencer.sort_events(events, direction);
 
             // event notification
             this._notifyEvents(events);
@@ -207,6 +218,11 @@ define(function(require) {
                 for (let cue of enterCues.values()) {
                     events.push({key:cue.key, new:cue, old:undefined});
                 }
+
+                // sort events according to general movement direction
+                let direction = motionutils.calculateDirection(new_vector);
+                BaseSequencer.sort_events(events, direction);
+
                 // event notification
                 this._notifyEvents(events);
             }

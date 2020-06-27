@@ -200,7 +200,37 @@
                 document.getElementById("data").innerHTML = html;
             });
 
+            // add change and remove handlers
+            s.on("remove", (item, eInfo) => {
+                let el = document.getElementById(`${item.key}`);
+                if (el) {
+                    el.classList.remove("active");
+                }
+                // console
+                let pos = to.pos.toFixed(2);
+                let itv_str = item.old.interval.toString();
+                console.log(`exit ${item.key} ${itv_str} ${pos}`);
+            });
 
+            s.on("change", (item, eInfo) => {
+                let el = document.getElementById(`${item.key}`);
+                if (el) {
+                    el.classList.add("active");
+                }
+
+                // console
+                let pos = to.pos.toFixed(2);
+                if (item.old) {
+                    // change
+                    console.log("change", item.key);
+                } else {
+                    // enter
+                    let itv_str = item.new.interval.toString();
+                    console.log(`enter ${item.key} ${itv_str} ${pos}`);
+                }
+            });
+
+            /*
             // add change handler
             s.on("update", function(events, eInfo) {
                 let pos = to.pos.toFixed(2);
@@ -225,6 +255,7 @@
                     }
                 });
             });
+            */
         };
 
 

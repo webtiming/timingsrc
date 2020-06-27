@@ -90,7 +90,7 @@ define(function (require) {
             freshVector = calculateVector(vector, ts);
         }
         // check velocity
-        const direction = cmp(freshVector.velocity, 0.0);
+        let direction = cmp(freshVector.velocity, 0.0);
         if (direction === 0) {
             // check acceleration
             direction = cmp(vector.acceleration, 0.0);

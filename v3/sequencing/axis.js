@@ -192,6 +192,26 @@ define (function (require) {
 
 
 
+    /*
+        CUE ORDERING AND SORTING
+    */
+
+    function cue_cmp_forwards (cue_a, cue_b) {
+        return Interval.cmpLow(cue_a.iterval, cue_b.interval);
+    }
+
+    function cue_cmp_backwards (cue_a, cue_b) {
+        return -1 * Interval.cmpHigh(cue_a.iterval, cue_b.interval);
+    }
+
+    function sort_cues (cues, direction=0) {
+        if (direction >= 0) {
+            cues.sort(cue_cmp_forwards);
+        } else {
+            cuess.sort(cue_cmp_backwards);
+        }
+    }
+
 
     /*
         this implements Axis, a datastructure for efficient lookup of
@@ -205,6 +225,8 @@ define (function (require) {
     */
 
     class Axis {
+
+        static sort_cues = sort_cues;
 
         constructor() {
             /*

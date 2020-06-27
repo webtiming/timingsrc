@@ -21,6 +21,7 @@
 define(function(require) {
 
     const utils = require("../util/utils");
+    const Interval = require("../util/interval");
     const eventify = require("../util/eventify");
     const Axis = require("./axis");
 
@@ -130,6 +131,32 @@ define(function(require) {
     ]);
 
 
+
+    /*******************************************************************
+     EVENT ORDERING SORTING
+    *******************************************************************/
+
+    function event_cmp_forwards (event_a, event_b) {
+        let itv_a = (event_a.new) ? event_a.new.interval : event_a.old.interval;
+        let itv_b = (event_b.new) ? event_b.new.interval : event_b.old.interval;
+        return Interval.cmpLow(itv_a, itv_b);
+    }
+
+    function event_cmp_backwards (event_a, event_b) {
+        let itv_a = (event_a.new) ? event_a.new.interval : event_a.old.interval;
+        let itv_b = (event_b.new) ? event_b.new.interval : event_b.old.interval;
+        return -1 * Interval.cmpHigh(itv_a, itv_b);
+    }
+
+    function sort_events (events, direction=0) {
+        if (direction >= 0) {
+            events.sort(event_cmp_forwards);
+        } else {
+            events.sort(event_cmp_backwards);
+        }
+    }
+
+
     /*******************************************************************
      BASE SEQUENCER
     *******************************************************************/
@@ -143,6 +170,7 @@ define(function(require) {
 
         static Active = Active;
         static ActiveMap = ActiveMap;
+        static sort_events = sort_events;
 
         constructor (axis) {
 
@@ -162,6 +190,11 @@ define(function(require) {
         }
 
 
+        get_movement_direction() {
+            throw new Error("not implemented");
+        }
+
+
         /***************************************************************
          EVENTS
         ***************************************************************/
@@ -174,6 +207,7 @@ define(function(require) {
                 let events = [...this._activeCues.values()].map(cue => {
                     return {key:cue.key, new:cue, old:undefined};
                 });
+                sort_events(events, this.get_movement_direction());
                 return (name == "update") ? [events] : events;
             }
         }
