@@ -107,23 +107,16 @@ define (function (require) {
         DELETE: 3
     });
 
-    // mode mask
-    const LookupMask = Object.freeze({
-        OVERLAP_LEFT: 16, //bx10000
-        COVERED: 8,       //bx01000
-        EQUALS: 4,        //bx00100
-        COVERS: 2,        //bx00010
-        OVERLAP_RIGHT: 1  //bx00001
-    });
+    /*
+        Mask values for Axis Lookup
+        based on Interval Relations
+    */
 
-    // mapping cue relations to lookupmasks
-    const LookupMaskMap = new Map([
-        [Relation.OVERLAP_LEFT, LookupMask.OVERLAP_LEFT],
-        [Relation.COVERED, LookupMask.COVERED],
-        [Relation.EQUALS, LookupMask.EQUALS],
-        [Relation.COVERS, LookupMask.COVERS],
-        [Relation.OVERLAP_RIGHT, LookupMask.OVERLAP_RIGHT]
-    ]);
+    const LOOKUP_MASK_BASIC =
+        Relation.OVERLAP_LEFT + Relation.COVERED +
+        Relation.EQUALS + Relation.OVERLAP_RIGHT;
+
+    const LOOKUP_MASK_ALL = LOOKUP_MASK_BASIC + Relation.COVERS;
 
 
     /*
@@ -227,6 +220,7 @@ define (function (require) {
     class Axis {
 
         static sort_cues = sort_cues;
+        static LOOKUP_MASK_ALL = LOOKUP_MASK_ALL;
 
         constructor() {
             /*
@@ -752,16 +746,16 @@ define (function (require) {
             LOOKUP
         */
 
-        lookup(interval, mode) {
-            return this._call_buckets("lookup", interval, mode);
+        lookup(interval, mask) {
+            return this._call_buckets("lookup", interval, mask);
         };
 
 
         /*
             REMOVE CUES BY INTERVAL
         */
-        lookup_delete(interval, mode) {
-            const cues = this._call_buckets("lookup_delete", interval, mode);
+        lookup_delete(interval, mask) {
+            const cues = this._call_buckets("lookup_delete", interval, mask);
             // remove from cueMap and make events
             const events = [];
             let cue;
@@ -1130,30 +1124,30 @@ define (function (require) {
             Relation.COVERS,
             Relation.OVERLAP_RIGHT
         */
-        lookup(interval, mode=31) {
+
+
+        lookup(interval, mask=LOOKUP_MASK_ALL) {
 
             let cues = [];
 
+            // ignore illegal values
+            mask &= LOOKUP_MASK_ALL;
+
             // special case only [EQUALS]
-            if (mode == LookupMask.EQUALS_MASK) {
+            if (mask == Relation.EQUALS) {
                 return this._pointMap.get(interval.low).filter(function(cue) {
-                    return cue.interval.equals(interval)
+                    return cue.interval.match(interval, Relation.EQUALS);
                 });
             }
 
-            // common case: [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
-            // exclude [COVERS]
-            if (mode - LookupMask.COVERS > 0) {
-                // keep cues which match lookup mode,
-                // except COVERS, which is excluded here
+            // handle match with the basic lookup mask first
+            // [OVERLAP_LEFT, COVERED, EQUALS, OVERLAP_RIGHT]
+            let _mask = mask & LOOKUP_MASK_BASIC;
+            if (_mask) {
+                // keep cues which match lookup part of basic mask,
                 cues = this._lookup_cues(interval)
                     .filter(function(cue){
-                        let relation = cue.interval.compare(interval);
-                        // exclude COVERS
-                        if (relation == Relation.COVERS) {
-                            return false;
-                        }
-                        return mode & LookupMaskMap.get(relation)
+                        return cue.interval.match(interval, _mask);
                     });
             }
 
@@ -1165,12 +1159,9 @@ define (function (require) {
             if (interval.length > this._maxLength) {
                 return cues;
             }
-            if (!(mode & LookupMask.COVERS)) {
-                return cues;
-            }
 
             /*
-                special handling [COVERS]
+                handle match with COVERS separately
 
                 search left of search interval for cues
                 that covers the search interval
@@ -1180,15 +1171,18 @@ define (function (require) {
                 it would be possible to search right too, but we
                 have to choose one.
             */
-            let low = interval.high - this._maxLength;
-            let high = interval.low;
-            let left_interval = new Interval(low, high, true, true);
-            this._lookup_cues(left_interval)
-                .forEach(function(cue){
-                    if (cue.interval.compare(interval) == Relation.COVERS) {
-                        cues.push(cue);
-                    }
-                });
+            if (mask & Relation.COVERS) {
+                let low = interval.high - this._maxLength;
+                let high = interval.low;
+                let left_interval = new Interval(low, high, true, true);
+                this._lookup_cues(left_interval)
+                    .forEach(function(cue){
+                        if (cue.interval.match(interval, Relation.COVERS)) {
+                            cues.push(cue);
+                        }
+                    });
+            }
+
             return cues;
         }
 
@@ -1196,7 +1190,7 @@ define (function (require) {
         /*
             REMOVE CUES
         */
-        lookup_delete(interval, mode) {
+        lookup_delete(interval, mask) {
             /*
                 update pointMap
                 - remove all cues from pointMap
@@ -1204,7 +1198,7 @@ define (function (require) {
                 - record points that became empty, as these need to be deleted in pointIndex
                 - separate into two bucketes, inside and outside
             */
-            const cues = this.lookup(interval, mode);
+            const cues = this.lookup(interval, mask);
             const to_remove = [];
             let cue, point, points;
             for (let i=0; i<cues.length; i++) {

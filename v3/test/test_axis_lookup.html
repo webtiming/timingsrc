@@ -16,6 +16,7 @@
 
         const Axis = timingsrc.Axis;
         const Interval = timingsrc.Interval;
+        const Relation = Interval.Relation;
 
         function assertTrue(val) {
           if (!val) {
@@ -58,9 +59,10 @@
 
         var test_lookup_correctness = function () {
 
-          const INSIDE = 12;
-          const OVERLAP = 29;
-          const COVERS = 31;
+
+          const INSIDE = Relation.EQUALS + Relation.COVERED;
+          const OVERLAP = Axis.LOOKUP_MASK_ALL - Relation.COVERS;
+          const COVERS = Axis.LOOKUP_MASK_ALL;
 
           const check = function(cues, expect) {
             let missing = [];
@@ -242,9 +244,9 @@
           let ax = new Axis();
           let events, expect;
 
-          const INSIDE = 12;
-          const OVERLAP = 29;
-          const COVERS = 31;
+          const INSIDE = Relation.EQUALS + Relation.COVERED;
+          const OVERLAP = Axis.LOOKUP_MASK_ALL - Relation.COVERS;
+          const COVERS = Axis.LOOKUP_MASK_ALL;
 
           /*
           cues [0,1),[1,2),...[99,100) + [4,18]
@@ -307,8 +309,8 @@
 
         var run = function () {
           test_lookup_endpoints();
-          test_lookup_delete();
           test_lookup_correctness();
+          test_lookup_delete();
         };
 
         if (document.readyState === "complete") run();
