@@ -30,6 +30,8 @@ define (function (require) {
     const Relation = Interval.Relation;
 
 
+
+
     /*
         UTILITY
     */
@@ -329,9 +331,9 @@ define (function (require) {
         };
 
 
-        _notify_callbacks (ev) {
+        _notify_callbacks (batchMap, relevanceInterval) {
             this._update_callbacks.forEach(function(handle) {
-                handle.handler(ev);
+                handle.handler(batchMap, relevanceInterval);
             });
         };
 
@@ -503,22 +505,43 @@ define (function (require) {
 
                 this._update_cue(batchMap, current_cue, cue, options);
             }
+            // flush all buckets so updates take effect
+            this._call_buckets("flush");
             if (batchMap.size > 0) {
-                // flush all buckets so updates take effect
-                this._call_buckets("flush");
-                // callbacks
+
+                /*
+                    create events without delta property
+                    and accumulate relevance interval for batch
+                */
+                let relevance = {low: Infinity, high: -Infinity};
+
                 // create list of events and remove delta property
                 let events = [...batchMap.values()].map(item => {
+                    if (item.new && item.new.interval) {
+                        relevance.low = endpoint.min(relevance.low, item.new.interval.endpointLow);
+                        relevance.high = endpoint.max(relevance.high, item.new.interval.endpointHigh);
+                    }
+                    if (item.old && item.old.interval) {
+                        relevance.low = endpoint.min(relevance.low, item.old.interval.endpointLow);
+                        relevance.high = endpoint.max(relevance.high, item.old.interval.endpointHigh);
+                    }
                     return {key:item.key, new:item.new, old:item.old};
                 });
                 // event notification
                 this._notifyEvents(events);
+
+                // create relevance Interval
+                let relevanceInterval = undefined;
+                if (relevance.low != Infinity) {
+                    let relevanceInterval = Interval.fromEndpoints(relevance.low, relevance.high);
+                }
+
                 /*
                     notify sequencer last so that change events
                     from the axis will be applied before change
                     events from sequencers.
                 */
-                this._notify_callbacks(batchMap);
+                this._notify_callbacks(batchMap, relevanceInterval);
                 return events;
             }
             return [];

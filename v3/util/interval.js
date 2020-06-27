@@ -46,6 +46,20 @@ define(function(require) {
 
 	class Interval {
 
+
+		static fromEndpoints(endpointLow, endpointHigh) {
+			let [low, low_right, low_closed, low_singular] = endpointLow;
+			let [high, high_right, high_closed, high_singular] = endpointHigh;
+			if (low_right) {
+				throw new Error("illegal endpointLow - bracket must be left");
+			}
+			if (!high_right) {
+				throw new Error("illegal endpointHigh - bracket must be right");
+			}
+			return new Interval(low, high, low_closed, high_closed);
+		}
+
+
 		constructor (low, high, lowInclude, highInclude) {
 			var lowIsNumber = isNumber(low);
 			var highIsNumber = isNumber(high);

@@ -93,7 +93,7 @@ define(function(require) {
         /*
             Handling Axis Update Callbacks
         */
-        _onAxisCallback(eventMap) {
+        _onAxisCallback(eventMap, relevanceInterval) {
             if (!this._isReady()) {
                 return;
             }

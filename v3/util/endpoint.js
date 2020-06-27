@@ -177,6 +177,17 @@ define(function () {
 		return (diff > 0) ? 1 : -1;
 	}
 
+
+    function min(e1, e2) {
+        return (cmp(e1, e2) <= 0) ? e1 : e2;
+    }
+
+
+    function max(e1, e2) {
+	    return (cmp(e1, e2) <= 0) ? e2 : e1;
+    }
+
+
 	/*
 		human friendly endpoint representation
 	*/
@@ -204,11 +215,13 @@ define(function () {
 	}
 
 	return {
-		cmp: cmp,
-		toString: toString,
-		equals: equals,
-		rightof: rightof,
-		leftof: leftof,
-		create: create
+		cmp,
+		toString,
+		equals,
+		rightof,
+		leftof,
+		create,
+		min,
+		max
 	}
 });

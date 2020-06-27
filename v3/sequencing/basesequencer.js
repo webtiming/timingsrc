@@ -250,7 +250,7 @@ define(function(require) {
          AXIS CALLBACK
         ***************************************************************/
 
-        _onAxisCallback(eventMap) {
+        _onAxisCallback(eventMap, relevanceInterval) {
             throw new Error("not implemented");
         }
 

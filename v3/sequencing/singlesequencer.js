@@ -65,7 +65,7 @@ define(function(require) {
             Handling Axis Update Callbacks
         */
 
-        _onAxisCallback(eventMap) {
+        _onAxisCallback(eventMap, relevanceInterval) {
             /*
                 process axis events which are relevant to the set
                 of activeCues, or to the immediate future (schedule)
@@ -287,6 +287,8 @@ define(function(require) {
                     }
                 }
             }, this);
+
+            // Events already sorted
 
             // event notification
             this._notifyEvents(events);
