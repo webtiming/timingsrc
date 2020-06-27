@@ -136,7 +136,7 @@ define(function(require) {
 		*/
 		match (other, mask=62) {
 			let relation = compare(this, other);
-			return mask & relation;
+			return Boolean(mask & relation);
 		}
 	}
 

@@ -533,7 +533,7 @@ define (function (require) {
                 // create relevance Interval
                 let relevanceInterval = undefined;
                 if (relevance.low != Infinity) {
-                    let relevanceInterval = Interval.fromEndpoints(relevance.low, relevance.high);
+                    relevanceInterval = Interval.fromEndpoints(relevance.low, relevance.high);
                 }
 
                 /*

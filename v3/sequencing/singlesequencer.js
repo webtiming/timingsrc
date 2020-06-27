@@ -29,9 +29,12 @@ define(function(require) {
     const BaseSequencer = require("./basesequencer");
     const Active = BaseSequencer.Active;
     const ActiveMap = BaseSequencer.ActiveMap;
+    const Relation = Interval.Relation;
 
     const EVENTMAP_THRESHOLD = 5000;
     const ACTIVECUES_THRESHOLD = 5000;
+
+    const OUTSIDE_MASK = Relation.OUTSIDE_LEFT + Relation.OUTSIDE_RIGHT;
 
 
     class SingleSequencer extends BaseSequencer {
@@ -101,65 +104,64 @@ define(function(require) {
                 return;
             }
 
+            if (relevanceInterval == undefined) {
+                return;
+            }
+
             const now = this._to.clock.now();
             const now_vector = motionutils.calculateVector(this._to.vector, now);
 
-            // choose approach to get events
-            let get_events = this._events_from_axis_events.bind(this);
-            if (EVENTMAP_THRESHOLD < eventMap.size) {
-                if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._events_from_axis_lookup.bind(this);
+            // activeInterval
+            const activeInterval = new Interval(now_vector.position);
+
+            if (!activeInterval.match(relevanceInterval, OUTSIDE_MASK)) {
+                // relevanceInterval is NOT outside activeInterval
+                // some events relevant for activeIntervale
+
+                // choose approach to get events
+                let get_events = this._events_from_axis_events.bind(this);
+                if (EVENTMAP_THRESHOLD < eventMap.size) {
+                    if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
+                        get_events = this._events_from_axis_lookup.bind(this);
+                    }
                 }
+
+                // get events
+                const [exit, change, enter] = get_events(eventMap, activeInterval);
+
+                // update activeCues
+                exit.forEach(item => {
+                    this._activeCues.delete(item.key);
+                });
+                enter.forEach(item => {
+                    this._activeCues.set(item.key, item.new);
+                });
+
+                // notifications
+                const events = utils.array_concat([exit, change, enter], {copy:true, order:true});
+
+                // sort events according to general movement direction
+                let direction = motionutils.calculateDirection(now_vector);
+                BaseSequencer.sort_events(events, direction);
+
+                // event notification
+                this._notifyEvents(events);
             }
-
-            // get events
-            let activeInterval = new Interval(now_vector.position);
-            const [exit, change, enter] = get_events(eventMap, activeInterval);
-
-            // update activeCues
-            exit.forEach(item => {
-                this._activeCues.delete(item.key);
-            });
-            enter.forEach(item => {
-                this._activeCues.set(item.key, item.new);
-            });
-
-            // notifications
-            const events = utils.array_concat([exit, change, enter], {copy:true, order:true});
-
-            // sort events according to general movement direction
-            let direction = motionutils.calculateDirection(now_vector);
-            BaseSequencer.sort_events(events, direction);
-
-            // event notification
-            this._notifyEvents(events);
 
             /*
                 clear schedule
 
                 This is only necessary if a cue interval is changed,
                 and the change is relevant within the posInterval of
-                of the schedule.
-
-                Instead of checking all cues, it is likely cheaper to
-                simply refresh the schedule every time, i.e. a single
-                lookup from axis on 5 second interval. At least for
-                large event batches it should be more efficient.
-
-                Also, simply refreshing the schedule is a much simpler
-                solution in terms of code complexity.
-
-                TODO: cue interval changes may affect schedule
-                posInterval even if it does not affect active cues,
-                so just looking at changes in active cues is not an option.
-
-                NOTE: if axis delivered a "union" interval for the
-                batch, it would be very quick to see if this was
-                relevant for the posInterval.
-
+                of the schedule. RelevanceInterval to figure this out.
             */
-
-            this._sched.setVector(now_vector);
+            if (this._sched.posInterval) {
+                if (!this._sched.posInterval.match(relevanceInterval, OUTSIDE_MASK)) {
+                    // relevanceInterval is NOT outside schedule posInterval
+                    // refresh schedule
+                    this._sched.setVector(now_vector);
+                }
+            }
         }
 
 
