@@ -669,6 +669,7 @@ export class MotionDelta {
 
 
 // return module object
+/*
 export default {
     isMoving,
     // equalVectors,
@@ -685,5 +686,5 @@ export default {
     rangeIntersect,
     MotionDelta
 };
-
+*/
 

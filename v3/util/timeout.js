@@ -19,73 +19,69 @@
 */
 
 
-define(function() {
+/*
+    Wraps the built in setTimeout to provide a
+    Timeout that does not fire too early.
 
+    Importantly, the Timeout object manages at most
+    one timeout.
+
+    - Given clock.now() returns a value in seconds.
+    - The timeout is set with and absolute timestamp,
+      not a delay.
+*/
+
+class Timeout {
+
+    constructor (timingObject, callback) {
+        this.tid = undefined;
+        this.to = timingObject;
+        this.callback = callback;
+    }
+
+    isSet() {
+        return this.tid != undefined;
+    }
 
     /*
-        Wraps the built in setTimeout to provide a
-        Timeout that does not fire too early.
-
-        Importantly, the Timeout object manages at most
-        one timeout.
-
-        - Given clock.now() returns a value in seconds.
-        - The timeout is set with and absolute timestamp,
-          not a delay.
+        set timeout to point in time (seconds)
     */
+    setTimeout(target_ts, arg) {
+        if (this.tid != undefined) {
+            throw new Error("at most on timeout");
+        }
+        let now = this.to.clock.now();
+        let delay = Math.max(target_ts - now, 0) * 1000;
+        this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts, arg);
+    }
 
-    class Timeout {
-
-        constructor (timingObject, callback) {
+    /*
+        handle timeout intended for point in time (seconds)
+    */
+    onTimeout(target_ts, arg) {
+        if (this.tid != undefined) {
             this.tid = undefined;
-            this.to = timingObject;
-            this.callback = callback;
-        }
-
-        isSet() {
-            return this.tid != undefined;
-        }
-
-        /*
-            set timeout to point in time (seconds)
-        */
-        setTimeout(target_ts, arg) {
-            if (this.tid != undefined) {
-                throw new Error("at most on timeout");
-            }
-            let now = this.to.clock.now();
-            let delay = Math.max(target_ts - now, 0) * 1000;
-            this.tid = setTimeout(this.onTimeout.bind(this), delay, target_ts, arg);
-        }
-
-        /*
-            handle timeout intended for point in time (seconds)
-        */
-        onTimeout(target_ts, arg) {
-            if (this.tid != undefined) {
-                this.tid = undefined;
-                // check if timeout was too early
-                let now = this.to.clock.now()
-                if (now < target_ts) {
-                    // schedule new timeout
-                    this.setTimeout(target_ts, arg);
-                } else {
-                    // handle timeout
-                    this.callback(now, arg);
-                }
-            }
-        }
-
-        /*
-            cancel and clear timeout if active
-        */
-        clear() {
-            if (this.tid != undefined) {
-                clearTimeout(this.tid);
-                this.tid = undefined;
+            // check if timeout was too early
+            let now = this.to.clock.now()
+            if (now < target_ts) {
+                // schedule new timeout
+                this.setTimeout(target_ts, arg);
+            } else {
+                // handle timeout
+                this.callback(now, arg);
             }
         }
     }
 
-    return Timeout;
-});
+    /*
+        cancel and clear timeout if active
+    */
+    clear() {
+        if (this.tid != undefined) {
+            clearTimeout(this.tid);
+            this.tid = undefined;
+        }
+    }
+}
+
+export default Timeout;

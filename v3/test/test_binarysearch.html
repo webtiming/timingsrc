@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../', 
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
     <!--  main -->
-    <script text="javascript">
-      var pub;
-      require(['util/binarysearch', 'util/interval'], function (BinarySearch, Interval) {
+    <script type="module">
+
+        import Interval from '../util/interval.js';
+        import BinarySearch from '../util/binarysearch.js';
+
+        var pub;
 
         var timeit = function (func, name) {
           let t0 = performance.now();
@@ -22,7 +17,7 @@
           return result;
         };
 
-        var make_presorted_ints = function (size) {          
+        var make_presorted_ints = function (size) {
           let numbers = [];
           for (let i=0; i<size; i++) {
             numbers.push(i);
@@ -121,7 +116,7 @@
             for (let j=0; j<range.length;j++) {
               datasize = range[i];
               batchsize = range[j];
-              
+
               let batch_init = make_presorted_ints(datasize);
               let batch_insert = make_random_floats(batchsize, datasize);
               let batch_remove = make_random_ints(batchsize, datasize);
@@ -152,7 +147,7 @@
                 stat_item['remove-sort'] = performance.now() - ts0;
 
                 // remove - splice
-                if (batchsize < 1000) {                
+                if (batchsize < 1000) {
                   b.clear();
                   b.insert(batch_init);
                   ts0 = performance.now();
@@ -263,7 +258,7 @@
           console.log(0, b.indexOf(e0));
           console.log(3, b.indexOf(e1));
           console.log(6, b.indexOf(e2));
-          
+
           b.remove([e1]);
           console.log(b.array.indexOf(e0));
           console.log(b.array.indexOf(e1));
@@ -279,7 +274,7 @@
 
         var test_remove = function () {
           let DATASIZE = 500000;
-          
+
           let batch = make_presorted_ints(DATASIZE);
           let b = new BinarySearch();
           b.insert(batch);
@@ -304,7 +299,7 @@
           // create batch from range [0,1,2,3,...]
           let batch1 = make_presorted_ints(DATASIZE);
           let b = new BinarySearch({value:"value"});
-          
+
           // initialise
           timeit(function () {
             b.insert(batch1);
@@ -346,8 +341,8 @@
 
         if (document.readyState === "complete") run();
         else window.onload = run;
-      });
-    </script>    
+
+    </script>
   </head>
   <body>
     <h1>Test Binary Search</h1>

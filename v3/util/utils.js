@@ -18,167 +18,148 @@
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define (function () {
 
-    'use strict';
+/* Set Comparison */
+export function eqSet(as, bs) {
+    return as.size === bs.size && all(isIn(bs), as);
+}
 
+export function all(pred, as) {
+    for (var a of as) if (!pred(a)) return false;
+    return true;
+}
 
-    /* Set Comparison */
-    function eqSet(as, bs) {
-        return as.size === bs.size && all(isIn(bs), as);
-    }
-
-    function all(pred, as) {
-        for (var a of as) if (!pred(a)) return false;
-        return true;
-    }
-
-    function isIn(as) {
-        return function (a) {
-            return as.has(a);
-        };
-    }
-
-    /*
-        get the difference of two Maps
-        key in a but not in b
-    */
-    const map_difference = function (a, b) {
-        if (a.size == 0) {
-            return new Map();
-        } else if (b.size == 0) {
-            return a;
-        } else {
-            return new Map([...a].filter(function ([key, value]) {
-                return !b.has(key)
-            }));
-        }
+export function isIn(as) {
+    return function (a) {
+        return as.has(a);
     };
+}
 
-    /*
-        get the intersection of two Maps
-        key in a and b
-    */
-    const map_intersect = function (a, b) {
-        [a, b] = (a.size <= b.size) ? [a,b] : [b,a];
-        if (a.size == 0) {
-            // No intersect
-            return new Map();
-        }
+/*
+    get the difference of two Maps
+    key in a but not in b
+*/
+export const map_difference = function (a, b) {
+    if (a.size == 0) {
+        return new Map();
+    } else if (b.size == 0) {
+        return a;
+    } else {
         return new Map([...a].filter(function ([key, value]) {
-            return b.has(key)
+            return !b.has(key)
         }));
-    };
-
-    function divmod (n, d) {
-        let r = n % d;
-        let q = (n-r)/d;
-        return [q, r];
     }
+};
 
-
-    function isIterable(obj) {
-        // checks for null and undefined
-        if (obj == null) {
-            return false;
-        }
-        return typeof obj[Symbol.iterator] === 'function';
+/*
+    get the intersection of two Maps
+    key in a and b
+*/
+export const map_intersect = function (a, b) {
+    [a, b] = (a.size <= b.size) ? [a,b] : [b,a];
+    if (a.size == 0) {
+        // No intersect
+        return new Map();
     }
+    return new Map([...a].filter(function ([key, value]) {
+        return b.has(key)
+    }));
+};
 
-    /*
-        effective concatenation of multiple arrays
-        - order - if true preserves ordering of input arrays
-                - else sorts input arrays (longest first)
-                - default false is more effective
-        - copy  - if true leaves input arrays unchanged, copy
-                  values into new array
-                - if false copies remainder arrays into the first
-                  array
-                - default false is more effective
-    */
-    function array_concat(arrays, options = {}) {
-        let {copy=false, order=false} = options;
-        if (arrays.length == 0) {
-            return [];
-        }
-        if (arrays.length == 1) {
-            return arrays[0];
-        }
-        let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
-        // order
-        if (!order) {
-            // sort arrays according to length - longest first
-            arrays.sort((a, b) => b.length - a.length);
-        }
-        // copy
-        let first = (copy) ? [] : arrays.shift();
-        let start = first.length;
-        // reserve memory total length
-        first.length = total_len;
-        // fill up first with entries from other arrays
-        let end, len;
-        for (let arr of arrays) {
-            len = arr.length;
-            end = start + len;
-            for (let i=0; i<len; i++) {
-                first[start + i] = arr[i]
-            }
-            start = end;
-        }
-        return first;
-    };
+export function divmod (n, d) {
+    let r = n % d;
+    let q = (n-r)/d;
+    return [q, r];
+}
 
-    /*
-        default object equals
-    */
-    function object_equals(a, b) {
-        // Create arrays of property names
-        let aProps = Object.getOwnPropertyNames(a);
-        let bProps = Object.getOwnPropertyNames(b);
-        let len = aProps.length;
-        let propName;
-        // If properties lenght is different => not equal
-        if (aProps.length != bProps.length) {
-            return false;
-        }
+
+export function isIterable(obj) {
+    // checks for null and undefined
+    if (obj == null) {
+        return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
+}
+
+/*
+    effective concatenation of multiple arrays
+    - order - if true preserves ordering of input arrays
+            - else sorts input arrays (longest first)
+            - default false is more effective
+    - copy  - if true leaves input arrays unchanged, copy
+              values into new array
+            - if false copies remainder arrays into the first
+              array
+            - default false is more effective
+*/
+export function array_concat(arrays, options = {}) {
+    let {copy=false, order=false} = options;
+    if (arrays.length == 0) {
+        return [];
+    }
+    if (arrays.length == 1) {
+        return arrays[0];
+    }
+    let total_len = arrays.reduce((acc, cur) => acc + cur.length, 0);
+    // order
+    if (!order) {
+        // sort arrays according to length - longest first
+        arrays.sort((a, b) => b.length - a.length);
+    }
+    // copy
+    let first = (copy) ? [] : arrays.shift();
+    let start = first.length;
+    // reserve memory total length
+    first.length = total_len;
+    // fill up first with entries from other arrays
+    let end, len;
+    for (let arr of arrays) {
+        len = arr.length;
+        end = start + len;
         for (let i=0; i<len; i++) {
-            propName = aProps[i];
-            // If property values are not equal => not equal
-            if (a[propName] !== b[propName]) {
-                return false;
-            }
+            first[start + i] = arr[i]
         }
-        // equal
-        return true;
+        start = end;
     }
+    return first;
+};
 
-
-    /* document readypromise */
-    const document_ready = new Promise(function(resolve) {
-        if (document.readyState === 'complete') {
-            resolve();
-        } else {
-            let onReady = function () {
-                resolve();
-                document.removeEventListener('DOMContentLoaded', onReady, true);
-                window.removeEventListener('load', onReady, true);
-            };
-            document.addEventListener('DOMContentLoaded', onReady, true);
-            window.addEventListener('load', onReady, true);
+/*
+    default object equals
+*/
+export function object_equals(a, b) {
+    // Create arrays of property names
+    let aProps = Object.getOwnPropertyNames(a);
+    let bProps = Object.getOwnPropertyNames(b);
+    let len = aProps.length;
+    let propName;
+    // If properties lenght is different => not equal
+    if (aProps.length != bProps.length) {
+        return false;
+    }
+    for (let i=0; i<len; i++) {
+        propName = aProps[i];
+        // If property values are not equal => not equal
+        if (a[propName] !== b[propName]) {
+            return false;
         }
-    });
+    }
+    // equal
+    return true;
+}
 
 
-    return {
-        document_ready: document_ready,
-        isIterable: isIterable,
-        array_concat: array_concat,
-        object_equals: object_equals,
-        map_intersect: map_intersect,
-        map_difference: map_difference,
-        eqSet: eqSet,
-        all: all,
-        isIn: isIn
-    };
-
+/* document readypromise */
+export const docready = new Promise(function(resolve) {
+    if (document.readyState === 'complete') {
+        resolve();
+    } else {
+        let onReady = function () {
+            resolve();
+            document.removeEventListener('DOMContentLoaded', onReady, true);
+            window.removeEventListener('load', onReady, true);
+        };
+        document.addEventListener('DOMContentLoaded', onReady, true);
+        window.addEventListener('load', onReady, true);
+    }
 });
