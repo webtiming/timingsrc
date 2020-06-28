@@ -1,115 +1,102 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- requirejs config -->
-        <script>
-            var require = {
-                baseUrl : '../',
-            };
-        </script>
-        <!-- requirejs -->
-        <script type="text/javascript" src="../../docs/lib/require.js"></script>
         <!--  main -->
-        <script text="javascript">
+        <script type="module">
 
-            require(['util/eventify'], function (eventify) {
+            import eventify from '../util/eventify.js';
 
-                /*
-                    test with one event source with two events
-                    test with one event sink, with one callback function,
-                    used to crate multiple subscriptions
-                */
+            /*
+                test with one event source with two events
+                test with one event sink, with one callback function,
+                used to crate multiple subscriptions
+            */
 
-                // Class that defines events
-                class EventSource {
+            // Class that defines events
+            class EventSource {
 
-                    constructor() {
-                        eventify.eventifyInstance(this);
-                        this.eventifyDefineEvent("change", {init:true});
-                        this.eventifyDefineEvent("other", {init:false});
-                    }
-
-                    eventifyInitEventArg(name) {
-                        if (name == "change") {
-                            return [true, true];
-                        }
-                    }
-                };
-                eventify.eventifyPrototype(EventSource.prototype);
-
-                // Class that subscribes to events
-                class EventSink {
-
-                    constructor() {
-                        // alternative ways of controlling the this object
-                        this.sub1 = es.on("change", this.onCallback, {ctx:this, init:false});
-                        this.sub2 = es.on("change", this.onCallback.bind(this));
-                        this.sub3 = es.on("other", this.onCallback.bind(this), {init:true})
-                        this.sub4 = es.on("other", this.onCallback.bind(this), {init:true})
-                    }
-
-                    get ready() {
-                        return eventify.makePromise(ev);
-                    }
-
-                    onCallback(eArg, eInfo) {
-                        if (eInfo.sub == this.sub1) {
-                            console.log("sub1", eInfo.init);
-                        } else if (eInfo.sub == this.sub2) {
-                            console.log("sub2", eInfo.init);
-                        } else if (eInfo.sub == this.sub3) {
-                            console.log("sub3", eInfo.init);
-                        } else if (eInfo.sub == this.sub4) {
-                            console.log("sub4", eInfo.init);
-                        }
-                        // Initially we should see only sub2.
-                    };
+                constructor() {
+                    eventify.eventifyInstance(this);
+                    this.eventifyDefine("change", {init:true});
+                    this.eventifyDefine("other", {init:false});
                 }
 
-                // objects
-                const ev = new eventify.EventBoolean();
-                const es = new EventSource();
-                const sink = new EventSink();
+                eventifyInitEventArgs(name) {
+                    if (name == "change") {
+                        return [true];
+                    }
+                }
+            };
+            eventify.eventifyPrototype(EventSource.prototype);
+
+            // Class that subscribes to events
+            class EventSink {
+
+                constructor() {
+                    // alternative ways of controlling the this object
+                    this.sub1 = es.on("change", this.onCallback, {ctx:this, init:false});
+                    this.sub2 = es.on("change", this.onCallback.bind(this));
+                    this.sub3 = es.on("other", this.onCallback.bind(this), {init:true})
+                    this.sub4 = es.on("other", this.onCallback.bind(this), {init:true})
+                }
+
+                get ready() {
+                    return eventify.makePromise(ev);
+                }
+
+                onCallback(eArg, eInfo) {
+                    if (eInfo.sub == this.sub1) {
+                        console.log("sub1", eInfo.init);
+                    } else if (eInfo.sub == this.sub2) {
+                        console.log("sub2", eInfo.init);
+                    } else if (eInfo.sub == this.sub3) {
+                        console.log("sub3", eInfo.init);
+                    } else if (eInfo.sub == this.sub4) {
+                        console.log("sub4", eInfo.init);
+                    }
+                    // Initially we should see only sub2.
+                };
+            }
+
+            // objects
+            const ev = new eventify.EventBoolean();
+            const es = new EventSource();
+            const sink = new EventSink();
 
 
-                var run = function () {
+            function run() {
 
-                    document.getElementById('trigger1').onclick = function () {
-                        console.log("trigger change");
-                        es.eventifyTriggerEvent("change", "earg change");
-                    };
-
-                    document.getElementById('trigger2').onclick = function () {
-                        console.log("trigger other");
-                        es.eventifyTriggerEvent("other", "earg other");
-                    };
-
-                    document.getElementById('unsub').onclick = function () {
-                        console.log("unsubscribe sub1");
-                        es.off(sink.sub1);
-                    };
-
-                    document.getElementById('toggle').onclick = function () {
-                        ev.toggle();
-                    };
-
-                    document.getElementById('promise').onclick = function () {
-                        console.log("promise start");
-                        eventify.makePromise(ev).then(function () {
-                            console.log("promise done");
-                        });
-                    };
-
-                    console.log("ready");
+                document.getElementById('trigger1').onclick = function () {
+                    console.log("trigger change");
+                    es.eventifyTrigger("change", "earg change");
                 };
 
-                if (document.readyState === "complete") {
-                    run();
-                }
-                else {
-                    window.onload = run;
-                }
-            });
+                document.getElementById('trigger2').onclick = function () {
+                    console.log("trigger other");
+                    es.eventifyTrigger("other", "earg other");
+                };
+
+                document.getElementById('unsub').onclick = function () {
+                    console.log("unsubscribe sub1");
+                    es.off(sink.sub1);
+                };
+
+                document.getElementById('toggle').onclick = function () {
+                    ev.value = !ev.value;
+                };
+
+                document.getElementById('promise').onclick = function () {
+                    console.log("promise start");
+                    eventify.makePromise(ev).then(function () {
+                        console.log("promise done");
+                    });
+                };
+
+                console.log("ready");
+            };
+
+            run();
+
         </script>
     </head>
     <body>

@@ -29,9 +29,6 @@ define (function (require) {
     const endpoint = require("../util/endpoint");
     const Relation = Interval.Relation;
 
-
-
-
     /*
         UTILITY
     */

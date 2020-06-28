@@ -1,255 +1,245 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- requirejs config -->
-        <script>
-            var require = {
-                baseUrl : '../',
-            };
-        </script>
-        <!-- requirejs -->
-        <script type="text/javascript" src="../../docs/lib/require.js"></script>
         <!--  main -->
-        <script text="javascript">
+        <script async type="module">
+
+            import endpoint from '../util/endpoint.js';
+            import Interval from '../util/interval.js';
+
             let itv;
-            require(['util/endpoint', 'util/interval'], function (endpoint, Interval) {
-                const Relation = Interval.Relation;
+            const Relation = Interval.Relation;
 
-                function assertEqual(val1, val2) {
-                    if (val1 !== val2) {
-                        console.log(val1, val2)
-                        throw new Error("fail")
+            function assertEqual(val1, val2) {
+                if (val1 !== val2) {
+                    console.log(val1, val2)
+                    throw new Error("fail")
+                }
+            }
+
+            // endpoint properties
+            const left = false;
+            const right = true;
+            const open = false;
+            const closed = true;
+
+            function test_inside() {
+
+                console.log("test inside")
+
+                // endpoints with value 4
+                const right_open = [4, right, open, false];
+                const left_closed = [4, left, closed, false];
+                const point = 4;
+                const right_closed = [4, right, closed, false];
+                const left_open = [4, left, open, false];
+                const all = [right_open, left_closed, point, right_closed, left_open]
+
+                // different intervals relevant to point 4
+                // left outside
+                const i1 = new Interval(3, 3.5);
+                // high endpoint match
+                const i2 = new Interval(3, 4, true, true);
+                const i3 = new Interval(3, 4, true, false);
+                // singleton match
+                const i4 = new Interval(4, 4);
+                // both sides
+                const i5 = new Interval(3, 5);
+                // low endpoint match
+                const i6 = new Interval(4, 5, true, false);
+                const i7 = new Interval(4, 5, false, false);
+                // right outside
+                const i8 = new Interval(4.5, 5);
+
+                let expectations;
+
+                function test_endpoints(itv, expectations) {
+                    // test different endpoints with interval
+                    let ok;
+                    for (let i=0; i<all.length; i++) {
+                        // console.log(itv.toString(), endpoint.toString(all[i]));
+                        ok = itv.covers_endpoint(all[i]);
+                        assertEqual(ok, expectations[i]);
                     }
                 }
 
-                // endpoint properties
-                const left = false;
-                const right = true;
-                const open = false;
-                const closed = true;
 
-                function test_inside() {
+                /*
+                    4) inside [3, 3.5) --  false
+                    [4 inside [3, 3.5) --  false
+                    4 inside  [3, 3.5) --  false
+                    4] inside [3, 3.5) --  false
+                    (4 inside [3, 3.5) --  false
 
-                    console.log("test inside")
+                */
+                expectations = [false, false, false, false, false];
+                test_endpoints(i1, expectations);
 
-                    // endpoints with value 4
-                    const right_open = [4, right, open, false];
-                    const left_closed = [4, left, closed, false];
-                    const point = 4;
-                    const right_closed = [4, right, closed, false];
-                    const left_open = [4, left, open, false];
-                    const all = [right_open, left_closed, point, right_closed, left_open]
+                /*
+                    4) inside [3, 4] --  true
+                    [4 inside [3, 4] --  true
+                    4 inside  [3, 4] --  true
+                    4] inside [3, 4] --  true
+                    (4 inside [3, 4] --  false
 
-                    // different intervals relevant to point 4
-                    // left outside
-                    const i1 = new Interval(3, 3.5);
-                    // high endpoint match
-                    const i2 = new Interval(3, 4, true, true);
-                    const i3 = new Interval(3, 4, true, false);
-                    // singleton match
-                    const i4 = new Interval(4, 4);
-                    // both sides
-                    const i5 = new Interval(3, 5);
-                    // low endpoint match
-                    const i6 = new Interval(4, 5, true, false);
-                    const i7 = new Interval(4, 5, false, false);
-                    // right outside
-                    const i8 = new Interval(4.5, 5);
+                */
+                expectations = [true, true, true, true, false];
+                test_endpoints(i2, expectations);
 
-                    let expectations;
+                /*
+                    4) inside [3, 4) --  true
+                    [4 inside [3, 4) --  false
+                    4 inside  [3, 4) --  false
+                    4] inside [3, 4) --  false
+                    (4 inside [3, 4) --  false
 
-                    function test_endpoints(itv, expectations) {
-                        // test different endpoints with interval
-                        let ok;
-                        for (let i=0; i<all.length; i++) {
-                            // console.log(itv.toString(), endpoint.toString(all[i]));
-                            ok = itv.covers_endpoint(all[i]);
-                            assertEqual(ok, expectations[i]);
-                        }
-                    }
+                */
+                expectations = [true, false, false, false, false];
+                test_endpoints(i3, expectations);
 
+                /*
+                    4) inside [4] --  false
+                    [4 inside [4] --  true
+                    4 inside  [4] --  true
+                    4] inside [4] --  true
+                    (4 inside [4] --  false
 
-                    /*
-                        4) inside [3, 3.5) --  false
-                        [4 inside [3, 3.5) --  false
-                        4 inside  [3, 3.5) --  false
-                        4] inside [3, 3.5) --  false
-                        (4 inside [3, 3.5) --  false
+                */
+                expectations = [false, true, true, true, false];
+                test_endpoints(i4, expectations);
 
-                    */
-                    expectations = [false, false, false, false, false];
-                    test_endpoints(i1, expectations);
+                /*
+                    4) inside [3, 5) --  true
+                    [4 inside [3, 5) --  true
+                    4 inside  [3, 5) --  true
+                    4] inside [3, 5) --  true
+                    (4 inside [3, 5) --  true
 
-                    /*
-                        4) inside [3, 4] --  true
-                        [4 inside [3, 4] --  true
-                        4 inside  [3, 4] --  true
-                        4] inside [3, 4] --  true
-                        (4 inside [3, 4] --  false
+                */
+                expectations = [true, true, true, true, true];
+                test_endpoints(i5, expectations);
 
-                    */
-                    expectations = [true, true, true, true, false];
-                    test_endpoints(i2, expectations);
+                /*
+                    4) inside [4, 5) --  false
+                    [4 inside [4, 5) --  true
+                    4 inside  [4, 5) --  true
+                    4] inside [4, 5) --  true
+                    (4 inside [4, 5) --  true
 
-                    /*
-                        4) inside [3, 4) --  true
-                        [4 inside [3, 4) --  false
-                        4 inside  [3, 4) --  false
-                        4] inside [3, 4) --  false
-                        (4 inside [3, 4) --  false
+                */
+                expectations = [false, true, true, true, true];
+                test_endpoints(i6, expectations);
 
-                    */
-                    expectations = [true, false, false, false, false];
-                    test_endpoints(i3, expectations);
+                /*
+                    4) inside (4, 5) --  false
+                    [4 inside (4, 5) --  false
+                    4 inside  (4, 5) --  false
+                    4] inside (4, 5) --  false
+                    (4 inside (4, 5) --  true
 
-                    /*
-                        4) inside [4] --  false
-                        [4 inside [4] --  true
-                        4 inside  [4] --  true
-                        4] inside [4] --  true
-                        (4 inside [4] --  false
+                */
+                expectations = [false, false, false, false, true];
+                test_endpoints(i7, expectations);
 
-                    */
-                    expectations = [false, true, true, true, false];
-                    test_endpoints(i4, expectations);
+                /*
+                    4) inside [4.5, 5) --  false
+                    [4 inside [4.5, 5) --  false
+                    4 inside  [4.5, 5) --  false
+                    4] inside [4.5, 5) --  false
+                    (4 inside [4.5, 5) --  false
 
-                    /*
-                        4) inside [3, 5) --  true
-                        [4 inside [3, 5) --  true
-                        4 inside  [3, 5) --  true
-                        4] inside [3, 5) --  true
-                        (4 inside [3, 5) --  true
-
-                    */
-                    expectations = [true, true, true, true, true];
-                    test_endpoints(i5, expectations);
-
-                    /*
-                        4) inside [4, 5) --  false
-                        [4 inside [4, 5) --  true
-                        4 inside  [4, 5) --  true
-                        4] inside [4, 5) --  true
-                        (4 inside [4, 5) --  true
-
-                    */
-                    expectations = [false, true, true, true, true];
-                    test_endpoints(i6, expectations);
-
-                    /*
-                        4) inside (4, 5) --  false
-                        [4 inside (4, 5) --  false
-                        4 inside  (4, 5) --  false
-                        4] inside (4, 5) --  false
-                        (4 inside (4, 5) --  true
-
-                    */
-                    expectations = [false, false, false, false, true];
-                    test_endpoints(i7, expectations);
-
-                    /*
-                        4) inside [4.5, 5) --  false
-                        [4 inside [4.5, 5) --  false
-                        4 inside  [4.5, 5) --  false
-                        4] inside [4.5, 5) --  false
-                        (4 inside [4.5, 5) --  false
-
-                    */
-                    expectations = [false, false, false, false, false];
-                    test_endpoints(i8, expectations);
-                }
+                */
+                expectations = [false, false, false, false, false];
+                test_endpoints(i8, expectations);
+            }
 
 
-                function test_compare() {
+            function test_compare() {
 
-                    console.log("test compare")
+                console.log("test compare")
 
-                    let A, B;
+                let A, B;
 
-                    // [2,4)
-                    A = new Interval(2,4);
+                // [2,4)
+                A = new Interval(2,4);
 
-                    // OUTSIDE RIGHT
-                    // [0,2)
-                    B = new Interval(0,2);
-                    assertEqual(A.compare(B), Relation.OUTSIDE_RIGHT);
+                // OUTSIDE RIGHT
+                // [0,2)
+                B = new Interval(0,2);
+                assertEqual(A.compare(B), Relation.OUTSIDE_RIGHT);
 
-                    // OVERLAP RIGHT
-                    // [0,2]
-                    B = new Interval(0,2,true, true);
-                    assertEqual(A.compare(B), Relation.OVERLAP_RIGHT);
-                    // [0,3)
-                    B = new Interval(0,3);
-                    assertEqual(A.compare(B), Relation.OVERLAP_RIGHT);
-
-
-                    // OUTSIDE LEFT
-                    // [4,5)
-                    B = new Interval(4,5);
-                    assertEqual(A.compare(B), Relation.OUTSIDE_LEFT);
-
-                    // OVERLAP LEFT
-                    // [3,5)
-                    B = new Interval(3,5);
-                    assertEqual(A.compare(B), Relation.OVERLAP_LEFT);
-
-                    // EQUAL
-                    // [2,4)
-                    B = new Interval(2,4);
-                    assertEqual(A.compare(B), Relation.EQUALS);
-
-                    // COVERS
-                    // (2,4)
-                    B = new Interval(2,4, false, false);
-                    assertEqual(A.compare(B), Relation.COVERS);
-                    // [2,3]
-                    B = new Interval(2,3,true, true);
-                    assertEqual(A.compare(B), Relation.COVERS);
-                    // [3,3.5)
-                    B = new Interval(3,3.5);
-                    assertEqual(A.compare(B), Relation.COVERS);
-
-                    // COVERED
-                    // [2,4]
-                    B = new Interval(2,4, true, true);
-                    assertEqual(A.compare(B), Relation.COVERED);
-                    // [1,4)
-                    B = new Interval(1,4);
-                    assertEqual(A.compare(B), Relation.COVERED);
-                    // [2,5)
-                    B = new Interval(2,5);
-                    assertEqual(A.compare(B), Relation.COVERED);
-                }
+                // OVERLAP RIGHT
+                // [0,2]
+                B = new Interval(0,2,true, true);
+                assertEqual(A.compare(B), Relation.OVERLAP_RIGHT);
+                // [0,3)
+                B = new Interval(0,3);
+                assertEqual(A.compare(B), Relation.OVERLAP_RIGHT);
 
 
-                function test_sort() {
+                // OUTSIDE LEFT
+                // [4,5)
+                B = new Interval(4,5);
+                assertEqual(A.compare(B), Relation.OUTSIDE_LEFT);
 
-                    a = [
-                        new Interval(4,5),
-                        new Interval(2,3),
-                        new Interval(1,6)
-                    ];
+                // OVERLAP LEFT
+                // [3,5)
+                B = new Interval(3,5);
+                assertEqual(A.compare(B), Relation.OVERLAP_LEFT);
 
-                    a.sort(Interval.cmpLow);
+                // EQUAL
+                // [2,4)
+                B = new Interval(2,4);
+                assertEqual(A.compare(B), Relation.EQUALS);
 
-                    a.forEach(function(i) {
-                        console.log(i.toString());
-                    })
-                }
+                // COVERS
+                // (2,4)
+                B = new Interval(2,4, false, false);
+                assertEqual(A.compare(B), Relation.COVERS);
+                // [2,3]
+                B = new Interval(2,3,true, true);
+                assertEqual(A.compare(B), Relation.COVERS);
+                // [3,3.5)
+                B = new Interval(3,3.5);
+                assertEqual(A.compare(B), Relation.COVERS);
 
-                var run = function () {
-                    test_inside();
-                    test_compare();
-                    test_sort();
-                    console.log("done");
-                };
+                // COVERED
+                // [2,4]
+                B = new Interval(2,4, true, true);
+                assertEqual(A.compare(B), Relation.COVERED);
+                // [1,4)
+                B = new Interval(1,4);
+                assertEqual(A.compare(B), Relation.COVERED);
+                // [2,5)
+                B = new Interval(2,5);
+                assertEqual(A.compare(B), Relation.COVERED);
+            }
 
-                if (document.readyState === "complete") {
-                    run();
-                }
-                else {
-                    window.onload = run;
-                }
-            });
+
+            function test_sort() {
+
+                let a = [
+                    new Interval(4,5),
+                    new Interval(2,3),
+                    new Interval(1,6)
+                ];
+
+                a.sort(Interval.cmpLow);
+
+                a.forEach(function(i) {
+                    console.log(i.toString());
+                })
+            }
+
+            var run = function () {
+                test_inside();
+                test_compare();
+                test_sort();
+                console.log("done");
+            };
+
+            run();
+
         </script>
     </head>
     <body>

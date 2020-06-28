@@ -18,210 +18,207 @@
 	along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-define(function () {
 
-	'use strict';
-
-	const isNumber = function(n) {
-		let N = parseFloat(n);
-	    return (n===N && !isNaN(N));
-	};
+const isNumber = function(n) {
+	let N = parseFloat(n);
+    return (n===N && !isNaN(N));
+};
 
 
-	/*********************************************************
+/*********************************************************
 
-	ENDPOINT
+ENDPOINT
 
-	Utilities for interval endpoints comparison
+Utilities for interval endpoints comparison
 
-	**********************************************************/
+**********************************************************/
 
-	/*
-		endpoint modes - in endpoint order
-		endpoint order
-		p), [p, [p], p], (p
-	*/
-	const MODE_RIGHT_OPEN = 0;
-	const MODE_LEFT_CLOSED = 1;
-	const MODE_SINGULAR = 2;
-	const MODE_RIGHT_CLOSED = 3;
-	const MODE_LEFT_OPEN = 4;
+/*
+	endpoint modes - in endpoint order
+	endpoint order
+	p), [p, [p], p], (p
+*/
+const MODE_RIGHT_OPEN = 0;
+const MODE_LEFT_CLOSED = 1;
+const MODE_SINGULAR = 2;
+const MODE_RIGHT_CLOSED = 3;
+const MODE_LEFT_OPEN = 4;
 
-	// create endpoint
-	function create(val, right, closed, singular) {
-		// make sure infinity endpoints are legal
-		if (val == Infinity) {
-			if (right == false || closed == false) {
-				throw new Error("Infinity endpoint must be right-closed or singular");
-			}
+// create endpoint
+function create(val, right, closed, singular) {
+	// make sure infinity endpoints are legal
+	if (val == Infinity) {
+		if (right == false || closed == false) {
+			throw new Error("Infinity endpoint must be right-closed or singular");
 		}
-		if (val == -Infinity) {
-			if (right == true || closed == false) {
-				throw new Error("-Infinity endpoint must be left-closed or singular")
-			}
-		}
-		return [val, right, closed, singular];
 	}
+	if (val == -Infinity) {
+		if (right == true || closed == false) {
+			throw new Error("-Infinity endpoint must be left-closed or singular")
+		}
+	}
+	return [val, right, closed, singular];
+}
 
 
-	/*
-		resolve endpoint mode
-	*/
-	function get_mode(e) {
-		// if right, closed is given
-		// use that instead of singular
-		let [val, right, closed, singular] = e;
-		if (right == undefined) {
-			return MODE_SINGULAR;
-		} else if (right) {
-			if (closed) {
-				return MODE_RIGHT_CLOSED;
-			} else {
-				return MODE_RIGHT_OPEN;
-			}
+/*
+	resolve endpoint mode
+*/
+function get_mode(e) {
+	// if right, closed is given
+	// use that instead of singular
+	let [val, right, closed, singular] = e;
+	if (right == undefined) {
+		return MODE_SINGULAR;
+	} else if (right) {
+		if (closed) {
+			return MODE_RIGHT_CLOSED;
 		} else {
-			if (closed) {
-				return MODE_LEFT_CLOSED;
-			} else {
-				return MODE_LEFT_OPEN;
-			}
+			return MODE_RIGHT_OPEN;
 		}
-	}
-
-	/*
-		get order
-
-		given two endpoints
-		return two numbers representing their order
-
-		also accepts regular numbers as endpoints
-		regular number are represented as singular endpoints
-
-		for endpoint values that are not
-		equal, these values convey order directly,
-		otherwise endpoint mode numbers 0-4 are returned
-
-		parameters are either
-		- point: Number
-		or,
-		- endpoint: [
-			value (number),
-			right (bool),
-			closed (bool),
-			singular (bool)
-		  ]
-	*/
-
-	function get_order(e1, e2) {
-		// support plain numbers (not endpoints)
-		if (e1.length === undefined) {
-			if (!isNumber(e1)) {
-				throw new Error("e1 not a number", e1);
-			}
-			e1 = create(e1, undefined, undefined, true);
-		}
-		if (e2.length === undefined) {
-			if (!isNumber(e2)) {
-				throw new Error("e2 not a number", e2);
-			}
-			e2 = create(e2, undefined, undefined, true);
-		}
-		if (e1[0] != e2[0]) {
-			// different values
-			return [e1[0], e2[0]];
+	} else {
+		if (closed) {
+			return MODE_LEFT_CLOSED;
 		} else {
-			// equal values
-			return [get_mode(e1), get_mode(e2)];
+			return MODE_LEFT_OPEN;
 		}
 	}
+}
 
-	/*
-		return true if e1 is ordered before e2
-		false if equal
-	*/
+/*
+	get order
 
-	function leftof(e1, e2) {
-		let [order1, order2] = get_order(e1, e2);
-		return (order1 < order2);
+	given two endpoints
+	return two numbers representing their order
+
+	also accepts regular numbers as endpoints
+	regular number are represented as singular endpoints
+
+	for endpoint values that are not
+	equal, these values convey order directly,
+	otherwise endpoint mode numbers 0-4 are returned
+
+	parameters are either
+	- point: Number
+	or,
+	- endpoint: [
+		value (number),
+		right (bool),
+		closed (bool),
+		singular (bool)
+	  ]
+*/
+
+function get_order(e1, e2) {
+	// support plain numbers (not endpoints)
+	if (e1.length === undefined) {
+		if (!isNumber(e1)) {
+			throw new Error("e1 not a number", e1);
+		}
+		e1 = create(e1, undefined, undefined, true);
 	}
-
-	/*
-		return true if e1 is ordered after e2
-		false is equal
-	*/
-
-	function rightof(e1, e2) {
-		let [order1, order2] = get_order(e1, e2);
-		return (order1 > order2);
+	if (e2.length === undefined) {
+		if (!isNumber(e2)) {
+			throw new Error("e2 not a number", e2);
+		}
+		e2 = create(e2, undefined, undefined, true);
 	}
-
-	/*
-		return true if e1 is ordered equal to e2
-	*/
-
-	function equals(e1, e2) {
-		let [order1, order2] = get_order(e1, e2);
-		return (order1 == order2);
+	if (e1[0] != e2[0]) {
+		// different values
+		return [e1[0], e2[0]];
+	} else {
+		// equal values
+		return [get_mode(e1), get_mode(e2)];
 	}
+}
 
-	/*
-		return -1 if ordering e1, e2 is correct
-		return 0 if e1 and e2 is equal
-		return 1 if ordering e1, e2 is incorrect
-	*/
+/*
+	return true if e1 is ordered before e2
+	false if equal
+*/
 
-	function cmp(e1, e2) {
-		let [order1, order2] = get_order(e1, e2);
-		let diff = order1 - order2;
-		if (diff == 0) return 0;
-		return (diff > 0) ? 1 : -1;
-	}
+function leftof(e1, e2) {
+	let [order1, order2] = get_order(e1, e2);
+	return (order1 < order2);
+}
+
+/*
+	return true if e1 is ordered after e2
+	false is equal
+*/
+
+function rightof(e1, e2) {
+	let [order1, order2] = get_order(e1, e2);
+	return (order1 > order2);
+}
+
+/*
+	return true if e1 is ordered equal to e2
+*/
+
+function equals(e1, e2) {
+	let [order1, order2] = get_order(e1, e2);
+	return (order1 == order2);
+}
+
+/*
+	return -1 if ordering e1, e2 is correct
+	return 0 if e1 and e2 is equal
+	return 1 if ordering e1, e2 is incorrect
+*/
+
+function cmp(e1, e2) {
+	let [order1, order2] = get_order(e1, e2);
+	let diff = order1 - order2;
+	if (diff == 0) return 0;
+	return (diff > 0) ? 1 : -1;
+}
 
 
-    function min(e1, e2) {
-        return (cmp(e1, e2) <= 0) ? e1 : e2;
-    }
+function min(e1, e2) {
+    return (cmp(e1, e2) <= 0) ? e1 : e2;
+}
 
 
-    function max(e1, e2) {
-	    return (cmp(e1, e2) <= 0) ? e2 : e1;
-    }
+function max(e1, e2) {
+    return (cmp(e1, e2) <= 0) ? e2 : e1;
+}
 
 
-	/*
-		human friendly endpoint representation
-	*/
-	function toString(e) {
-		if (e.length === undefined) {
-			return e.toString();
-		} else {
-			let mode = get_mode(e);
-			let val = e[0];
-			if (val == Infinity || val == -Infinity) {
-				val = "--";
-			}
-			if (mode == MODE_RIGHT_OPEN) {
-				return `${val})`
-			} else if (mode == MODE_LEFT_CLOSED) {
-				return `[${val}`
-			} else if (mode == MODE_SINGULAR){
-				return `[${val}]`
-			} else if (mode == MODE_RIGHT_CLOSED) {
-				return `${val}]`
-			} else if (mode == MODE_LEFT_OPEN) {
-				return `(${val}`
-			}
+/*
+	human friendly endpoint representation
+*/
+function toString(e) {
+	if (e.length === undefined) {
+		return e.toString();
+	} else {
+		let mode = get_mode(e);
+		let val = e[0];
+		if (val == Infinity || val == -Infinity) {
+			val = "--";
+		}
+		if (mode == MODE_RIGHT_OPEN) {
+			return `${val})`
+		} else if (mode == MODE_LEFT_CLOSED) {
+			return `[${val}`
+		} else if (mode == MODE_SINGULAR){
+			return `[${val}]`
+		} else if (mode == MODE_RIGHT_CLOSED) {
+			return `${val}]`
+		} else if (mode == MODE_LEFT_OPEN) {
+			return `(${val}`
 		}
 	}
+}
 
-	return {
-		cmp,
-		toString,
-		equals,
-		rightof,
-		leftof,
-		create,
-		min,
-		max
-	}
-});
+
+export default {
+	cmp,
+	toString,
+	equals,
+	rightof,
+	leftof,
+	create,
+	min,
+	max
+};
