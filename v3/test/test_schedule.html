@@ -1,22 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../',
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
     <!--  main -->
-    <script text="javascript">
+    <script type="module">
 
-      let to, s;
+        import * as timingsrc from './index.js';
+        import Schedule from '../sequencing/schedule.js';
 
-      require(['test/main'], function (timingsrc) {
+        let to, s;
 
-        const isMoving = timingsrc.motionutils.isMoving;
         const Interval = timingsrc.Interval;
         const endpoint = timingsrc.endpoint;
 
@@ -57,7 +49,7 @@
 
 
           to = new timingsrc.TimingObject();
-          s = new timingsrc.Schedule(axis, to);
+          s = new Schedule(axis, to);
           s.add_callback(function(now, endpointEvents) {
             print_endpoints(now, endpointEvents);
           });
@@ -90,7 +82,7 @@
 
         if (document.readyState === "complete") run();
         else window.onload = run;
-      });
+
     </script>
   </head>
   <body>

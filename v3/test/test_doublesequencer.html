@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../',
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
     <!--  main -->
-    <script text="javascript">
+    <script type="module">
 
-        let to, toB, axis, s, Interval;
+        import * as timingsrc from './index.js';
+        const Interval = timingsrc.Interval;
+
+        let to, toA, toB, axis, s;
 
         function get_cues_ordering() {
             // generate some queues for testing cue ordering
@@ -259,33 +254,29 @@
         };
 
 
-        require(['test/main'], function (timingsrc) {
 
-            Interval = timingsrc.Interval;
+        // Axis
+        axis = new timingsrc.Axis();
 
-            // Axis
-            axis = new timingsrc.Axis();
+        // cues
+        let cues;
+        cues = get_cues();
+        // cues = get_cues_ordering();
 
-            // cues
-            let cues;
-            cues = get_cues();
-            // cues = get_cues_ordering();
+        axis.update(cues);
 
-            axis.update(cues);
+        // initialise
+        to = new timingsrc.TimingObject({position:5.0});
+        toA = new timingsrc.SkewConverter(to, 4);
 
-            // initialise
-            to = new timingsrc.TimingObject({position:5.0});
-            toA = new timingsrc.SkewConverter(to, 4);
+        s = new timingsrc.DoubleSequencer(axis, toA, to);
 
-            s = new timingsrc.DoubleSequencer(axis, toA, to);
+        if (document.readyState === "complete") {
+            run();
+        } else {
+            window.onload = run;
+        };
 
-            if (document.readyState === "complete") {
-                run();
-            } else {
-                window.onload = run;
-            };
-
-        });
 
     </script>
 

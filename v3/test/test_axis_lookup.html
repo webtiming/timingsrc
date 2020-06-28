@@ -1,21 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../',
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
     <!--  main -->
-    <script text="javascript">
+    <script type="module">
 
-      require(['test/main'], function (timingsrc) {
+        import {Interval, Axis} from './index.js';
 
-        const Axis = timingsrc.Axis;
-        const Interval = timingsrc.Interval;
         const Relation = Interval.Relation;
 
         function assertTrue(val) {
@@ -59,10 +49,9 @@
 
         var test_lookup_correctness = function () {
 
-
-          const INSIDE = Relation.EQUALS + Relation.COVERED;
-          const OVERLAP = Axis.LOOKUP_MASK_ALL - Relation.COVERS;
-          const COVERS = Axis.LOOKUP_MASK_ALL;
+          const INSIDE = Interval.Match.INSIDE;
+          const OVERLAP = Interval.Match.OVERLAP;
+          const COVERS = Interval.Match.COVERS;
 
           const check = function(cues, expect) {
             let missing = [];
@@ -244,9 +233,9 @@
           let ax = new Axis();
           let events, expect;
 
-          const INSIDE = Relation.EQUALS + Relation.COVERED;
-          const OVERLAP = Axis.LOOKUP_MASK_ALL - Relation.COVERS;
-          const COVERS = Axis.LOOKUP_MASK_ALL;
+          const INSIDE = Interval.Match.INSIDE;
+          const OVERLAP = Interval.Match.OVERLAP;
+          const COVERS = Interval.Match.COVERS;
 
           /*
           cues [0,1),[1,2),...[99,100) + [4,18]
@@ -315,7 +304,7 @@
 
         if (document.readyState === "complete") run();
         else window.onload = run;
-      });
+
     </script>
   </head>
   <body>

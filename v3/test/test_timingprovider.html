@@ -2,34 +2,11 @@
 
 <html>
 <head>
-  <!-- requirejs config -->
-  <script>
-    var require = {
-      baseUrl : '../',
-    };
-  </script>
   <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
-  <script type="text/javascript" src="../../docs/lib/require.js"></script>
-  <script type="text/javascript">
+  <script type="module">
     let app, motion, to, toA, toB;
 
-    /* polyfill making document ready into a promise */
-    (function() {
-        document.ready = new Promise(function(resolve) {
-            if (document.readyState === 'complete') {
-                resolve();
-            } else {
-                let onReady = function () {
-                    resolve();
-                    document.removeEventListener('DOMContentLoaded', onReady, true);
-                    window.removeEventListener('load', onReady, true);
-                };
-                document.addEventListener('DOMContentLoaded', onReady, true);
-                window.addEventListener('load', onReady, true);
-            }
-        });
-    })();
-
+    import TimingObject from '../timingobject/timingobject.js';
 
     function run() {
         console.log("document ready");
@@ -63,41 +40,36 @@
         });
     };
 
-    require(['test/main'], function (timingsrc) {
 
-        // app
-        app = MCorp.app("8456579076771837888", {anon:true});
-        app.ready.then(function() {
-            console.log("motion ready");
-            motion = app.motions.shared;
-            toA.timingsrc = motion;
-        });
-
-        /*
-            Test live flag in event args.
-            Test switching between timingsources
-        */
-
-        // timing object
-        toA = new timingsrc.TimingObject();
-        toB = new timingsrc.TimingObject();
-
-        to = new timingsrc.TimingObject({timingsrc:toA});
-
-        // timing object
-        to.on("change", function (eArg) {
-            console.log("onchange", eArg);
-        });
-
-        to.ready.then(function(){
-            console.log("to ready");
-        });
-
-        // run
-        document.ready.then(function(){
-            run();
-        })
+    // app
+    app = MCorp.app("8456579076771837888", {anon:true});
+    app.ready.then(function() {
+        console.log("motion ready");
+        motion = app.motions.shared;
+        toA.timingsrc = motion;
     });
+
+    /*
+        Test live flag in event args.
+        Test switching between timingsources
+    */
+
+    // timing object
+    toA = new TimingObject();
+    toB = new TimingObject();
+
+    to = new TimingObject({timingsrc:toA});
+
+    // timing object
+    to.on("change", function (eArg) {
+        console.log("onchange", eArg);
+    });
+
+    to.ready.then(function(){
+        console.log("to ready");
+    });
+
+    run();
 
 </script>
 </head>

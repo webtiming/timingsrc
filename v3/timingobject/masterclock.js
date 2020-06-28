@@ -51,96 +51,90 @@
 	implying that master clock is equal to local clock.
 */
 
-define(function (require) {
-
-	'use strict';
-
-	const eventify = require('../util/eventify');
-	const motionutils = require('../util/motionutils');
+import eventify from '../util/eventify.js';
 
 
-	// Need a polyfill for performance,now as Safari on ios doesn't have it...
-	(function(){
-	    if ("performance" in window === false) {
-	        window.performance = {};
-	        window.performance.offset = new Date().getTime();
-	    }
-	    if ("now" in window.performance === false){
-	      window.performance.now = function now(){
-	        return new Date().getTime() - window.performance.offset;
-	      };
-	    }
- 	})();
+// Need a polyfill for performance,now as Safari on ios doesn't have it...
+(function(){
+    if ("performance" in window === false) {
+        window.performance = {};
+        window.performance.offset = new Date().getTime();
+    }
+    if ("now" in window.performance === false){
+      window.performance.now = function now(){
+        return new Date().getTime() - window.performance.offset;
+      };
+    }
+	})();
 
-	// local clock in seconds
-	const local_clock = {
-		now : function () {return performance.now()/1000.0;}
+// local clock in seconds
+const local_clock = {
+	now : function () {return performance.now()/1000.0;}
+};
+
+function calculateVector(vector, tsSec) {
+	if (tsSec === undefined) tsSec = local_clock.now();
+	var deltaSec = tsSec - vector.timestamp;
+	return {
+		position : vector.position + vector.velocity*deltaSec,
+		velocity : vector.velocity,
+		timestamp : tsSec
+	};
+};
+
+class MasterClock {
+
+	constructor (options) {
+		var now = local_clock.now();
+		options = options || {};
+		this._vector  = {position: now, velocity: 1.0, timestamp: now};
+		// event support
+		eventify.eventifyInstance(this);
+		this.eventifyDefine("change", {init:false}); // define change event (no init-event)
+		// adjust
+		this.adjust(options);
 	};
 
-	function calculateVector(vector, tsSec) {
-		if (tsSec === undefined) tsSec = local_clock.now();
-		var deltaSec = tsSec - vector.timestamp;
-		return {
-			position : vector.position + vector.velocity*deltaSec,
-			velocity : vector.velocity,
-			timestamp : tsSec
-		};
+	/*
+		ADJUST
+		- could also accept timestamp for velocity if needed?
+		- given skew is relative to local clock
+		- given rate is relative to local clock
+	*/
+	adjust(options) {
+		options = options || {};
+		var now = local_clock.now();
+		var nowVector = this.query(now);
+		if (options.skew === undefined && options.rate === undefined) {
+			return;
+		}
+		this._vector = {
+			position : (options.skew !== undefined) ? now + options.skew : nowVector.position,
+			velocity : (options.rate !== undefined) ? options.rate : nowVector.velocity,
+			timestamp : nowVector.timestamp
+		}
+		this.eventifyTrigger("change");
 	};
 
-	class MasterClock {
+	/*
+		NOW
+		- calculates the value of the clock right now
+		- shorthand for query
+	*/
+	now() {
+		return calculateVector(this._vector, local_clock.now()).position;
+	};
 
-		constructor (options) {
-			var now = local_clock.now();
-			options = options || {};
-			this._vector  = {position: now, velocity: 1.0, timestamp: now};
-			// event support
-			eventify.eventifyInstance(this);
-			this.eventifyDefine("change"); // define change event (no init-event)
-			// adjust
-			this.adjust(options);
-		};
+	/*
+		QUERY
+		- calculates the state of the clock right now
+		- result vector includes position and velocity
+	*/
+	query(now) {
+		return calculateVector(this._vector, now);
+	};
 
-		/*
-			ADJUST
-			- could also accept timestamp for velocity if needed?
-			- given skew is relative to local clock
-			- given rate is relative to local clock
-		*/
-		adjust(options) {
-			options = options || {};
-			var now = local_clock.now();
-			var nowVector = this.query(now);
-			if (options.skew === undefined && options.rate === undefined) {
-				return;
-			}
-			this._vector = {
-				position : (options.skew !== undefined) ? now + options.skew : nowVector.position,
-				velocity : (options.rate !== undefined) ? options.rate : nowVector.velocity,
-				timestamp : nowVector.timestamp
-			}
-			this.eventifyTrigger("change");
-		};
+}
+eventify.eventifyPrototype(MasterClock.prototype);
 
-		/*
-			NOW
-			- calculates the value of the clock right now
-			- shorthand for query
-		*/
-		now() {
-			return calculateVector(this._vector, local_clock.now()).position;
-		};
-
-		/*
-			QUERY
-			- calculates the state of the clock right now
-			- result vector includes position and velocity
-		*/
-		query(now) {
-			return calculateVector(this._vector, now);
-		};
-
-	}
-	eventify.eventifyPrototype(MasterClock.prototype);
-
-	return MasterClock;
-});
+export default MasterClock;

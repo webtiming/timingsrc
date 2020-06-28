@@ -19,106 +19,98 @@
 */
 
 
-define(function (require) {
+import MasterClock from './masterclock.js';
+import {calculateVector, checkRange} from '../util/motionutils.js';
 
-	'use strict';
 
-	const MasterClock = require('./masterclock');
-	const motionutils = require('../util/motionutils');
+/*
+	INTERNAL PROVIDER
 
-	/*
-		INTERNAL PROVIDER
+	Timing provider internal to the browser context
 
-		Timing provider internal to the browser context
+	Used by timing objects as timingsrc if no timingsrc is specified.
+*/
 
-		Used by timing objects as timingsrc if no timingsrc is specified.
-	*/
+class InternalProvider {
 
-	class InternalProvider {
+	constructor (callback, options) {
+		options = options || {};
+		// initialise internal state
+		this._clock = new MasterClock({skew:0});
+		this._range = [-Infinity, Infinity];
+		this._vector;
+		this._callback = callback;
+		// options
+		options.timestamp = options.timestamp || this._clock.now();
+		this._process_update(options);
+	};
 
-		constructor (callback, options) {
-			options = options || {};
-			// initialise internal state
-			this._clock = new MasterClock({skew:0});
-			this._range = [-Infinity, Infinity];
-			this._vector;
-			this._callback = callback;
-			// options
-			options.timestamp = options.timestamp || this._clock.now();
-			this._process_update(options);
+	// internal clock
+	get clock() {return this._clock;};
+	get range() {return this._range;};
+	get vector() {return this._vector;};
+
+	isReady() {return true;};
+
+	// update
+	_process_update(arg) {
+		// process arg
+		let {
+			position: pos,
+			velocity: vel,
+			acceleration: acc,
+			timestamp: ts,
+			range: range,
+			...rest
+		} = arg;
+
+		// record state from current motion
+		let p = 0, v = 0, a = 0;
+		if (this._vector != undefined) {
+			let nowVector = calculateVector(this._vector, ts);
+			nowVector = checkRange(nowVector, this._range);
+			p = nowVector.position;
+			v = nowVector.velocity;
+			a = nowVector.acceleration;
+		}
+
+		// fill in from current motion, for missing properties
+		let vector = {
+			position : (pos != undefined) ? pos : p,
+			velocity : (vel != undefined) ? vel : v,
+			acceleration : (acc != undefined) ? acc : a,
+			timestamp : ts
 		};
 
-		// internal clock
-		get clock() {return this._clock;};
-		get range() {return this._range;};
-		get vector() {return this._vector;};
-
-		isReady() {return true;};
-
-
-		// update
-		_process_update(arg) {
-			// process arg
-			let {
-				position: pos,
-				velocity: vel,
-				acceleration: acc,
-				timestamp: ts,
-				range: range,
-				...rest
-			} = arg;
-
-			// record state from current motion
-			let p = 0, v = 0, a = 0;
-			if (this._vector != undefined) {
-				let nowVector = motionutils.calculateVector(this._vector, ts);
-				nowVector = motionutils.checkRange(nowVector, this._range);
-				p = nowVector.position;
-				v = nowVector.velocity;
-				a = nowVector.acceleration;
-			}
-
-			// fill in from current motion, for missing properties
-			let vector = {
-				position : (pos != undefined) ? pos : p,
-				velocity : (vel != undefined) ? vel : v,
-				acceleration : (acc != undefined) ? acc : a,
-				timestamp : ts
-			};
-
-			// update range
-			if (range != undefined) {
-				let [low, high] = range;
-				if (low < high) {
-					if (low != this._range[0] || high != this._range[1]) {
-						this._range = [low, high];
-					}
+		// update range
+		if (range != undefined) {
+			let [low, high] = range;
+			if (low < high) {
+				if (low != this._range[0] || high != this._range[1]) {
+					this._range = [low, high];
 				}
 			}
-
-			// check vector with respect to range
-			vector = motionutils.checkRange(vector, this._range);
-			// save old vector
-			this._old_vector = this._vector;
-			// update vector
-			this._vector = vector;
-			return {range, ...vector, ...rest};
-		};
-
-		// update
-		update(arg) {
-			arg = this._process_update(arg);
-			return this._callback(arg);
 		}
 
+		// check vector with respect to range
+		vector = checkRange(vector, this._range);
+		// save old vector
+		this._old_vector = this._vector;
+		// update vector
+		this._vector = vector;
+		return {range, ...vector, ...rest};
+	};
 
-		close() {
-			this._callback = undefined;
-		}
-
+	// update
+	update(arg) {
+		arg = this._process_update(arg);
+		return this._callback(arg);
 	}
 
-	return InternalProvider;
-});
+	close() {
+		this._callback = undefined;
+	}
+}
 
+export default InternalProvider;
 

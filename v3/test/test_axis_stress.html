@@ -1,26 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../',
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
+
     <!--  main -->
-    <script text="javascript">
+    <script type="module">
 
-      require(['test/main'], function (timingsrc) {
-
-        const Axis = timingsrc.Axis;
-        const Interval = timingsrc.Interval;
-        const util = timingsrc.util;
+        import {utils, Interval, Axis} from './index.js';
 
         const Delta = Axis.Delta;
         const cue_delta = Axis.cue_delta;
-        const equals = util.object_equals;
+        const equals = utils.object_equals;
 
 
         function assertTrue(val) {
@@ -45,7 +34,7 @@
 
         var make_sorted_ints = function (size, options) {
           options = options || {};
-          offset = options['offset'] || 0;
+          let offset = options['offset'] || 0;
           let numbers = [];
           for (let i=0; i<size; i++) {
             numbers.push(Math.floor(i+offset));
@@ -55,7 +44,7 @@
 
         var make_sorted_floats = function (size, options) {
           options = options || {};
-          offset = options['offset'] || 0;
+          let offset = options['offset'] || 0;
           let numbers = [];
           for (let i=0; i<size; i++) {
             numbers.push(i+offset);
@@ -65,15 +54,15 @@
 
         var make_random_ints = function (size, options) {
           options = options || {};
-          scale = options['scale'] || 1;
-          offset = options['offset'] || 0;
+          let scale = options['scale'] || 1;
+          let offset = options['offset'] || 0;
           return Array.from({length: size}, () => Math.floor(Math.random() * scale + offset));
         };
 
         var make_random_floats = function (size, options) {
           options = options || {};
-          scale = options['scale'] || 1;
-          offset = options['offset'] || 0;
+          let scale = options['scale'] || 1;
+          let offset = options['offset'] || 0;
           return Array.from({length: size}, () => Math.random() * scale + offset);
         };
 
@@ -319,7 +308,7 @@
 
         if (document.readyState === "complete") run();
         else window.onload = run;
-      });
+
     </script>
   </head>
   <body>

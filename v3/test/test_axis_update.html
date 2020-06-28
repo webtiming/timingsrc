@@ -1,22 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- requirejs config -->
-    <script>
-      var require = {
-        baseUrl : '../',
-      };
-    </script>
-    <!-- requirejs -->
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
+
     <!--  main -->
-    <script text="javascript">
+    <script type="module">
 
-      require(['test/main'], function (timingsrc) {
-
-        const Axis = timingsrc.Axis;
-        const Interval = timingsrc.Interval;
-        const utils = timingsrc.utils;
+        import {utils, Interval, Axis} from './index.js';
 
         const Delta = Axis.Delta;
         const cue_delta = Axis.cue_delta;
@@ -52,7 +41,7 @@
         */
         function test_update() {
           let ax = new Axis();
-          let res, init_cue, cue;
+          let res, init_cue, _init_cue, cue;
 
           /*
             INSERT
@@ -430,7 +419,7 @@
         function test_update_multiple() {
 
 
-          let res, init_cue, cues;
+          let res, init_cue, _init_cue, cues;
           let ax = new Axis();
 
           /*
@@ -761,7 +750,7 @@
 
         if (document.readyState === "complete") run();
         else window.onload = run;
-      });
+
     </script>
   </head>
   <body>

@@ -26,67 +26,64 @@
 
 */
 
-define(function (require) {
 
-	'use strict';
+import TimingObject from './timingobject.js';
 
-    const TimingObject = require('./timingobject');
 
-	class SkewConverter extends TimingObject {
+class SkewConverter extends TimingObject {
 
-		constructor (timingsrc, skew, options) {
-			super(timingsrc, options);
-			this._skew = skew;
-            this.eventifyDefine("skewchange", {init:true});
-		}
+	constructor (timingsrc, skew, options) {
+		super(timingsrc, options);
+		this._skew = skew;
+        this.eventifyDefine("skewchange", {init:true});
+	}
 
-        // extend
-        eventifyInitEventArgs(name) {
-            if (name == "skewchange") {
-                return [this._skew];
-            } else {
-                return super.eventifyInitEventArgs(name)
-            }
+    // extend
+    eventifyInitEventArgs(name) {
+        if (name == "skewchange") {
+            return [this._skew];
+        } else {
+            return super.eventifyInitEventArgs(name)
         }
+    }
 
-		// overrides
-		onUpdateStart(arg) {
-            if (arg.range != undefined) {
-                arg.range[0] += this._skew;
-                arg.range[1] += this._skew;
-            }
-            if (arg.position != undefined) {
-    			arg.position += this._skew;
-            }
-            return arg;
-		};
-
-		// overrides
-		update(arg) {
-            if (arg.position != undefined) {
-				arg.position -= this._skew;
-            }
-            if (arg.range != undefined) {
-                let [low, high] = arg.range;
-                arg.range = [low - this._skew, high - this._skew];
-            }
-			return super.update(arg);
-		};
-
-		get skew() {return this._skew;};
-
-		set skew(skew) {
-            if (skew != this._skew) {
-                // set skew and emulate new event from timingsrc
-    			this._skew = skew;
-    			this.__handleEvent({
-                    ...this.timingsrc.vector,
-                    range: this.timingsrc.range
-                });
-                this.eventifyTrigger("skewchange", skew);
-            }
-		}
+	// overrides
+	onUpdateStart(arg) {
+        if (arg.range != undefined) {
+            arg.range[0] += this._skew;
+            arg.range[1] += this._skew;
+        }
+        if (arg.position != undefined) {
+			arg.position += this._skew;
+        }
+        return arg;
 	};
 
-	return SkewConverter;
-});
+	// overrides
+	update(arg) {
+        if (arg.position != undefined) {
+			arg.position -= this._skew;
+        }
+        if (arg.range != undefined) {
+            let [low, high] = arg.range;
+            arg.range = [low - this._skew, high - this._skew];
+        }
+		return super.update(arg);
+	};
+
+	get skew() {return this._skew;};
+
+	set skew(skew) {
+        if (skew != this._skew) {
+            // set skew and emulate new event from timingsrc
+			this._skew = skew;
+			this.__handleEvent({
+                ...this.timingsrc.vector,
+                range: this.timingsrc.range
+            });
+            this.eventifyTrigger("skewchange", skew);
+        }
+	}
+};
+
+export default SkewConverter;
