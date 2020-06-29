@@ -1,14 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- requirejs config -->
-  <script>
-    var require = {
-      baseUrl : '../',
-    };
-  </script>
-  <script type="text/javascript" src="../../docs/lib/require.js"></script>
-  <script type="text/javascript">
+
+  <script type="module">
+    import MasterClock from '../../timingobject/masterclock.js';
     var c;
     var refresh = function () {
       // print diff from local clock
@@ -82,11 +77,9 @@
         c.adjust({skew: currentSkew-0.001});
       };
     };
-    require(['util/masterclock'], function (MasterClock) {
-      c = new MasterClock();        
-      if (document.readyState === "complete") run();
-      else window.onload = run;
-    });
+
+    c = new MasterClock();
+
 </script>
 </head>
 <body>

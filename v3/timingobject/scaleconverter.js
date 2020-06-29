@@ -26,71 +26,68 @@
 
 */
 
-define(function (require) {
+import TimingObject from './timingobject.js';
 
-  'use strict';
 
-    const TimingObject = require('./timingobject');
+class ScaleConverter extends TimingObject {
+    constructor (timingsrc, factor) {
+		super(timingsrc);
+		this._factor = factor;
+        this.eventifyDefine("scalechange", {init:true});
+	};
 
-	class ScaleConverter extends TimingObject {
-        constructor (timingsrc, factor) {
-    		super(timingsrc);
-    		this._factor = factor;
-            this.eventifyDefine("scalechange", {init:true});
-    	};
-
-        // extend
-        eventifyInitEventArgs(name) {
-            if (name == "scalechange") {
-                return [this._factor];
-            } else {
-                return super.eventifyInitEventArgs(name)
-            }
-        }
-
-    	// overrides
-        onUpdateStart(arg) {
-            if (arg.range != undefined) {
-                arg.range = [arg.range[0]*this._factor, arg.range[1]*this._factor];
-            }
-            if (arg.position != undefined) {
-                arg.position *= this._factor;
-            }
-            if (arg.velocity != undefined) {
-                arg.velocity *= this._factor;
-            }
-            if (arg.acceleration != undefined) {
-                arg.acceleration *= this._factor;
-            }
-            return arg;
-        }
-
-    	update(arg) {
-    		if (arg.position != undefined) {
-                arg.position /= this._factor;
-            }
-    		if (arg.velocity != undefined) {
-                arg.velocity /= this._factor;
-            }
-    		if (arg.acceleration != undefined) {
-                arg.acceleration /= this._factor;
-            }
-    		return super.update(arg);
-    	};
-
-        get scale() {return this._factor;};
-
-        set scale(factor) {
-            if (factor != this._factor) {
-                // set scale and emulate new event from timingsrc
-                this._factor = factor;
-                this.__handleEvent({
-                    ...this.timingsrc.vector,
-                    range: this.timingsrc.range
-                });
-                this.eventifyTrigger("scalechange", factor);
-            }
+    // extend
+    eventifyInitEventArgs(name) {
+        if (name == "scalechange") {
+            return [this._factor];
+        } else {
+            return super.eventifyInitEventArgs(name)
         }
     }
-	return ScaleConverter;
-});
+
+	// overrides
+    onUpdateStart(arg) {
+        if (arg.range != undefined) {
+            arg.range = [arg.range[0]*this._factor, arg.range[1]*this._factor];
+        }
+        if (arg.position != undefined) {
+            arg.position *= this._factor;
+        }
+        if (arg.velocity != undefined) {
+            arg.velocity *= this._factor;
+        }
+        if (arg.acceleration != undefined) {
+            arg.acceleration *= this._factor;
+        }
+        return arg;
+    }
+
+	update(arg) {
+		if (arg.position != undefined) {
+            arg.position /= this._factor;
+        }
+		if (arg.velocity != undefined) {
+            arg.velocity /= this._factor;
+        }
+		if (arg.acceleration != undefined) {
+            arg.acceleration /= this._factor;
+        }
+		return super.update(arg);
+	};
+
+    get scale() {return this._factor;};
+
+    set scale(factor) {
+        if (factor != this._factor) {
+            // set scale and emulate new event from timingsrc
+            this._factor = factor;
+            this.__handleEvent({
+                ...this.timingsrc.vector,
+                range: this.timingsrc.range
+            });
+            this.eventifyTrigger("scalechange", factor);
+        }
+    }
+}
+export default ScaleConverter;
+

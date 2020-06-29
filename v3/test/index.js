@@ -8,18 +8,13 @@ export {default as eventify} from '../util/eventify.js';
 // timing object
 export {default as TimingObject} from '../timingobject/timingobject.js';
 export {default as SkewConverter} from '../timingobject/skewconverter.js';
-
-/*
-DelayConverter : require('timingobject/delayconverter'),
-ScaleConverter : require('timingobject/scaleconverter'),
-LoopConverter : require('timingobject/loopconverter'),
-TimeshiftConverter : require('timingobject/timeshiftconverter'),
-RangeConverter : require('timingobject/rangeconverter'),
-*/
+export {default as DelayConverter} from '../timingobject/delayconverter.js';
+export {default as ScaleConverter} from '../timingobject/scaleconverter.js';
+export {default as LoopConverter} from '../timingobject/loopconverter.js';
+export {default as RangeConverter} from '../timingobject/rangeconverter.js';
+export {default as TimeshiftConverter} from '../timingobject/timeshiftconverter.js';
 
 // sequencing
 export {default as Axis} from '../sequencing/axis.js';
 export {default as SingleSequencer} from '../sequencing/singlesequencer.js';
 export {default as DoubleSequencer} from '../sequencing/doublesequencer.js';
-
-

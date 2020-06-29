@@ -38,63 +38,58 @@
 	- range is infinite
 */
 
+import TimingObject from './timingobject.js';
+import {calculateVector} from '../util/motionutils.js';
 
-define(function (require) {
 
-    'use strict';
+class TimeshiftConverter extends TimingObject {
 
-    const motionutils = require('../util/motionutils');
-    const TimingObject = require('./timingobject');
+    constructor (timingsrc, offset) {
+		super(timingsrc);
+		this._offset = offset;
+        this.eventifyDefine("offsetchange", {init:true});
+	};
 
-	class TimeshiftConverter extends TimingObject {
-
-        constructor (timingsrc, offset) {
-    		super(timingsrc);
-    		this._offset = offset;
-            this.eventifyDefine("offsetchange", {init:true});
-    	};
-
-        // extend
-        eventifyInitEventArgs(name) {
-            if (name == "offsetchange") {
-                return [this._offset];
-            } else {
-                return super.eventifyInitEventArgs(name)
-            }
+    // extend
+    eventifyInitEventArgs(name) {
+        if (name == "offsetchange") {
+            return [this._offset];
+        } else {
+            return super.eventifyInitEventArgs(name)
         }
-
-        // overrides
-        onUpdateStart(arg) {
-            if (arg.range != undefined) {
-                arg.range = [-Infinity, Infinity];
-            }
-            if (arg.position != undefined) {
-                // calculate timeshifted vector
-                let ts = arg.timestamp;
-                let new_vector = motionutils.calculateVector(arg, ts + this._offset);
-                arg.position = new_vector.position;
-                arg.velocity = new_vector.velocity;
-                arg.acceleration = new_vector.acceleration;
-                arg.timestamp = ts;
-            }
-            return arg;
-        };
-
-        get offset() {return this._offset;};
-
-        set offset(offset) {
-            if (offset != this._offset) {
-                // set offset and emulate new event from timingsrc
-                this._offset = offset;
-                this.__handleEvent({
-                    ...this.timingsrc.vector,
-                    range: this.timingsrc.range
-                });
-                this.eventifyTrigger("offsetchange", offset);
-            }
-        }
-
     }
 
-	return TimeshiftConverter;
-});
+    // overrides
+    onUpdateStart(arg) {
+        if (arg.range != undefined) {
+            arg.range = [-Infinity, Infinity];
+        }
+        if (arg.position != undefined) {
+            // calculate timeshifted vector
+            let ts = arg.timestamp;
+            let new_vector = calculateVector(arg, ts + this._offset);
+            arg.position = new_vector.position;
+            arg.velocity = new_vector.velocity;
+            arg.acceleration = new_vector.acceleration;
+            arg.timestamp = ts;
+        }
+        return arg;
+    };
+
+    get offset() {return this._offset;};
+
+    set offset(offset) {
+        if (offset != this._offset) {
+            // set offset and emulate new event from timingsrc
+            this._offset = offset;
+            this.__handleEvent({
+                ...this.timingsrc.vector,
+                range: this.timingsrc.range
+            });
+            this.eventifyTrigger("offsetchange", offset);
+        }
+    }
+
+}
+
+export default TimeshiftConverter;

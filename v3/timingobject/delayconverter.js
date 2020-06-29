@@ -32,101 +32,98 @@
 
 */
 
-define(function (require) {
+import TimingObject from './timingobject.js';
+import Timeout from '../util/timeout.js';
 
-    'use strict';
 
-    const Timeout = require('../util/timeout');
-    const TimingObject = require('./timingobject');
+class DelayConverter extends TimingObject {
+	constructor (timingObject, delay) {
+		if (delay < 0) {throw new Error ("negative delay not supported");}
+		if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
+		super(timingObject);
+		// fixed delay
+		this._delay = delay;
+		// buffer
+		this._buffer = [];
+		// timeoutid
+		this._timeout = new Timeout(this, this.__handleDelayed.bind(this));
+        this.eventifyDefine("delaychange", {init:true});
+	};
 
-	class DelayConverter extends TimingObject {
-		constructor (timingObject, delay) {
-			if (delay < 0) {throw new Error ("negative delay not supported");}
-			if (delay === 0) {throw new Error ("zero delay makes delayconverter pointless");}
-			super(timingObject);
-			// fixed delay
-			this._delay = delay;
-			// buffer
-			this._buffer = [];
-			// timeoutid
-			this._timeout = new Timeout(this, this.__handleDelayed.bind(this));
-	        this.eventifyDefine("delaychange", {init:true});
-		};
-
-        // extend
-        eventifyInitEventArgs(name) {
-            if (name == "delaychange") {
-                return [this._delay];
-            } else {
-                return super.eventifyInitEventArgs(name)
-            }
+    // extend
+    eventifyInitEventArgs(name) {
+        if (name == "delaychange") {
+            return [this._delay];
+        } else {
+            return super.eventifyInitEventArgs(name)
         }
+    }
 
-		// overrides
-		onUpdateStart(arg) {
-			/*
-				Vector's timestamp always time-shifted (back-dated) by delay
+	// overrides
+	onUpdateStart(arg) {
+		/*
+			Vector's timestamp always time-shifted (back-dated) by delay
 
-				Normal operation is to delay every incoming vector update.
-				This implies returning null to abort further processing at this time,
-				and instead trigger a later continuation.
+			Normal operation is to delay every incoming vector update.
+			This implies returning null to abort further processing at this time,
+			and instead trigger a later continuation.
 
-				However, delay is calculated based on the timestamp of the vector (age), not when the vector is
-				processed in this method. So, for small small delays the age of the vector could already be
-				greater than delay, indicating that the vector is immediately valid and do not require delayed processing.
+			However, delay is calculated based on the timestamp of the vector (age), not when the vector is
+			processed in this method. So, for small small delays the age of the vector could already be
+			greater than delay, indicating that the vector is immediately valid and do not require delayed processing.
 
-				This is particularly true for the first vector, which may be old.
+			This is particularly true for the first vector, which may be old.
 
-				So we generally check the age to figure out whether to apply the vector immediately or to delay it.
-			*/
+			So we generally check the age to figure out whether to apply the vector immediately or to delay it.
+		*/
 
-			this._buffer.push(arg);
-			// if timeout for next already defined, nothing to do
-			if (!this._timeout.isSet()) {
-				this.__handleDelayed();
+		this._buffer.push(arg);
+		// if timeout for next already defined, nothing to do
+		if (!this._timeout.isSet()) {
+			this.__handleDelayed();
+		}
+		return;
+	};
+
+	__handleDelayed() {
+		// run through buffer and apply vectors that are due
+		let now = this.clock.now();
+		let arg, due;
+		while (this._buffer.length > 0) {
+			due = this._buffer[0].timestamp + this._delay;
+			if (now < due) {
+				break;
+			} else {
+				arg = this._buffer.shift();
+				// apply
+				arg.timestamp = due;
+				this.__process(arg);
 			}
-			return;
-		};
+		}
+		// set new timeout
+		if (this._buffer.length > 0) {
+			due = this._buffer[0].timestamp + this._delay;
+			this._timeout.setTimeout(due);
+		}
+	};
 
-		__handleDelayed() {
-			// run through buffer and apply vectors that are due
-			let now = this.clock.now();
-			let arg, due;
-			while (this._buffer.length > 0) {
-				due = this._buffer[0].timestamp + this._delay;
-				if (now < due) {
-					break;
-				} else {
-					arg = this._buffer.shift();
-					// apply
-					arg.timestamp = due;
-					this.__process(arg);
-				}
-			}
-			// set new timeout
-			if (this._buffer.length > 0) {
-				due = this._buffer[0].timestamp + this._delay;
-				this._timeout.setTimeout(due);
-			}
-		};
+	update(arg) {
+		// Updates are prohibited on delayed timingobjects
+		throw new Error ("update is not legal on delayed (non-live) timingobject");
+	};
 
-		update(arg) {
-			// Updates are prohibited on delayed timingobjects
-			throw new Error ("update is not legal on delayed (non-live) timingobject");
-		};
+    get delay() {return this._delay;};
 
-        get delay() {return this._delay;};
-
-		set delay(delay) {
-            if (delay != this._delay) {
-                // set delay and emulate new event from timingsrc
-                this._delay = delay;
-                this._timeout.clear();
-                this.__handleDelayed();
-                this.eventifyTrigger("delaychange", delay);
-            }
+	set delay(delay) {
+        if (delay != this._delay) {
+            // set delay and emulate new event from timingsrc
+            this._delay = delay;
+            this._timeout.clear();
+            this.__handleDelayed();
+            this.eventifyTrigger("delaychange", delay);
         }
-	}
+    }
+}
 
-	return DelayConverter;
-});
+export default DelayConverter;
+

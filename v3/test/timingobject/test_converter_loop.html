@@ -2,14 +2,9 @@
 
 <html>
 <head>
-    <!-- requirejs config -->
-    <script>
-        var require = {
-          baseUrl : '../',
-        };
-    </script>
-    <script type="text/javascript" src="../../docs/lib/require.js"></script>
-    <script type="text/javascript">
+    <script type="module">
+        import * as timingsrc from '../index.js';
+
         var to, c;
 
         function setup_timingobject(key, name, to) {
@@ -53,24 +48,17 @@
 
         };
 
-        require(['test/main'], function (timingsrc) {
-
-            function run() {
-                to = new timingsrc.TimingObject({range:[-10,10]});
-                setup_timingobject(0, "source", to);
-                c = new timingsrc.LoopConverter(to, [2,5]);
-                setup_timingobject(1, "converter", c);
 
 
+        function run() {
+            to = new timingsrc.TimingObject({range:[-10,10]});
+            setup_timingobject(0, "source", to);
+            c = new timingsrc.LoopConverter(to, [2,5]);
+            setup_timingobject(1, "converter", c);
+        };
 
-            };
+        run();
 
-            if (document.readyState === "complete") {
-                run();}
-            else {
-                window.onload = run;
-            }
-        });
     </script>
     </head>
 <body>
