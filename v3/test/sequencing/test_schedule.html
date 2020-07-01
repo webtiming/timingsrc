@@ -4,7 +4,7 @@
     <!--  main -->
     <script type="module">
 
-        import * as timingsrc from '../index.js';
+        import * as timingsrc from '../../index.js';
         import Schedule from '../../sequencing/schedule.js';
 
         let to, s;
@@ -31,9 +31,9 @@
 
         function run(){
 
-          const axis = new timingsrc.Axis();
+          const ds = new timingsrc.Dataset();
 
-          // fill axis with some cues
+          // fill ds with some cues
           let cues = [];
           for (let i=0; i<100; i++) {
             let j0 = i;
@@ -45,11 +45,11 @@
             let j1 = j0 + 1;
             cues.push({key: 1000 + i, interval: new Interval(j0, j1)});
           }
-          axis.update(cues);
+          ds.update(cues);
 
 
           to = new timingsrc.TimingObject();
-          s = new Schedule(axis, to);
+          s = new Schedule(ds, to);
           s.add_callback(function(now, endpointEvents) {
             print_endpoints(now, endpointEvents);
           });

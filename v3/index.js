@@ -36,7 +36,7 @@ export {default as RangeConverter} from './timingobject/rangeconverter.js';
 export {default as TimeshiftConverter} from './timingobject/timeshiftconverter.js';
 
 // sequencing
-export {default as Axis} from './sequencing/axis.js';
+export {default as Dataset} from './sequencing/dataset.js';
 import {default as SingleSequencer} from './sequencing/singlesequencer.js';
 import {default as DoubleSequencer} from './sequencing/doublesequencer.js';
 

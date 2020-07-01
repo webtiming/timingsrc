@@ -5,10 +5,10 @@
     <!--  main -->
     <script type="module">
 
-        import {utils, Interval, Axis} from '../index.js';
+        import {utils, Interval, Dataset} from '../../index.js';
 
-        const Delta = Axis.Delta;
-        const cue_delta = Axis.cue_delta;
+        const Delta = Dataset.Delta;
+        const cue_delta = Dataset.cue_delta;
         const equals = utils.object_equals;
 
 
@@ -107,19 +107,19 @@
         var test_insert = function (size) {
           //let cues = make_singular_cues_sorted_unique(size);
           let cues = make_singular_cues(size, size/2);
-          let ax = new Axis();
+          let ds = new Dataset();
           let [res, t] = timeit(function () {
-            ax.update(cues, {chaining:false});
+            ds.update(cues, {chaining:false});
           });
           console.log("add bigbatch " + size + " " + t);
 
           // add more
           cues = make_singular_cues(size, size/2);
           timeit(function () {
-            ax.update(cues, {chaining:false});
+            ds.update(cues, {chaining:false});
           }, "add bigbatch " + size);
 
-          ax.integrity();
+          ds.integrity();
         };
 
 
@@ -128,25 +128,25 @@
           let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
           let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 50);
 
-          let ax = new Axis();
+          let ds = new Dataset();
 
           // initialise
           let numbers_1 = make_sorted_floats(DATASIZE);
           let batch_1 = make_cues_from_numbers(numbers_1);
-          ax.update(batch_1, {chaining:false});
+          ds.update(batch_1, {chaining:false});
 
           // remove cues in interval
           [res, t] = timeit(function () {
-            return ax.lookup_delete(interval);
+            return ds.lookup_delete(interval);
           });
           console.log("delete cues by interval", interval.toString(), " ", res.size, " ", t);
 
-          ax.clear();
-          ax.update(batch_1, {chaining:false});
+          ds.clear();
+          ds.update(batch_1, {chaining:false});
 
           // remove cues in interval
           [res, t] = timeit(function () {
-            return ax.lookup_delete(smallInterval);
+            return ds.lookup_delete(smallInterval);
           });
           console.log("delete cues by smallinterval", smallInterval.toString(), " ", res.size, " ", t);
 
@@ -154,121 +154,121 @@
 
 
         var test_main = function (DATASIZE) {
-          let ax = new Axis();
+          let ds = new Dataset();
 
           // Lookup Intervals
           let interval = new Interval(DATASIZE*0.25, DATASIZE*0.75);
           let smallInterval = new Interval(DATASIZE*0.5, DATASIZE*0.5 + 10);
 
-          // insert sorted into empty axis
+          // insert sorted into empty Dataset
           let numbers_1 = make_sorted_floats(DATASIZE);
           let batch_1 = make_cues_from_numbers(numbers_1);
           let [res, t] = timeit(function () {
-            return ax.update(batch_1, {chaining:false});
+            return ds.update(batch_1, {chaining:false});
           });
-          console.log("insert sorted sorted cues ", res.length, " into empty axis", t);
+          console.log("insert sorted sorted cues ", res.length, " into empty Dataset", t);
 
 
-          // insert small cue batch int non empty axis
+          // insert small cue batch int non empty Dataset
           let numbers_22 = make_random_floats(10, {scale:DATASIZE});
           let batch_22 = make_cues_from_numbers(numbers_22);
           [res, t] = timeit(function () {
-            return ax.update(batch_22, {chaining:false});
+            return ds.update(batch_22, {chaining:false});
           });
-          console.log("insert small batch random cues ", res.length, " into non-empty axis ", t);
+          console.log("insert small batch random cues ", res.length, " into non-empty Dataset ", t);
 
 
-          // clear axis
+          // clear Dataset
           [res, t] = timeit(function () {
-            return ax.clear();
+            return ds.clear();
           })
-          console.log("clear ", res.length, " non-empty axis ", t);
+          console.log("clear ", res.length, " non-empty Dataset ", t);
 
-          ax.clear();
+          ds.clear();
 
-          // insert random into empty axis
+          // insert random into empty Dataset
           let numbers_3 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_3 = make_cues_from_numbers(numbers_3);
           [res, t] = timeit(function () {
-            return ax.update(batch_3, {chaining:false});
+            return ds.update(batch_3, {chaining:false});
           });
-          console.log("insert random cues ", res.length, " into empty axis ", t);
+          console.log("insert random cues ", res.length, " into empty Dataset ", t);
 
-          // insert sorted into non-empty axis
+          // insert sorted into non-empty Dataset
           let numbers_2 = make_sorted_floats(DATASIZE, {offset:0.5});
           let batch_2 = make_cues_from_numbers(numbers_2);
           [res, t] = timeit(function () {
-            return ax.update(batch_2, {chaining:false});
+            return ds.update(batch_2, {chaining:false});
           });
-          console.log("insert batch sorted cues ", res.length, " into non-empty axis ", t);
+          console.log("insert batch sorted cues ", res.length, " into non-empty Dataset ", t);
 
-          ax.clear();
+          ds.clear();
 
           // initialise
           let numbers_11 = make_sorted_floats(DATASIZE);
           let batch_11 = make_cues_from_numbers(numbers_11);
-          ax.update(batch_11, {chaining:false});
+          ds.update(batch_11, {chaining:false});
 
-          // insert random into non-empty axis
+          // insert random into non-empty Dataset
           let numbers_4 = make_random_floats(DATASIZE, {scale:DATASIZE});
           let batch_4 = make_cues_from_numbers(numbers_4);
           [res, t] = timeit(function () {
-            return ax.update(batch_4, {chaining:false});
+            return ds.update(batch_4, {chaining:false});
           });
-          console.log("insert random cues ", res.length, " into non-empty axis ", t);
+          console.log("insert random cues ", res.length, " into non-empty Dataset ", t);
 
           /*
-          console.log("cueMap", ax._cueMap.size);
-          console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
-          console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
+          console.log("cueMap", ds._cueMap.size);
+          console.log("pointMap", ds._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", ds._cueBuckets.get(10)._pointIndex.array.length);
           */
 
-          ax.clear()
-          ax.update(batch_11, {chaining:false});
+          ds.clear()
+          ds.update(batch_11, {chaining:false});
 
 
           // lookup cuepoints
           [res, t] = timeit(function () {
-            return ax.lookup_endpoints(smallInterval);
+            return ds.lookup_endpoints(smallInterval);
           });
           console.log("lookup a few cuepoints ", smallInterval.toString(), " ", res.length, " ", t);
 
           // lookup cuepoints
           [res, t] = timeit(function () {
-            return ax.lookup_endpoints(interval);
+            return ds.lookup_endpoints(interval);
           });
           console.log("lookup cuepoints ", interval.toString(), " ", res.length, " ", t);
 
           // lookup cues big interval
           [res, t] = timeit(function () {
-            return ax.lookup(interval);
+            return ds.lookup(interval);
           });
           console.log("lookup cues - big interval ", interval.toString(), " ", res.length, " ", t);
 
           // lookup cues small interval
           [res, t] = timeit(function () {
-            return ax.lookup(smallInterval);
+            return ds.lookup(smallInterval);
           });
           console.log("lookup cues - small interval ", smallInterval.toString(), " ", res.length, " ", t);
 
 
           // remove cues small interval
           [res, t] = timeit(function () {
-            return ax.lookup_delete(smallInterval);
+            return ds.lookup_delete(smallInterval);
           });
           console.log("remove cues - small interval", smallInterval.toString(), " ", res.length, " ", t);
 
           // remove cues big interval
           [res, t] = timeit(function () {
-            return ax.lookup_delete(interval);
+            return ds.lookup_delete(interval);
           });
           console.log("remove cues - big interval", interval.toString(), " ", res.length, " ", t);
 
 
-          ax.clear()
+          ds.clear()
 
           batch_4 = make_cues_from_numbers(numbers_4);
-          ax.update(batch_4, {chaining:false});
+          ds.update(batch_4, {chaining:false});
 
           // remove
           let batch_5 = numbers_4.map(n => {return {key:n.toString()}})
@@ -279,21 +279,21 @@
           let big_remove_batch = batch_5.slice(0, half);
 
           [res, t] = timeit(function () {
-            return ax.update(small_remove_batch, {chaining:false});
+            return ds.update(small_remove_batch, {chaining:false});
           });
           console.log("remove small batch of random cues ", res.length, " ", t);
 
 
           [res, t] = timeit(function () {
-            return ax.update(big_remove_batch, {chaining:false});
+            return ds.update(big_remove_batch, {chaining:false});
           });
           console.log("remove big batch of random cues ", res.length, " ", t);
 
 
 
-          console.log("cueMap", ax._cueMap.size);
-          console.log("pointMap", ax._cueBuckets.get(10)._pointMap.size);
-          console.log("pointIndex", ax._cueBuckets.get(10)._pointIndex.array.length);
+          console.log("cueMap", ds._cueMap.size);
+          console.log("pointMap", ds._cueBuckets.get(10)._pointMap.size);
+          console.log("pointIndex", ds._cueBuckets.get(10)._pointIndex.array.length);
 
 
         };
@@ -312,6 +312,6 @@
     </script>
   </head>
   <body>
-    <h1>Test Axis</h1>
+    <h1>Test Dataset</h1>
   </body>
 </html>

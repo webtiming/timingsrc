@@ -4,9 +4,7 @@
 
     <script type="module">
 
-        import * as timingsrc from '../index.js';
-
-        let to, axis, s;
+        import * as timingsrc from '../../index.js';
 
         const Interval = timingsrc.Interval;
 
@@ -19,8 +17,8 @@
         };
 
 
-        function update(axis, N, position) {
-            // update axis with N random cues relevant for position
+        function update(ds, N, position) {
+            // update dataset with N random cues relevant for position
             console.log(N);
             let width = 10;
             let spread = 5;
@@ -34,7 +32,7 @@
                     data: `data-${i}`
                 });
             }
-            axis.update(cues);
+            ds.update(cues);
         };
 
 
@@ -103,41 +101,41 @@
 
             // update
             document.getElementById('p').onclick = function () {
-                update(axis, 1, 0);
+                update(ds, 1, 0);
             };
             document.getElementById('q').onclick = function () {
-                update(axis, 10, 0);
+                update(ds, 10, 0);
             };
             document.getElementById('r').onclick = function () {
-                update(axis, 100, 0);
+                update(ds, 100, 0);
             };
             document.getElementById('s').onclick = function () {
-                update(axis, 1000, 0);
+                update(ds, 1000, 0);
             };
             document.getElementById('t').onclick = function () {
-                update(axis, 10000, 0);
+                update(ds, 10000, 0);
             };
             document.getElementById('u').onclick = function () {
-                update(axis, 100000, 0);
+                update(ds, 100000, 0);
             };
 
             document.getElementById('p1').onclick = function () {
-                update(axis, 1, 100);
+                update(ds, 1, 100);
             };
             document.getElementById('q1').onclick = function () {
-                update(axis, 10, 100);
+                update(ds, 10, 100);
             };
             document.getElementById('r1').onclick = function () {
-                update(axis, 100, 100);
+                update(ds, 100, 100);
             };
             document.getElementById('s1').onclick = function () {
-                update(axis, 1000, 100);
+                update(ds, 1000, 100);
             };
             document.getElementById('t1').onclick = function () {
-                update(axis, 10000, 100);
+                update(ds, 10000, 100);
             };
             document.getElementById('u1').onclick = function () {
-                update(axis, 100000, 100);
+                update(ds, 100000, 100);
             };
 
 
@@ -158,21 +156,19 @@
             });
         };
 
-        // Axis
-        axis = new timingsrc.Axis();
-
         // initialise
-        to = new timingsrc.TimingObject({range:[0,15]});
+        const ds = new timingsrc.Dataset();
+        const to = new timingsrc.TimingObject({range:[0,15]});
+        const s = new timingsrc.Sequencer(ds, to);
 
-        s = new timingsrc.SingleSequencer(axis, to);
-
-
+        // run
+        run();
     </script>
 
 
   </head>
   <body>
-    <h1>Test Single Sequencer Axis Update</h1>
+    <h1>Test Single Sequencer Dataset Update</h1>
     <div id="value" style="font-weight:bold;"></div>
     <p>
         <button id="a">P=-1</button>

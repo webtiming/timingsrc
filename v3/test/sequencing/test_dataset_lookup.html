@@ -4,7 +4,7 @@
     <!--  main -->
     <script type="module">
 
-        import {Interval, Axis} from '../index.js';
+        import {Interval, Dataset} from '../../index.js';
 
         const Relation = Interval.Relation;
 
@@ -18,7 +18,7 @@
           test lookup endpoints
         */
         var test_lookup_endpoints = function () {
-          let ax = new Axis();
+          let ds = new Dataset();
 
           let cues = [];
           for (let i=0; i<100; i++) {
@@ -27,10 +27,10 @@
           for (let i=0; i<100; i++) {
             cues.push({key: 1000 + i, interval: new Interval(i)});
           }
-          ax.update(cues);
+          ds.update(cues);
 
           let interval = new Interval(4,18, false, false);
-          let endpoints = ax.lookup_endpoints(interval);
+          let endpoints = ds.lookup_endpoints(interval);
 
           let current = 0;
 
@@ -142,8 +142,8 @@
           let _expect;
 
           // insert cues
-          let ax = new Axis();
-          ax.update(cues);
+          let ds = new Dataset();
+          ds.update(cues);
 
           const searchInterval1 = new Interval(4,10, false, false);
           const searchInterval2 = new Interval(4,10, false, true);
@@ -154,73 +154,73 @@
           // inside search interval 1
           console.log("inside", searchInterval1)
           _expect = ["D1", "D3", "D5", "G3"];
-          _cues = ax.lookup(searchInterval1, INSIDE);
+          _cues = ds.lookup(searchInterval1, INSIDE);
           check(_cues, _expect);
 
           // partial search interval 1
           console.log("overlap", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "G3"];
-          _cues = ax.lookup(searchInterval1, OVERLAP);
+          _cues = ds.lookup(searchInterval1, OVERLAP);
           check(_cues, _expect);
 
           // inside search interval 1
           console.log("covers", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "F", "G3"];
-          _cues = ax.lookup(searchInterval1, COVERS);
+          _cues = ds.lookup(searchInterval1, COVERS);
           check(_cues, _expect);
 
           // inside search interval 2
           console.log("inside", searchInterval2)
           _expect = ["D1", "D3", "D4", "D5", "D7", "G3", "G4"];
-          _cues = ax.lookup(searchInterval2, INSIDE);
+          _cues = ds.lookup(searchInterval2, INSIDE);
           check(_cues, _expect);
 
           // partial search interval 2
           console.log("overlap", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E3", "G3", "G4"];
-          _cues = ax.lookup(searchInterval2, OVERLAP);
+          _cues = ds.lookup(searchInterval2, OVERLAP);
           check(_cues, _expect);
 
           // inside search interval 2
           console.log("covers", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G4", "F"];
-          _cues = ax.lookup(searchInterval2, COVERS);
+          _cues = ds.lookup(searchInterval2, COVERS);
           check(_cues, _expect);
 
           // inside search interval 3
           console.log("inside", searchInterval3)
           _expect = ["D1", "D3", "D2", "D5", "D6", "G3", "G2"];
-          _cues = ax.lookup(searchInterval3, INSIDE);
+          _cues = ds.lookup(searchInterval3, INSIDE);
           check(_cues, _expect);
 
           // partial search interval 3
           console.log("overlap", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "E1", "G3", "G2"];
-          _cues = ax.lookup(searchInterval3, OVERLAP);
+          _cues = ds.lookup(searchInterval3, OVERLAP);
           check(_cues, _expect);
 
           // inside search interval 3
           console.log("covers", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G2", "F"];
-          _cues = ax.lookup(searchInterval3, COVERS);
+          _cues = ds.lookup(searchInterval3, COVERS);
           check(_cues, _expect);
 
           // inside search interval 4
           console.log("inside", searchInterval4)
           _expect = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "G2", "G3", "G4"];
-          _cues = ax.lookup(searchInterval4, INSIDE);
+          _cues = ds.lookup(searchInterval4, INSIDE);
           check(_cues, _expect);
 
           // partial search interval 4
           console.log("overlap", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E3", "G2", "G3", "G4"];
-          _cues = ax.lookup(searchInterval4, OVERLAP);
+          _cues = ds.lookup(searchInterval4, OVERLAP);
           check(_cues, _expect);
 
           // inside search interval 4
           console.log("covers", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4", "F"];
-          _cues = ax.lookup(searchInterval4, COVERS);
+          _cues = ds.lookup(searchInterval4, COVERS);
           check(_cues, _expect);
 
           console.log("test_lookup_correctness done");
@@ -230,7 +230,7 @@
 
 
         var test_lookup_delete = function () {
-          let ax = new Axis();
+          let ds = new Dataset();
           let events, expect;
 
           const INSIDE = Interval.Match.INSIDE;
@@ -264,33 +264,33 @@
             for (let item of events.values()) {
               assertTrue(expect.includes(item.old.key));
             }
-            ax.integrity();
+            ds.integrity();
           }
 
           // remove inside
           console.log("remove inside");
           expect = [5,6,7,8,9,10,11,12,13,14,15,16];
-          ax.update(cues);
-          events = ax.lookup_delete(interval, INSIDE);
+          ds.update(cues);
+          events = ds.lookup_delete(interval, INSIDE);
           evaluate(expect, events);
-          ax.clear();
+          ds.clear();
 
           // remove partial
           console.log("remove partial")
           expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17];
-          ax.update(cues);
-          events = ax.lookup_delete(interval, OVERLAP);
-          ax.integrity();
+          ds.update(cues);
+          events = ds.lookup_delete(interval, OVERLAP);
+          ds.integrity();
           evaluate(expect, events);
-          ax.clear();
+          ds.clear();
 
           // remove overlap
           console.log("remove overlap");
           expect = [4,5,6,7,8,9,10,11,12,13,14,15,16,17, "overlapping"];
-          ax.update(cues);
-          events = ax.lookup_delete(interval, COVERS);
+          ds.update(cues);
+          events = ds.lookup_delete(interval, COVERS);
           evaluate(expect, events);
-          ax.clear();
+          ds.clear();
 
           console.log("test lookup delete done");
 
@@ -308,6 +308,6 @@
     </script>
   </head>
   <body>
-    <h1>Test Axis</h1>
+    <h1>Test Dataset</h1>
   </body>
 </html>

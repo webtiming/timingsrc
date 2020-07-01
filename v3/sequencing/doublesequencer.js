@@ -24,7 +24,7 @@ import eventify from '../util/eventify.js';
 import * as motionutils from '../util/motionutils.js';
 import Schedule from './schedule.js';
 import BaseSequencer from './basesequencer.js';
-import Axis from './axis.js';
+import dataset from './dataset.js';
 
 const PosDelta = motionutils.MotionDelta.PosDelta;
 const MoveDelta = motionutils.MotionDelta.MoveDelta;
@@ -50,9 +50,9 @@ function movement_direction (now_vector_A, now_vector_B) {
 
 class DoubleSequencer extends BaseSequencer {
 
-    constructor (axis, toA, toB) {
+    constructor (dataset, toA, toB) {
 
-        super(axis);
+        super(dataset);
 
         // Timing objects
         this._toA = toA;
@@ -65,9 +65,9 @@ class DoubleSequencer extends BaseSequencer {
 
         // Schedules
         let sched_cb = this._onScheduleCallback.bind(this);
-        this._schedA = new Schedule(this._axis, toA);
+        this._schedA = new Schedule(this._ds, toA);
         this._schedA_cb = this._schedA.add_callback(sched_cb);
-        this._schedB = new Schedule(this._axis, toB);
+        this._schedB = new Schedule(this._ds, toB);
         this._schedB_cb = this._schedB.add_callback(sched_cb);
 
     }
@@ -85,13 +85,13 @@ class DoubleSequencer extends BaseSequencer {
     }
 
     /***************************************************************
-     AXIS CALLBACK
+     DATASET CALLBACK
     ***************************************************************/
 
     /*
-        Handling Axis Update Callbacks
+        Handling Dataset Update Callbacks
     */
-    _onAxisCallback(eventMap, relevanceInterval) {
+    _onDatasetCallback(eventMap, relevanceInterval) {
         if (!this._isReady()) {
             return;
         }
@@ -115,10 +115,10 @@ class DoubleSequencer extends BaseSequencer {
             // some events relevant for activeIntervale
 
             // choose approach to get events
-            let get_events = this._events_from_axis_events.bind(this);
+            let get_events = this._events_from_dataset_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._events_from_axis_lookup.bind(this);
+                    get_events = this._events_from_dataset_lookup.bind(this);
                 }
             }
 
@@ -243,7 +243,7 @@ class DoubleSequencer extends BaseSequencer {
             let itv = new Interval(low, high, true, true);
 
             // new active cues
-            let activeCues = new Map(this._axis.lookup(itv).map(cue => {
+            let activeCues = new Map(this._ds.lookup(itv).map(cue => {
                 return [cue.key, cue];
             }));
             // exit cues - in old activeCues but not in new activeCues

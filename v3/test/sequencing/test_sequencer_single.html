@@ -4,9 +4,7 @@
     <!--  main -->
     <script type="module">
 
-        import * as timingsrc from '../index.js';
-
-        let to, axis, s;
+        import * as timingsrc from '../../index.js';
 
         const Interval = timingsrc.Interval;
 
@@ -139,7 +137,7 @@
                     interval: itv,
                     data: itv.toString()
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
             document.getElementById('q').onclick = function () {
                 // modify interval and data
@@ -150,7 +148,7 @@
                     interval: itv,
                     data: itv.toString()
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
             document.getElementById('r').onclick = function () {
                 // modify only data
@@ -159,14 +157,14 @@
                     key: key,
                     data: "new data"
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
 
             document.getElementById('s').onclick = function () {
                 // delete
                 let key = "jalla";
                 let cue = {key: key};
-                axis.update(cue);
+                ds.update(cue);
             };
 
             let value = document.getElementById("value");
@@ -180,9 +178,9 @@
             });
 
             // Visualize list of timed data
-            axis.on("update", function (events){
+            ds.on("update", function (events){
                 // refresh visuals by redrawing the list entirely
-                let html = [...axis.values()]
+                let html = [...ds.values()]
                     .sort(function(cue_a, cue_b) {
                         return Interval.cmpLow(cue_a.interval, cue_b.interval);
                     }).map(function(cue){
@@ -194,7 +192,6 @@
                     }).join("\n");
                 document.getElementById("data").innerHTML = html;
             });
-
 
             // add change and remove handlers
             s.on("remove", (item, eInfo) => {
@@ -228,25 +225,14 @@
         };
 
 
-        // Axis
-        axis = new timingsrc.Axis();
-
-        // cues
-        let cues;
-        cues = get_cues();
-        // cues = get_cues_ordering();
-
-        axis.update(cues);
-
         // initialise
-        to = new timingsrc.TimingObject({range:[0,15]});
-        s = new timingsrc.SingleSequencer(axis, to);
+        const ds = new timingsrc.Dataset();
+        ds.update(get_cues());
+        const to = new timingsrc.TimingObject({range:[0,15]});
+        const s = new timingsrc.Sequencer(ds, to);
 
-        if (document.readyState === "complete") {
-            run();
-        } else {
-            window.onload = run;
-        };
+        // run
+        run();
 
     </script>
 

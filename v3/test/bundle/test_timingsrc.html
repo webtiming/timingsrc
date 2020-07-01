@@ -9,39 +9,7 @@
 
         window.timingsrc = timingsrc;
 
-        let to, axis, s;
-
         const Interval = timingsrc.Interval;
-
-        function get_cues_ordering() {
-            // generate some queues for testing cue ordering
-            // different intervals relevant to point 4
-            // left outside
-            const i1 = new Interval(3, 3.5);
-            // high endpoint match
-            const i2 = new Interval(3, 4, true, true);
-            const i3 = new Interval(3, 4, true, false);
-            // singleton match
-            const i4 = new Interval(4, 4);
-            // both sides
-            const i5 = new Interval(3, 5);
-            // low endpoint match
-            const i6 = new Interval(4, 5, true, false);
-            const i7 = new Interval(4, 5, false, false);
-            // right outside
-            const i8 = new Interval(4.5, 5);
-
-            return [
-                {key: "1", interval: i1, data: i1.toString()},
-                {key: "2", interval: i2, data: i2.toString()},
-                {key: "3", interval: i3, data: i3.toString()},
-                {key: "4", interval: i4, data: i4.toString()},
-                {key: "5", interval: i5, data: i5.toString()},
-                {key: "6", interval: i6, data: i6.toString()},
-                {key: "7", interval: i7, data: i7.toString()},
-                {key: "8", interval: i8, data: i8.toString()}
-            ];
-        }
 
         function get_cues() {
             // generate some cues
@@ -68,8 +36,6 @@
             }
             return cues;
         }
-
-
 
         function run() {
 
@@ -142,7 +108,7 @@
                     interval: itv,
                     data: itv.toString()
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
             document.getElementById('q').onclick = function () {
                 // modify interval and data
@@ -153,7 +119,7 @@
                     interval: itv,
                     data: itv.toString()
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
             document.getElementById('r').onclick = function () {
                 // modify only data
@@ -162,14 +128,14 @@
                     key: key,
                     data: "new data"
                 };
-                axis.update(cue);
+                ds.update(cue);
             };
 
             document.getElementById('s').onclick = function () {
                 // delete
                 let key = "jalla";
                 let cue = {key: key};
-                axis.update(cue);
+                ds.update(cue);
             };
 
             let value = document.getElementById("value");
@@ -183,9 +149,9 @@
             });
 
             // Visualize list of timed data
-            axis.on("update", function (events){
+            ds.on("update", function (events){
                 // refresh visuals by redrawing the list entirely
-                let html = [...axis.values()]
+                let html = [...ds.values()]
                     .sort(function(cue_a, cue_b) {
                         return Interval.cmpLow(cue_a.interval, cue_b.interval);
                     }).map(function(cue){
@@ -231,26 +197,19 @@
         };
 
 
-        // Axis
-        axis = new timingsrc.Axis();
+        // Dataset
+        const ds = new timingsrc.Dataset();
 
         // cues
-        let cues;
-        cues = get_cues();
-        // cues = get_cues_ordering();
+        let cues = get_cues();
 
-        axis.update(cues);
+        ds.update(cues);
 
         // initialise
-        to = new timingsrc.TimingObject({range:[0,15]});
-        s = new timingsrc.Sequencer(axis, to);
+        const to = new timingsrc.TimingObject({range:[0,15]});
+        const s = new timingsrc.Sequencer(ds, to);
 
-        if (document.readyState === "complete") {
-            run();
-        } else {
-            window.onload = run;
-        };
-
+        run();
     </script>
 
     <style type="text/css">

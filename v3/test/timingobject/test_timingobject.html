@@ -4,7 +4,7 @@
 <head>
   <script type="module">
 
-    import * as timingsrc from '../index.js';
+    import TimingObject from '../../timingobject/timingobject.js';
 
     let to;
 
@@ -38,7 +38,7 @@
     */
 
     // timing object
-    to = new timingsrc.TimingObject({range:[0,10]});
+    to = new TimingObject({range:[0,10]});
 
     // timing object
     to.on("change", function (eArg) {

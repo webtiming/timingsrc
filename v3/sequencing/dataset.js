@@ -192,17 +192,17 @@ function sort_cues (cues, direction=0) {
 
 
 /*
-    this implements Axis, a datastructure for efficient lookup of
-    cues on a timeline
+    this implements Dataset, a data collection supporting
+    efficient lookup of cues tied to intervals on the timeline
 
     - cues may be tied to one or two points on the timeline, this
       is expressed by an Interval.
     - cues are indexed both by key and by intervals
-    - the timeline index is divided into a set of CueBuckets,
+    - the interval index is divided into a set of CueBuckets,
       based on cue interval length, for efficient lookup
 */
 
-class Axis {
+class Dataset {
 
     static sort_cues = sort_cues;
     static Delta = Delta;
@@ -238,7 +238,7 @@ class Axis {
 
     /*
         SIZE
-        Number of cues managed by axis
+        Number of cues managed by dataset
     */
     get size () {
         return this._cueMap.size;
@@ -522,7 +522,7 @@ class Axis {
 
             /*
                 notify sequencer last so that change events
-                from the axis will be applied before change
+                from the dataset will be applied before change
                 events from sequencers.
             */
             this._notify_callbacks(batchMap, relevanceInterval);
@@ -859,7 +859,7 @@ class Axis {
 
 }
 
-eventify.eventifyPrototype(Axis.prototype);
+eventify.eventifyPrototype(Dataset.prototype);
 
 
 
@@ -1329,11 +1329,7 @@ class CueBucket {
             cues: cues
         }];
     };
-
 }
 
-
-
-
 // module definition
-export default Axis;
+export default Dataset;

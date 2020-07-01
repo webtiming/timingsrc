@@ -21,11 +21,11 @@
 import {map_intersect, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 import eventify from '../util/eventify.js';
-import Axis from './axis.js';
+import Dataset from './dataset.js';
 
 
 function isNoop(delta) {
-    return (delta.interval == Axis.Delta.NOOP && delta.data == Axis.Delta.NOOP);
+    return (delta.interval == Dataset.Delta.NOOP && delta.data == Dataset.Delta.NOOP);
 }
 
 
@@ -162,7 +162,7 @@ function sort_events (events, direction=0) {
 
 /*
     This is an abstract base class for sequencers
-    It implements common logic related to axis, events and activeCues.
+    It implements common logic related to Dataset, events and activeCues.
 */
 
 class BaseSequencer {
@@ -171,15 +171,15 @@ class BaseSequencer {
     static ActiveMap = ActiveMap;
     static sort_events = sort_events;
 
-    constructor (axis) {
+    constructor (dataset) {
 
         // ActiveCues
         this._activeCues = new Map(); // (key -> cue)
 
-        // Axis
-        this._axis = axis;
-        let cb = this._onAxisCallback.bind(this)
-        this._axis_cb = this._axis.add_callback(cb);
+        // Dataset
+        this._ds = dataset;
+        let cb = this._onDatasetCallback.bind(this)
+        this._ds_cb = this._ds.add_callback(cb);
 
         // Change event
         eventify.eventifyInstance(this);
@@ -246,10 +246,12 @@ class BaseSequencer {
 
 
     /***************************************************************
-     AXIS CALLBACK
+     DATASET
     ***************************************************************/
 
-    _onAxisCallback(eventMap, relevanceInterval) {
+    get ds () { return this._ds;}
+
+    _onDatasetCallback(eventMap, relevanceInterval) {
         throw new Error("not implemented");
     }
 
@@ -257,7 +259,7 @@ class BaseSequencer {
         make exit, change and enter events
         - based on eventMap
     */
-    _events_from_axis_events(eventMap, interval) {
+    _events_from_dataset_events(eventMap, interval) {
         const enterEvents = [];
         const changeEvents = [];
         const exitEvents = [];
@@ -294,16 +296,16 @@ class BaseSequencer {
 
     /*
         make exit, change and enter events
-        - based on axis.lookup
+        - based on dataset.lookup
     */
-    _events_from_axis_lookup(eventMap, interval) {
+    _events_from_dataset_lookup(eventMap, interval) {
 
         /*
             Active cues
 
-            find new set of active cues by querying the axis
+            find new set of active cues by querying the dataset
         */
-        const _activeCues = new Map(this._axis.lookup(interval).map(function(cue) {
+        const _activeCues = new Map(this._ds.lookup(interval).map(function(cue) {
             return [cue.key, cue];
         }));
 

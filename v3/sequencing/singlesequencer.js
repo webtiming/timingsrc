@@ -24,7 +24,7 @@ import eventify from '../util/eventify.js';
 import * as motionutils from '../util/motionutils.js';
 import Schedule from './schedule.js';
 import BaseSequencer from './basesequencer.js';
-import Axis from './axis.js';
+import Dataset from './dataset.js';
 
 const PosDelta = motionutils.MotionDelta.PosDelta;
 const MoveDelta = motionutils.MotionDelta.MoveDelta;
@@ -38,16 +38,16 @@ const ACTIVECUES_THRESHOLD = 5000;
 
 class SingleSequencer extends BaseSequencer {
 
-    constructor (axis, to) {
+    constructor (dataset, to) {
 
-        super(axis);
+        super(dataset);
 
         // Timing Object
         this._to = to;
         this._sub = this._to.on("timingsrc", this._onTimingCallback.bind(this));
 
         // Schedule
-        this._sched = new Schedule(this._axis, to);
+        this._sched = new Schedule(this._ds, to);
         let cb = this._onScheduleCallback.bind(this);
         this._sched_cb = this._sched.add_callback(cb)
     }
@@ -60,16 +60,16 @@ class SingleSequencer extends BaseSequencer {
 
 
     /***************************************************************
-     AXIS CALLBACK
+     DATASET CALLBACK
     ***************************************************************/
 
     /*
-        Handling Axis Update Callbacks
+        Handling Dataset Update Callbacks
     */
 
-    _onAxisCallback(eventMap, relevanceInterval) {
+    _onDatasetCallback(eventMap, relevanceInterval) {
         /*
-            process axis events which are relevant to the set
+            process dataset events which are relevant to the set
             of activeCues, or to the immediate future (schedule)
 
             enterCues - inactive -> active
@@ -79,7 +79,7 @@ class SingleSequencer extends BaseSequencer {
             Two approaches
             - 1) EVENTS: filter list of events - compare to current active cues
             - 2) LOOKUP: regenerate new activeCues by looking up set of
-                 active cues from axis, compare it to current active cues
+                 active cues from dataset, compare it to current active cues
 
 
             EventMap.size < about 1K-10K (5K)
@@ -118,10 +118,10 @@ class SingleSequencer extends BaseSequencer {
             // some events relevant for activeIntervale
 
             // choose approach to get events
-            let get_events = this._events_from_axis_events.bind(this);
+            let get_events = this._events_from_dataset_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
                 if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._events_from_axis_lookup.bind(this);
+                    get_events = this._events_from_dataset_lookup.bind(this);
                 }
             }
 
@@ -203,7 +203,7 @@ class SingleSequencer extends BaseSequencer {
             let high = new_vector.position;
             let itv = new Interval(low, high, true, true);
             // new active cues
-            let activeCues = new Map(this._axis.lookup(itv).map(cue => {
+            let activeCues = new Map(this._ds.lookup(itv).map(cue => {
                 return [cue.key, cue];
             }));
             // exit cues - in old activeCues but not in new activeCues
