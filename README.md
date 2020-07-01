@@ -17,3 +17,16 @@ This implements the [Timing Object Draft Spec](https://github.com/webtiming/timi
 [sequencing](v2/sequencing)
 
 This implements tools for timed sequencing based on the Timing Object.
+
+
+### Compile
+
+Install node modules
+- rollup
+- terser
+- rollup-plugin-terser
+
+
+```sh
+./compile.py v3
+```
