@@ -281,7 +281,7 @@ class Dataset {
         if (has_remove_subs || has_change_subs) {
             for (let item of events) {
                 if (item.new == undefined) {
-                    if (has_remove_subs) {
+                    if (has_remove_subs && item.old != undefined) {
                         this.eventifyTrigger("remove", item);
                     }
                 } else {

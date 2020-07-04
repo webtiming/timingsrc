@@ -231,7 +231,7 @@ class BaseSequencer {
         // change, remove
         if (has_remove_subs || has_change_subs) {
             for (let item of events) {
-                if (item.new == undefined) {
+                if (item.new == undefined && item.old != undefined) {
                     if (has_remove_subs) {
                         this.eventifyTrigger("remove", item);
                     }
