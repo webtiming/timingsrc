@@ -3,4 +3,5 @@ _sass
 .sass-cache
 docs/build
 node_modules/
-
+dist/
+package-lock.json

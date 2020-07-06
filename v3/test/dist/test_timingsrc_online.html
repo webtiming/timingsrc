@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="module">
+
+        import * as timingsrc from "https://webtiming.github.io/timingsrc/lib/timingsrc-module-v3.js";
+        window.timingsrc = timingsrc;
+
+        const Interval = timingsrc.Interval;
+
+        function get_cues() {
+            // generate some cues
+            let cues = [];
+            for (let i=0; i<20; i++) {
+                let j0 = i;
+                let j1 = i + 1;
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: i, interval:itv, data:data});
+            }
+            for (let i=0; i<20; i++) {
+                let j0 = i + 0.5;
+                let j1 = j0 + 1;
+                let itv = new Interval(j0, j1);
+                let data =  itv.toString();
+                cues.push({key: 1000 + i, interval:itv, data:data});
+            }
+            // add a few singular cues
+            for (let i=0; i<20; i+=5) {
+                let itv = new Interval(i);
+                let data =  itv.toString();
+                cues.push({key: 2000 + i, interval:itv, data:data});
+            }
+            return cues;
+        }
+
+        function run() {
+
+            // position controls
+            document.getElementById('a').onclick = function () {
+                to.update({position: -1.0});
+            };
+            document.getElementById('b').onclick = function () {
+                to.update({position: 0});
+            };
+            document.getElementById('c').onclick = function () {
+                to.update({position: 1.0});
+            };
+            document.getElementById('d').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos + 1.0});
+            };
+            document.getElementById('e').onclick = function () {
+                let pos = to.query().position;
+                to.update({position: pos - 1.0});
+            };
+
+
+            // velocity controls
+            document.getElementById('f').onclick = function () {
+                to.update({velocity: -1.0});
+            };
+            document.getElementById('g').onclick = function () {
+                to.update({velocity: 0});
+            };
+            document.getElementById('h').onclick = function () {
+                to.update({velocity: 1.0});
+            };
+            document.getElementById('i').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel + 1.0});
+            };
+            document.getElementById('j').onclick = function () {
+                let vel = to.query().velocity;
+                to.update({velocity: vel - 1.0});
+            };
+
+
+            // acceleration controls
+            document.getElementById('k').onclick = function () {
+                to.update({acceleration: -1.0});
+            };
+            document.getElementById('l').onclick = function () {
+                to.update({acceleration: 0.0});
+            };
+            document.getElementById('m').onclick = function () {
+                to.update({acceleration: 1.0});
+            };
+            document.getElementById('n').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc + 1.0});
+            };
+            document.getElementById('o').onclick = function () {
+                let acc = to.query().acceleration;
+                to.update({acceleration: acc - 1.0});
+            };
+
+
+            document.getElementById('p').onclick = function () {
+                // insert
+                let key = "jalla";
+                let itv = new Interval(5,7)
+                let cue = {
+                    key: key,
+                    interval: itv,
+                    data: itv.toString()
+                };
+                ds.update(cue);
+            };
+            document.getElementById('q').onclick = function () {
+                // modify interval and data
+                let key = "jalla";
+                let itv = new Interval(5, 10)
+                let cue = {
+                    key: key,
+                    interval: itv,
+                    data: itv.toString()
+                };
+                ds.update(cue);
+            };
+            document.getElementById('r').onclick = function () {
+                // modify only data
+                let key = "jalla";
+                let cue = {
+                    key: key,
+                    data: "new data"
+                };
+                ds.update(cue);
+            };
+
+            document.getElementById('s').onclick = function () {
+                // delete
+                let key = "jalla";
+                let cue = {key: key};
+                ds.update(cue);
+            };
+
+            let value = document.getElementById("value");
+
+            to.on("timeupdate", function () {
+                let v = to.query();
+                let pos = v.position.toFixed(2)
+                let vel = v.velocity.toFixed(2)
+                let acc = v.acceleration.toFixed(2)
+                value.innerHTML = `P:${pos} V:${vel} A:${acc}`;
+            });
+
+            // Visualize list of timed data
+            ds.on("update", function (events){
+                // refresh visuals by redrawing the list entirely
+                let html = [...ds.values()]
+                    .sort(function(cue_a, cue_b) {
+                        return Interval.cmpLow(cue_a.interval, cue_b.interval);
+                    }).map(function(cue){
+                        if (s.has(cue.key)) {
+                            return `<div id=${cue.key} class="active">${cue.data}</div>`;
+                        } else {
+                            return `<div id=${cue.key}>${cue.data}</div>`;
+                        }
+                    }).join("\n");
+                document.getElementById("data").innerHTML = html;
+            });
+
+
+            // add change and remove handlers
+            s.on("remove", (item, eInfo) => {
+                let el = document.getElementById(`${item.key}`);
+                if (el) {
+                    el.classList.remove("active");
+                }
+                // console
+                let pos = to.pos.toFixed(2);
+                let itv_str = item.old.interval.toString();
+                console.log(`exit ${item.key} ${itv_str} ${pos}`);
+            });
+
+            s.on("change", (item, eInfo) => {
+                let el = document.getElementById(`${item.key}`);
+                if (el) {
+                    el.classList.add("active");
+                }
+
+                // console
+                let pos = to.pos.toFixed(2);
+                if (item.old) {
+                    // change
+                    console.log("change", item.key);
+                } else {
+                    // enter
+                    let itv_str = item.new.interval.toString();
+                    console.log(`enter ${item.key} ${itv_str} ${pos}`);
+                }
+            });
+        };
+
+
+        // Dataset
+        const ds = new timingsrc.Dataset();
+
+        // cues
+        let cues = get_cues();
+
+        ds.update(cues);
+
+        // initialise
+        const to = new timingsrc.TimingObject({range:[0,15]});
+        const s = new timingsrc.Sequencer(ds, to);
+
+        run();
+    </script>
+
+    <style type="text/css">
+        .active {color:red}
+    </style>
+
+  </head>
+  <body>
+    <h1>Test Sequencer</h1>
+    <div id="value" style="font-weight:bold;"></div>
+    <p>
+        <button id="a">P=-1</button>
+        <button id="b">P=0</button>
+        <button id="c">P=1</button>
+        <button id="d">P.inc</button>
+        <button id="e">P.dec</button>
+    </p>
+    <p>
+        <button id="f">V=-1</button>
+        <button id="g">V=0</button>
+        <button id="h">V=1</button>
+        <button id="i">V.inc</button>
+        <button id="j">V.dec</button>
+    </p>
+    <p>
+        <button id="k">A=-1</button>
+        <button id="l">A=0</button>
+        <button id="m">A=1</button>
+        <button id="n">A.inc</button>
+        <button id="o">A.dec</button>
+    </p>
+    <h3>Update</h3>
+    <p>
+        <button id="p">Insert</button>
+        <button id="q">Modify Interval</button>
+        <button id="r">Modify Data</button>
+        <button id="s">Delete</button>
+    </p>
+    <h3>Timed Data</h3>
+    <p>Active cues in red color</p>
+    <p>
+      <div id="data"></div>
+    </p>
+
+  </body>
+</html>

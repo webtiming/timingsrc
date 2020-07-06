@@ -9,20 +9,40 @@ versions = ["v1", "v2", "v3"]
 
 def build(version):
     srcdir = os.path.join(".", version)
-    libdir = "docs/lib"
+    libdir = "dist"
 
     if version == "v3":
+
         entry_file = os.path.join(srcdir, "index.js")
         rollup_config = os.path.join(".", "rollup.config.js")
 
         # module export - unminified
         out = os.path.join(libdir, f'timingsrc-{version}.js')
-        args = ["rollup", "-m", "-f", "es", "-o", out, entry_file]
+        args = ["rollup", "-m", "-f", "iife", "--name", "TIMINGSRC", "-o", out, entry_file]
         print(" ".join(args))
         subprocess.call(args)
 
         # module export - minified
         out = os.path.join(libdir, f'timingsrc-min-{version}.js')
+        args = ["rollup",
+                "-f", "iife",
+                "--name", "TIMINGSRC",
+                "-m",
+                "--environment", "BUILD:production",
+                "-c", rollup_config,
+                "-o", out,
+                entry_file]
+        print(" ".join(args))
+        subprocess.call(args)
+
+        # module export - unminified
+        out = os.path.join(libdir, f'timingsrc-module-{version}.js')
+        args = ["rollup", "-m", "-f", "es", "-o", out, entry_file]
+        print(" ".join(args))
+        subprocess.call(args)
+
+        # module export - minified
+        out = os.path.join(libdir, f'timingsrc-module-min-{version}.js')
         args = ["rollup",
                 "-f", "es",
                 "-m",
