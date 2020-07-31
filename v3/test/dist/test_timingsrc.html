@@ -2,16 +2,11 @@
 <html>
   <head>
 
-    <script src="../../../dist/timingsrc-v3.js"></script>
-
-    <!--
-    <script src="../../../dist/timingsrc-min-v3.js"></script>
-    -->
-
     <!--  main -->
-    <script type="text/javascript">
+    <script type="module">
 
-        let timingsrc = TIMINGSRC;
+        import * as timingsrc from '../../../dist/timingsrc-v3.js';
+        //import * as timingsrc from '../../../dist/timingsrc-min-v3.js';
 
         window.timingsrc = timingsrc;
 
@@ -215,10 +210,7 @@
         const to = new timingsrc.TimingObject({range:[0,15]});
         const s = new timingsrc.Sequencer(ds, to);
 
-
-        if (document.readyState === "complete") run();
-        else window.onload = run;
-
+        run();
     </script>
 
     <style type="text/css">
