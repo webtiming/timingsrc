@@ -36,7 +36,7 @@ const EVENTMAP_THRESHOLD = 5000;
 const ACTIVECUES_THRESHOLD = 5000;
 
 
-class SingleSequencer extends BaseSequencer {
+class PointModeSequencer extends BaseSequencer {
 
     constructor (dataset, to) {
 
@@ -299,5 +299,5 @@ class SingleSequencer extends BaseSequencer {
     };
 }
 
-export default SingleSequencer;
+export default PointModeSequencer;
 

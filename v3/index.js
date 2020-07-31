@@ -37,18 +37,18 @@ export {default as TimeshiftConverter} from './timingobject/timeshiftconverter.j
 
 // sequencing
 export {default as Dataset} from './sequencing/dataset.js';
-import {default as SingleSequencer} from './sequencing/singlesequencer.js';
-import {default as DoubleSequencer} from './sequencing/doublesequencer.js';
+import {default as PointModeSequencer} from './sequencing/pointsequencer.js';
+import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.js';
 
 
 /*
-    Common constructor SingeSequencer and DoubleSequencer
+    Common constructor PointModeSequencer and IntervalModeSequencer
 */
 export function Sequencer(axis, toA, toB) {
     if (toB === undefined) {
-        return new SingleSequencer(axis, toA);
+        return new PointModeSequencer(axis, toA);
     } else {
-        return new DoubleSequencer(axis, toA, toB);
+        return new IntervalModeSequencer(axis, toA, toB);
     }
 };
 

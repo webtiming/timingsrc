@@ -48,7 +48,7 @@ function movement_direction (now_vector_A, now_vector_B) {
 }
 
 
-class DoubleSequencer extends BaseSequencer {
+class IntervalModeSequencer extends BaseSequencer {
 
     constructor (dataset, toA, toB) {
 
@@ -69,7 +69,6 @@ class DoubleSequencer extends BaseSequencer {
         this._schedA_cb = this._schedA.add_callback(sched_cb);
         this._schedB = new Schedule(this._ds, toB);
         this._schedB_cb = this._schedB.add_callback(sched_cb);
-
     }
 
 
@@ -393,5 +392,5 @@ class DoubleSequencer extends BaseSequencer {
     }
 }
 
-export default DoubleSequencer;
+export default IntervalModeSequencer;
 
