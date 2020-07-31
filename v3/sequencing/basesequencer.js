@@ -20,7 +20,7 @@
 
 import {map_intersect, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
-import eventify from '../util/eventify.js';
+import CueCollection from './cuecollection.js';
 import Dataset from './dataset.js';
 
 
@@ -165,32 +165,19 @@ function sort_events (events, direction=0) {
     It implements common logic related to Dataset, events and activeCues.
 */
 
-class BaseSequencer {
+class BaseSequencer extends CueCollection {
 
     static Active = Active;
     static ActiveMap = ActiveMap;
     static sort_events = sort_events;
 
     constructor (dataset) {
-
-        // ActiveCues
-        this._activeCues = new Map(); // (key -> cue)
+        super();
 
         // Dataset
         this._ds = dataset;
         let cb = this._onDatasetCallback.bind(this)
         this._ds_cb = this._ds.add_callback(cb);
-
-        // Change event
-        eventify.eventifyInstance(this);
-        this.eventifyDefine("update", {init:true});
-        this.eventifyDefine("change", {init:true});
-        this.eventifyDefine("remove", {init:false});
-    }
-
-
-    get_movement_direction() {
-        throw new Error("not implemented");
     }
 
 
@@ -199,49 +186,20 @@ class BaseSequencer {
     ***************************************************************/
 
     /*
-        Eventify: immediate events
+        Get the direction of movement
+        To be implemented by subclass
     */
-    eventifyInitEventArgs(name) {
-        if (name == "update" || name == "change") {
-            let events = [...this._activeCues.values()].map(cue => {
-                return {key:cue.key, new:cue, old:undefined};
-            });
-            sort_events(events, this.get_movement_direction());
-            return (name == "update") ? [events] : events;
-        }
+    _movementDirection() {
+        throw new Error("not implemented");
     }
 
 
     /*
-        Event Notification
-
+        event order based on movement direction
     */
-    _notifyEvents(events) {
-        // event notification
-        if (events.length == 0) {
-            return;
-        }
-        const has_update_subs = this.eventifySubscriptions("update").length > 0;
-        const has_remove_subs = this.eventifySubscriptions("remove").length > 0;
-        const has_change_subs = this.eventifySubscriptions("change").length > 0;
-        // update
-        if (has_update_subs) {
-            this.eventifyTrigger("update", events);
-        }
-        // change, remove
-        if (has_remove_subs || has_change_subs) {
-            for (let item of events) {
-                if (item.new == undefined && item.old != undefined) {
-                    if (has_remove_subs) {
-                        this.eventifyTrigger("remove", item);
-                    }
-                } else {
-                    if (has_change_subs) {
-                        this.eventifyTrigger("change", item);
-                    }
-                }
-            }
-        }
+    _sortEvents(events) {
+        sort_events(events, this._movementDirection());
+        return events;
     }
 
 
@@ -263,14 +221,14 @@ class BaseSequencer {
         const enterEvents = [];
         const changeEvents = [];
         const exitEvents = [];
-        const first = this._activeCues.size == 0;
+        const first = this._cueMap.size == 0;
         let is_active, should_be_active, _item;
         for (let item of eventMap.values()) {
             if (isNoop(item.delta)) {
                 continue;
             }
             // exit, change, enter events
-            is_active = (first) ? false : this._activeCues.has(item.key);
+            is_active = (first) ? false : this._cueMap.has(item.key);
             should_be_active = false;
             if (item.new != undefined) {
                 if (item.new.interval.match(interval)) {
@@ -311,7 +269,7 @@ class BaseSequencer {
 
         let changeEvents = [];
         let exitEvents = [];
-        let first = (this._activeCues.size == 0);
+        let first = (this._cueMap.size == 0);
         if (!first){
 
             /*
@@ -319,7 +277,7 @@ class BaseSequencer {
 
                 change cues - cues which are modified, yet remain active cues
             */
-            let remainCues = map_intersect(this._activeCues, _activeCues);
+            let remainCues = map_intersect(this._cueMap, _activeCues);
             if (remainCues.size > 0) {
                 /*
                     Two approaches
@@ -350,7 +308,7 @@ class BaseSequencer {
                 Exit Events
                 exit cues were in old active cues - but not in new
             */
-            let exitCues = map_difference(this._activeCues, _activeCues);
+            let exitCues = map_difference(this._cueMap, _activeCues);
             exitEvents = [...exitCues.values()]
                 .map(cue => {
                     return {key:cue.key, new:undefined, old:cue};
@@ -365,7 +323,7 @@ class BaseSequencer {
         if (first) {
             enterCues = _activeCues
         } else {
-            enterCues = map_difference(_activeCues, this._activeCues);
+            enterCues = map_difference(_activeCues, this._cueMap);
         }
         let enterEvents = [...enterCues.values()]
             .map(cue => {
@@ -374,33 +332,6 @@ class BaseSequencer {
 
         return [exitEvents, changeEvents, enterEvents];
     }
-
-
-    /***************************************************************
-     MAP ACCESSORS
-    ***************************************************************/
-
-    has(key) {
-        return this._activeCues.has(key);
-    };
-
-    get(key) {
-        return this._activeCues.get(key);
-    };
-
-    keys() {
-        return this._activeCues.keys();
-    };
-
-    values() {
-        return this._activeCues.values();
-    };
-
-    entries() {
-        return this._activeCues.entries();
-    }
 }
-
-eventify.eventifyPrototype(BaseSequencer.prototype);
 
 export default BaseSequencer;

@@ -10,10 +10,10 @@
 
 
         function make_random_floats (size, options) {
-          options = options || {};
-          scale = options['scale'] || 1;
-          offset = options['offset'] || 0;
-          return Array.from({length: size}, () => Math.random() * scale + offset);
+            options = options || {};
+            let scale = options['scale'] || 1;
+            let offset = options['offset'] || 0;
+            return Array.from({length: size}, () => Math.random() * scale + offset);
         };
 
 
@@ -151,7 +151,7 @@
 
 
             // add change handler
-            s.on("update", function(events) {
+            s.on("batch", function(events) {
                 console.log("sequencer change", events.length);
             });
         };

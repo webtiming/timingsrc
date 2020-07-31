@@ -53,7 +53,10 @@ class SingleSequencer extends BaseSequencer {
     }
 
 
-    get_movement_direction() {
+    /*
+        Implement movement direction from single timing object
+    */
+    _movementDirection() {
         const now = this._to.clock.now();
         return motionutils.calculateDirection(this._to.vector, now);
     }
@@ -120,7 +123,7 @@ class SingleSequencer extends BaseSequencer {
             // choose approach to get events
             let get_events = this._events_from_dataset_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
-                if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
+                if (this._cueMap.size < ACTIVECUES_THRESHOLD) {
                     get_events = this._events_from_dataset_lookup.bind(this);
                 }
             }
@@ -130,10 +133,10 @@ class SingleSequencer extends BaseSequencer {
 
             // update activeCues
             exit.forEach(item => {
-                this._activeCues.delete(item.key);
+                this._cueMap.delete(item.key);
             });
             enter.forEach(item => {
-                this._activeCues.set(item.key, item.new);
+                this._cueMap.set(item.key, item.new);
             });
 
             // notifications
@@ -207,11 +210,11 @@ class SingleSequencer extends BaseSequencer {
                 return [cue.key, cue];
             }));
             // exit cues - in old activeCues but not in new activeCues
-            let exitCues = map_difference(this._activeCues, activeCues);
+            let exitCues = map_difference(this._cueMap, activeCues);
             // enter cues - not in old activeCues but in new activeCues
-            let enterCues = map_difference(activeCues, this._activeCues);
+            let enterCues = map_difference(activeCues, this._cueMap);
             // update active cues
-            this._activeCues = activeCues;
+            this._cueMap = activeCues;
             // make events
             for (let cue of exitCues.values()) {
                 events.push({key:cue.key, new:undefined, old:cue});
@@ -247,7 +250,7 @@ class SingleSequencer extends BaseSequencer {
         const events = [];
         endpointItems.forEach(function (item) {
             let cue = item.cue;
-            let has_cue = this._activeCues.has(cue.key);
+            let has_cue = this._cueMap.has(cue.key);
             let [value, right, closed, singular] = item.endpoint;
 
             /*
@@ -266,7 +269,7 @@ class SingleSequencer extends BaseSequencer {
                 if (has_cue) {
                     // exit
                     events.push({key:cue.key, new:undefined, old:cue});
-                    this._activeCues.delete(cue.key);
+                    this._cueMap.delete(cue.key);
                 } else {
                     // enter
                     events.push({key:cue.key, new:cue, old:undefined});
@@ -278,13 +281,13 @@ class SingleSequencer extends BaseSequencer {
                 if (!has_cue) {
                     // enter
                     events.push({key:cue.key, new:cue, old:undefined});
-                    this._activeCues.set(cue.key, cue);
+                    this._cueMap.set(cue.key, cue);
                 }
             } else if (action_code == Active.EXIT) {
                 if (has_cue) {
                     // exit
                     events.push({key:cue.key, new:undefined, old:cue});
-                    this._activeCues.delete(cue.key);
+                    this._cueMap.delete(cue.key);
                 }
             }
         }, this);

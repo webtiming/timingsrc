@@ -24,6 +24,7 @@ import endpoint from '../util/endpoint.js';
 import Interval from '../util/interval.js';
 import eventify from '../util/eventify.js';
 import BinarySearch from '../util/binarysearch.js';
+import CueCollection from './cuecollection.js';
 
 const Relation = Interval.Relation;
 
@@ -202,18 +203,14 @@ function sort_cues (cues, direction=0) {
       based on cue interval length, for efficient lookup
 */
 
-class Dataset {
+class Dataset extends CueCollection {
 
     static sort_cues = sort_cues;
     static Delta = Delta;
     static cue_delta = cue_delta;
 
     constructor() {
-        /*
-            efficient lookup of cues by key
-            key -> cue
-        */
-        this._cueMap = new Map();
+        super();
 
         /*
             Initialise set of CueBuckets
@@ -227,71 +224,7 @@ class Dataset {
 
         // Inline update callbacks
         this._update_callbacks = [];
-
-        // Change event
-        eventify.eventifyInstance(this);
-        this.eventifyDefine("update", {init:true});
-        this.eventifyDefine("change", {init:true});
-        this.eventifyDefine("remove", {init:false});
     };
-
-
-    /*
-        SIZE
-        Number of cues managed by dataset
-    */
-    get size () {
-        return this._cueMap.size;
-    }
-
-
-    /***************************************************************
-        EVENTIFY
-
-        Immediate events
-    */
-
-    eventifyInitEventArgs = function (name) {
-        if (name == "update" || name == "change") {
-            let events = [...this.values()].map(cue => {
-                return {key:cue.key, new:cue, old:undefined};
-            });
-            return (name == "update") ? [events] : events;
-        }
-    };
-
-
-    /*
-        Event Notification
-
-    */
-    _notifyEvents(events) {
-        // event notification
-        if (events.length == 0) {
-            return;
-        }
-        const has_update_subs = this.eventifySubscriptions("update").length > 0;
-        const has_remove_subs = this.eventifySubscriptions("remove").length > 0;
-        const has_change_subs = this.eventifySubscriptions("change").length > 0;
-        // update
-        if (has_update_subs) {
-            this.eventifyTrigger("update", events);
-        }
-        // change, remove
-        if (has_remove_subs || has_change_subs) {
-            for (let item of events) {
-                if (item.new == undefined) {
-                    if (has_remove_subs && item.old != undefined) {
-                        this.eventifyTrigger("remove", item);
-                    }
-                } else {
-                    if (has_change_subs) {
-                        this.eventifyTrigger("change", item);
-                    }
-                }
-            }
-        }
-    }
 
 
     /***************************************************************
@@ -798,31 +731,6 @@ class Dataset {
 
 
     /*
-        Map accessors
-    */
-
-    has(key) {
-        return this._cueMap.has(key);
-    };
-
-    get(key) {
-        return this._cueMap.get(key);
-    };
-
-    keys() {
-        return this._cueMap.keys();
-    };
-
-    values() {
-        return this._cueMap.values();
-    };
-
-    entries() {
-        return this._cueMap.entries();
-    }
-
-
-    /*
         utility
     */
     integrity() {
@@ -858,10 +766,6 @@ class Dataset {
     };
 
 }
-
-eventify.eventifyPrototype(Dataset.prototype);
-
-
 
 
 /*

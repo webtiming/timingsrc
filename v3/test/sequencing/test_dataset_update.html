@@ -725,7 +725,7 @@
           }
 
           // events event for the entire batch
-          ds.on("update", function (eItems) {
+          ds.on("batch", function (eItems) {
             assertTrue(eItems.length == cues.length);
             flag = true;
           });

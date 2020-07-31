@@ -148,7 +148,7 @@
 
 
             // Visualize list of timed data
-            ds.on("update", function (events){
+            ds.on("batch", function (events){
                 // refresh visuals by redrawing the list entirely
                 let html = [...ds.values()]
                     .sort(function(cue_a, cue_b) {

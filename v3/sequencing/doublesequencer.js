@@ -77,7 +77,12 @@ class DoubleSequencer extends BaseSequencer {
         return (this._toA_ready && this._toB_ready);
     }
 
-    get_movement_direction() {
+
+    /*
+        Implement movement direction from two timing objects
+    */
+
+    _movementDirection() {
         const now = this._toA.clock.now();
         const now_vector_A = motionutils.calculateVector(this._toA.vector, now);
         const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
@@ -117,7 +122,7 @@ class DoubleSequencer extends BaseSequencer {
             // choose approach to get events
             let get_events = this._events_from_dataset_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
-                if (this._activeCues.size < ACTIVECUES_THRESHOLD) {
+                if (this._cueMap.size < ACTIVECUES_THRESHOLD) {
                     get_events = this._events_from_dataset_lookup.bind(this);
                 }
             }
@@ -127,10 +132,10 @@ class DoubleSequencer extends BaseSequencer {
 
             // update activeCues
             exit.forEach(item => {
-                this._activeCues.delete(item.key);
+                this._cueMap.delete(item.key);
             });
             enter.forEach(item => {
-                this._activeCues.set(item.key, item.new);
+                this._cueMap.set(item.key, item.new);
             });
 
             // notifications
@@ -247,11 +252,11 @@ class DoubleSequencer extends BaseSequencer {
                 return [cue.key, cue];
             }));
             // exit cues - in old activeCues but not in new activeCues
-            let exitCues = map_difference(this._activeCues, activeCues);
+            let exitCues = map_difference(this._cueMap, activeCues);
             // enter cues - not in old activeCues but in new activeCues
-            let enterCues = map_difference(activeCues, this._activeCues);
+            let enterCues = map_difference(activeCues, this._cueMap);
             // update active cues
-            this._activeCues = activeCues;
+            this._cueMap = activeCues;
             // make events
             for (let cue of exitCues.values()) {
                 events.push({key:cue.key, new:undefined, old:cue});
@@ -335,7 +340,7 @@ class DoubleSequencer extends BaseSequencer {
                 state of cue
             */
             let cue = item.cue;
-            let has_cue = this._activeCues.has(cue.key);
+            let has_cue = this._cueMap.has(cue.key);
 
             // filter action code
             if (action_code == Active.ENTER_EXIT) {
@@ -373,11 +378,11 @@ class DoubleSequencer extends BaseSequencer {
             if (action_code == Active.ENTER) {
                 // enter
                 events.push({key:cue.key, new:cue, old:undefined});
-                this._activeCues.set(cue.key, cue);
+                this._cueMap.set(cue.key, cue);
             } else if (action_code == Active.EXIT) {
                 // exit
                 events.push({key:cue.key, new:undefined, old:cue});
-                this._activeCues.delete(cue.key);
+                this._cueMap.delete(cue.key);
             }
         }, this);
 
