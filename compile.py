@@ -9,7 +9,7 @@ versions = ["v1", "v2", "v3"]
 
 def build(version):
     srcdir = os.path.join(".", version)
-    libdir = "dist"
+    libdir = "docs/lib"
 
     if version == "v3":
 
