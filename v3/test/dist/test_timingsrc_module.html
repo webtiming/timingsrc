@@ -5,8 +5,8 @@
     <!--  main -->
     <script type="module">
 
-        import * as timingsrc from '../../../dist/timingsrc-module-v3.js';
-        //import * as timingsrc from '../../../dist/timingsrc-module-min-v3.js';
+        import * as timingsrc from '../../../dist/timingsrc-v3.js';
+        //import * as timingsrc from '../../../dist/timingsrc-min-v3.js';
 
         window.timingsrc = timingsrc;
 
@@ -150,7 +150,7 @@
             });
 
             // Visualize list of timed data
-            ds.on("update", function (events){
+            ds.on("batch", function (events){
                 // refresh visuals by redrawing the list entirely
                 let html = [...ds.values()]
                     .sort(function(cue_a, cue_b) {

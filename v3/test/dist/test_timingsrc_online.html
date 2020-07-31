@@ -3,7 +3,7 @@
   <head>
     <script type="module">
 
-        import * as timingsrc from "https://webtiming.github.io/timingsrc/lib/timingsrc-module-v3.js";
+        import * as timingsrc from "https://webtiming.github.io/timingsrc/lib/timingsrc-v3.js";
         window.timingsrc = timingsrc;
 
         const Interval = timingsrc.Interval;
@@ -146,7 +146,7 @@
             });
 
             // Visualize list of timed data
-            ds.on("update", function (events){
+            ds.on("batch", function (events){
                 // refresh visuals by redrawing the list entirely
                 let html = [...ds.values()]
                     .sort(function(cue_a, cue_b) {
