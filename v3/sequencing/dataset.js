@@ -485,6 +485,10 @@ class Dataset extends ObservableMap {
         let equals = options.equals;
         let chaining = options.chaining;
 
+        if (current_cue === cue) {
+            throw Error("illegal cue arg: same object as current cue");
+        }
+
         // check for equality
         let delta = cue_delta(current_cue, cue, equals);
 
