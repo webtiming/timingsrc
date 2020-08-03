@@ -4512,6 +4512,10 @@ class Dataset extends ObservableMap {
         let equals = options.equals;
         let chaining = options.chaining;
 
+        if (current_cue === cue) {
+            throw Error("illegal cue arg: same object as current cue");
+        }
+
         // check for equality
         let delta = cue_delta(current_cue, cue, equals);
 
@@ -5712,6 +5716,23 @@ function sort_items (items, direction=0) {
 }
 
 
+function cues_cmp_forwards (cue_a, cue_b) {
+    return Interval.cmpLow(cue_a.interval, cue_b.interval);
+}
+
+function cues_cmp_backwards (cue_a, cue_b) {
+    return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
+}
+
+function sort_cues$1 (cues, direction=0) {
+    if (direction >= 0) {
+        cues.sort(cues_cmp_forwards);
+    } else {
+        cues.sort(cues_cmp_backwards);
+    }
+}
+
+
 /*******************************************************************
  BASE SEQUENCER
 *******************************************************************/
@@ -5756,6 +5777,11 @@ class BaseSequencer extends ObservableMap {
     _sortItems(items) {
         sort_items(items, this._movementDirection());
         return items;
+    }
+
+    sortCues(cues) {
+        sort_cues$1(cues, this._movementDirection());
+        return cues;
     }
 
 
