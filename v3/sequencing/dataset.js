@@ -24,7 +24,7 @@ import endpoint from '../util/endpoint.js';
 import Interval from '../util/interval.js';
 import eventify from '../util/eventify.js';
 import BinarySearch from '../util/binarysearch.js';
-import CueCollection from './cuecollection.js';
+import ObservableMap from '../util/observablemap.js';
 
 const Relation = Interval.Relation;
 
@@ -203,7 +203,7 @@ function sort_cues (cues, direction=0) {
       based on cue interval length, for efficient lookup
 */
 
-class Dataset extends CueCollection {
+class Dataset extends ObservableMap {
 
     static sort_cues = sort_cues;
     static Delta = Delta;
@@ -344,7 +344,7 @@ class Dataset extends CueCollection {
         const batchMap = new Map();
         let current_cue;
         let has_interval, has_data;
-        let init = this._cueMap.size == 0;
+        let init = this._map.size == 0;
         // options
         options = options || {};
         // check is false by default
@@ -388,7 +388,7 @@ class Dataset extends CueCollection {
                 - includeds preservation of values from current cue
             *******************************************************/
 
-            current_cue = (init) ? undefined : this._cueMap.get(cue.key);
+            current_cue = (init) ? undefined : this._map.get(cue.key);
             if (current_cue == undefined) {
                 // make sure properties are defined
                 if (!has_interval) {
@@ -415,7 +415,7 @@ class Dataset extends CueCollection {
 
             /*******************************************************
                 update cue
-                - update cueMap
+                - update _map
                 - update cueBuckets
                 - create batchMap
             *******************************************************/
@@ -433,7 +433,7 @@ class Dataset extends CueCollection {
             let relevance = {low: Infinity, high: -Infinity};
 
             // create list of events and remove delta property
-            let events = [...batchMap.values()].map(item => {
+            let items = [...batchMap.values()].map(item => {
                 if (item.new && item.new.interval) {
                     relevance.low = endpoint.min(relevance.low, item.new.interval.endpointLow);
                     relevance.high = endpoint.max(relevance.high, item.new.interval.endpointHigh);
@@ -445,7 +445,7 @@ class Dataset extends CueCollection {
                 return {key:item.key, new:item.new, old:item.old};
             });
             // event notification
-            this._notifyEvents(events);
+            this._notifyEvents(items);
 
             // create relevance Interval
             let relevanceInterval = undefined;
@@ -454,12 +454,12 @@ class Dataset extends CueCollection {
             }
 
             /*
-                notify sequencer last so that change events
+                notify sequencer last so that change event
                 from the dataset will be applied before change
                 events from sequencers.
             */
             this._notify_callbacks(batchMap, relevanceInterval);
-            return events;
+            return items;
         }
         return [];
     };
@@ -471,7 +471,7 @@ class Dataset extends CueCollection {
 
         update operation for a single cue
 
-        - update cueMap
+        - update _map
         - generate entry for batchMap
         - update CueBucket
     ***************************************************************/
@@ -499,19 +499,19 @@ class Dataset extends CueCollection {
         }
 
         /***********************************************************
-            update cueMap and batchMap
+            update _map and batchMap
         ***********************************************************/
 
         if (current_cue == undefined) {
-            // INSERT - add cue object to cueMap
+            // INSERT - add cue object to _map
             old_cue = undefined;
             new_cue = cue;
-            this._cueMap.set(cue.key, new_cue);
+            this._map.set(cue.key, new_cue);
         } else if (cue.interval == undefined && cue.data == undefined) {
-            // DELETE - remove cue object from cueMap
+            // DELETE - remove cue object from _map
             old_cue = current_cue;
             new_cue = undefined;
-            this._cueMap.delete(cue.key);
+            this._map.delete(cue.key);
         } else {
             // REPLACE
             // in-place modification of current cue
@@ -567,7 +567,7 @@ class Dataset extends CueCollection {
         ***********************************************************/
 
         if (delta.interval == Delta.NOOP) {
-            // data changes are reflected in cueMap changes,
+            // data changes are reflected in _map changes,
             // since data changes are made in-place, these
             // changes will be visible in cues registered in
             // CueBuckets
@@ -696,18 +696,18 @@ class Dataset extends CueCollection {
     */
     lookup_delete(interval, mask) {
         const cues = this._call_buckets("lookup_delete", interval, mask);
-        // remove from cueMap and make events
-        const events = [];
+        // remove from _map and make event items
+        const items = [];
         let cue;
         for (let i=0; i<cues.length; i++) {
             cue = cues[i];
-            this._cueMap.delete(cue.key);
+            this._map.delete(cue.key);
             // check for equality
-            events.push({key:cue.key, new: undefined, old: cue});
+            items.push({key:cue.key, new: undefined, old: cue});
         }
         // event notification
-        this._notifyEvents(events);
-        return events;
+        this._notifyEvents(items);
+        return items;
     };
 
     /*
@@ -716,17 +716,17 @@ class Dataset extends CueCollection {
     clear() {
         // clear cue Buckets
         this._call_buckets("clear");
-        // clear cueMap
-        let cueMap = this._cueMap;
-        this._cueMap = new Map();
+        // clear _map
+        let _map = this._map;
+        this._map = new Map();
         // create change events for all cues
-        const events = [];
-        for (let cue of cueMap.values()) {
-            events.push({key: cue.key, new: undefined, old: cue});
+        const items = [];
+        for (let cue of _map.values()) {
+            items.push({key: cue.key, new: undefined, old: cue});
         }
         // event notification
-        this._notifyEvents(events);
-        return events;
+        this._notifyEvents(items);
+        return items;
     };
 
 
@@ -748,14 +748,14 @@ class Dataset extends CueCollection {
         // remove point duplicates if any
         points = [...new Set(points)];
 
-        if (cues.length != this._cueMap.size) {
-            throw new Error("inconsistent cue count cueMap and aggregate cueBuckets " + cues-this._cueMap.size);
+        if (cues.length != this._map.size) {
+            throw new Error("inconsistent cue count _map and aggregate cueBuckets " + cues-this._map.size);
         }
 
         // check that cues are the same
         for (let cue of cues.values()) {
-            if (!this._cueMap.has(cue.key)) {
-                throw new Error("inconsistent cues cueMap and aggregate cueBuckets");
+            if (!this._map.has(cue.key)) {
+                throw new Error("inconsistent cues _map and aggregate cueBuckets");
             }
         }
 

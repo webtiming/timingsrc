@@ -20,7 +20,7 @@
 
 import {map_intersect, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
-import CueCollection from './cuecollection.js';
+import ObservableMap from '../util/observablemap.js';
 import Dataset from './dataset.js';
 
 
@@ -132,26 +132,26 @@ const ActiveMap = new Map([
 
 
 /*******************************************************************
- EVENT ORDERING SORTING
+ EVENT ITEM ORDERING SORTING
 *******************************************************************/
 
-function event_cmp_forwards (event_a, event_b) {
-    let itv_a = (event_a.new) ? event_a.new.interval : event_a.old.interval;
-    let itv_b = (event_b.new) ? event_b.new.interval : event_b.old.interval;
+function item_cmp_forwards (item_a, item_b) {
+    let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
+    let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
     return Interval.cmpLow(itv_a, itv_b);
 }
 
-function event_cmp_backwards (event_a, event_b) {
-    let itv_a = (event_a.new) ? event_a.new.interval : event_a.old.interval;
-    let itv_b = (event_b.new) ? event_b.new.interval : event_b.old.interval;
+function item_cmp_backwards (item_a, item_b) {
+    let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
+    let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
     return -1 * Interval.cmpHigh(itv_a, itv_b);
 }
 
-function sort_events (events, direction=0) {
+function sort_items (items, direction=0) {
     if (direction >= 0) {
-        events.sort(event_cmp_forwards);
+        items.sort(item_cmp_forwards);
     } else {
-        events.sort(event_cmp_backwards);
+        items.sort(item_cmp_backwards);
     }
 }
 
@@ -165,11 +165,11 @@ function sort_events (events, direction=0) {
     It implements common logic related to Dataset, events and activeCues.
 */
 
-class BaseSequencer extends CueCollection {
+class BaseSequencer extends ObservableMap {
 
     static Active = Active;
     static ActiveMap = ActiveMap;
-    static sort_events = sort_events;
+    static sort_items = sort_items;
 
     constructor (dataset) {
         super();
@@ -197,9 +197,9 @@ class BaseSequencer extends CueCollection {
     /*
         event order based on movement direction
     */
-    _sortEvents(events) {
-        sort_events(events, this._movementDirection());
-        return events;
+    _sortItems(items) {
+        sort_items(items, this._movementDirection());
+        return items;
     }
 
 
@@ -217,18 +217,18 @@ class BaseSequencer extends CueCollection {
         make exit, change and enter events
         - based on eventMap
     */
-    _events_from_dataset_events(eventMap, interval) {
+    _items_from_dataset_events(eventMap, interval) {
         const enterEvents = [];
         const changeEvents = [];
         const exitEvents = [];
-        const first = this._cueMap.size == 0;
+        const first = this._map.size == 0;
         let is_active, should_be_active, _item;
         for (let item of eventMap.values()) {
             if (isNoop(item.delta)) {
                 continue;
             }
             // exit, change, enter events
-            is_active = (first) ? false : this._cueMap.has(item.key);
+            is_active = (first) ? false : this._map.has(item.key);
             should_be_active = false;
             if (item.new != undefined) {
                 if (item.new.interval.match(interval)) {
@@ -256,7 +256,7 @@ class BaseSequencer extends CueCollection {
         make exit, change and enter events
         - based on dataset.lookup
     */
-    _events_from_dataset_lookup(eventMap, interval) {
+    _items_from_dataset_lookup(eventMap, interval) {
 
         /*
             Active cues
@@ -269,7 +269,7 @@ class BaseSequencer extends CueCollection {
 
         let changeEvents = [];
         let exitEvents = [];
-        let first = (this._cueMap.size == 0);
+        let first = (this._map.size == 0);
         if (!first){
 
             /*
@@ -277,7 +277,7 @@ class BaseSequencer extends CueCollection {
 
                 change cues - cues which are modified, yet remain active cues
             */
-            let remainCues = map_intersect(this._cueMap, _activeCues);
+            let remainCues = map_intersect(this._map, _activeCues);
             if (remainCues.size > 0) {
                 /*
                     Two approaches
@@ -308,7 +308,7 @@ class BaseSequencer extends CueCollection {
                 Exit Events
                 exit cues were in old active cues - but not in new
             */
-            let exitCues = map_difference(this._cueMap, _activeCues);
+            let exitCues = map_difference(this._map, _activeCues);
             exitEvents = [...exitCues.values()]
                 .map(cue => {
                     return {key:cue.key, new:undefined, old:cue};
@@ -323,7 +323,7 @@ class BaseSequencer extends CueCollection {
         if (first) {
             enterCues = _activeCues
         } else {
-            enterCues = map_difference(_activeCues, this._cueMap);
+            enterCues = map_difference(_activeCues, this._map);
         }
         let enterEvents = [...enterCues.values()]
             .map(cue => {
