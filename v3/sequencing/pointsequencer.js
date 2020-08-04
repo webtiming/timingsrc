@@ -121,33 +121,33 @@ class PointModeSequencer extends BaseSequencer {
             // some events relevant for activeIntervale
 
             // choose approach to get events
-            let get_events = this._events_from_dataset_events.bind(this);
+            let get_items = this._items_from_dataset_events.bind(this);
             if (EVENTMAP_THRESHOLD < eventMap.size) {
-                if (this._cueMap.size < ACTIVECUES_THRESHOLD) {
-                    get_events = this._events_from_dataset_lookup.bind(this);
+                if (this._map.size < ACTIVECUES_THRESHOLD) {
+                    get_items = this._items_from_dataset_lookup.bind(this);
                 }
             }
 
-            // get events
-            const [exit, change, enter] = get_events(eventMap, activeInterval);
+            // get items
+            const [exit, change, enter] = get_items(eventMap, activeInterval);
 
             // update activeCues
             exit.forEach(item => {
-                this._cueMap.delete(item.key);
+                this._map.delete(item.key);
             });
             enter.forEach(item => {
-                this._cueMap.set(item.key, item.new);
+                this._map.set(item.key, item.new);
             });
 
             // notifications
-            const events = array_concat([exit, change, enter], {copy:true, order:true});
+            const items = array_concat([exit, change, enter], {copy:true, order:true});
 
-            // sort events according to general movement direction
+            // sort event items according to general movement direction
             let direction = motionutils.calculateDirection(now_vector);
-            BaseSequencer.sort_events(events, direction);
+            BaseSequencer.sort_items(items, direction);
 
             // event notification
-            this._notifyEvents(events);
+            this._notifyEvents(items);
         }
 
         /*
@@ -172,7 +172,6 @@ class PointModeSequencer extends BaseSequencer {
     ***************************************************************/
 
     _onTimingCallback (eArg) {
-        const events = [];
         /*
             If update is the initial vector from the timing object,
             we set current time as the official time for the update.
@@ -200,6 +199,7 @@ class PointModeSequencer extends BaseSequencer {
             or if the motion stopped without jumping (pause or halt at range
             restriction)
         */
+        const items = [];
         if (delta.posDelta == PosDelta.CHANGE || delta.moveDelta == MoveDelta.STOP) {
             // make position interval
             let low = new_vector.position;
@@ -210,25 +210,25 @@ class PointModeSequencer extends BaseSequencer {
                 return [cue.key, cue];
             }));
             // exit cues - in old activeCues but not in new activeCues
-            let exitCues = map_difference(this._cueMap, activeCues);
+            let exitCues = map_difference(this._map, activeCues);
             // enter cues - not in old activeCues but in new activeCues
-            let enterCues = map_difference(activeCues, this._cueMap);
+            let enterCues = map_difference(activeCues, this._map);
             // update active cues
-            this._cueMap = activeCues;
-            // make events
+            this._map = activeCues;
+            // make event items
             for (let cue of exitCues.values()) {
-                events.push({key:cue.key, new:undefined, old:cue});
+                items.push({key:cue.key, new:undefined, old:cue});
             }
             for (let cue of enterCues.values()) {
-                events.push({key:cue.key, new:cue, old:undefined});
+                items.push({key:cue.key, new:cue, old:undefined});
             }
 
-            // sort events according to general movement direction
+            // sort event items according to general movement direction
             let direction = motionutils.calculateDirection(new_vector);
-            BaseSequencer.sort_events(events, direction);
+            BaseSequencer.sort_items(items, direction);
 
             // event notification
-            this._notifyEvents(events);
+            this._notifyEvents(items);
         }
 
         /*
@@ -247,10 +247,10 @@ class PointModeSequencer extends BaseSequencer {
             return;
         }
 
-        const events = [];
+        const items = [];
         endpointItems.forEach(function (item) {
             let cue = item.cue;
-            let has_cue = this._cueMap.has(cue.key);
+            let has_cue = this._map.has(cue.key);
             let [value, right, closed, singular] = item.endpoint;
 
             /*
@@ -268,34 +268,34 @@ class PointModeSequencer extends BaseSequencer {
             if (action_code == Active.ENTER_EXIT) {
                 if (has_cue) {
                     // exit
-                    events.push({key:cue.key, new:undefined, old:cue});
-                    this._cueMap.delete(cue.key);
+                    items.push({key:cue.key, new:undefined, old:cue});
+                    this._map.delete(cue.key);
                 } else {
                     // enter
-                    events.push({key:cue.key, new:cue, old:undefined});
+                    items.push({key:cue.key, new:cue, old:undefined});
                     // exit
-                    events.push({key:cue.key, new:undefined, old:cue});
+                    items.push({key:cue.key, new:undefined, old:cue});
                     // no need to both add and remove from activeCues
                 }
             } else if (action_code == Active.ENTER) {
                 if (!has_cue) {
                     // enter
-                    events.push({key:cue.key, new:cue, old:undefined});
-                    this._cueMap.set(cue.key, cue);
+                    items.push({key:cue.key, new:cue, old:undefined});
+                    this._map.set(cue.key, cue);
                 }
             } else if (action_code == Active.EXIT) {
                 if (has_cue) {
                     // exit
-                    events.push({key:cue.key, new:undefined, old:cue});
-                    this._cueMap.delete(cue.key);
+                    items.push({key:cue.key, new:undefined, old:cue});
+                    this._map.delete(cue.key);
                 }
             }
         }, this);
 
-        // Events already sorted
+        // Event items already sorted
 
         // event notification
-        this._notifyEvents(events);
+        this._notifyEvents(items);
     };
 }
 

@@ -18,22 +18,22 @@
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import eventify from '../util/eventify.js';
+import eventify from './eventify.js';
 
 /*******************************************************************
- CUE COLLECTION
+ BASE OBSERVABLE MAP
 *******************************************************************/
 
 /*
-    This is an abstract class for cue collection
+    This is a base class for observable map
 */
 
-class CueCollection {
+class ObservableMap {
 
     constructor () {
 
-        // CueMap
-        this._cueMap = new Map(); // (key -> cue)
+        // Internal Map
+        this._map = new Map(); // (key -> item)
 
         // Events
         eventify.eventifyInstance(this);
@@ -47,10 +47,10 @@ class CueCollection {
     ***************************************************************/
 
     /*
-        event ordering
+        item ordering
     */
-    _sortEvents(events) {
-        return events;
+    _sortItems(items) {
+        return items;
     }
 
     /*
@@ -58,20 +58,20 @@ class CueCollection {
     */
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
-            let events = [...this._cueMap.values()].map(cue => {
-                return {key:cue.key, new:cue, old:undefined};
+            let items = [...this._map.entries()].map(([key, item]) => {
+                return {key:key, new:item, old:undefined};
             });
-            events = this._sortEvents(events);
-            return (name == "batch") ? [events] : events;
+            items = this._sortItems(items);
+            return (name == "batch") ? [items] : items;
         }
     }
 
     /*
         Event Notification
     */
-    _notifyEvents(events) {
+    _notifyEvents(items) {
         // event notification
-        if (events.length == 0) {
+        if (items.length == 0) {
             return;
         }
         const has_update_subs = this.eventifySubscriptions("batch").length > 0;
@@ -79,11 +79,11 @@ class CueCollection {
         const has_change_subs = this.eventifySubscriptions("change").length > 0;
         // update
         if (has_update_subs) {
-            this.eventifyTrigger("batch", events);
+            this.eventifyTrigger("batch", items);
         }
         // change, remove
         if (has_remove_subs || has_change_subs) {
-            for (let item of events) {
+            for (let item of items) {
                 if (item.new == undefined && item.old != undefined) {
                     if (has_remove_subs) {
                         this.eventifyTrigger("remove", item);
@@ -103,30 +103,30 @@ class CueCollection {
     ***************************************************************/
 
     get size () {
-        return this._cueMap.size;
+        return this._map.size;
     }
 
     has(key) {
-        return this._cueMap.has(key);
+        return this._map.has(key);
     };
 
     get(key) {
-        return this._cueMap.get(key);
+        return this._map.get(key);
     };
 
     keys() {
-        return this._cueMap.keys();
+        return this._map.keys();
     };
 
     values() {
-        return this._cueMap.values();
+        return this._map.values();
     };
 
     entries() {
-        return this._cueMap.entries();
+        return this._map.entries();
     }
 }
 
-eventify.eventifyPrototype(CueCollection.prototype);
+eventify.eventifyPrototype(ObservableMap.prototype);
 
-export default CueCollection;
+export default ObservableMap;
