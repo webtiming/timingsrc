@@ -156,14 +156,6 @@ class Interval {
 		return compare(this, other) == Relation.EQUALS;
 	}
 
-	covered (other) {
-		return compare(this, other) == Relation.COVERED;
-	}
-
-	covers (other) {
-		return compare(this, other) == Relation.COVERS;
-	}
-
 	/*
 		default mode - all except outside
 		2+4+8+16+32 = 62
