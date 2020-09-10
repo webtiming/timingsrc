@@ -4970,6 +4970,9 @@ class CueBucket {
     */
 
     lookup_endpoints(interval) {
+        if (this._pointMap.size == 0) {
+            return [];
+        }
         const broader_interval = new Interval(interval.low, interval.high, true, true);
         const points = this._pointIndex.lookup(broader_interval);
         const result = [];
@@ -5020,6 +5023,9 @@ class CueBucket {
     */
 
     _lookup_cues(interval) {
+        if (this._pointMap.size == 0) {
+            return [];
+        }
         const broader_interval = new Interval(interval.low, interval.high, true, true);
         const points = this._pointIndex.lookup(broader_interval);
         const len = points.length;
@@ -5060,6 +5066,10 @@ class CueBucket {
 
 
     lookup(interval, mask=Interval.Match.COVERS) {
+
+        if (this._pointMap.size == 0) {
+            return [];
+        }
 
         let cues = [];
 
@@ -5105,8 +5115,13 @@ class CueBucket {
             have to choose one.
         */
         if (mask & Relation$1.COVERS) {
+
+
             let low = interval.high - this._maxLength;
             let high = interval.low;
+            // protect against float rounding effects creating
+            // high < low by a very small margin
+            [low, high] = [Math.min(low, high), Math.max(low, high)];
             let left_interval = new Interval(low, high, true, true);
             this._lookup_cues(left_interval)
                 .forEach(function(cue){
