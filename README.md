@@ -19,7 +19,7 @@ This implements the [Timing Object Draft Spec](https://github.com/webtiming/timi
 This implements tools for timed sequencing based on the Timing Object.
 
 
-### Compile
+### Compile Timingsrc v3
 
 
 Install Node and NPM (Node Packet Manager)
@@ -76,8 +76,6 @@ npm install rollup --save-dev
 npm install terser --save-dev
 npm install rollup-plugin-terser --save-dev
 ```
-
-
 
 Install node modules
 - rollup

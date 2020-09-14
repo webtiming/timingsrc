@@ -22,9 +22,12 @@
 // utils
 export * as utils from './util/utils.js';
 export * as motionutils from './util/motionutils.js';
+export {default as BinarySearch} from './util/binarysearch.js';
 export {default as endpoint} from './util/endpoint.js';
 export {default as eventify} from './util/eventify.js';
 export {default as Interval} from './util/interval.js';
+export {default as ObservableMap} from './util/observablemap.js';
+export {default as Timeout} from './util/timeout.js';
 
 // timing object
 export {default as TimingObject} from './timingobject/timingobject.js';
