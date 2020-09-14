@@ -226,7 +226,6 @@ class Dataset extends ObservableMap {
         this._update_callbacks = [];
     };
 
-
     /***************************************************************
         UPDATE CALLBACKS
     */
@@ -253,6 +252,18 @@ class Dataset extends ObservableMap {
             handle.handler(batchMap, relevanceInterval);
         });
     };
+
+    /***************************************************************
+     MAP METHODS
+    */
+
+    set (key, value) {
+        throw new Error("not implemented");
+    }
+
+    delete (key) {
+        throw new Error("not implemented");
+    }
 
 
     /***************************************************************
