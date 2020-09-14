@@ -84,29 +84,23 @@ Install node modules
 - terser
 - rollup-plugin-terser
 
-
-```sh
-./compile.py v3
-```
-
-
-
-### Build and Deploy v3
-
-Build puts new files in *docs/lib*
+### Build v3
 
 ```sh
 python3 compile.py v3
 ```
+Build puts new files in *docs/lib*
 
-Commit all files
+After build - commit all build files
 
 ```sh
 git commit -am "build"
 git push
 ```
 
-Switch to master and merge in new build files
+### Deploy
+
+Switch to master and merge in new build files from develop.
 
 ```sh
 git checkout master
