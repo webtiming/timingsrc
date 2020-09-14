@@ -86,3 +86,30 @@ Install node modules
 ```sh
 ./compile.py v3
 ```
+
+
+
+### Build and Deploy v3
+
+Build puts new files in *docs/lib*
+
+```sh
+python3 compile.py v3
+```
+
+Commit all files
+
+```sh
+git commit -am "build"
+git push
+```
+
+Switch to master and merge in new build files
+
+```sh
+git checkout master
+git merge develop
+git push
+git checkout develop
+```
+
