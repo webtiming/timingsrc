@@ -99,7 +99,7 @@ class ObservableMap {
 
 
     /***************************************************************
-     MAP ACCESSORS
+     ACCESSORS
     ***************************************************************/
 
     get size () {
@@ -125,6 +125,47 @@ class ObservableMap {
     entries() {
         return this._map.entries();
     }
+
+
+    /***************************************************************
+     MODIFY
+    ***************************************************************/
+
+    set(key, value) {
+        let old = undefined;
+        if (this._map.has(key)) {
+            old = this._map.get(key);
+        }
+        this._map.set(key, value);
+        this._notifyEvents([{key: key, new:value, old: old}]);
+        return this;
+    }
+
+    delete(key) {
+        let result = false;
+        let old = undefined;
+        if (this._map.has(key)) {
+            old = this._map.get(key);
+            this._map.delete(key);
+            result = true;
+        }
+        this._notifyEvents([{key: key, new:undefined, old: old}]);
+        return result;
+    }
+
+    clear() {
+        // clear _map
+        let _map = this._map;
+        this._map = new Map();
+        // create change events for all cues
+        const items = [];
+        for (let [key, val] of _map.entries()) {
+            items.push({key: key, new: undefined, old: val});
+        }
+        // event notification
+        this._notifyEvents(items);
+    }
+
 }
 
 eventify.eventifyPrototype(ObservableMap.prototype);
