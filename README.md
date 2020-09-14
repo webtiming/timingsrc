@@ -61,7 +61,13 @@ sudo apt-get install -y nodejs
 - Script Minifier: [Terser](https://terser.org/)
 - Bundler Plugin: [Rollup-Plugin-Terser](https://www.npmjs.com/package/rollup-plugin-terser)
 
-Install from package.json
+
+Rollup needs global install so that it may be used by the compile.py script.
+
+```sh
+npm install --global rollup
+```
+Then go ahead and install the rest from package.json
 
 ```sh
 cd ~/timingsrc
@@ -71,16 +77,10 @@ npm install
 Alternatively, install manually
 
 ```sh
-# Install Rollup
-npm install rollup --save-dev
-npm install terser --save-dev
-npm install rollup-plugin-terser --save-dev
+sudo npm install --global rollup
+npm install terser
+npm install rollup-plugin-terser
 ```
-
-Install node modules
-- rollup
-- terser
-- rollup-plugin-terser
 
 ### Build v3
 
