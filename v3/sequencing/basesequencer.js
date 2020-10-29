@@ -237,6 +237,9 @@ class BaseSequencer extends ObservableMap {
         throw new Error("not implemented");
     }
 
+    clear (key) {
+        throw new Error("not implemented");
+    }
 
     /***************************************************************
      DATASET
