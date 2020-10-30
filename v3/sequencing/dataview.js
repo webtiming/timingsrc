@@ -18,28 +18,6 @@ import ObservableMap from '../util/observablemap.js';
  * 
  */
 
-function filter_items(items, filter) {
-    let _items = [];
-    for (let item in items) {
-        if (item.new != undefined && item.old != undefined) {
-            /* 
-                use filter function to check relevance of both old and new
-                consider change of unrelevant cue into relevant cue.
-                old cue would be non-relevant, new cue would be relevant
-                Since old cue was not part of the dataview before, it needs
-                to be removed from the item - effectively turning the change
-                operation into an add operation. 
-            */
-            let _old = (item.old != undefined && filter(item.old)) ? item.old : undefined;
-            let _new = (item.new != undefined && filter(item.new)) ? item.new : undefined;
-            if (_old == undefined && _new == undefined) {
-                continue;
-            }
-            _items.push({id:item.id, new: _new, old: _old});
-        }
-    }
-    return _items;
-}
 
 
 /*
@@ -55,8 +33,8 @@ class Dataview extends ObservableMap {
 
     constructor(dataset, options={}) {
         super();
-        this._filter = options.filter;
-        this._convert = options.convert;
+        this._key_filter = options.key_filter;
+        this._data_filter = options.data_filter;
 
         if (this._filter == undefined && this._convert == undefined) {
             throw new Error("Dataview pointless with no filter and no convert");
@@ -67,6 +45,45 @@ class Dataview extends ObservableMap {
         // Source Dataset
         this._src_ds = dataset;
         this._src_ds.on("batch", this.onBatchCallback.bind(this));
+    }
+
+    _cue_filter(cue) {
+        let keep = true; 
+        if (this._key_filter) {
+            keep = keep && this._key_filter(cue.key);
+        }
+        if (this._data_filter) {
+            keep = keep && this._data_filter(cue.data);
+        }
+        return keep;
+    }
+
+    /**
+     * Filter (and modify) event items based on key_filter and data_filter
+     */
+
+    _items_filter(items) {
+        let _items = [];
+        for (let item in items) {
+            if (item.new == undefined && item.old == undefined) {
+                continue;
+            }
+            /* 
+            use cue filter function to check relevance of both old and new
+            consider change of unrelevant cue into relevant cue.
+            old cue would be non-relevant, new cue would be relevant
+            Since old cue was not part of the dataview before, it needs
+            to be removed from the item - effectively turning the change
+            operation into an add operation. 
+            */
+            let _old = (item.old != undefined && this._cue_filter(item.old)) ? item.old : undefined;
+            let _new = (item.new != undefined && this._cue_filter(item.new)) ? item.new : undefined;
+            if (_old == undefined && _new == undefined) {
+                continue;
+            }
+            _items.push({id:item.id, new: _new, old: _old});
+        }
+        return _items;
     }
 
     /**
@@ -81,15 +98,26 @@ class Dataview extends ObservableMap {
         let items = super.eventifyInitEventArgs(name);
         if (name == "batch") {
             items = items[0];
-            return [filter_items(items[0], this._filter)];
+            return [this._items_filter(items[0])];
         } else if (name == "change") {
-            return filter_items(items, this._filter);
+            return this._items_filter(items);
         }        
     }
 
     // forward events
     onBatchCallback(items) {
-        items = filter_items(items, this._filter);
+        let items = this._items_filter(items);
+        // update size
+        for (let item of items) {
+            if (item.new != undefined && item.old == undefined) {
+                // add
+                this._size += 1;
+            } else if (item.new == undefined && item.old != undefined) {
+                // remove
+                this._size -= 1;
+            }           
+        }
+        // forward as events
         super._notifyEvents(items);
     }
 
@@ -107,7 +135,7 @@ class Dataview extends ObservableMap {
 
     get(key) {
         let cue = super.get(key);
-        return (cue != undefined) ? this.filter(cue) : cue;
+        return (cue != undefined) ? this._cue_filter(cue) : cue;
     };
 
     keys() {
@@ -118,13 +146,13 @@ class Dataview extends ObservableMap {
 
     values() {
         return [...super.values()].filter((cue) => {
-            return this.filter(cue);
+            return this._cue_filter(cue);
         })
     };
 
     entries() {
         return [...super.entries()].filter(([key, cue]) => {
-            return this.filter(cue);
+            return this._cue_filter(cue);
         });
     }
 
