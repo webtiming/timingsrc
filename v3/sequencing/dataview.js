@@ -35,11 +35,6 @@ class Dataview extends ObservableMap {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
-
-        if (this._filter == undefined && this._convert == undefined) {
-            throw new Error("Dataview pointless with no filter and no convert");
-        }
-
         this._size = 0;
 
         // Source Dataset
@@ -64,7 +59,7 @@ class Dataview extends ObservableMap {
 
     _items_filter(items) {
         let _items = [];
-        for (let item in items) {
+        for (let item of items) {
             if (item.new == undefined && item.old == undefined) {
                 continue;
             }
@@ -81,7 +76,7 @@ class Dataview extends ObservableMap {
             if (_old == undefined && _new == undefined) {
                 continue;
             }
-            _items.push({id:item.id, new: _new, old: _old});
+            _items.push({key:item.key, new: _new, old: _old});
         }
         return _items;
     }
@@ -96,6 +91,9 @@ class Dataview extends ObservableMap {
     // extend superclass
     eventifyInitEventArgs(name) {
         let items = super.eventifyInitEventArgs(name);
+        if (items.length == 0) {
+            return items;
+        }
         if (name == "batch") {
             items = items[0];
             return [this._items_filter(items[0])];
@@ -106,7 +104,7 @@ class Dataview extends ObservableMap {
 
     // forward events
     onBatchCallback(items) {
-        let items = this._items_filter(items);
+        items = this._items_filter(items);
         // update size
         for (let item of items) {
             if (item.new != undefined && item.old == undefined) {

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!--  main -->
+    <script type="module">
+
+        import {utils, Interval, Dataset} from '../../index.js';
+        import Dataview from '../../sequencing/dataview.js';
+        import DatasetViewer from '../../sequencing/datasetviewer.js';
+
+        // dataset
+        let ds = new Dataset();
+        let ds_elem = document.getElementById("dataset");
+        let ds_viewer = new DatasetViewer(ds, ds_elem);
+
+        // dataview
+        function keep_odd_keys(key) {
+            let [prefix, number] = key.split("-");
+            return parseInt(number)%2 == 1;
+        }
+
+        let dv = new Dataview(ds, {key_filter: keep_odd_keys});
+        let dv_elem = document.getElementById("dataview");
+        let dv_viewer = new DatasetViewer(dv, dv_elem);
+
+        let cues = [...Array(20).keys()].map((i) => {
+            return {
+                key: `key-${i}`,
+                interval: new Interval(i, i+1),
+                data: `data-${i}`
+            }
+        });
+        ds.update(cues);
+
+        window.ds = ds;
+        window.dv = dv;
+
+    </script>
+  </head>
+  <body>
+    <h1>Test Dataview</h1>
+    <h3>Dataset</h3>
+    <div id="dataset"></div>
+    <h3>Dataview</h3>
+    <div id="dataview"></div>
+  </body>
+</html>
