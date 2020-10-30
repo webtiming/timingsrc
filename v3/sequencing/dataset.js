@@ -22,7 +22,6 @@
 import * as utils from '../util/utils.js';
 import endpoint from '../util/endpoint.js';
 import Interval from '../util/interval.js';
-import eventify from '../util/eventify.js';
 import BinarySearch from '../util/binarysearch.js';
 import ObservableMap from '../util/observablemap.js';
 
@@ -212,6 +211,8 @@ class Dataset extends ObservableMap {
     constructor() {
         super();
 
+        this._map = new Map();
+
         /*
             Initialise set of CueBuckets
             Each CueBucket is responsible for cues of a certain length
@@ -225,6 +226,13 @@ class Dataset extends ObservableMap {
         // Inline update callbacks
         this._update_callbacks = [];
     };
+
+    /**
+     * ObservableMap needs access to map 
+     */
+    get datasource () {
+        return this._map;
+    }
 
     /***************************************************************
         UPDATE CALLBACKS

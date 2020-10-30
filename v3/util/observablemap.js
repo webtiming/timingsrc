@@ -32,14 +32,22 @@ class ObservableMap {
 
     constructor () {
 
-        // Internal Map
-        this._map = new Map(); // (key -> item)
-
         // Events
         eventify.eventifyInstance(this);
         this.eventifyDefine("batch", {init:true});
         this.eventifyDefine("change", {init:true});
         this.eventifyDefine("remove", {init:false});
+    }
+
+    /**
+     *  Abstract accessor to datasource backing implementation
+     *  of observable map. Typically this is an instance of Map() class.
+     * 
+     *  Must be implemented by subclass. 
+     */
+
+    get datasource () {
+        throw new Error("not implemented");
     }
 
     /***************************************************************
@@ -58,7 +66,7 @@ class ObservableMap {
     */
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
-            let items = [...this._map.entries()].map(([key, item]) => {
+            let items = [...this.datasource.entries()].map(([key, item]) => {
                 return {key:key, new:item, old:undefined};
             });
             items = this._sortItems(items);
@@ -103,27 +111,27 @@ class ObservableMap {
     ***************************************************************/
 
     get size () {
-        return this._map.size;
+        return this.datasource.size;
     }
 
     has(key) {
-        return this._map.has(key);
+        return this.datasource.has(key);
     };
 
     get(key) {
-        return this._map.get(key);
+        return this.datasource.get(key);
     };
 
     keys() {
-        return this._map.keys();
+        return this.datasource.keys();
     };
 
     values() {
-        return this._map.values();
+        return this.datasource.values();
     };
 
     entries() {
-        return this._map.entries();
+        return this.datasource.entries();
     }
 
 
@@ -133,10 +141,10 @@ class ObservableMap {
 
     set(key, value) {
         let old = undefined;
-        if (this._map.has(key)) {
-            old = this._map.get(key);
+        if (this.datasource.has(key)) {
+            old = this.datasource.get(key);
         }
-        this._map.set(key, value);
+        this.datasource.set(key, value);
         this._notifyEvents([{key: key, new:value, old: old}]);
         return this;
     }
@@ -144,9 +152,9 @@ class ObservableMap {
     delete(key) {
         let result = false;
         let old = undefined;
-        if (this._map.has(key)) {
-            old = this._map.get(key);
-            this._map.delete(key);
+        if (this.datasource.has(key)) {
+            old = this.datasource.get(key);
+            this.datasource.delete(key);
             result = true;
         }
         this._notifyEvents([{key: key, new:undefined, old: old}]);
@@ -154,14 +162,12 @@ class ObservableMap {
     }
 
     clear() {
-        // clear _map
-        let _map = this._map;
-        this._map = new Map();
         // create change events for all cues
-        const items = [];
-        for (let [key, val] of _map.entries()) {
-            items.push({key: key, new: undefined, old: val});
-        }
+        const items = [...this.datasource.entries()].map(([key, val]) => {
+            return {key: key, new: undefined, old: val};
+        })
+        // clear _map
+        this.datasource.clear();
         // event notification
         this._notifyEvents(items);
     }

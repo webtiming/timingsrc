@@ -191,12 +191,21 @@ class BaseSequencer extends ObservableMap {
     constructor (dataset) {
         super();
 
+        // Active cues
+        this._map = new Map();
+
         // Dataset
         this._ds = dataset;
         let cb = this._onDatasetCallback.bind(this)
         this._ds_cb = this._ds.add_callback(cb);
     }
 
+    /**
+     * ObservableMap needs access to map 
+     */
+    get datasource () {
+        return this._map;
+    }
 
     /***************************************************************
      EVENTS
