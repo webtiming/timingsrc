@@ -20,17 +20,14 @@
 
 import {array_concat, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
-import eventify from '../util/eventify.js';
 import * as motionutils from '../util/motionutils.js';
 import Schedule from './schedule.js';
 import BaseSequencer from './basesequencer.js';
-import dataset from './dataset.js';
 
 const PosDelta = motionutils.MotionDelta.PosDelta;
 const MoveDelta = motionutils.MotionDelta.MoveDelta;
 const Active = BaseSequencer.Active;
 const ActiveMap = BaseSequencer.ActiveMap;
-const Relation = Interval.Relation;
 
 const EVENTMAP_THRESHOLD = 5000;
 const ACTIVECUES_THRESHOLD = 5000;

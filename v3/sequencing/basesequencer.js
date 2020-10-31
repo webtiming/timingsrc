@@ -155,21 +155,12 @@ function sort_items (items, direction=0) {
     }
 }
 
-
 function cues_cmp_forwards (cue_a, cue_b) {
     return Interval.cmpLow(cue_a.interval, cue_b.interval);
 }
 
 function cues_cmp_backwards (cue_a, cue_b) {
     return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
-}
-
-function sort_cues (cues, direction=0) {
-    if (direction >= 0) {
-        cues.sort(cues_cmp_forwards);
-    } else {
-        cues.sort(cues_cmp_backwards);
-    }
 }
 
 
@@ -219,18 +210,20 @@ class BaseSequencer extends ObservableMap {
         throw new Error("not implemented");
     }
 
-
     /*
         event order based on movement direction
-    */
-    _sortItems(items) {
-        sort_items(items, this._movementDirection());
-        return items;
-    }
 
-    sortCues(cues) {
-        sort_cues(cues, this._movementDirection());
-        return cues;
+        Implement ObservableMap.cmpValue to define
+        the ordering of event items delivered by
+        eventifyInitArgs
+     */
+    cmpValue(cue_a, cue_b) {
+        let direction = this._movementDirection();
+        if (direction >= 0) {
+            return cues_cmp_forwards(cue_a, cue_b);
+        } else {
+            return cues_cmp_backwards(cue_a, cue_b);
+        }
     }
 
 

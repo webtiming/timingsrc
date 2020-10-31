@@ -5,7 +5,7 @@
     <!--  main -->
     <script type="module">
 
-        import {utils, Interval, Dataset} from '../../index.js';
+        import {Interval, Dataset} from '../../index.js';
         import Dataview from '../../sequencing/dataview.js';
         import DatasetViewer from '../../sequencing/datasetviewer.js';
 
@@ -20,7 +20,9 @@
             return parseInt(number)%2 == 1;
         }
 
-        let dv = new Dataview(ds, {key_filter: keep_odd_keys});
+        let itv = new Interval(7,13);
+        let options = {key_filter: keep_odd_keys};
+        let dv = new Dataview(ds, itv);
         let dv_elem = document.getElementById("dataview");
         let dv_viewer = new DatasetViewer(dv, dv_elem);
 

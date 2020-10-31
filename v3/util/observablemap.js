@@ -55,20 +55,36 @@ class ObservableMap {
     ***************************************************************/
 
     /*
-        item ordering
-    */
+        value ordering
+
+        if specific ordering is needed on initial events
+
+        subclass implements class method <cmpValue>
+        to be used with Array.sort(cmpValue)
+
+        cmpValue(value_a, value_b) {}
+
+    */   
     _sortItems(items) {
+        if (this.cmpValue) {
+            let self = this;
+            items.sort(function(item_a, item_b) {
+                return self.cmpValue(item_a.new, item_b.new)
+            });
+        }
         return items;
     }
+
 
     /*
         Eventify: immediate events
     */
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
-            let items = [...this.datasource.entries()].map(([key, item]) => {
-                return {key:key, new:item, old:undefined};
+            let items = [...this.datasource.entries()].map(([key, val]) => {
+                return {key:key, new:val, old:undefined};
             });
+            // sort items
             items = this._sortItems(items);
             return (name == "batch") ? [items] : items;
         }

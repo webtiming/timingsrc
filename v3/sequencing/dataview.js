@@ -31,10 +31,11 @@ import ObservableMap from '../util/observablemap.js';
 
 class Dataview extends ObservableMap {
 
-    constructor(dataset, options={}) {
+    constructor(dataset, interval, options={}) {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
+        this._interval = interval;
         this._size = 0;
 
         // Source Dataset
@@ -88,9 +89,41 @@ class Dataview extends ObservableMap {
         return this._src_ds;
     }
 
+    /*
+        override superclass implementation with
+    */
+    eventifyInitEventArgs(name) {
+        if (name == "batch" || name == "change") {
+            // find cues
+            let cues;
+            if (this._interval) {
+                cues = [...this.datasource.lookup(this._interval)];
+            } else {
+                cues = [...this.datasource.values()];
+            }
+            // filter
+            cues = cues.filter(this._cue_filter, this);
+            // make event items
+            let items = cues.map((cue) => {
+                return {key:cue.key, new:cue, old:undefined};
+            });
+            // sort
+            items = this._sortItems(items);
+            return (name == "batch") ? [items] : items;
+        }
+    }
+
+    /*
     // extend superclass
     eventifyInitEventArgs(name) {
+
         let items = super.eventifyInitEventArgs(name);
+        
+        if (name == "batch") {
+            console.log("initEvents", name, this);
+            console.log(items);
+        }
+
         if (items.length == 0) {
             return items;
         }
@@ -101,9 +134,12 @@ class Dataview extends ObservableMap {
             return this._items_filter(items);
         }        
     }
+    */
 
     // forward events
     onBatchCallback(items) {
+        console.log("batch", this);
+        console.log(items);
         items = this._items_filter(items);
         // update size
         for (let item of items) {
