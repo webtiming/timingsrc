@@ -20,9 +20,17 @@
             return parseInt(number)%2 == 1;
         }
 
+        function convert(data) {
+            return `prefix-${data}-postfix`;
+        }
+
+
         let itv = new Interval(7,13);
-        let options = {key_filter: keep_odd_keys};
-        let dv = new Dataview(ds, itv);
+        let options = {
+            key_filter: keep_odd_keys,
+            data_convert: convert
+        };
+        let dv = new Dataview(ds, itv, options);
         let dv_elem = document.getElementById("dataview");
         let dv_viewer = new DatasetViewer(dv, dv_elem);
 
