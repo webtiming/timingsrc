@@ -19,7 +19,7 @@ class DatasetViewer {
     }
 
     cue2string(cue) {
-        let itv = (cue.inteval) ? cue.interval.toString() : "undefined";
+        let itv = (cue.interval) ? cue.interval.toString() : "undefined";
         let data = JSON.stringify(cue.data); 
         return `${cue.key}, ${itv}, ${data}`;
     }

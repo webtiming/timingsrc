@@ -43,15 +43,30 @@ class Dataview extends ObservableMap {
         this._src_ds.on("batch", this.onBatchCallback.bind(this));
     }
 
-    _cue_filter(cue) {
-        let keep = true; 
+    /** 
+     * Evaluate if a single cue is relevant for the dataview
+    */
+
+    _cue_keep(cue) {
+        // check interval
+        if (this._interval) {
+            if (!this._interval.match(cue.interval)) {
+                return false;
+            }
+        }
+        // check key filter
         if (this._key_filter) {
-            keep = keep && this._key_filter(cue.key);
+            if (!this._key_filter(cue.key)) {
+                return false;
+            }
         }
+        // check data filter
         if (this._data_filter) {
-            keep = keep && this._data_filter(cue.data);
+            if (!this._data_filter(cue.data)) {
+                return false;
+            }
         }
-        return keep;
+        return true;
     }
 
     /**
@@ -72,8 +87,8 @@ class Dataview extends ObservableMap {
             to be removed from the item - effectively turning the change
             operation into an add operation. 
             */
-            let _old = (item.old != undefined && this._cue_filter(item.old)) ? item.old : undefined;
-            let _new = (item.new != undefined && this._cue_filter(item.new)) ? item.new : undefined;
+            let _old = (item.old != undefined && this._cue_keep(item.old)) ? item.old : undefined;
+            let _new = (item.new != undefined && this._cue_keep(item.new)) ? item.new : undefined;
             if (_old == undefined && _new == undefined) {
                 continue;
             }
@@ -102,7 +117,7 @@ class Dataview extends ObservableMap {
                 cues = [...this.datasource.values()];
             }
             // filter
-            cues = cues.filter(this._cue_filter, this);
+            cues = cues.filter(this._cue_keep, this);
             // make event items
             let items = cues.map((cue) => {
                 return {key:cue.key, new:cue, old:undefined};
@@ -114,32 +129,9 @@ class Dataview extends ObservableMap {
     }
 
     /*
-    // extend superclass
-    eventifyInitEventArgs(name) {
-
-        let items = super.eventifyInitEventArgs(name);
-        
-        if (name == "batch") {
-            console.log("initEvents", name, this);
-            console.log(items);
-        }
-
-        if (items.length == 0) {
-            return items;
-        }
-        if (name == "batch") {
-            items = items[0];
-            return [this._items_filter(items[0])];
-        } else if (name == "change") {
-            return this._items_filter(items);
-        }        
-    }
+        forward events
     */
-
-    // forward events
     onBatchCallback(items) {
-        console.log("batch", this);
-        console.log(items);
         items = this._items_filter(items);
         // update size
         for (let item of items) {
@@ -169,7 +161,9 @@ class Dataview extends ObservableMap {
 
     get(key) {
         let cue = super.get(key);
-        return (cue != undefined) ? this._cue_filter(cue) : cue;
+        if (cue != undefined && this._cue_keep(cue)) {
+            return cue;
+        }
     };
 
     keys() {
@@ -180,13 +174,13 @@ class Dataview extends ObservableMap {
 
     values() {
         return [...super.values()].filter((cue) => {
-            return this._cue_filter(cue);
+            return this._cue_keep(cue);
         })
     };
 
     entries() {
         return [...super.entries()].filter(([key, cue]) => {
-            return this._cue_filter(cue);
+            return this._cue_keep(cue);
         });
     }
 
