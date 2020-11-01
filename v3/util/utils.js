@@ -35,6 +35,7 @@ export function isIn(as) {
     };
 }
 
+
 /*
     get the difference of two Maps
     key in a but not in b
@@ -65,6 +66,58 @@ export const map_intersect = function (a, b) {
         return b.has(key)
     }));
 };
+
+/*
+
+NOTE : just as good to do 
+    let merged = new Map(...map0, ...map1, ...)
+
+effective concatenation of multiple arrays
+- order - if true preserves ordering of input arrays
+        - else sorts input arrays (longest first)
+        - default false is more effective
+- copy  - if true leaves input arrays unchanged, copy
+          values into new array
+        - if false copies remainder arrays into the first
+          array
+        - default false is more effective
+*/
+export function map_merge(array_of_maps, options={}) {
+    let {copy=false, order=false} = options;
+    // check input
+    if (array_of_maps instanceof Map) {
+        return array_of_maps;
+    }
+    if (!Array.isArray(array_of_maps)) {
+        throw new Error("illegal input array_of_maps", array_of_maps);
+    }
+    if (array_of_maps.length == 0) {
+        throw new Error("empty array_of_maps");
+    }
+    let is_maps = array_of_maps.map((o) => {
+        return (o instanceof Map);
+    });
+    if (!is_maps.all(true)) {
+        throw new Error("some object in array_of_maps is not a Map", array_of_maps);
+    }
+    // total size
+    let total_size = array_of_maps.reduce((acc, cur) => acc + cur.size, 0);
+    // order
+    if (!order) {
+        // sort array_of_maps according to size - longest first
+        array_of_maps.sort((a, b) => b.size - a.size);
+    }
+    // copy
+    let first = (copy) ? new Map() : array_of_maps.shift();
+    // fill up first Map with entries from other Maps
+    for (let m of array_of_maps) {
+        for (let [key, val] of m.entries()) {
+            first.set(key, val);
+        }
+    }
+    return first;
+}
+
 
 export function divmod (n, d) {
     let r = n % d;
@@ -123,6 +176,8 @@ export function array_concat(arrays, options = {}) {
     }
     return first;
 };
+
+
 
 /*
     default object equals
