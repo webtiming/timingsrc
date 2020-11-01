@@ -1,10 +1,11 @@
 import ObservableMap from '../util/observablemap.js';
+import {map_merge} from '../util/utils.js';
 
 /*
     Dataview provides read-only access to subset of a source Dataset
 
-    - <interval> filter in time domain, 
-        include only cues that match given interval (default mode 62)
+    - <intervals> list of intervals, 
+        include only cues that match at least one of given intervals (default mode 62)
 
     - <options>
         - <key_filter> : filter by cue key
@@ -29,12 +30,12 @@ import ObservableMap from '../util/observablemap.js';
 
 class Dataview extends ObservableMap {
 
-    constructor(dataset, interval, options={}) {
+    constructor(dataset, intervals, options={}) {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
         this._data_convert = options.data_convert;
-        this._interval = interval;
+        this._intervals = (Array.isArray(intervals)) ? intervals: [intervals];
         this._size = 0;
 
         // Source Dataset
@@ -51,14 +52,12 @@ class Dataview extends ObservableMap {
         if (cue == undefined) {
             return false;
         }
-        // check interval
-        if (this._interval) {
-            if (cue.interval == undefined) {
-                return false;
-            }
-            if (!this._interval.match(cue.interval)) {
-                return false;
-            }
+        // check if cue matches at least one interval
+        let matches = this._intervals.map((interval) => {
+                return cue.interval != undefined && interval.match(cue.interval);
+            });
+        if (!matches.some((flag) => flag == true )){
+            return false;
         }
         // check key filter
         if (this._key_filter) {
@@ -127,22 +126,40 @@ class Dataview extends ObservableMap {
         return this._src_ds;
     }
 
+
+    /*
+        find all cues which belong to dataview
+
+    */
+    _find_all_cues() {
+        /*
+            search multiple intervals
+            - use maps to avoid duplicate cues
+        */
+        if (this._intervals.length == 0) {
+            return [...this.datasource.values()];
+        } else {
+            let cueMaps = this._intervals.map((interval) => {
+                return new Map([...this.datasource.lookup(interval)].map((cue) => {
+                    return [cue.key, cue];
+                }));
+            });
+            // merge cueMaps
+            let cueMap = map_merge(cueMaps, {copy:false, order:false});
+            return [...cueMap.values()];
+        }
+    }
+
     /*
         override superclass implementation with
     */
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
             // find cues
-            let cues;
-            if (this._interval) {
-                cues = [...this.datasource.lookup(this._interval)];
-            } else {
-                cues = [...this.datasource.values()];
-            }
+            let cues = this._find_all_cues();
             // filter & convert
             cues = cues.filter(this._cue_keep, this)
                 .map(this._cue_convert, this);
-
             // make event items
             let items = cues.map((cue) => {
                 return {key:cue.key, new:cue, old:undefined};
@@ -190,7 +207,7 @@ class Dataview extends ObservableMap {
     get(key) {
         let cue = super.get(key);
         if (cue != undefined && this._cue_keep(cue)) {
-            return cue;
+            return this._cue_convert(cue);
         }
     };
 
@@ -201,16 +218,20 @@ class Dataview extends ObservableMap {
     };
 
     values() {
-        return [...super.values()].filter((cue) => {
-            return this._cue_keep(cue);
-        })
+        return [...super.values()]
+            .filter((cue) => {
+                return this._cue_keep(cue);
+            }, this)
+            .map((cue) => {
+                return this._cue_convert(cue);
+            }, this);
     };
 
     entries() {
-        return [...super.entries()].filter(([key, cue]) => {
-            return this._cue_keep(cue);
+        return this.values().map((cue) => {
+            return [cue.key, cue];
         });
-    }
+    };
 
 
     /***************************************************************

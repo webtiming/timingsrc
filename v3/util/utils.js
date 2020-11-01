@@ -97,18 +97,16 @@ export function map_merge(array_of_maps, options={}) {
     let is_maps = array_of_maps.map((o) => {
         return (o instanceof Map);
     });
-    if (!is_maps.all(true)) {
+    if (!is_maps.every((e) => e == true)) {
         throw new Error("some object in array_of_maps is not a Map", array_of_maps);
     }
-    // total size
-    let total_size = array_of_maps.reduce((acc, cur) => acc + cur.size, 0);
     // order
     if (!order) {
         // sort array_of_maps according to size - longest first
         array_of_maps.sort((a, b) => b.size - a.size);
     }
     // copy
-    let first = (copy) ? new Map() : array_of_maps.shift();
+    let first = (copy) ? new Map() : array_of_maps.shift(); 
     // fill up first Map with entries from other Maps
     for (let m of array_of_maps) {
         for (let [key, val] of m.entries()) {
