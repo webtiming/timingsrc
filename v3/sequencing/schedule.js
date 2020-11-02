@@ -35,7 +35,7 @@ class Schedule {
     // Default lookahead in seconds
     static LOOKAHEAD = 5
 
-    constructor(axis, to, options) {
+    constructor(dataset, to, options) {
         // timingobject
         this.to = to;
         // current timeout
@@ -46,8 +46,8 @@ class Schedule {
         this.timeInterval;
         // current position interval
         this.posInterval;
-        // axis
-        this.axis = axis;
+        // dataset
+        this.ds = dataset;
         // task queue
         this.queue = [];
         // callbacks
@@ -288,7 +288,7 @@ class Schedule {
         // advance schedule and load events if needed
         if (this.advance(now)) {
             // fetch cue endpoints for posInterval
-            let endpointItems = this.axis.lookup_endpoints(this.posInterval);
+            let endpointItems = this.ds.lookup_endpoints(this.posInterval);
             // load events and push on queue
             this.push(this.load(endpointItems));
             // process - possibly new due events
