@@ -1,5 +1,6 @@
 import ObservableMap from '../util/observablemap.js';
 import {map_merge} from '../util/utils.js';
+import Interval from '../util/interval.js';
 
 /*
     Dataview provides read-only access to subset of a source Dataset
@@ -128,26 +129,71 @@ class Dataview extends ObservableMap {
 
 
     /*
-        find all cues which belong to dataview
-
+        Find all cues covering at least one interval
+        - search all intervals
+        - remove duplicate cues        
     */
-    _find_all_cues() {
+    _find_cues(intervals) {
+        let cueMap_list = intervals.map((itv) => {
+                return new Map([...this.datasource.lookup(itv)].map((cue) => {
+                    return [cue.key, cue];
+                }));
+            });
+        // merge cueMap_list
+        let cueMap = map_merge(cueMap_list, {copy:false, order:false});
+        return [...cueMap.values()];
+    }
+
+
+
+    /***************************************************************
+     LOOKUP
+    ***************************************************************/
+
+    lookup(lookup_interval, mask) {
         /*
             search multiple intervals
             - use maps to avoid duplicate cues
         */
-        if (this._intervals.length == 0) {
-            return [...this.datasource.values()];
+        let cues;
+        let got_lookup_interval = (lookup_interval != undefined);
+
+        /*
+            check if filtering intervals match lookup interval
+
+            - merge filter intervals into a list of non-overlapping intervals
+            - use exact intersection of filter intervals with search interval
+        */
+        if (this._intervals.length > 0) {
+            // union filter intervals
+            let intervals = this._intervals;
+
+            if (got_lookup_interval) {
+                // intersect with lookup interval
+            }
+
+            // list of disjunct intervals
+            cues = this._find_cues(intervals);
+
+            // filter out those not fitting mask
+            if (mask != Interval.Match.COVERS) {
+
+            }
+
         } else {
-            let cueMaps = this._intervals.map((interval) => {
-                return new Map([...this.datasource.lookup(interval)].map((cue) => {
-                    return [cue.key, cue];
-                }));
-            });
-            // merge cueMaps
-            let cueMap = map_merge(cueMaps, {copy:false, order:false});
-            return [...cueMap.values()];
+            // no filter intervals
+            if (got_lookup_interval) {
+                // regular lookup
+                cues = this.datasource.lookup(interval, mask);
+            } else {
+                // return all cues, ignore mask
+                cues = [...this.datasource.values()];
+            }
         }
+
+        // filter & convert cues
+        return cues.filter(this._cue_keep, this)
+            .map(this._cue_convert, this);
     }
 
     /*
@@ -156,10 +202,7 @@ class Dataview extends ObservableMap {
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
             // find cues
-            let cues = this._find_all_cues();
-            // filter & convert
-            cues = cues.filter(this._cue_keep, this)
-                .map(this._cue_convert, this);
+            let cues = this.lookup();
             // make event items
             let items = cues.map((cue) => {
                 return {key:cue.key, new:cue, old:undefined};
@@ -191,6 +234,7 @@ class Dataview extends ObservableMap {
         // forward as events
         super._notifyEvents(items);
     }
+
 
     /***************************************************************
      ACCESSORS
