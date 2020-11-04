@@ -5,7 +5,7 @@
         <script async type="module">
 
             import endpoint from '../../util/endpoint.js';
-            import Interval from '..././util/interval.js';
+            import Interval from '../../util/interval.js';
 
             let itv;
             const Relation = Interval.Relation;
@@ -231,10 +231,43 @@
                 })
             }
 
+            function test_union() {
+
+                let intervals = [
+                    new Interval(1,6),
+                    new Interval(4,5),
+                    new Interval(2,3),
+                    new Interval(6,8)
+                ];
+
+                console.log("union");
+                let res = Interval.unionAll(intervals);
+                res.forEach((i) => {
+                    console.log(i.toString());
+                })
+            }
+
+            function test_intersect() {
+
+                console.log("intersect")
+
+                let intervals = [
+                    new Interval(1,4, true, true),
+                    new Interval(4,5),
+                ];
+
+                let res = Interval.intersectAll(intervals);
+                res.forEach((i) => {
+                    console.log(i.toString());
+                })
+            }
+
             var run = function () {
                 test_inside();
                 test_compare();
                 test_sort();
+                test_union();
+                test_intersect();
                 console.log("done");
             };
 

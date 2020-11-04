@@ -71,7 +71,6 @@ INTERVAL
 
 class Interval {
 
-
 	static fromEndpoints(endpointLow, endpointHigh) {
 		let [low, low_right, low_closed, low_singular] = endpointLow;
 		let [high, high_right, high_closed, high_singular] = endpointHigh;
@@ -83,6 +82,84 @@ class Interval {
 		}
 		return new Interval(low, high, low_closed, high_closed);
 	};
+
+	static intersect(a, b) {
+		let rel = compare(a, b);
+		if (rel == Relation.OUTSIDE_LEFT) {
+			return [];
+		} else if (rel == Relation.OVERLAP_LEFT) {
+			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+		} else if (rel == Relation.COVERS) {
+			return [b];
+		} else if (rel == Relation.EQUALS) {
+			return [a]; // or b
+		} else if (rel == Relation.COVERED) {
+			return [a];
+		} else if (rel == Relation.OVERLAP_RIGHT) {
+			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+		} else if (rel == Relation.OUTSIDE_RIGHT) {
+			return [];
+		}
+	}
+	
+	static union(a, b) {
+		let rel = compare(a, b);
+		if (rel == Relation.OUTSIDE_LEFT) {
+			// merge
+			// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
+			if (a.high == b.low) {
+				return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
+			} else {
+				return [a, b];
+			}
+		} else if (rel == Relation.OVERLAP_LEFT) {
+			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+		} else if (rel == Relation.COVERS) {
+			return [a];
+		} else if (rel == Relation.EQUALS) {
+			return [a]; // or b
+		} else if (rel == Relation.COVERED) {
+			return [b];
+		} else if (rel == Relation.OVERLAP_RIGHT) {
+			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+		} else if (rel == Relation.OUTSIDE_RIGHT) {
+			// merge
+			// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
+			if (a.high == b.low) {
+				return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
+			} else {
+				return [b, a];
+			}
+		}
+	}
+
+	static intersectAll(intervals) {
+		intervals.sort(Interval.cmpLow);
+		if (intervals.length <= 1) {
+			return intervals;
+		}
+		const result = [intervals.shift()];
+		while (intervals.length > 0) {
+			let prev = result.pop();
+			let next = intervals.shift()
+			result.push(...Interval.intersect(prev, next));
+		}
+		return result;
+	}
+
+	static unionAll(intervals) {
+		intervals.sort(Interval.cmpLow);
+		if (intervals.length <= 1) {
+			return intervals;
+		}
+		const result = [intervals.shift()];
+		while (intervals.length > 0) {
+			let prev = result.pop();
+			let next = intervals.shift()
+			result.push(...Interval.union(prev, next));
+		}
+		return result;
+	}
 
 
 	static Match = Object.freeze({
@@ -272,6 +349,11 @@ function _make_interval_cmp(low) {
 		return endpoint.cmp(e1, e2);
 	}
 }
+
+
+
+
+
 
 /*
 	Add static variables to Interval class.

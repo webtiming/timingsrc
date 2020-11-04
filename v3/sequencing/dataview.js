@@ -31,12 +31,12 @@ import Interval from '../util/interval.js';
 
 class Dataview extends ObservableMap {
 
-    constructor(dataset, intervals, options={}) {
+    constructor(dataset, interval, options={}) {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
         this._data_convert = options.data_convert;
-        this._intervals = (Array.isArray(intervals)) ? intervals: [intervals];
+        this._interval = interval;
         this._size = 0;
 
         // Source Dataset
@@ -53,12 +53,11 @@ class Dataview extends ObservableMap {
         if (cue == undefined) {
             return false;
         }
-        // check if cue matches at least one interval
-        let matches = this._intervals.map((interval) => {
-                return cue.interval != undefined && interval.match(cue.interval);
-            });
-        if (!matches.some((flag) => flag == true )){
-            return false;
+        // check if cue matches interval
+        if (this._interval) {
+            if (!this._interval.match(cue.interval)) {
+                return false;
+            }
         }
         // check key filter
         if (this._key_filter) {
@@ -150,47 +149,39 @@ class Dataview extends ObservableMap {
      LOOKUP
     ***************************************************************/
 
-    lookup(lookup_interval, mask) {
-        /*
-            search multiple intervals
-            - use maps to avoid duplicate cues
-        */
-        let cues;
-        let got_lookup_interval = (lookup_interval != undefined);
-
-        /*
-            check if filtering intervals match lookup interval
-
-            - merge filter intervals into a list of non-overlapping intervals
-            - use exact intersection of filter intervals with search interval
-        */
-        if (this._intervals.length > 0) {
-            // union filter intervals
-            let intervals = this._intervals;
-
-            if (got_lookup_interval) {
-                // intersect with lookup interval
-            }
-
-            // list of disjunct intervals
-            cues = this._find_cues(intervals);
-
-            // filter out those not fitting mask
-            if (mask != Interval.Match.COVERS) {
-
-            }
-
-        } else {
-            // no filter intervals
-            if (got_lookup_interval) {
-                // regular lookup
-                cues = this.datasource.lookup(interval, mask);
+    lookup(interval, mask) {
+       
+       if (this._interval) {
+           // dataview interval
+           if (interval) {
+               // lookup interval - find intersection
+               let intersects = Interval.intersect(interval, this._interval);
+               if (intersects.length == 0) {
+                   console.log(`warning - lookup interval ${interval.toString()} outside the dataview interval ${this._interval.toString()}`);
+                   return [];
+                } else {
+                    interval = intersects[0];
+                }
             } else {
-                // return all cues, ignore mask
-                cues = [...this.datasource.values()];
+                // no lookup interval - use dataview interval   
+                interval = this._interval;
+            }
+        } else {
+            // no dataview interval 
+            if (interval) {
+                // lookup interval - use as is
+            } else {
+                // no lookup interval - interval undefined
             }
         }
 
+        let cues;
+        if (interval) {
+            cues = this.datasource.lookup(interval, mask);
+        } else {
+            cues = [...this.datasource.values()];
+        }
+        
         // filter & convert cues
         return cues.filter(this._cue_keep, this)
             .map(this._cue_convert, this);
