@@ -31,19 +31,52 @@ import Interval from '../util/interval.js';
 
 class Dataview extends ObservableMap {
 
-    constructor(dataset, interval, options={}) {
+    constructor(dataset, options={}) {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
+        this._interval = options.interval_filter;
         this._data_convert = options.data_convert;
-        this._interval = interval;
         this._size = 0;
+
+        // Inline update callbacks
+        this._update_callbacks = [];
 
         // Source Dataset
         this._src_ds = dataset;
         let cb = this._onDatasetCallback.bind(this)
         this._src_ds_cb = this._src_ds.add_callback(cb);
     }
+
+   /***************************************************************
+        UPDATE CALLBACKS
+    */
+
+    add_callback (handler) {
+        let handle = {
+            handler: handler
+        }
+        this._update_callbacks.push(handle);
+        return handle;
+    };
+
+
+    del_callback (handle) {
+        let index = this._update_callbacks.indexof(handle);
+        if (index > -1) {
+            this._update_callbacks.splice(index, 1);
+        }
+    };
+
+
+    _notify_callbacks (batchMap, relevanceInterval) {
+        this._update_callbacks.forEach(function(handle) {
+            handle.handler(batchMap, relevanceInterval);
+        });
+    };
+
+
+
 
     /** 
      * Evaluate if a single cue is relevant for the dataview
@@ -149,9 +182,8 @@ class Dataview extends ObservableMap {
      LOOKUP
     ***************************************************************/
 
-    lookup(interval, mask) {
-       
-       if (this._interval) {
+    _check_interval(interval) {
+        if (this._interval) {
            // dataview interval
            if (interval) {
                // lookup interval - find intersection
@@ -166,25 +198,36 @@ class Dataview extends ObservableMap {
                 // no lookup interval - use dataview interval   
                 interval = this._interval;
             }
-        } else {
-            // no dataview interval 
-            if (interval) {
-                // lookup interval - use as is
-            } else {
-                // no lookup interval - interval undefined
-            }
         }
+        return interval;
+    }
 
+    lookup(interval, mask) {
+        let _interval = this._check_interval(interval);
         let cues;
-        if (interval) {
-            cues = this.datasource.lookup(interval, mask);
+        if (_interval) {
+            cues = this.datasource.lookup(_interval, mask);
         } else {
             cues = [...this.datasource.values()];
         }
-        
         // filter & convert cues
         return cues.filter(this._cue_keep, this)
             .map(this._cue_convert, this);
+    }
+
+    /***************************************************************
+     LOOKUP ENDPOINTS
+    ***************************************************************/
+
+    lookup_endpoints(interval) {
+        let _interval = this._check_interval(interval);
+        let items = this.datasource.lookup_endpoints(_interval);
+        // filter and convert
+        items.filter((item) => {
+            return this._cue_keep(item.cue);
+        }, this).map((item) => {
+            return {endpoint: item.endpoint, cue: this._cue_convert(item.cue)};
+        }, this);
     }
 
     /*
@@ -209,7 +252,7 @@ class Dataview extends ObservableMap {
 
         TODO - should be using the callback instead
     */
-    _onDatasetCallback(eventMap) {
+    _onDatasetCallback(eventMap, relevanceInterval) {
         let items = [...eventMap.values()];
         items = this._items_filter_convert(items);
         // update size
@@ -222,8 +265,17 @@ class Dataview extends ObservableMap {
                 this._size -= 1;
             }           
         }
+        
         // forward as events
         super._notifyEvents(items);
+        // forward as callbacks
+        let batchMap = new Map(items.map((item) => {
+            return [item.key, item];
+        }));
+        if (this._interval) {
+            relevanceInterval = Interval.intersect(this._inverval, relevanceInterval);
+        }
+        this._notify_callbacks(batchMap, relevanceInterval);
     }
 
 
