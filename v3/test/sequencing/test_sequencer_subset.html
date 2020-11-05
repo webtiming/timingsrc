@@ -5,7 +5,7 @@
     <script type="module">
 
         import * as timingsrc from '../../index.js';
-        import Dataview from '../../sequencing/dataview.js';
+        import Subset from '../../dataset/subset.js';
         const Interval = timingsrc.Interval;
 
         function get_cues_ordering() {
@@ -232,7 +232,7 @@
                 return key%2 == 1;
             }
         }
-        const dv = new Dataview(ds, options);
+        const dv = new Subset(ds, options);
         ds.update(get_cues());
         const to = new timingsrc.TimingObject({range:[0,15]});
         const s = new timingsrc.Sequencer(dv, to);

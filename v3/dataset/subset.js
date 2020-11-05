@@ -1,9 +1,29 @@
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 import ObservableMap from '../util/observablemap.js';
 import {array_concat, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 
 /*
-    Dataview provides read-only access to subset of a source Dataset
+    Subset provides read-only access to subset of a source Dataset
 
     - <options>
         - <interva>: if defined only include cues that match the interval
@@ -18,16 +38,13 @@ import Interval from '../util/interval.js';
             WARNING: it is possible to change the value
             in such a way that filtering appears incorrect
 
-    This dataview implementation is STATELESS
+    This subset implementation is STATELESS
     It does not manage its own state, only implements a
-    stateless wrapper around its source dataset.
-
-    NOTE: The stateless nature also means that it must remain static.
-    Intervals and filters can not be changed.
+    stateless frontend over its source dataset.
 
 */
 
-class Dataview extends ObservableMap {
+class Subset extends ObservableMap {
 
     constructor(dataset, options={}) {
         super();
@@ -154,7 +171,7 @@ class Dataview extends ObservableMap {
             use cue filter function to check relevance of both old and new
             consider change of unrelevant cue into relevant cue.
             old cue would be non-relevant, new cue would be relevant
-            Since old cue was not part of the dataview before, it needs
+            Since old cue was not part of the subset before, it needs
             to be removed from the item - effectively turning the change
             operation into an add operation. 
             */
@@ -179,18 +196,18 @@ class Dataview extends ObservableMap {
 
     _check_interval(interval) {
         if (this._interval) {
-           // dataview interval
+           // subset interval
            if (interval) {
                // lookup interval - find intersection
                let intersects = Interval.intersect(interval, this._interval);
                if (intersects.length == 0) {
-                   console.log(`warning - lookup interval ${interval.toString()} outside the dataview interval ${this._interval.toString()}`);
+                   console.log(`warning - lookup interval ${interval.toString()} outside the subset interval ${this._interval.toString()}`);
                    return [];
                 } else {
                     interval = intersects[0];
                 }
             } else {
-                // no lookup interval - use dataview interval   
+                // no lookup interval - use subset interval   
                 interval = this._interval;
             }
         }
@@ -389,4 +406,4 @@ class Dataview extends ObservableMap {
 }
 
 // module definition
-export default Dataview;
+export default Subset;

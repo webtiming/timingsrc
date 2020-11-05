@@ -19,6 +19,16 @@
 */
 
 
+export function random_string(length) {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    for(var i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
+
+
 /* Set Comparison */
 export function eqSet(as, bs) {
     return as.size === bs.size && all(isIn(bs), as);

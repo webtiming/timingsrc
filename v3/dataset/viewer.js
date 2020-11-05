@@ -1,19 +1,31 @@
-function randomString(length) {
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    for(var i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-}
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
 
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+import {random_string} from '../util/utils.js';
 
 class DatasetViewer {
 
     constructor(ds, elem) {
         this.ds = ds;
         this.elem = elem;
-        this.nonce = randomString(4);
+        this.nonce = random_string(4);
         this.ds.on("change", this.onchange.bind(this));
         this.ds.on("remove", this.onremove.bind(this));
     }

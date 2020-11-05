@@ -6,8 +6,8 @@
     <script type="module">
 
         import {Interval, Dataset} from '../../index.js';
-        import Dataview from '../../sequencing/dataview.js';
-        import DatasetViewer from '../../sequencing/datasetviewer.js';
+        import Subset from '../../dataset/subset.js';
+        import DatasetViewer from '../../dataset/viewer.js';
 
         // dataset
         let ds = new Dataset();
@@ -29,13 +29,11 @@
             new Interval(12, 17) 
         ]
 
-
-
         let options = {
             key_filter: keep_odd_keys,
             data_convert: convert
         };
-        let dv = new Dataview(ds, options);
+        let dv = new Subset(ds, options);
         let dv_elem = document.getElementById("dataview");
         let dv_viewer = new DatasetViewer(dv, dv_elem);
 

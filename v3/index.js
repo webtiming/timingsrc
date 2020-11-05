@@ -39,7 +39,9 @@ export {default as RangeConverter} from './timingobject/rangeconverter.js';
 export {default as TimeshiftConverter} from './timingobject/timeshiftconverter.js';
 
 // sequencing
-export {default as Dataset} from './sequencing/dataset.js';
+export {default as Dataset} from './dataset/dataset.js';
+export {default as Subset} from './dataset/subset.js';
+export {default as DatasetViewer} from './dataset/viewer.js';
 import {default as PointModeSequencer} from './sequencing/pointsequencer.js';
 import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.js';
 

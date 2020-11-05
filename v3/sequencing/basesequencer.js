@@ -21,7 +21,7 @@
 import {map_intersect, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 import ObservableMap from '../util/observablemap.js';
-import Dataset from './dataset.js';
+import Dataset from '../dataset/dataset.js';
 
 
 function isNoop(delta) {
