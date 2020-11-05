@@ -39,8 +39,8 @@ class Dataview extends ObservableMap {
         this._data_convert = options.data_convert;
         this._size = 0;
 
-        // Inline update callbacks
-        this._update_callbacks = [];
+        // Callbacks
+        this._callbacks = [];
 
         // Source Dataset
         this._src_ds = dataset;
@@ -56,26 +56,24 @@ class Dataview extends ObservableMap {
         let handle = {
             handler: handler
         }
-        this._update_callbacks.push(handle);
+        this._callbacks.push(handle);
         return handle;
     };
 
 
     del_callback (handle) {
-        let index = this._update_callbacks.indexof(handle);
+        let index = this._callbacks.indexof(handle);
         if (index > -1) {
-            this._update_callbacks.splice(index, 1);
+            this._callbacks.splice(index, 1);
         }
     };
 
 
     _notify_callbacks (batchMap, relevanceInterval) {
-        this._update_callbacks.forEach(function(handle) {
+        this._callbacks.forEach(function(handle) {
             handle.handler(batchMap, relevanceInterval);
         });
     };
-
-
 
 
     /** 
@@ -223,7 +221,7 @@ class Dataview extends ObservableMap {
         let _interval = this._check_interval(interval);
         let items = this.datasource.lookup_endpoints(_interval);
         // filter and convert
-        items.filter((item) => {
+        return items.filter((item) => {
             return this._cue_keep(item.cue);
         }, this).map((item) => {
             return {endpoint: item.endpoint, cue: this._cue_convert(item.cue)};
