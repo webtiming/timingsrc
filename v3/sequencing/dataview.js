@@ -1,5 +1,5 @@
 import ObservableMap from '../util/observablemap.js';
-import {map_merge} from '../util/utils.js';
+import {map_merge, array_concat, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 
 /*
@@ -275,6 +275,52 @@ class Dataview extends ObservableMap {
         }
         this._notify_callbacks(batchMap, relevanceInterval);
     }
+
+
+    get interval () {
+        return this._interval;
+    }
+
+    set interval (itv) {
+        if (!itv instanceof Interval) {
+            throw new Error("must be interval", itv.toString());
+        }
+        if (!this._interval || !this._interval.equals(itv)) {
+            // current cues (before interval update)
+            let current_cues = this.lookup();
+            // update interval
+            this._interval = itv;
+            // cues (after interval update)
+            let new_cues = this.datasource.lookup(itv);
+            // filter & convert cues
+            new_cues = new_cues
+                .filter(this._cue_keep, this)
+                .map(this._cue_convert, this);
+            // switch to map representation
+            let currentCueMap = new Map([...current_cues].map((cue) => {
+                return [cue.key, cue];
+            }));
+            let newCueMap = new Map([...new_cues].map((cue) => {
+                return [cue.key, cue];
+            }));
+            // exit and enter cues
+            let exitCueMap = map_difference(currentCueMap, newCueMap);
+            let enterCueMap = map_difference(newCueMap, currentCueMap);
+            // make list of event items
+            let exitItems = [...exitCueMap.values].map((cue) => {
+                return {key: cue.key, new:undefined, old: cue}
+            });
+            let enterItems = [...enterCueMap.values].map((cue) => {
+                return {key: cue.key, new:cue, old: undefined}
+            });
+            const items = array_concat([exitItems, enterItems], {copy:false, order:true});
+            
+            // event notification
+            this._notifyEvents(items);
+        }
+
+    }
+
 
 
     /***************************************************************
