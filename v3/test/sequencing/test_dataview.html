@@ -24,10 +24,15 @@
             return `prefix-${data}-postfix`;
         }
 
+        const INTERVALS = [
+            new Interval(2,8),
+            new Interval(12, 17) 
+        ]
+
+
 
         let options = {
             key_filter: keep_odd_keys,
-            interval_filter : new Interval(7,13),
             data_convert: convert
         };
         let dv = new Dataview(ds, options);
@@ -43,6 +48,15 @@
         });
         ds.update(cues);
 
+        function toggle() {
+            if (!dv.interval || dv.interval.equals(INTERVALS[0])) {
+                dv.interval = INTERVALS[1];
+            } else {
+                dv.interval = INTERVALS[0];
+            }
+        }
+        document.getElementById("toggle").onclick = toggle;
+
         window.ds = ds;
         window.dv = dv;
         window.Interval = Interval;
@@ -51,6 +65,7 @@
   </head>
   <body>
     <h1>Test Dataview</h1>
+    <button id="toggle">Toggle Interval</button>
     <h3>Dataset</h3>
     <div id="dataset"></div>
     <h3>Dataview</h3>

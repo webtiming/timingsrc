@@ -1,14 +1,12 @@
 import ObservableMap from '../util/observablemap.js';
-import {map_merge, array_concat, map_difference} from '../util/utils.js';
+import {array_concat, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 
 /*
     Dataview provides read-only access to subset of a source Dataset
 
-    - <intervals> list of intervals, 
-        include only cues that match at least one of given intervals (default mode 62)
-
     - <options>
+        - <interva>: if defined only include cues that match the interval
         - <key_filter> : filter by cue key
             function keep(key) returns boolena
         - <data_filter> : filter by cue data
@@ -35,7 +33,7 @@ class Dataview extends ObservableMap {
         super();
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
-        this._interval = options.interval_filter;
+        this._interval = options.interval;
         this._data_convert = options.data_convert;
         this._size = 0;
 
@@ -48,9 +46,27 @@ class Dataview extends ObservableMap {
         this._src_ds_cb = this._src_ds.add_callback(cb);
     }
 
-   /***************************************************************
-        UPDATE CALLBACKS
-    */
+
+    /***************************************************************
+        ACCESSORS
+    ***************************************************************/
+
+    get datasource () {
+        return this._src_ds;
+    }
+
+    get interval () {
+        return this._interval;
+    }
+
+    set interval (itv) {
+        this._setInterval(itv);
+    }
+
+
+    /***************************************************************
+        EVENT CALLBACKS - FOR SEQUENCERS
+    ***************************************************************/
 
     add_callback (handler) {
         let handle = {
@@ -76,8 +92,12 @@ class Dataview extends ObservableMap {
     };
 
 
-    /** 
-     * Evaluate if a single cue is relevant for the dataview
+   /***************************************************************
+        FILTER & CONVER
+    ***************************************************************/
+
+    /* 
+        Keep cue 
     */
 
     _cue_keep(cue) {
@@ -105,6 +125,9 @@ class Dataview extends ObservableMap {
         return true;
     }
 
+    /**
+     *  Convert cue
+     */
     _cue_convert(cue) {
         if (cue != undefined && this._data_convert) {
             // copy
@@ -150,32 +173,6 @@ class Dataview extends ObservableMap {
     }
 
 
-    /**
-     * ObservableMap needs access to source dataset. 
-     */
-    get datasource () {
-        return this._src_ds;
-    }
-
-
-    /*
-        Find all cues covering at least one interval
-        - search all intervals
-        - remove duplicate cues        
-    */
-    _find_cues(intervals) {
-        let cueMap_list = intervals.map((itv) => {
-                return new Map([...this.datasource.lookup(itv)].map((cue) => {
-                    return [cue.key, cue];
-                }));
-            });
-        // merge cueMap_list
-        let cueMap = map_merge(cueMap_list, {copy:false, order:false});
-        return [...cueMap.values()];
-    }
-
-
-
     /***************************************************************
      LOOKUP
     ***************************************************************/
@@ -200,6 +197,10 @@ class Dataview extends ObservableMap {
         return interval;
     }
 
+    /** 
+     * lookup cues
+    */
+
     lookup(interval, mask) {
         let _interval = this._check_interval(interval);
         let cues;
@@ -213,9 +214,10 @@ class Dataview extends ObservableMap {
             .map(this._cue_convert, this);
     }
 
-    /***************************************************************
-     LOOKUP ENDPOINTS
-    ***************************************************************/
+    /* 
+        lookup endpoints
+        used by sequencers
+    */
 
     lookup_endpoints(interval) {
         let _interval = this._check_interval(interval);
@@ -228,9 +230,10 @@ class Dataview extends ObservableMap {
         }, this);
     }
 
-    /*
-        override superclass implementation with
-    */
+    /***************************************************************
+     INITIAL STATE
+    ***************************************************************/
+
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
             // find cues
@@ -245,11 +248,11 @@ class Dataview extends ObservableMap {
         }
     }
 
-    /*
-        forward events
 
-        TODO - should be using the callback instead
-    */
+    /***************************************************************
+     DATASET CALLBACK
+    ***************************************************************/
+
     _onDatasetCallback(eventMap, relevanceInterval) {
         let items = [...eventMap.values()];
         items = this._items_filter_convert(items);
@@ -262,8 +265,7 @@ class Dataview extends ObservableMap {
                 // remove
                 this._size -= 1;
             }           
-        }
-        
+        }        
         // forward as events
         super._notifyEvents(items);
         // forward as callbacks
@@ -277,11 +279,11 @@ class Dataview extends ObservableMap {
     }
 
 
-    get interval () {
-        return this._interval;
-    }
+    /***************************************************************
+        SET INTERVAL
+    ***************************************************************/
 
-    set interval (itv) {
+    _setInterval (itv) {
         if (!itv instanceof Interval) {
             throw new Error("must be interval", itv.toString());
         }
@@ -307,24 +309,23 @@ class Dataview extends ObservableMap {
             let exitCueMap = map_difference(currentCueMap, newCueMap);
             let enterCueMap = map_difference(newCueMap, currentCueMap);
             // make list of event items
-            let exitItems = [...exitCueMap.values].map((cue) => {
+            let exitItems = [...exitCueMap.values()].map((cue) => {
                 return {key: cue.key, new:undefined, old: cue}
             });
-            let enterItems = [...enterCueMap.values].map((cue) => {
+            let enterItems = [...enterCueMap.values()].map((cue) => {
                 return {key: cue.key, new:cue, old: undefined}
             });
-            const items = array_concat([exitItems, enterItems], {copy:false, order:true});
-            
+            // update size
+            this._size -= exitItems.length;
+            this._size += enterItems.length;            
             // event notification
+            const items = array_concat([exitItems, enterItems], {copy:false, order:true});
             this._notifyEvents(items);
         }
-
     }
 
-
-
     /***************************************************************
-     ACCESSORS
+     MAP ACCESSORS
     ***************************************************************/
 
     get size () {
@@ -369,6 +370,10 @@ class Dataview extends ObservableMap {
      MAP MODIFICATION METHODS
     ***************************************************************/
 
+    update(cues, options) {
+        throw new Error("not implemented");
+    }
+
     set (key, value) {
         throw new Error("not implemented");
     }
@@ -382,7 +387,6 @@ class Dataview extends ObservableMap {
     }
 
 }
-
 
 // module definition
 export default Dataview;
