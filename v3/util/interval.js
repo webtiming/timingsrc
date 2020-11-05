@@ -64,185 +64,13 @@ const MATCH_OVERLAP = MATCH_INSIDE +
 const MATCH_COVERS = MATCH_OVERLAP + Relation.COVERS;
 const MATCH_ALL = MATCH_COVERS + MATCH_OUTSIDE;
 
-
-/*********************************************************
-INTERVAL
-**********************************************************/
-
-class Interval {
-
-	static fromEndpoints(endpointLow, endpointHigh) {
-		let [low, low_right, low_closed, low_singular] = endpointLow;
-		let [high, high_right, high_closed, high_singular] = endpointHigh;
-		if (low_right) {
-			throw new IntervalError("illegal endpointLow - bracket must be left");
-		}
-		if (!high_right) {
-			throw new IntervalError("illegal endpointHigh - bracket must be right");
-		}
-		return new Interval(low, high, low_closed, high_closed);
-	};
-
-	static intersect(a, b) {
-		let rel = compare(a, b);
-		if (rel == Relation.OUTSIDE_LEFT) {
-			return [];
-		} else if (rel == Relation.OVERLAP_LEFT) {
-			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
-		} else if (rel == Relation.COVERS) {
-			return [b];
-		} else if (rel == Relation.EQUALS) {
-			return [a]; // or b
-		} else if (rel == Relation.COVERED) {
-			return [a];
-		} else if (rel == Relation.OVERLAP_RIGHT) {
-			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
-		} else if (rel == Relation.OUTSIDE_RIGHT) {
-			return [];
-		}
-	}
-	
-	static union(a, b) {
-		let rel = compare(a, b);
-		if (rel == Relation.OUTSIDE_LEFT) {
-			// merge
-			// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
-			if (a.high == b.low) {
-				return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
-			} else {
-				return [a, b];
-			}
-		} else if (rel == Relation.OVERLAP_LEFT) {
-			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
-		} else if (rel == Relation.COVERS) {
-			return [a];
-		} else if (rel == Relation.EQUALS) {
-			return [a]; // or b
-		} else if (rel == Relation.COVERED) {
-			return [b];
-		} else if (rel == Relation.OVERLAP_RIGHT) {
-			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
-		} else if (rel == Relation.OUTSIDE_RIGHT) {
-			// merge
-			// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
-			if (a.high == b.low) {
-				return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
-			} else {
-				return [b, a];
-			}
-		}
-	}
-
-	static intersectAll(intervals) {
-		intervals.sort(Interval.cmpLow);
-		if (intervals.length <= 1) {
-			return intervals;
-		}
-		const result = [intervals.shift()];
-		while (intervals.length > 0) {
-			let prev = result.pop();
-			let next = intervals.shift()
-			result.push(...Interval.intersect(prev, next));
-		}
-		return result;
-	}
-
-	static unionAll(intervals) {
-		intervals.sort(Interval.cmpLow);
-		if (intervals.length <= 1) {
-			return intervals;
-		}
-		const result = [intervals.shift()];
-		while (intervals.length > 0) {
-			let prev = result.pop();
-			let next = intervals.shift()
-			result.push(...Interval.union(prev, next));
-		}
-		return result;
-	}
-
-
-	static Match = Object.freeze({
-		OUTSIDE: MATCH_OUTSIDE,
-		INSIDE: MATCH_INSIDE,
-		OVERLAP: MATCH_OVERLAP,
-		COVERS: MATCH_COVERS,
-		ALL: MATCH_ALL
-	});
-
-
-	constructor (low, high, lowInclude, highInclude) {
-		var lowIsNumber = isNumber(low);
-		var highIsNumber = isNumber(high);
-		// new Interval(3.0) defines singular - low === high
-		if (lowIsNumber && high === undefined) high = low;
-		if (!isNumber(low)) throw new IntervalError("low not a number");
-		if (!isNumber(high)) throw new IntervalError("high not a number");
-		if (low > high) throw new IntervalError("low > high");
-		if (low === high) {
-			lowInclude = true;
-			highInclude = true;
-		}
-		if (low === -Infinity) lowInclude = true;
-		if (high === Infinity) highInclude = true;
-		if (lowInclude === undefined) lowInclude = true;
-		if (highInclude === undefined) highInclude = false;
-		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
-		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
-		this.low = low;
-		this.high = high;
-		this.lowInclude = lowInclude;
-		this.highInclude = highInclude;
-		this.length = this.high - this.low;
-		this.singular = (this.low === this.high);
-		this.finite = (isFinite(this.low) && isFinite(this.high));
-
-		/*
-			Accessors for full endpoint representationo
-			[value (number), right (bool), closed (bool)]
-
-			- use with inside(endpoint, interval)
-		*/
-		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
-		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
-	}
-
-	toString () {
-		const toString = endpoint.toString;
-		if (this.singular) {
-			let p = this.endpointLow[0];
-			return `[${p}]`;
-		} else {
-			let low = endpoint.toString(this.endpointLow);
-			let high = endpoint.toString(this.endpointHigh);
-			return `${low},${high}`;
-		}
-	};
-
-	covers_endpoint (p) {
-		let leftof = endpoint.leftof(p, this.endpointLow);
-		let rightof = endpoint.rightof(p, this.endpointHigh);
-		return !leftof && !rightof;
-	}
-
-	compare (other) {
-		return compare(this, other);
-	}
-
-	equals (other) {
-		return compare(this, other) == Relation.EQUALS;
-	}
-
-	/*
-		default mode - all except outside
-		2+4+8+16+32 = 62
-	*/
-	match (other, mask=MATCH_COVERS) {
-		let relation = compare(this, other);
-		return Boolean(mask & relation);
-	}
-}
-
+const Match = Object.freeze({
+	OUTSIDE: MATCH_OUTSIDE,
+	INSIDE: MATCH_INSIDE,
+	OVERLAP: MATCH_OVERLAP,
+	COVERS: MATCH_COVERS,
+	ALL: MATCH_ALL
+});
 
 
 /*********************************************************
@@ -276,8 +104,6 @@ cmp_1  cmp_2  key  relation
 =====  =====  ===  ============================
 
 **********************************************************/
-
-
 
 function compare(a, b) {
 	if (! a instanceof Interval) {
@@ -352,19 +178,204 @@ function _make_interval_cmp(low) {
 
 
 
+/**
+ *  Create interval from two endpoints
+ */
+
+function fromEndpoints(endpointLow, endpointHigh) {
+	let [low, low_right, low_closed, low_singular] = endpointLow;
+	let [high, high_right, high_closed, high_singular] = endpointHigh;
+	if (low_right) {
+		throw new IntervalError("illegal endpointLow - bracket must be left");
+	}
+	if (!high_right) {
+		throw new IntervalError("illegal endpointHigh - bracket must be right");
+	}
+	return new Interval(low, high, low_closed, high_closed);
+};
 
 
+// intersect two intervals
+function intersect(a, b) {
+	let rel = compare(a, b);
+	if (rel == Relation.OUTSIDE_LEFT) {
+		return [];
+	} else if (rel == Relation.OVERLAP_LEFT) {
+		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+	} else if (rel == Relation.COVERS) {
+		return [b];
+	} else if (rel == Relation.EQUALS) {
+		return [a]; // or b
+	} else if (rel == Relation.COVERED) {
+		return [a];
+	} else if (rel == Relation.OVERLAP_RIGHT) {
+		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+	} else if (rel == Relation.OUTSIDE_RIGHT) {
+		return [];
+	}
+}
 
-/*
-	Add static variables to Interval class.
-*/
-Interval.Relation = Relation;
-Interval.cmpLow = _make_interval_cmp(true);
-Interval.cmpHigh = _make_interval_cmp(false);
+// union of two intervals
+function union(a, b) {
+	let rel = compare(a, b);
+	if (rel == Relation.OUTSIDE_LEFT) {
+		// merge
+		// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
+		if (a.high == b.low) {
+			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
+		} else {
+			return [a, b];
+		}
+	} else if (rel == Relation.OVERLAP_LEFT) {
+		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+	} else if (rel == Relation.COVERS) {
+		return [a];
+	} else if (rel == Relation.EQUALS) {
+		return [a]; // or b
+	} else if (rel == Relation.COVERED) {
+		return [b];
+	} else if (rel == Relation.OVERLAP_RIGHT) {
+		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+	} else if (rel == Relation.OUTSIDE_RIGHT) {
+		// merge
+		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
+		if (a.high == b.low) {
+			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
+		} else {
+			return [b, a];
+		}
+	}
+}
 
-/*
-	Possibility for more interval methods such as union, intersection,
-*/
+// intersection of multiple intervals
+function intersectAll(intervals) {
+	intervals.sort(Interval.cmpLow);
+	if (intervals.length <= 1) {
+		return intervals;
+	}
+	const result = [intervals.shift()];
+	while (intervals.length > 0) {
+		let prev = result.pop();
+		let next = intervals.shift()
+		result.push(...Interval.intersect(prev, next));
+	}
+	return result;
+}
+
+// union of multiple interval
+function unionAll(intervals) {
+	intervals.sort(Interval.cmpLow);
+	if (intervals.length <= 1) {
+		return intervals;
+	}
+	const result = [intervals.shift()];
+	while (intervals.length > 0) {
+		let prev = result.pop();
+		let next = intervals.shift()
+		result.push(...Interval.union(prev, next));
+	}
+	return result;
+}
+
+
+/*********************************************************
+INTERVAL CLASS
+**********************************************************/
+
+class Interval {
+
+	/*
+		Add static variables to Interval class.
+	*/
+	static Relation = Relation;
+	static Match = Match;
+	static cmpLow = _make_interval_cmp(true);
+	static cmpHigh = _make_interval_cmp(false);
+	static fromEndpoints = fromEndpoints;
+	static intersect = intersect;
+	static union = union;
+	static intersectAll = intersectAll;
+	static unionAll = unionAll;
+
+	/*
+		Constructor
+	*/
+	constructor (low, high, lowInclude, highInclude) {
+		var lowIsNumber = isNumber(low);
+		var highIsNumber = isNumber(high);
+		// new Interval(3.0) defines singular - low === high
+		if (lowIsNumber && high === undefined) high = low;
+		if (!isNumber(low)) throw new IntervalError("low not a number");
+		if (!isNumber(high)) throw new IntervalError("high not a number");
+		if (low > high) throw new IntervalError("low > high");
+		if (low === high) {
+			lowInclude = true;
+			highInclude = true;
+		}
+		if (low === -Infinity) lowInclude = true;
+		if (high === Infinity) highInclude = true;
+		if (lowInclude === undefined) lowInclude = true;
+		if (highInclude === undefined) highInclude = false;
+		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
+		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
+		this.low = low;
+		this.high = high;
+		this.lowInclude = lowInclude;
+		this.highInclude = highInclude;
+		this.length = this.high - this.low;
+		this.singular = (this.low === this.high);
+		this.finite = (isFinite(this.low) && isFinite(this.high));
+
+		/*
+			Accessors for full endpoint representationo
+			[value (number), right (bool), closed (bool)]
+
+			- use with inside(endpoint, interval)
+		*/
+		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
+		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
+	}
+
+
+	/**
+	 *  Instance methods
+	 */
+
+	toString () {
+		const toString = endpoint.toString;
+		if (this.singular) {
+			let p = this.endpointLow[0];
+			return `[${p}]`;
+		} else {
+			let low = endpoint.toString(this.endpointLow);
+			let high = endpoint.toString(this.endpointHigh);
+			return `${low},${high}`;
+		}
+	};
+
+	covers_endpoint (p) {
+		let leftof = endpoint.leftof(p, this.endpointLow);
+		let rightof = endpoint.rightof(p, this.endpointHigh);
+		return !leftof && !rightof;
+	}
+
+	compare (other) {
+		return compare(this, other);
+	}
+
+	equals (other) {
+		return compare(this, other) == Relation.EQUALS;
+	}
+
+	/*
+		default mode - all except outside
+		2+4+8+16+32 = 62
+	*/
+	match (other, mask=MATCH_COVERS) {
+		let relation = compare(this, other);
+		return Boolean(mask & relation);
+	}
+}
 
 export default Interval;
 

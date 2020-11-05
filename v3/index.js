@@ -38,13 +38,16 @@ export {default as LoopConverter} from './timingobject/loopconverter.js';
 export {default as RangeConverter} from './timingobject/rangeconverter.js';
 export {default as TimeshiftConverter} from './timingobject/timeshiftconverter.js';
 
-// sequencing
+// dataset
 export {default as Dataset} from './dataset/dataset.js';
 export {default as Subset} from './dataset/subset.js';
-export {default as DatasetViewer} from './dataset/viewer.js';
+
+// sequencing
 import {default as PointModeSequencer} from './sequencing/pointsequencer.js';
 import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.js';
 
+// ui
+export {default as DatasetViewer} from './ui/datasetviewer.js';
 
 /*
     Common constructor PointModeSequencer and IntervalModeSequencer
