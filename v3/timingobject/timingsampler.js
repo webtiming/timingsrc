@@ -51,6 +51,7 @@ class TimingSampler {
         }        
         // Events
         eventify.eventifyInstance(this);
+
         this.eventifyDefine("change", {init:true});
         // Handle timing object change event
         this._sub = this._to.on("change", this._onChange.bind(this));
@@ -61,7 +62,7 @@ class TimingSampler {
     */
     eventifyInitEventArgs(name) {
         if (name == "change" && this._to.isReady()) {
-            return this._to.pos;
+            return [this._to.pos];
         }
     }
 
@@ -69,21 +70,19 @@ class TimingSampler {
      * Start/stop sampling
      */
     _onChange() {
-        if (this._tid) {
-            let v = this._to.query();
-            let moving = (v.velocity != 0.0 || v.acceleration != 0.0);
-            // start or stop sampling
-            if (moving && this._tid == undefined) {
-                this._tid = setInterval(function(){
-                    this._onSample();
-                }.bind(this), this._period);
-            }
-            if (!moving && this._tid != undefined) {
-                clearTimeout(this._tid);
-                this._tid = undefined;
-            }
-            this._onSample(v.position);
+        let v = this._to.query();
+        let moving = (v.velocity != 0.0 || v.acceleration != 0.0);
+        // start or stop sampling
+        if (moving && this._tid == undefined) {
+            this._tid = setInterval(function(){
+                this._onSample();
+            }.bind(this), this._period);
         }
+        if (!moving && this._tid != undefined) {
+            clearTimeout(this._tid);
+            this._tid = undefined;
+        }
+        this._onSample(v.position);
     }
 
     /**
@@ -91,7 +90,7 @@ class TimingSampler {
      */
     _onSample(pos) {
         pos = pos || this._to.pos;
-        this._eventifyTrigger("change", pos);
+        this.eventifyTrigger("change", pos);
     }
    
     /**
@@ -107,5 +106,7 @@ class TimingSampler {
         this._to.off(this._sub);
     }
 }
+
+eventify.eventifyPrototype(TimingSampler.prototype);
 
 export default TimingSampler;

@@ -51,7 +51,7 @@
     <script type="module">
 
         import TimingObject from '../../timingobject/timingobject.js';
-        import TimingProgress from '../../ui/timingprogress.js';
+        import Progress from '../../ui/progress.js';
 
         // timing object
         const to = new TimingObject({range:[0,10]});
@@ -76,7 +76,8 @@
 
         // timing object progress in percent
         const progress_elem = document.getElementById("progress");
-        const progress = new TimingProgress(to);
+        const progress = new Progress(to, progress_elem);
+        /*
         progress.addCallback(function () {
             progress_elem.value = `${progress.percent}`;
         });
@@ -86,6 +87,7 @@
             console.log("click percent", percent);
             progress.percent = percent;
         }
+        */
     </script>
 
 
@@ -97,7 +99,7 @@
         Pos : <span id="value"></span>
     </p>
     <div class="slidercontainer">
-      <input type="range" min="0" max="100" value="50" class="slider" id="progress">
+      <input type="range" min="0" max="100" value="0" class="slider" id="progress">
     </div>
 
     <p>
