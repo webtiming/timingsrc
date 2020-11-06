@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  
+    <style type="text/css">
+        .slidercontainer {
+            width: 400px;
+        }
+
+        .slider {
+            -webkit-appearance: none;  /* Override default CSS styles */
+            appearance: none;
+            width: 100%; /* Full-width */
+            height: 15px; /* Specified height */
+            border-radius: 5px;
+            background: #d3d3d3; /* Grey background */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+            transition: opacity .2s;
+        }
+
+
+        /* Mouse-over effects */
+        .slider:hover {
+            opacity: 1; /* Fully shown on mouse-over */
+        }
+
+        /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Override default look */
+            appearance: none;
+            width: 25px; /* Set a specific slider handle width */
+            height: 25px; /* Slider handle height */
+            border-radius: 50%;
+            background: #4CAF50; /* Green background */
+            cursor: pointer; /* Cursor on hover */
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px; /* Set a specific slider handle width */
+            height: 25px; /* Slider handle height */
+            border-radius: 50%;
+            background: #4CAF50; /* Green background */
+            cursor: pointer; /* Cursor on hover */
+        }
+
+    </style>
+
+
+    <script type="module">
+
+        import TimingObject from '../../timingobject/timingobject.js';
+        import TimingProgress from '../../ui/timingprogress.js';
+
+        // timing object
+        const to = new TimingObject({range:[0,10]});
+
+
+        // timing object position
+        const pos_elem = document.getElementById("value");
+        to.on("timeupdate", () => {
+            pos_elem.innerHTML = `${to.pos.toFixed(2)}`;
+        });
+
+        // timing object controls
+        document.getElementById("play").onclick = function() {
+            to.update({velocity:1.0});
+        };
+        document.getElementById("pause").onclick = function() {
+            to.update({velocity:0.0});
+        }
+        document.getElementById("reset").onclick = function() {
+            to.update({position:0.0, velocity:0.0});
+        }
+
+        // timing object progress in percent
+        const progress_elem = document.getElementById("progress");
+        const progress = new TimingProgress(to);
+        progress.addCallback(function () {
+            progress_elem.value = `${progress.percent}`;
+        });
+        progress_elem.onclick = function(e) {
+            let rect = progress_elem.getBoundingClientRect();
+            let percent = 100.0 * (e.clientX - rect.left) / rect.width;
+            console.log("click percent", percent);
+            progress.percent = percent;
+        }
+    </script>
+
+
+  </head>
+  <body>
+
+    <h1> Timing Progress </h1>
+    <p>
+        Pos : <span id="value"></span>
+    </p>
+    <div class="slidercontainer">
+      <input type="range" min="0" max="100" value="50" class="slider" id="progress">
+    </div>
+
+    <p>
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+    </p>
+  </body>
+</html>
