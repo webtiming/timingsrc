@@ -3,12 +3,28 @@
   <head>
   
     <style type="text/css">
-        .slidercontainer {
+        
+        .progresscontainer {
             width: 400px;
         }
 
-        .slider {
+        .progress-thumb {
             -webkit-appearance: none;  /* Override default CSS styles */
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%; /* Full-width */
+            height: 15px; /* Specified height */
+            border-radius: 5px;
+            background: #d3d3d3; /* Grey background */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+            transition: opacity .2s;
+        }
+
+        .progress-no-thumb {
+            -webkit-appearance: none;  /* Override default CSS styles */
+            -moz-appearance: none;
             appearance: none;
             width: 100%; /* Full-width */
             height: 15px; /* Specified height */
@@ -21,14 +37,21 @@
         }
 
 
+
         /* Mouse-over effects */
-        .slider:hover {
+        .progress-thumb:hover {
             opacity: 1; /* Fully shown on mouse-over */
         }
 
+        .progress-no-thumb:hover {
+            opacity: 1; /* Fully shown on mouse-over */
+        }
+
+
         /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-        .slider::-webkit-slider-thumb {
+        .progress-thumb::-webkit-slider-thumb {
             -webkit-appearance: none; /* Override default look */
+            -moz-appearance: none;
             appearance: none;
             width: 25px; /* Set a specific slider handle width */
             height: 25px; /* Slider handle height */
@@ -37,13 +60,16 @@
             cursor: pointer; /* Cursor on hover */
         }
 
-        .slider::-moz-range-thumb {
-            width: 25px; /* Set a specific slider handle width */
-            height: 25px; /* Slider handle height */
-            border-radius: 50%;
-            background: #4CAF50; /* Green background */
-            cursor: pointer; /* Cursor on hover */
+
+        .progress-no-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 0;
+            height: 0;
         }
+
+
 
     </style>
 
@@ -76,18 +102,30 @@
 
         // timing object progress in percent
         const progress_elem = document.getElementById("progress");
-        const progress = new Progress(to, progress_elem);
-        /*
-        progress.addCallback(function () {
-            progress_elem.value = `${progress.percent}`;
-        });
-        progress_elem.onclick = function(e) {
-            let rect = progress_elem.getBoundingClientRect();
-            let percent = 100.0 * (e.clientX - rect.left) / rect.width;
-            console.log("click percent", percent);
-            progress.percent = percent;
+
+        let options = {
+            range: [2,8], 
+            thumb: {
+                hide: function() {
+                    if (progress_elem.classList.contains("progress-thumb")) {
+                        progress_elem.classList.remove("progress-thumb");
+                    }
+                    if (!progress_elem.classList.contains("progress-no-thumb")) {
+                        progress_elem.classList.add("progress-no-thumb");
+                    }
+                },
+                show: function() {
+                    if (progress_elem.classList.contains("progress-no-thumb")) {
+                        progress_elem.classList.remove("progress-no-thumb");
+                    }
+                    if (!progress_elem.classList.contains("progress-thumb")) {
+                        progress_elem.classList.add("progress-thumb");
+                    }
+                }
+            }    
         }
-        */
+        const progress = new Progress(to, progress_elem, options);
+        
     </script>
 
 
@@ -98,8 +136,8 @@
     <p>
         Pos : <span id="value"></span>
     </p>
-    <div class="slidercontainer">
-      <input type="range" min="0" max="100" value="0" class="slider" id="progress">
+    <div class="progresscontainer">
+      <input type="range" min="0" max="100" value="0" class="progress-no-thumb"  id="progress">
     </div>
 
     <p>

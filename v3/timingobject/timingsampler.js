@@ -28,12 +28,22 @@
  *      - period (between samples) in ms
  *      - frequency (sample frequency) in hz
  *      if both given - period takes precedence
- *      if none given - default period = 1000 ms 
+ *      if none given - default period = 200 ms 
+ * 
+ *  TODO
+        - set refresh frequency to be sensitive
+            to velocity - adapted to a fixed rate
+            change in percent
+            calculate percent velocity
+            rate change in percent per second
+
+ * 
+ * 
  */
 
 import eventify from '../util/eventify.js';
 
-const DEFAULT_PERIOD = 1000;
+const DEFAULT_PERIOD = 200;
 
 class TimingSampler {
 

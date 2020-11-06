@@ -1,78 +1,39 @@
 /*
-    TODO
+	Copyright 2020
+	Author : Ingar Mæhlum Arntzen
 
-    - set refresh frequency to be sensitive
-        to velocity - adapted to a fixed rate
-        change in percent
-        calculate percent velocity
-        rate change in percent per second
+	This file is part of the Timingsrc module.
+
+	Timingsrc is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Timingsrc is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+import TimingSampler from "../timingobject/timingsampler.js";
+
+/*
+    TODO
 
     - treat progress change as a speculative
         change, (with a timeout)
         implementation - ideally as speculative converter
-        easy solution - lock with a timeout
-
-    - avoid competition from timeupdate and dragging
-
-    - dragging should not be interrupted
-    - make handle invisible when to out of range
-
+        easy solution - just lock
 */
-
-/**
- *  Make a progress variable for a timing object
- *  
- *  - create an evented variable for a timing object
- *  - adaptive rate sampling  - appropriate for velocity and rate?
- *  - change event with value changes
- *  - change events only at the time we hit integers?
- *      - sequencing intervals
- *      - or once per different integer - not important when?
- *  - need to test with online motions
- * 
- */
-
-import TimingSampler from "../timingobject/timingsampler.js";
-
-
-
-
-/**
- *  This is effectively a type of timing object converter that
- *  - transforms to a 0,100 value range (given a range)
- *  - and audomates sampling -> change event 
-
- */
 
  class Progress {
 
-
-    /*
-        TODO
-
-        - set refresh frequency to be sensitive
-            to velocity - adapted to a fixed rate
-            change in percent
-            calculate percent velocity
-            rate change in percent per second
-
-        - treat progress change as a speculative
-            change, (with a timeout)
-            implementation - ideally as speculative converter
-            easy solution - lock with a timeout
-
-        - avoid competition from timeupdate and dragging
-
-        - dragging should not be interrupted
-        - make handle invisible when to out of range
-
-    */
-
     static position2percent(position, range) {
         let [low, high] = range;
-        // make sure position is within position_range
-        position = Math.max(position, low);
-        position = Math.min(position, high);
+
         let offset = position - low;
         let length = high - low;
         return 100.0*offset/length;
@@ -91,50 +52,30 @@ import TimingSampler from "../timingobject/timingsampler.js";
     constructor (timingObject, progress_elem, options={}) {
         this._to = timingObject;
         this._progress_elem = progress_elem;
-        let {range} = options;
-        this._range = range || this._to.range;
+        this._lock = false;
+        this._options = options;
+        this._range = options.range || this._to.range;
         let [low, high] = this._range;
         if (low == -Infinity || high == Infinity) {
             throw new Error("illegal range", this._range);
         }
 
-        this._lock_value = undefined;
-        this._lock_tid = undefined;
-
         // subscribe to input event from progress elem
         this._progress_elem.addEventListener("input", function() {
-            // lock updates on progress elem until lock value is removed
-            this._lock_value = this._progress_elem.value;
+            // set lock
+            // no updates on progress elem from timing object until lock is released
+            this._lock_value = true;
         }.bind(this));
 
         // subscribe to change event from progress elem
-        this._progress_elem.addEventListener("change", function () {
-            if (this._lock_value != undefined) {
-                /*
-                progress change with preceeding input event
-                this is a drag end
-                use cached value from input event to update the timing object
-                */
-                let percent = parseInt(this._lock_value);
-            } else {
-                /*
-                progress change without preceeding input event
-                this is a click
-                use element value to update the timing object
-                */ 
-               let percent = parseInt(this._progress_elem.value);   
-            }
+        this._progress_elem.addEventListener("change", function () { 
+            // clear lock
+            this._lock_value = false;
             // update the timing object
+            let percent = parseInt(this._progress_elem.value);               
             let position = Progress.percent2position(percent, this._range);
             this._to.update({position: position});
-            // unlock on update timeout
-            this._lock_value = undefined;
-            this._lock_tid = setTimeout(function(){
-                // unlock after timeout
-                this._lock_tid = undefined;
-                console.log("timeout on update ack - should not happen");
-            }.bind(this), 1000);
-        });
+        }.bind(this));
         
         // sampler
         this._sampler = new TimingSampler(this._to, options); 
@@ -142,15 +83,24 @@ import TimingSampler from "../timingobject/timingsampler.js";
     }
 
     _refresh(position) {
-        // unlock if unlock is pending
-        if (this._lock_tid) {
-            clearTimeout(this._lock_tid);
-            this._lock_tid = undefined;
-        }
         // update progress elem if unlocked
-        if (this._lock_value != undefined) {
+        if (!this._lock_value) {
             let percent = Progress.position2percent(position, this._range);
+            if (this._options.thumb) {
+                // check if percent is legal
+                if (percent < 0.0 || 100.0 < percent) {
+                    // hide
+                    this._options.thumb.hide();
+                    return;
+                }
+            } else {
+                percent = (percent < 0.0) ? 0.0 : percent;
+                percent = (100.0 < percent) ? 100.0: percent;
+            }
             this._progress_elem.value = `${percent}`;
+            if (this._options.thumb) {
+                this._options.thumb.show();            
+            }
         }
     }
 }
