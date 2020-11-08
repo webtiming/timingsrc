@@ -192,6 +192,59 @@ function sort_cues (cues, direction=0) {
 
 
 /*
+    CueArgBuilder
+
+    AddCue - adds or changes a cue.
+    RemoveCue - removes a cue
+    Submit - submits the cues to the dataset update operation
+    Clear - remove un-submitted cues
+
+*/
+
+class CueArgBuilder {
+
+    constructor (dataset) {
+        this._cues = [];
+        this._ds = dataset;
+    }
+
+    /*
+        AddCue
+    
+        if both interval and data are undefined
+        this is not interpreted as remove,
+        but as a cue with no interval and a data value set
+        to undefined
+    */
+    addCue(key, interval, data) {
+        let cue = {key:key, data:data};
+        if (interval instanceof Interval) {
+            cue.interval = interval;
+        }
+        this._cues.push(cue);
+        return this;
+    }
+
+    removeCue(key) {
+        this._cues.push({key:key});
+        return this;
+    }
+
+    clear() {
+        this._cues = [];
+        return this;
+    }
+
+    submit(options) {
+        let cues = this._cues;
+        this._cues = [];
+        return this._ds.update(cues, options);
+    }
+}
+
+
+
+/*
     this implements Dataset, a data collection supporting
     efficient lookup of cues tied to intervals on the timeline
 
@@ -271,6 +324,31 @@ class Dataset extends ObservableMap {
 
     delete (key) {
         throw new Error("not implemented");
+    }
+
+
+    /***************************************************************
+     CUE ARG BUILDER
+    */
+
+    get builder() {
+        return new CueArgBuilder(this);
+    }
+
+    /***************************************************************
+     ADD CUE, REMOVE CUE
+
+        - CONVENIENCE for interactive use
+        - DO NOT USE REPEATEDLY (e.g. in for loop) ANTIPATTERN  
+        - use CUE ARG BUILDER instead to build up cue batch before submit.
+    */
+
+    addCue(key, interval, data) {
+        return this.builder.addCue(key, interval, data).submit();
+    }
+
+    removeCue(key) {
+        return this.builder.removeCue(key).submit();
     }
 
 
