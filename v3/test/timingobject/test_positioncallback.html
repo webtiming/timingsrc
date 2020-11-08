@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--  main -->
+    <script type="module">
+
+        import {TimingObject} from '../../index.js';
+        import PositionCallback from '../../timingobject/positioncallback.js';
+
+        // timing object
+        const to = new TimingObject({range:[0,20]});
+        
+        // Hook up buttons UI
+        document.getElementById('play').onclick = function () {
+            to.update({velocity:1.0});
+        };
+        document.getElementById('pause').onclick = function () {
+            to.update({velocity:0.0});
+        };
+        document.getElementById('reset').onclick = function () {
+            to.update({position: 0.0, velocity:0.0});
+        };
+        document.getElementById('back').onclick = function () {
+            to.update({velocity:-1.0});
+        };
+
+        // Hook up text UI
+        var value = document.getElementById('value');
+        to.on("timeupdate", function () {
+            value.innerHTML = to.pos.toFixed(2); 
+        });
+
+        // Interval callback            
+        function callback(pos) {
+            console.log(`interval callback ${pos.toFixed(2)} ${to.pos.toFixed(2)}`);
+        }
+        const stride = 5;
+        const ic = new PositionCallback(to, callback, {offset:0, stride:5});
+        
+       
+    </script>
+  </head>
+  <body>
+    <h1>Test Position Callback</h1>
+    <div id="value"></div>
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+    <button id="back">Back</button>
+  </body>
+</html>

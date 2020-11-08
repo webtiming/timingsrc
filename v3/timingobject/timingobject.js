@@ -533,7 +533,7 @@ class TimingObject {
 		let now = this.clock.now();
 		let now_vector = motionutils.calculateVector(vector, now);
 		let [delta, pos] = motionutils.calculateDelta(now_vector, range);
-		if (delta == undefined || delta == Infinity) {
+		if (delta == undefined) {
 			return;
 		}
 		// vector when range restriction will be reached
