@@ -77,7 +77,7 @@
     <script type="module">
 
         import TimingObject from '../../timingobject/timingobject.js';
-        import Progress from '../../ui/progress.js';
+        import TimingProgress from '../../ui/timingprogress.js';
 
         // timing object
         const to = new TimingObject({range:[0,10]});
@@ -124,7 +124,7 @@
                 }
             }    
         }
-        const progress = new Progress(to, progress_elem, options);
+        const progress = new TimingProgress(to, progress_elem, options);
         
     </script>
 

@@ -55,6 +55,6 @@ export function Sequencer(axis, toA, toB) {
 
 // ui
 export {default as DatasetViewer} from './ui/datasetviewer.js';
-
+export {default as TimingProgress} from './ui/timingprogress.js';
 
 export const version = "v3.0";

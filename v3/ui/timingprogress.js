@@ -29,7 +29,7 @@ import TimingSampler from "../timingobject/timingsampler.js";
         easy solution - just lock
 */
 
- class Progress {
+class TimingProgress {
 
     static position2percent(position, range) {
         let [low, high] = range;
@@ -73,7 +73,7 @@ import TimingSampler from "../timingobject/timingsampler.js";
             this._lock_value = false;
             // update the timing object
             let percent = parseInt(this._progress_elem.value);               
-            let position = Progress.percent2position(percent, this._range);
+            let position = TimingProgress.percent2position(percent, this._range);
             this._to.update({position: position});
         }.bind(this));
         
@@ -85,7 +85,7 @@ import TimingSampler from "../timingobject/timingsampler.js";
     _refresh(position) {
         // update progress elem if unlocked
         if (!this._lock_value) {
-            let percent = Progress.position2percent(position, this._range);
+            let percent = TimingProgress.position2percent(position, this._range);
             if (this._options.thumb) {
                 // check if percent is legal
                 if (percent < 0.0 || 100.0 < percent) {
@@ -105,4 +105,4 @@ import TimingSampler from "../timingobject/timingsampler.js";
     }
 }
 
-export default Progress;
+export default TimingProgress;
