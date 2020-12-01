@@ -19,6 +19,16 @@
 */
 
 
+function random_string(length) {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    for(var i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
+
+
 /* Set Comparison */
 function eqSet(as, bs) {
     return as.size === bs.size && all(isIn(bs), as);
@@ -34,6 +44,7 @@ function isIn(as) {
         return as.has(a);
     };
 }
+
 
 /*
     get the difference of two Maps
@@ -65,6 +76,56 @@ const map_intersect = function (a, b) {
         return b.has(key)
     }));
 };
+
+/*
+
+NOTE : just as good to do 
+    let merged = new Map(...map0, ...map1, ...)
+
+effective concatenation of multiple arrays
+- order - if true preserves ordering of input arrays
+        - else sorts input arrays (longest first)
+        - default false is more effective
+- copy  - if true leaves input arrays unchanged, copy
+          values into new array
+        - if false copies remainder arrays into the first
+          array
+        - default false is more effective
+*/
+function map_merge(array_of_maps, options={}) {
+    let {copy=false, order=false} = options;
+    // check input
+    if (array_of_maps instanceof Map) {
+        return array_of_maps;
+    }
+    if (!Array.isArray(array_of_maps)) {
+        throw new Error("illegal input array_of_maps", array_of_maps);
+    }
+    if (array_of_maps.length == 0) {
+        throw new Error("empty array_of_maps");
+    }
+    let is_maps = array_of_maps.map((o) => {
+        return (o instanceof Map);
+    });
+    if (!is_maps.every((e) => e == true)) {
+        throw new Error("some object in array_of_maps is not a Map", array_of_maps);
+    }
+    // order
+    if (!order) {
+        // sort array_of_maps according to size - longest first
+        array_of_maps.sort((a, b) => b.size - a.size);
+    }
+    // copy
+    let first = (copy) ? new Map() : array_of_maps.shift(); 
+    // fill up first Map with entries from other Maps
+    for (let m of array_of_maps) {
+        for (let [key, val] of m.entries()) {
+            first.set(key, val);
+        }
+    }
+    return first;
+}
+
 
 function divmod (n, d) {
     let r = n % d;
@@ -123,6 +184,8 @@ function array_concat(arrays, options = {}) {
     }
     return first;
 }
+
+
 /*
     default object equals
 */
@@ -165,11 +228,13 @@ const docready = new Promise(function(resolve) {
 
 var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    random_string: random_string,
     eqSet: eqSet,
     all: all,
     isIn: isIn,
     map_difference: map_difference,
     map_intersect: map_intersect,
+    map_merge: map_merge,
     divmod: divmod,
     isIterable: isIterable,
     array_concat: array_concat,
@@ -464,106 +529,13 @@ const MATCH_OVERLAP = MATCH_INSIDE +
 const MATCH_COVERS = MATCH_OVERLAP + Relation.COVERS;
 const MATCH_ALL = MATCH_COVERS + MATCH_OUTSIDE;
 
-
-/*********************************************************
-INTERVAL
-**********************************************************/
-
-class Interval {
-
-
-	static fromEndpoints(endpointLow, endpointHigh) {
-		let [low, low_right, low_closed, low_singular] = endpointLow;
-		let [high, high_right, high_closed, high_singular] = endpointHigh;
-		if (low_right) {
-			throw new IntervalError("illegal endpointLow - bracket must be left");
-		}
-		if (!high_right) {
-			throw new IntervalError("illegal endpointHigh - bracket must be right");
-		}
-		return new Interval(low, high, low_closed, high_closed);
-	};
-
-
-	static Match = Object.freeze({
-		OUTSIDE: MATCH_OUTSIDE,
-		INSIDE: MATCH_INSIDE,
-		OVERLAP: MATCH_OVERLAP,
-		COVERS: MATCH_COVERS,
-		ALL: MATCH_ALL
-	});
-
-
-	constructor (low, high, lowInclude, highInclude) {
-		var lowIsNumber = isNumber$1(low);
-		// new Interval(3.0) defines singular - low === high
-		if (lowIsNumber && high === undefined) high = low;
-		if (!isNumber$1(low)) throw new IntervalError("low not a number");
-		if (!isNumber$1(high)) throw new IntervalError("high not a number");
-		if (low > high) throw new IntervalError("low > high");
-		if (low === high) {
-			lowInclude = true;
-			highInclude = true;
-		}
-		if (low === -Infinity) lowInclude = true;
-		if (high === Infinity) highInclude = true;
-		if (lowInclude === undefined) lowInclude = true;
-		if (highInclude === undefined) highInclude = false;
-		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
-		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
-		this.low = low;
-		this.high = high;
-		this.lowInclude = lowInclude;
-		this.highInclude = highInclude;
-		this.length = this.high - this.low;
-		this.singular = (this.low === this.high);
-		this.finite = (isFinite(this.low) && isFinite(this.high));
-
-		/*
-			Accessors for full endpoint representationo
-			[value (number), right (bool), closed (bool)]
-
-			- use with inside(endpoint, interval)
-		*/
-		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
-		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
-	}
-
-	toString () {
-		if (this.singular) {
-			let p = this.endpointLow[0];
-			return `[${p}]`;
-		} else {
-			let low = endpoint.toString(this.endpointLow);
-			let high = endpoint.toString(this.endpointHigh);
-			return `${low},${high}`;
-		}
-	};
-
-	covers_endpoint (p) {
-		let leftof = endpoint.leftof(p, this.endpointLow);
-		let rightof = endpoint.rightof(p, this.endpointHigh);
-		return !leftof && !rightof;
-	}
-
-	compare (other) {
-		return compare(this, other);
-	}
-
-	equals (other) {
-		return compare(this, other) == Relation.EQUALS;
-	}
-
-	/*
-		default mode - all except outside
-		2+4+8+16+32 = 62
-	*/
-	match (other, mask=MATCH_COVERS) {
-		let relation = compare(this, other);
-		return Boolean(mask & relation);
-	}
-}
-
+const Match = Object.freeze({
+	OUTSIDE: MATCH_OUTSIDE,
+	INSIDE: MATCH_INSIDE,
+	OVERLAP: MATCH_OVERLAP,
+	COVERS: MATCH_COVERS,
+	ALL: MATCH_ALL
+});
 
 
 /*********************************************************
@@ -597,8 +569,6 @@ cmp_1  cmp_2  key  relation
 =====  =====  ===  ============================
 
 **********************************************************/
-
-
 
 function compare(a, b) {
 	if (! a instanceof Interval) {
@@ -671,12 +641,203 @@ function _make_interval_cmp(low) {
 	}
 }
 
-/*
-	Add static variables to Interval class.
-*/
-Interval.Relation = Relation;
-Interval.cmpLow = _make_interval_cmp(true);
-Interval.cmpHigh = _make_interval_cmp(false);
+
+
+/**
+ *  Create interval from two endpoints
+ */
+
+function fromEndpoints(endpointLow, endpointHigh) {
+	let [low, low_right, low_closed, low_singular] = endpointLow;
+	let [high, high_right, high_closed, high_singular] = endpointHigh;
+	if (low_right) {
+		throw new IntervalError("illegal endpointLow - bracket must be left");
+	}
+	if (!high_right) {
+		throw new IntervalError("illegal endpointHigh - bracket must be right");
+	}
+	return new Interval(low, high, low_closed, high_closed);
+}
+
+// intersect two intervals
+function intersect(a, b) {
+	let rel = compare(a, b);
+	if (rel == Relation.OUTSIDE_LEFT) {
+		return [];
+	} else if (rel == Relation.OVERLAP_LEFT) {
+		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+	} else if (rel == Relation.COVERS) {
+		return [b];
+	} else if (rel == Relation.EQUALS) {
+		return [a]; // or b
+	} else if (rel == Relation.COVERED) {
+		return [a];
+	} else if (rel == Relation.OVERLAP_RIGHT) {
+		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+	} else if (rel == Relation.OUTSIDE_RIGHT) {
+		return [];
+	}
+}
+
+// union of two intervals
+function union(a, b) {
+	let rel = compare(a, b);
+	if (rel == Relation.OUTSIDE_LEFT) {
+		// merge
+		// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
+		if (a.high == b.low) {
+			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
+		} else {
+			return [a, b];
+		}
+	} else if (rel == Relation.OVERLAP_LEFT) {
+		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
+	} else if (rel == Relation.COVERS) {
+		return [a];
+	} else if (rel == Relation.EQUALS) {
+		return [a]; // or b
+	} else if (rel == Relation.COVERED) {
+		return [b];
+	} else if (rel == Relation.OVERLAP_RIGHT) {
+		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
+	} else if (rel == Relation.OUTSIDE_RIGHT) {
+		// merge
+		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
+		if (a.high == b.low) {
+			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
+		} else {
+			return [b, a];
+		}
+	}
+}
+
+// intersection of multiple intervals
+function intersectAll(intervals) {
+	intervals.sort(Interval.cmpLow);
+	if (intervals.length <= 1) {
+		return intervals;
+	}
+	const result = [intervals.shift()];
+	while (intervals.length > 0) {
+		let prev = result.pop();
+		let next = intervals.shift();
+		result.push(...Interval.intersect(prev, next));
+	}
+	return result;
+}
+
+// union of multiple interval
+function unionAll(intervals) {
+	intervals.sort(Interval.cmpLow);
+	if (intervals.length <= 1) {
+		return intervals;
+	}
+	const result = [intervals.shift()];
+	while (intervals.length > 0) {
+		let prev = result.pop();
+		let next = intervals.shift();
+		result.push(...Interval.union(prev, next));
+	}
+	return result;
+}
+
+
+/*********************************************************
+INTERVAL CLASS
+**********************************************************/
+
+class Interval {
+
+	/*
+		Add static variables to Interval class.
+	*/
+	static Relation = Relation;
+	static Match = Match;
+	static cmpLow = _make_interval_cmp(true);
+	static cmpHigh = _make_interval_cmp(false);
+	static fromEndpoints = fromEndpoints;
+	static intersect = intersect;
+	static union = union;
+	static intersectAll = intersectAll;
+	static unionAll = unionAll;
+
+	/*
+		Constructor
+	*/
+	constructor (low, high, lowInclude, highInclude) {
+		var lowIsNumber = isNumber$1(low);
+		// new Interval(3.0) defines singular - low === high
+		if (lowIsNumber && high === undefined) high = low;
+		if (!isNumber$1(low)) throw new IntervalError("low not a number");
+		if (!isNumber$1(high)) throw new IntervalError("high not a number");
+		if (low > high) throw new IntervalError("low > high");
+		if (low === high) {
+			lowInclude = true;
+			highInclude = true;
+		}
+		if (low === -Infinity) lowInclude = true;
+		if (high === Infinity) highInclude = true;
+		if (lowInclude === undefined) lowInclude = true;
+		if (highInclude === undefined) highInclude = false;
+		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
+		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
+		this.low = low;
+		this.high = high;
+		this.lowInclude = lowInclude;
+		this.highInclude = highInclude;
+		this.length = this.high - this.low;
+		this.singular = (this.low === this.high);
+		this.finite = (isFinite(this.low) && isFinite(this.high));
+
+		/*
+			Accessors for full endpoint representationo
+			[value (number), right (bool), closed (bool)]
+
+			- use with inside(endpoint, interval)
+		*/
+		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
+		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
+	}
+
+
+	/**
+	 *  Instance methods
+	 */
+
+	toString () {
+		if (this.singular) {
+			let p = this.endpointLow[0];
+			return `[${p}]`;
+		} else {
+			let low = endpoint.toString(this.endpointLow);
+			let high = endpoint.toString(this.endpointHigh);
+			return `${low},${high}`;
+		}
+	};
+
+	covers_endpoint (p) {
+		let leftof = endpoint.leftof(p, this.endpointLow);
+		let rightof = endpoint.rightof(p, this.endpointHigh);
+		return !leftof && !rightof;
+	}
+
+	compare (other) {
+		return compare(this, other);
+	}
+
+	equals (other) {
+		return compare(this, other) == Relation.EQUALS;
+	}
+
+	/*
+		default mode - all except outside
+		2+4+8+16+32 = 62
+	*/
+	match (other, mask=MATCH_COVERS) {
+		let relation = compare(this, other);
+		return Boolean(mask & relation);
+	}
+}
 
 /*
 	Copyright 2020
@@ -961,7 +1122,14 @@ function calculateDelta(vector, range) {
 	const deltaBeforeSec = calculateMinPositiveRealSolution(vector, range[0]);
 	// Time delta to hit posAfter
 	const deltaAfterSec = calculateMinPositiveRealSolution(vector, range[1]);
-	// Pick the appropriate solution
+    // Infinity is no good solution
+    if (deltaBeforeSec == Infinity) {
+        deltaBeforeSec = undefined;
+    }
+    if (deltaAfterSec == Infinity) {
+        deltaAfterSec = undefined;
+    }
+    // Pick the appropriate solution
 	if (deltaBeforeSec !== undefined && deltaAfterSec !== undefined) {
 	    if (deltaBeforeSec < deltaAfterSec)
 			return [deltaBeforeSec, range[0]];
@@ -2284,9 +2452,6 @@ class ObservableMap {
 
     constructor () {
 
-        // Internal Map
-        this._map = new Map(); // (key -> item)
-
         // Events
         eventify.eventifyInstance(this);
         this.eventifyDefine("batch", {init:true});
@@ -2294,25 +2459,52 @@ class ObservableMap {
         this.eventifyDefine("remove", {init:false});
     }
 
+    /**
+     *  Abstract accessor to datasource backing implementation
+     *  of observable map. Typically this is an instance of Map() class.
+     * 
+     *  Must be implemented by subclass. 
+     */
+
+    get datasource () {
+        throw new Error("not implemented");
+    }
+
     /***************************************************************
      EVENTS
     ***************************************************************/
 
     /*
-        item ordering
-    */
+        value ordering
+
+        if specific ordering is needed on initial events
+
+        subclass implements class method <cmpValue>
+        to be used with Array.sort(cmpValue)
+
+        cmpValue(value_a, value_b) {}
+
+    */   
     _sortItems(items) {
+        if (this.cmpValue) {
+            let self = this;
+            items.sort(function(item_a, item_b) {
+                return self.cmpValue(item_a.new, item_b.new)
+            });
+        }
         return items;
     }
+
 
     /*
         Eventify: immediate events
     */
     eventifyInitEventArgs(name) {
         if (name == "batch" || name == "change") {
-            let items = [...this._map.entries()].map(([key, item]) => {
-                return {key:key, new:item, old:undefined};
+            let items = [...this.datasource.entries()].map(([key, val]) => {
+                return {key:key, new:val, old:undefined};
             });
+            // sort items
             items = this._sortItems(items);
             return (name == "batch") ? [items] : items;
         }
@@ -2355,27 +2547,27 @@ class ObservableMap {
     ***************************************************************/
 
     get size () {
-        return this._map.size;
+        return this.datasource.size;
     }
 
     has(key) {
-        return this._map.has(key);
+        return this.datasource.has(key);
     };
 
     get(key) {
-        return this._map.get(key);
+        return this.datasource.get(key);
     };
 
     keys() {
-        return this._map.keys();
+        return this.datasource.keys();
     };
 
     values() {
-        return this._map.values();
+        return this.datasource.values();
     };
 
     entries() {
-        return this._map.entries();
+        return this.datasource.entries();
     }
 
 
@@ -2385,10 +2577,10 @@ class ObservableMap {
 
     set(key, value) {
         let old = undefined;
-        if (this._map.has(key)) {
-            old = this._map.get(key);
+        if (this.datasource.has(key)) {
+            old = this.datasource.get(key);
         }
-        this._map.set(key, value);
+        this.datasource.set(key, value);
         this._notifyEvents([{key: key, new:value, old: old}]);
         return this;
     }
@@ -2396,9 +2588,9 @@ class ObservableMap {
     delete(key) {
         let result = false;
         let old = undefined;
-        if (this._map.has(key)) {
-            old = this._map.get(key);
-            this._map.delete(key);
+        if (this.datasource.has(key)) {
+            old = this.datasource.get(key);
+            this.datasource.delete(key);
             result = true;
         }
         this._notifyEvents([{key: key, new:undefined, old: old}]);
@@ -2406,14 +2598,12 @@ class ObservableMap {
     }
 
     clear() {
-        // clear _map
-        let _map = this._map;
-        this._map = new Map();
         // create change events for all cues
-        const items = [];
-        for (let [key, val] of _map.entries()) {
-            items.push({key: key, new: undefined, old: val});
-        }
+        const items = [...this.datasource.entries()].map(([key, val]) => {
+            return {key: key, new: undefined, old: val};
+        });
+        // clear _map
+        this.datasource.clear();
         // event notification
         this._notifyEvents(items);
     }
@@ -3423,7 +3613,7 @@ class TimingObject {
 		let now = this.clock.now();
 		let now_vector = calculateVector(vector, now);
 		let [delta, pos] = calculateDelta(now_vector, range);
-		if (delta == undefined || delta == Infinity) {
+		if (delta == undefined) {
 			return;
 		}
 		// vector when range restriction will be reached
@@ -4094,6 +4284,230 @@ class TimeshiftConverter extends TimingObject {
 }
 
 /*
+	Copyright 2020
+	Author : Ingar Mæhlum Arntzen
+
+	This file is part of the Timingsrc module.
+
+	Timingsrc is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Timingsrc is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+const DEFAULT_PERIOD = 200;
+
+class TimingSampler {
+
+    constructor (timingObject, options = {}) {
+        this._to = timingObject;
+        // timeout id
+        this._tid;
+        // period
+        let {period, frequency} = options;
+        this._period = DEFAULT_PERIOD;
+        if (period != undefined) {
+            this._period = period;
+        } else if (frequency != undefined) {
+            this._period = 1.0/frequency;
+        }        
+        // Events
+        eventify.eventifyInstance(this);
+
+        this.eventifyDefine("change", {init:true});
+        // Handle timing object change event
+        this._sub = this._to.on("change", this._onChange.bind(this));
+    }
+
+    /*
+        Eventify: immediate events
+    */
+    eventifyInitEventArgs(name) {
+        if (name == "change" && this._to.isReady()) {
+            return [this._to.pos];
+        }
+    }
+
+    /**
+     * Start/stop sampling
+     */
+    _onChange() {
+        let v = this._to.query();
+        let moving = (v.velocity != 0.0 || v.acceleration != 0.0);
+        // start or stop sampling
+        if (moving && this._tid == undefined) {
+            this._tid = setInterval(function(){
+                this._onSample();
+            }.bind(this), this._period);
+        }
+        if (!moving && this._tid != undefined) {
+            clearTimeout(this._tid);
+            this._tid = undefined;
+        }
+        this._onSample(v.position);
+    }
+
+    /**
+     * Sample timing object
+     */
+    _onSample(pos) {
+        pos = pos || this._to.pos;
+        this.eventifyTrigger("change", pos);
+    }
+   
+    /**
+     * Terminate sampler
+     */
+    clear() {
+        // stop sampling
+        if (this._tid) {
+            clearTimeout(this._tid);
+            this._tid = undefined;
+        }
+        // disconnect handler
+        this._to.off(this._sub);
+    }
+}
+
+eventify.eventifyPrototype(TimingSampler.prototype);
+
+/*
+    modify modulo operation
+*/
+function mod$1(n,m) {
+    return ((n % m) + m) % m;   
+}
+
+/*
+    divide n by m, 
+    find q (integer) and r such that  
+    n = q*m + r 
+*/
+function divmod$1(n, m) {
+    let q = Math.floor(n/m);
+    let r = mod$1(n, m);
+    return [q,r];
+}
+
+/**
+ *  point n == offset + q*stride + r
+    - given stride, offset
+    represent point as [q, r]
+ */
+
+function float2point(n, stride, offset) {
+    return divmod$1(n-offset, stride);
+}
+
+function point2float(p, stride, offset) {
+    let [q, r] = p;
+    return offset + q*stride + r;
+}
+
+
+/*
+    Given stride and offset, calculate nearest
+    waypoints before and after given position.
+    If position is exact match with waypoint,
+    return [true, before, after]
+*/
+function stride_points(position, stride, offset) {
+    let [q, r] = float2point(position, stride, offset);
+    let after = [q+1, 0];
+    let before = (r == 0) ? [q-1, 0]: [q, 0];
+    before = point2float(before, stride, offset);
+    after = point2float(after, stride, offset);
+    return [(r==0), before, after];
+}
+
+
+/*
+    
+    Position callback
+
+    - callback whenever the timing object position is x, 
+      where (x - offset) % stride === 0
+
+    - analogy to setInterval - except callbacks are in position space, not
+      in time space
+
+    options : {
+        stride - default 1
+        offset - default 0
+    }
+
+    NOTE: pausing on x and later resuming from x triggers callback in both cases 
+
+*/
+
+class PositionCallback {
+
+    constructor (timingObject, callback, options={}) {
+        this._to = timingObject;
+        let {stride=1, offset=0} = options;
+        this._offset = offset;
+        this._stride = stride;
+        this._callback = callback;
+        this._timeout = new Timeout(this._to, this._handleTimeout.bind(this));
+
+        // timing object timingsrc event
+        this._to.on("timingsrc", this._onChange.bind(this));
+    }
+
+    _onChange(eArg, eInfo) {
+        let pos = (eArg.live) ? eArg.position : this._to.pos;                
+        this._renewTimeout(pos);
+    }
+
+    _calculateTimeout(before, after) {
+        let vector = this._to.query();
+        let [delta, pos] = calculateDelta(vector, [before, after]);
+        if (delta == undefined) {            
+            return;
+        } 
+        // check range violation
+        let [rLow, rHigh] = this._to.range;
+        if (pos < rLow || rHigh < pos ) {
+            return [undefined, undefined];
+        }
+        return [vector.timestamp + delta, pos];   
+    }
+
+    _renewTimeout(pos) {
+        this._timeout.clear();
+        // find candidate points - before and after
+        let [match, before, after]  = stride_points(pos,
+                                                    this._stride, 
+                                                    this._offset);
+        // callback
+        if (match) {
+            this._callback(pos);
+        }
+        // calculate timeout to next
+        let res = this._calculateTimeout(before, after);
+        if (res == undefined) {
+            return;
+        }
+        // set timeout
+        let ts = res[0];
+        this._timeout.setTimeout(ts, res);
+    }
+    
+    _handleTimeout(now, arg) {
+        let pos = arg[1];
+        this._renewTimeout(pos);
+    }
+}
+
+/*
     Copyright 2020
     Author : Ingar Arntzen
 
@@ -4255,6 +4669,59 @@ function sort_cues (cues, direction=0) {
 
 
 /*
+    CueArgBuilder
+
+    AddCue - adds or changes a cue.
+    RemoveCue - removes a cue
+    Submit - submits the cues to the dataset update operation
+    Clear - remove un-submitted cues
+
+*/
+
+class CueArgBuilder {
+
+    constructor (dataset) {
+        this._cues = [];
+        this._ds = dataset;
+    }
+
+    /*
+        AddCue
+    
+        if both interval and data are undefined
+        this is not interpreted as remove,
+        but as a cue with no interval and a data value set
+        to undefined
+    */
+    addCue(key, interval, data) {
+        let cue = {key:key, data:data};
+        if (interval instanceof Interval) {
+            cue.interval = interval;
+        }
+        this._cues.push(cue);
+        return this;
+    }
+
+    removeCue(key) {
+        this._cues.push({key:key});
+        return this;
+    }
+
+    clear() {
+        this._cues = [];
+        return this;
+    }
+
+    submit(options) {
+        let cues = this._cues;
+        this._cues = [];
+        return this._ds.update(cues, options);
+    }
+}
+
+
+
+/*
     this implements Dataset, a data collection supporting
     efficient lookup of cues tied to intervals on the timeline
 
@@ -4274,6 +4741,8 @@ class Dataset extends ObservableMap {
     constructor() {
         super();
 
+        this._map = new Map();
+
         /*
             Initialise set of CueBuckets
             Each CueBucket is responsible for cues of a certain length
@@ -4287,6 +4756,13 @@ class Dataset extends ObservableMap {
         // Inline update callbacks
         this._update_callbacks = [];
     };
+
+    /**
+     * ObservableMap needs access to map 
+     */
+    get datasource () {
+        return this._map;
+    }
 
     /***************************************************************
         UPDATE CALLBACKS
@@ -4325,6 +4801,31 @@ class Dataset extends ObservableMap {
 
     delete (key) {
         throw new Error("not implemented");
+    }
+
+
+    /***************************************************************
+     CUE ARG BUILDER
+    */
+
+    get builder() {
+        return new CueArgBuilder(this);
+    }
+
+    /***************************************************************
+     ADD CUE, REMOVE CUE
+
+        - CONVENIENCE for interactive use
+        - DO NOT USE REPEATEDLY (e.g. in for loop) ANTIPATTERN  
+        - use CUE ARG BUILDER instead to build up cue batch before submit.
+    */
+
+    addCue(key, interval, data) {
+        return this.builder.addCue(key, interval, data).submit();
+    }
+
+    removeCue(key) {
+        return this.builder.removeCue(key).submit();
     }
 
 
@@ -4481,7 +4982,7 @@ class Dataset extends ObservableMap {
                 } else if (!has_interval) {
                     // REPLACE_DATA, preserve interval
                     cue.interval = current_cue.interval;
-                } else ;
+                }
             }
 
             /*******************************************************
@@ -5344,6 +5845,409 @@ class CueBucket {
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+    Subset provides read-only access to subset of a source Dataset
+
+    - <options>
+        - <interva>: if defined only include cues that match the interval
+        - <key_filter> : filter by cue key
+            function keep(key) returns boolena
+        - <data_filter> : filter by cue data
+            function keep(data) returns boolean
+        - <data_convert> : change cue data
+            function convert(data) returns data
+            NOTE: filtering occurs BEFORE convert
+            and only impacts the presentation of cues
+            WARNING: it is possible to change the value
+            in such a way that filtering appears incorrect
+
+    This subset implementation is STATELESS
+    It does not manage its own state, only implements a
+    stateless frontend over its source dataset.
+
+*/
+
+class Subset extends ObservableMap {
+
+    constructor(dataset, options={}) {
+        super();
+        this._key_filter = options.key_filter;
+        this._data_filter = options.data_filter;
+        this._interval = options.interval;
+        this._data_convert = options.data_convert;
+        this._size = 0;
+
+        // Callbacks
+        this._callbacks = [];
+
+        // Source Dataset
+        this._src_ds = dataset;
+        let cb = this._onDatasetCallback.bind(this);
+        this._src_ds_cb = this._src_ds.add_callback(cb);
+    }
+
+
+    /***************************************************************
+        ACCESSORS
+    ***************************************************************/
+
+    get datasource () {
+        return this._src_ds;
+    }
+
+    get interval () {
+        return this._interval;
+    }
+
+    set interval (itv) {
+        this._setInterval(itv);
+    }
+
+
+    /***************************************************************
+        EVENT CALLBACKS - FOR SEQUENCERS
+    ***************************************************************/
+
+    add_callback (handler) {
+        let handle = {
+            handler: handler
+        };
+        this._callbacks.push(handle);
+        return handle;
+    };
+
+
+    del_callback (handle) {
+        let index = this._callbacks.indexof(handle);
+        if (index > -1) {
+            this._callbacks.splice(index, 1);
+        }
+    };
+
+
+    _notify_callbacks (batchMap, relevanceInterval) {
+        this._callbacks.forEach(function(handle) {
+            handle.handler(batchMap, relevanceInterval);
+        });
+    };
+
+
+   /***************************************************************
+        FILTER & CONVER
+    ***************************************************************/
+
+    /* 
+        Keep cue 
+    */
+
+    _cue_keep(cue) {
+        if (cue == undefined) {
+            return false;
+        }
+        // check if cue matches interval
+        if (this._interval) {
+            if (!this._interval.match(cue.interval)) {
+                return false;
+            }
+        }
+        // check key filter
+        if (this._key_filter) {
+            if (!this._key_filter(cue.key)) {
+                return false;
+            }
+        }
+        // check data filter
+        if (this._data_filter) {
+            if (!this._data_filter(cue.data)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     *  Convert cue
+     */
+    _cue_convert(cue) {
+        if (cue != undefined && this._data_convert) {
+            // copy
+            return {
+                key: cue.key,
+                interval: cue.interval,
+                data: this._data_convert(cue.data)
+            }
+        }
+        return cue;
+    }
+
+    /**
+     * Filter (and modify) event items based on key_filter and data_filter
+     */
+
+    _items_filter_convert(items) {
+        let _items = [];
+        for (let item of items) {
+            if (item.new == undefined && item.old == undefined) {
+                continue;
+            }
+            /* 
+            use cue filter function to check relevance of both old and new
+            consider change of unrelevant cue into relevant cue.
+            old cue would be non-relevant, new cue would be relevant
+            Since old cue was not part of the subset before, it needs
+            to be removed from the item - effectively turning the change
+            operation into an add operation. 
+            */
+            let _old = (this._cue_keep(item.old)) ? item.old : undefined;
+            let _new = (this._cue_keep(item.new)) ? item.new : undefined;
+            if (_old == undefined && _new == undefined) {
+                continue;
+            }
+            // convert
+            _old = this._cue_convert(_old);
+            _new = this._cue_convert(_new);
+            // push
+            _items.push({key:item.key, new: _new, old: _old});
+        }
+        return _items;
+    }
+
+
+    /***************************************************************
+     LOOKUP
+    ***************************************************************/
+
+    _check_interval(interval) {
+        if (this._interval) {
+           // subset interval
+           if (interval) {
+               // lookup interval - find intersection
+               let intersects = Interval.intersect(interval, this._interval);
+               if (intersects.length == 0) {
+                   console.log(`warning - lookup interval ${interval.toString()} outside the subset interval ${this._interval.toString()}`);
+                   return [];
+                } else {
+                    interval = intersects[0];
+                }
+            } else {
+                // no lookup interval - use subset interval   
+                interval = this._interval;
+            }
+        }
+        return interval;
+    }
+
+    /** 
+     * lookup cues
+    */
+
+    lookup(interval, mask) {
+        let _interval = this._check_interval(interval);
+        let cues;
+        if (_interval) {
+            cues = this.datasource.lookup(_interval, mask);
+        } else {
+            cues = [...this.datasource.values()];
+        }
+        // filter & convert cues
+        return cues.filter(this._cue_keep, this)
+            .map(this._cue_convert, this);
+    }
+
+    /* 
+        lookup endpoints
+        used by sequencers
+    */
+
+    lookup_endpoints(interval) {
+        let _interval = this._check_interval(interval);
+        let items = this.datasource.lookup_endpoints(_interval);
+        // filter and convert
+        return items.filter((item) => {
+            return this._cue_keep(item.cue);
+        }, this).map((item) => {
+            return {endpoint: item.endpoint, cue: this._cue_convert(item.cue)};
+        }, this);
+    }
+
+    /***************************************************************
+     INITIAL STATE
+    ***************************************************************/
+
+    eventifyInitEventArgs(name) {
+        if (name == "batch" || name == "change") {
+            // find cues
+            let cues = this.lookup();
+            // make event items
+            let items = cues.map((cue) => {
+                return {key:cue.key, new:cue, old:undefined};
+            });
+            // sort
+            items = this._sortItems(items);
+            return (name == "batch") ? [items] : items;
+        }
+    }
+
+
+    /***************************************************************
+     DATASET CALLBACK
+    ***************************************************************/
+
+    _onDatasetCallback(eventMap, relevanceInterval) {
+        let items = [...eventMap.values()];
+        items = this._items_filter_convert(items);
+        // update size
+        for (let item of items) {
+            if (item.new != undefined && item.old == undefined) {
+                // add
+                this._size += 1;
+            } else if (item.new == undefined && item.old != undefined) {
+                // remove
+                this._size -= 1;
+            }           
+        }        
+        // forward as events
+        super._notifyEvents(items);
+        // forward as callbacks
+        let batchMap = new Map(items.map((item) => {
+            return [item.key, item];
+        }));
+        if (this._interval) {
+            relevanceInterval = Interval.intersect(this._inverval, relevanceInterval);
+        }
+        this._notify_callbacks(batchMap, relevanceInterval);
+    }
+
+
+    /***************************************************************
+        SET INTERVAL
+    ***************************************************************/
+
+    _setInterval (itv) {
+        if (!itv instanceof Interval) {
+            throw new Error("must be interval", itv.toString());
+        }
+        if (!this._interval || !this._interval.equals(itv)) {
+            // current cues (before interval update)
+            let current_cues = this.lookup();
+            // update interval
+            this._interval = itv;
+            // cues (after interval update)
+            let new_cues = this.datasource.lookup(itv);
+            // filter & convert cues
+            new_cues = new_cues
+                .filter(this._cue_keep, this)
+                .map(this._cue_convert, this);
+            // switch to map representation
+            let currentCueMap = new Map([...current_cues].map((cue) => {
+                return [cue.key, cue];
+            }));
+            let newCueMap = new Map([...new_cues].map((cue) => {
+                return [cue.key, cue];
+            }));
+            // exit and enter cues
+            let exitCueMap = map_difference(currentCueMap, newCueMap);
+            let enterCueMap = map_difference(newCueMap, currentCueMap);
+            // make list of event items
+            let exitItems = [...exitCueMap.values()].map((cue) => {
+                return {key: cue.key, new:undefined, old: cue}
+            });
+            let enterItems = [...enterCueMap.values()].map((cue) => {
+                return {key: cue.key, new:cue, old: undefined}
+            });
+            // update size
+            this._size -= exitItems.length;
+            this._size += enterItems.length;            
+            // event notification
+            const items = array_concat([exitItems, enterItems], {copy:false, order:true});
+            this._notifyEvents(items);
+        }
+    }
+
+    /***************************************************************
+     MAP ACCESSORS
+    ***************************************************************/
+
+    get size () {
+        return this._size;
+    }
+
+    has(key) {
+        return (this.get(key) != undefined);
+    };
+
+    get(key) {
+        let cue = super.get(key);
+        if (cue != undefined && this._cue_keep(cue)) {
+            return this._cue_convert(cue);
+        }
+    };
+
+    keys() {
+        return this.values().map((cue => {
+            return cue.key;
+        }));
+    };
+
+    values() {
+        return [...super.values()]
+            .filter((cue) => {
+                return this._cue_keep(cue);
+            }, this)
+            .map((cue) => {
+                return this._cue_convert(cue);
+            }, this);
+    };
+
+    entries() {
+        return this.values().map((cue) => {
+            return [cue.key, cue];
+        });
+    };
+
+
+    /***************************************************************
+     MAP MODIFICATION METHODS
+    ***************************************************************/
+
+    update(cues, options) {
+        throw new Error("not implemented");
+    }
+
+    set (key, value) {
+        throw new Error("not implemented");
+    }
+
+    delete (key) {
+        throw new Error("not implemented");
+    }
+
+    clear (key) {
+        throw new Error("not implemented");
+    }
+
+}
+
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 const pft = posInterval_from_timeInterval;
 
 function queueCmp(a,b) {
@@ -5354,7 +6258,7 @@ class Schedule {
     // Default lookahead in seconds
     static LOOKAHEAD = 5
 
-    constructor(axis, to, options) {
+    constructor(dataset, to, options) {
         // timingobject
         this.to = to;
         // current timeout
@@ -5365,8 +6269,8 @@ class Schedule {
         this.timeInterval;
         // current position interval
         this.posInterval;
-        // axis
-        this.axis = axis;
+        // dataset
+        this.ds = dataset;
         // task queue
         this.queue = [];
         // callbacks
@@ -5607,7 +6511,7 @@ class Schedule {
         // advance schedule and load events if needed
         if (this.advance(now)) {
             // fetch cue endpoints for posInterval
-            let endpointItems = this.axis.lookup_endpoints(this.posInterval);
+            let endpointItems = this.ds.lookup_endpoints(this.posInterval);
             // load events and push on queue
             this.push(this.load(endpointItems));
             // process - possibly new due events
@@ -5774,21 +6678,12 @@ function sort_items (items, direction=0) {
     }
 }
 
-
 function cues_cmp_forwards (cue_a, cue_b) {
     return Interval.cmpLow(cue_a.interval, cue_b.interval);
 }
 
 function cues_cmp_backwards (cue_a, cue_b) {
     return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
-}
-
-function sort_cues$1 (cues, direction=0) {
-    if (direction >= 0) {
-        cues.sort(cues_cmp_forwards);
-    } else {
-        cues.sort(cues_cmp_backwards);
-    }
 }
 
 
@@ -5810,12 +6705,21 @@ class BaseSequencer extends ObservableMap {
     constructor (dataset) {
         super();
 
+        // Active cues
+        this._map = new Map();
+
         // Dataset
         this._ds = dataset;
         let cb = this._onDatasetCallback.bind(this);
         this._ds_cb = this._ds.add_callback(cb);
     }
 
+    /**
+     * ObservableMap needs access to map 
+     */
+    get datasource () {
+        return this._map;
+    }
 
     /***************************************************************
      EVENTS
@@ -5829,18 +6733,20 @@ class BaseSequencer extends ObservableMap {
         throw new Error("not implemented");
     }
 
-
     /*
         event order based on movement direction
-    */
-    _sortItems(items) {
-        sort_items(items, this._movementDirection());
-        return items;
-    }
 
-    sortCues(cues) {
-        sort_cues$1(cues, this._movementDirection());
-        return cues;
+        Implement ObservableMap.cmpValue to define
+        the ordering of event items delivered by
+        eventifyInitArgs
+     */
+    cmpValue(cue_a, cue_b) {
+        let direction = this._movementDirection();
+        if (direction >= 0) {
+            return cues_cmp_forwards(cue_a, cue_b);
+        } else {
+            return cues_cmp_backwards(cue_a, cue_b);
+        }
     }
 
 
@@ -5856,6 +6762,9 @@ class BaseSequencer extends ObservableMap {
         throw new Error("not implemented");
     }
 
+    clear (key) {
+        throw new Error("not implemented");
+    }
 
     /***************************************************************
      DATASET
@@ -6665,8 +7574,66 @@ class IntervalModeSequencer extends BaseSequencer {
 }
 
 /*
-    Common constructor PointModeSequencer and IntervalModeSequencer
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+class DatasetViewer {
+
+    constructor(ds, elem) {
+        this.ds = ds;
+        this.elem = elem;
+        this.nonce = random_string(4);
+        this.ds.on("change", this.onchange.bind(this));
+        this.ds.on("remove", this.onremove.bind(this));
+    }
+
+    cue2string(cue) {
+        let itv = (cue.interval) ? cue.interval.toString() : "undefined";
+        let data = JSON.stringify(cue.data); 
+        return `${cue.key}, ${itv}, ${data}`;
+    }
+
+    onchange(eItem) {
+        let _id = `${this.nonce}-${eItem.key}`;
+        let node = this.elem.querySelector(`#${_id}`);
+        if (node) {
+            // update existing node
+            node.textContent = this.cue2string(eItem.new);
+        } else {
+            // create new node
+            let node = document.createElement("div");
+            node.textContent = this.cue2string(eItem.new);
+            node.setAttribute("id", _id);
+            this.elem.appendChild(node);
+        }
+    }
+
+    onremove(eItem) {
+        // remove node
+        let _id = `${this.nonce}-${eItem.key}`;
+        let node = this.elem.querySelector(`#${_id}`);
+        if (node) {
+            node.parentNode.removeChild(node);
+        }
+    }
+}
+
 function Sequencer(axis, toA, toB) {
     if (toB === undefined) {
         return new PointModeSequencer(axis, toA);
@@ -6674,7 +7641,8 @@ function Sequencer(axis, toA, toB) {
         return new IntervalModeSequencer(axis, toA, toB);
     }
 }
+
 const version = "v3.0";
 
-export { BinarySearch, Dataset, DelayConverter, Interval, LoopConverter, ObservableMap, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Timeout, TimeshiftConverter, TimingObject, endpoint, eventify, motionutils, utils, version };
+export { BinarySearch, Dataset, DatasetViewer, DelayConverter, Interval, LoopConverter, ObservableMap, PositionCallback, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Subset, Timeout, TimeshiftConverter, TimingObject, TimingSampler, endpoint, eventify, motionutils, utils, version };
 //# sourceMappingURL=timingsrc-v3.js.map

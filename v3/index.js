@@ -37,21 +37,14 @@ export {default as ScaleConverter} from './timingobject/scaleconverter.js';
 export {default as LoopConverter} from './timingobject/loopconverter.js';
 export {default as RangeConverter} from './timingobject/rangeconverter.js';
 export {default as TimeshiftConverter} from './timingobject/timeshiftconverter.js';
+export {default as TimingSampler} from './timingobject/timingsampler.js';
+export {default as PositionCallback} from './timingobject/positioncallback.js';
 
-// dataset
+// timed data
 export {default as Dataset} from './dataset/dataset.js';
 export {default as Subset} from './dataset/subset.js';
-
-// sequencing
 import {default as PointModeSequencer} from './sequencing/pointsequencer.js';
 import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.js';
-
-// ui
-export {default as DatasetViewer} from './ui/datasetviewer.js';
-
-/*
-    Common constructor PointModeSequencer and IntervalModeSequencer
-*/
 export function Sequencer(axis, toA, toB) {
     if (toB === undefined) {
         return new PointModeSequencer(axis, toA);
@@ -59,5 +52,9 @@ export function Sequencer(axis, toA, toB) {
         return new IntervalModeSequencer(axis, toA, toB);
     }
 };
+
+// ui
+export {default as DatasetViewer} from './ui/datasetviewer.js';
+
 
 export const version = "v3.0";
