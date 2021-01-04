@@ -98,9 +98,9 @@ class TimingSampler {
     /**
      * Sample timing object
      */
-    _onSample(pos) {
-        pos = pos || this._to.pos;
-        this.eventifyTrigger("change", pos);
+    _onSample(position) {
+        position = (position != undefined) ? position : this._to.pos;
+        this.eventifyTrigger("change", position);
     }
    
     /**
