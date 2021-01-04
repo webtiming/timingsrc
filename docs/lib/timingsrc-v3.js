@@ -7685,6 +7685,7 @@ class TimingProgress {
 
     constructor (timingObject, progress_elem, options={}) {
         this._to = timingObject;
+        this._sampler = options.sampler;
         this._progress_elem = progress_elem;
         this._lock = false;
         this._options = options;
@@ -7712,11 +7713,13 @@ class TimingProgress {
         }.bind(this));
         
         // sampler
-        this._sampler = new TimingSampler(this._to, options); 
-        this._sampler.on("change", this._refresh.bind(this));
+        if (this._sampler) {
+            this._sampler.on("change", this.refresh.bind(this));
+        }
     }
 
-    _refresh(position) {
+    refresh(position) {
+        position = position || this._to.pos;
         // update progress elem if unlocked
         if (!this._lock_value) {
             let percent = TimingProgress.position2percent(position, this._range);

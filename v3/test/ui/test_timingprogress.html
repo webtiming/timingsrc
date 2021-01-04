@@ -77,15 +77,18 @@
     <script type="module">
 
         import TimingObject from '../../timingobject/timingobject.js';
+        import TimingSampler from '../../timingobject/timingsampler.js';
         import TimingProgress from '../../ui/timingprogress.js';
 
         // timing object
         const to = new TimingObject({range:[0,10]});
 
+        // timing sampler
+        const sampler = new TimingSampler(to, {period: 100});
 
         // timing object position
         const pos_elem = document.getElementById("value");
-        to.on("timeupdate", () => {
+        sampler.on("change", () => {
             pos_elem.innerHTML = `${to.pos.toFixed(2)}`;
         });
 
@@ -122,8 +125,10 @@
                         progress_elem.classList.add("progress-thumb");
                     }
                 }
-            }    
-        }
+            }, 
+            sampler: sampler
+        };
+        
         const progress = new TimingProgress(to, progress_elem, options);
         
     </script>
