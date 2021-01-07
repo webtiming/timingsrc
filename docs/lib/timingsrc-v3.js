@@ -3301,6 +3301,7 @@ class TimingObject {
 	// clock - from timingsrc or provider
 	get clock() {return this.__timingsrc.clock};
 
+	get version() {return 5;}
 
 
 	/***************************************************************
@@ -4358,9 +4359,9 @@ class TimingSampler {
     /**
      * Sample timing object
      */
-    _onSample(pos) {
-        pos = pos || this._to.pos;
-        this.eventifyTrigger("change", pos);
+    _onSample(position) {
+        position = (position != undefined) ? position : this._to.pos;
+        this.eventifyTrigger("change", position);
     }
    
     /**
@@ -7719,7 +7720,7 @@ class TimingProgress {
     }
 
     refresh(position) {
-        position = position || this._to.pos;
+        position = (position != undefined) ? position : this._to.pos;
         // update progress elem if unlocked
         if (!this._lock_value) {
             let percent = TimingProgress.position2percent(position, this._range);

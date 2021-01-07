@@ -221,6 +221,7 @@ class TimingObject {
 	// clock - from timingsrc or provider
 	get clock() {return this.__timingsrc.clock};
 
+	get version() {return 5;}
 
 
 	/***************************************************************
