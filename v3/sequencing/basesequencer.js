@@ -372,6 +372,33 @@ class BaseSequencer extends ObservableMap {
 
         return [exitEvents, changeEvents, enterEvents];
     }
+
+    /***************************************************************
+     BACKWARD COMPATIBILTY
+
+     Sequencers forward dataset operation to datase
+    ***************************************************************/
+
+    get builder() {
+        return this.ds.builder;
+    }
+
+    addCue(key, interval, data) {
+        return this.ds.addCue(key, interval, data);
+    }
+
+    removeCue(key) {
+        return this.ds.removeCue(key);
+    }
+
+    update(cues, options) {
+        return this.ds.update(cues, options);
+    }
+
+    clear() {
+        return this.ds.clear();
+    }
+
 }
 
 export default BaseSequencer;

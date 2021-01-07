@@ -30,7 +30,8 @@ export {default as ObservableMap} from './util/observablemap.js';
 export {default as Timeout} from './util/timeout.js';
 
 // timing object
-export {default as TimingObject} from './timingobject/timingobject.js';
+import {default as TimingObject} from './timingobject/timingobject.js';
+export {TimingObject};
 export {default as SkewConverter} from './timingobject/skewconverter.js';
 export {default as DelayConverter} from './timingobject/delayconverter.js';
 export {default as ScaleConverter} from './timingobject/scaleconverter.js';
@@ -41,16 +42,38 @@ export {default as TimingSampler} from './timingobject/timingsampler.js';
 export {default as PositionCallback} from './timingobject/positioncallback.js';
 
 // timed data
-export {default as Dataset} from './dataset/dataset.js';
+import {default as Dataset} from './dataset/dataset.js';
+export {Dataset};
 export {default as Subset} from './dataset/subset.js';
 import {default as PointModeSequencer} from './sequencing/pointsequencer.js';
 import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.js';
-export function Sequencer(axis, toA, toB) {
-    if (toB === undefined) {
-        return new PointModeSequencer(axis, toA);
+
+// create single sequencer factory function
+export function Sequencer() {
+    let ds_list = [...arguments].filter((e) => (e instanceof Dataset));
+    let ds = (ds_list.length > 0) ? ds_list[0] : new Dataset();
+    let to_list = [...arguments].filter((e) => (e instanceof TimingObject)); 
+    if (to_list.length == 0) {
+        throw new Error("no timingobject in arguments");
+    } else if (to_list.length == 1) {
+        return new PointModeSequencer(ds, to_list[0]);
     } else {
-        return new IntervalModeSequencer(axis, toA, toB);
+        return new IntervalModeSequencer(ds, to_list[0], to_list[1]);
     }
+};
+
+// Add clone functions for backwards compatibility
+PointModeSequencer.prototype.clone = function () {
+    let args = [this.ds];
+    args.push.apply(args, [...arguments]);
+    return Sequencer(...args);
+};
+
+// Add clone functions for backwards compatibility
+IntervalModeSequencer.prototype.clone = function () {
+    let args = [this.ds];
+    args.push.apply(args, [...arguments]);
+    return Sequencer(...args);
 };
 
 // ui
