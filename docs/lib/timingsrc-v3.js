@@ -6895,6 +6895,33 @@ class BaseSequencer extends ObservableMap {
 
         return [exitEvents, changeEvents, enterEvents];
     }
+
+    /***************************************************************
+     BACKWARD COMPATIBILTY
+
+     Sequencers forward dataset operation to datase
+    ***************************************************************/
+
+    get builder() {
+        return this.ds.builder;
+    }
+
+    addCue(key, interval, data) {
+        return this.ds.addCue(key, interval, data);
+    }
+
+    removeCue(key) {
+        return this.ds.removeCue(key);
+    }
+
+    update(cues, options) {
+        return this.ds.update(cues, options);
+    }
+
+    clear() {
+        return this.ds.clear();
+    }
+
 }
 
 /*
@@ -7743,13 +7770,33 @@ class TimingProgress {
     }
 }
 
-function Sequencer(axis, toA, toB) {
-    if (toB === undefined) {
-        return new PointModeSequencer(axis, toA);
+// create single sequencer factory function
+function Sequencer() {
+    let ds_list = [...arguments].filter((e) => (e instanceof Dataset));
+    let ds = (ds_list.length > 0) ? ds_list[0] : new Dataset();
+    let to_list = [...arguments].filter((e) => (e instanceof TimingObject)); 
+    if (to_list.length == 0) {
+        throw new Error("no timingobject in arguments");
+    } else if (to_list.length == 1) {
+        return new PointModeSequencer(ds, to_list[0]);
     } else {
-        return new IntervalModeSequencer(axis, toA, toB);
+        return new IntervalModeSequencer(ds, to_list[0], to_list[1]);
     }
 }
+// Add clone functions for backwards compatibility
+PointModeSequencer.prototype.clone = function () {
+    let args = [this.ds];
+    args.push.apply(args, [...arguments]);
+    return Sequencer(...args);
+};
+
+// Add clone functions for backwards compatibility
+IntervalModeSequencer.prototype.clone = function () {
+    let args = [this.ds];
+    args.push.apply(args, [...arguments]);
+    return Sequencer(...args);
+};
+
 const version = "v3.0";
 
 export { BinarySearch, Dataset, DatasetViewer, DelayConverter, Interval, LoopConverter, ObservableMap, PositionCallback, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Subset, Timeout, TimeshiftConverter, TimingObject, TimingProgress, TimingSampler, endpoint, eventify, motionutils, utils, version };
