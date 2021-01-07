@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        .ctrl-btn button {
+            width:80px;
+        }
+        .progress {
+            width: 100%; /* Full-width */
+            appearance: none;
+            border-radius: 5px;
+            height: 5px;
+            background: #d3d3d3; /* Grey background */
+            outline: none;
+        }
+        #video {
+            display:inline;
+        }
+    </style>
+    <script text="javascript" src="mediasync.js"></script>
+    <script type="module">
+
+        import {
+                TimingObject, 
+                TimingSampler,
+                TimingProgress
+            } from "https://webtiming.github.io/timingsrc/lib/timingsrc-v3.js";
+
+        // timing object
+        const to = new TimingObject({range:[0,100]});
+
+        // Hook up buttons UI
+        document.getElementById("reset").onclick = function () {
+            to.update({position:0});
+        };
+        document.getElementById("pause").onclick = function () {
+            to.update({velocity:0});
+        };
+        document.getElementById("play").onclick = function () {
+            to.update({velocity:1});
+        };
+        document.getElementById("reverse").onclick = function () {
+            to.update({velocity:-1});
+        };
+
+        // refresh position every 100 ms
+        const sampler = new TimingSampler(to, {period:100});
+
+        // position
+        const pos_elem = document.getElementById("position");
+        sampler.on("change", function () {
+            pos_elem.innerHTML = `${to.pos.toFixed(2)}`;
+        });
+
+        // progress
+        const progress_elem = document.getElementById("progress");
+        const progress = new TimingProgress(to, 
+                                            progress_elem,              {sampler:sampler});
+        
+        // Set up video sync
+        const sync1 = MCorp.mediaSync(document.getElementById('player1'), to);
+
+        // Set up video sync
+        const sync2 = MCorp.mediaSync(document.getElementById('player2'), to);
+
+        window.to = to;
+
+    </script>
+</head>
+<body>
+    <p>
+        <div>
+            Position: <span id="position" style="color:red;"></span>
+        </div>
+        <div class="ctrl-btn">
+            <button id="reset">Reset</button>    
+            <button id="play">Play</button>    
+            <button id="pause">Pause</button>
+            <button id="reverse">Reverse</button>
+        </div>
+    </p>
+    <p>
+        <input type="range" min="0" max="100" value="0" id="progress" class="progress">
+    </p>
+    <p>
+        <video id="player1" style="width:49%" autoplay>
+            <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
+            <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
+        </video>
+        <video id="player2" style="width:49%" autoplay>
+            <source src="https://mcorp.no/res/bigbuckbunny.webm" type="video/webm" />
+            <source src="https://mcorp.no/res/bigbuckbunny.m4v" type="video/mp4" />
+        </video>
+    </p>
+</body>
+</html>
