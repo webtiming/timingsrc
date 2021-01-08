@@ -41,11 +41,11 @@ class DatasetViewer {
         let node = this.elem.querySelector(`#${_id}`);
         if (node) {
             // update existing node
-            node.textContent = this.cue2string(eItem.new);
+            node.innerHTML = this.cue2string(eItem.new);
         } else {
             // create new node
             let node = document.createElement("div");
-            node.textContent = this.cue2string(eItem.new);
+            node.innerHTML = this.cue2string(eItem.new);
             node.setAttribute("id", _id);
             this.elem.appendChild(node);
         }
