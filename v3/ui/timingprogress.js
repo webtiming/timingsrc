@@ -85,7 +85,7 @@ class TimingProgress {
     }
 
     refresh() {
-        position = this._to.pos;
+        let position = this._to.pos;
         // update progress elem if unlocked
         if (!this._lock_value) {
             let percent = TimingProgress.position2percent(position, this._range);
