@@ -83,8 +83,8 @@ class TimeshiftConverter extends TimingObject {
             // set offset and emulate new event from timingsrc
             this._offset = offset;
             this.__handleEvent({
-                ...this.timingsrc.vector,
-                range: this.timingsrc.range
+                ...this.__get_timingsrc().vector,
+                range: this.__get_timingsrc().range
             });
             this.eventifyTrigger("offsetchange", offset);
         }

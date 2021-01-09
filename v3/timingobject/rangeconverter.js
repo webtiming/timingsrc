@@ -124,7 +124,7 @@ class RangeConverter extends TimingObject {
 
 			// local processing of range change
 			// to trigger range change event
-			let _arg = {range: arg.range, ...this.timingsrc.vector, live:true};
+			let _arg = {range: arg.range, ...this.__get_timingsrc().vector, live:true};
 			this.__process(_arg);
 			// avoid that range change affects timingsrc
 			delete arg.range;
@@ -150,7 +150,7 @@ class RangeConverter extends TimingObject {
         	if (vector == undefined) {
         		// drop because motion is outside
 				// create new timeout for entering inside
-				this.__renewTimeout(this.timingsrc.vector, this.__range);
+				this.__renewTimeout(this.__get_timingsrc().vector, this.__range);
 				return;
         	} else {
         		// regular
