@@ -65,7 +65,7 @@ class LoopConverter extends TimingObject {
 			}
 			if (low != this.__range[0] || high != this.__range[1]) {
 				this.__range = [low, high];
-				let vector = this.timingsrc.query();
+				let vector = this.__get_timingsrc().query();
 				vector.position = transform(vector.position, this.__range);
 				this.__vector = vector;
 				// trigger vector change
@@ -82,7 +82,7 @@ class LoopConverter extends TimingObject {
 			let now = this.clock.now();
 			let now_vector = calculateVector(this.vector, now);
 			let diff = now_vector.position - arg.position;
-			let now_vector_src = calculateVector(this.timingsrc.vector, now);
+			let now_vector_src = calculateVector(this.__get_timingsrc().vector, now);
 			arg.position = now_vector_src.position - diff;
 		}
 		return super.update(arg);

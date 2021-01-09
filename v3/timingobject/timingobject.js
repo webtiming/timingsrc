@@ -601,7 +601,25 @@ class TimingObject {
 		}
 	}
 
-	get timingsrc () {return this.__timingsrc;};
+	__get_timingsrc() {
+		// returns InternalProvider, ExternalProvider or TimingObject
+		return this.__timingsrc;
+	}
+
+	get timingsrc () {
+		// returns TimingObject, Provider or undefined
+		let timingsrc = this.__get_timingsrc();
+		if (timingsrc instanceof TimingObject) {
+			return timingsrc;
+		} else if (timingsrc instanceof InternalProvider) {
+			return undefined;
+		} else if (timingsrc instanceof ExternalProvider) {
+			return timingsrc._provider;
+		} else {
+			throw new Error("illegal timingsrc")
+		}
+	}
+	
 	set timingsrc(timingsrc) {
 		this.__clear_timingsrc();
 		this.__set_timingsrc(timingsrc);

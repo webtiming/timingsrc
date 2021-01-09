@@ -3681,7 +3681,25 @@ class TimingObject {
 		}
 	}
 
-	get timingsrc () {return this.__timingsrc;};
+	__get_timingsrc() {
+		// returns InternalProvider, ExternalProvider or TimingObject
+		return this.__timingsrc;
+	}
+
+	get timingsrc () {
+		// returns TimingObject, Provider or undefined
+		let timingsrc = this.__get_timingsrc();
+		if (timingsrc instanceof TimingObject) {
+			return timingsrc;
+		} else if (timingsrc instanceof InternalProvider) {
+			return undefined;
+		} else if (timingsrc instanceof ExternalProvider) {
+			return timingsrc._provider;
+		} else {
+			throw new Error("illegal timingsrc")
+		}
+	}
+	
 	set timingsrc(timingsrc) {
 		this.__clear_timingsrc();
 		this.__set_timingsrc(timingsrc);
@@ -3760,8 +3778,8 @@ class SkewConverter extends TimingObject {
             // set skew and emulate new event from timingsrc
 			this._skew = skew;
 			this.__handleEvent({
-                ...this.timingsrc.vector,
-                range: this.timingsrc.range
+                ...this.__get_timingsrc().vector,
+                range: this.__get_timingsrc().range
             });
             this.eventifyTrigger("skewchange", skew);
         }
@@ -3952,8 +3970,8 @@ class ScaleConverter extends TimingObject {
             // set scale and emulate new event from timingsrc
             this._factor = factor;
             this.__handleEvent({
-                ...this.timingsrc.vector,
-                range: this.timingsrc.range
+                ...this.__get_timingsrc().vector,
+                range: this.__get_timingsrc().range
             });
             this.eventifyTrigger("scalechange", factor);
         }
@@ -4013,7 +4031,7 @@ class LoopConverter extends TimingObject {
 			}
 			if (low != this.__range[0] || high != this.__range[1]) {
 				this.__range = [low, high];
-				let vector = this.timingsrc.query();
+				let vector = this.__get_timingsrc().query();
 				vector.position = transform(vector.position, this.__range);
 				this.__vector = vector;
 				// trigger vector change
@@ -4030,7 +4048,7 @@ class LoopConverter extends TimingObject {
 			let now = this.clock.now();
 			let now_vector = calculateVector(this.vector, now);
 			let diff = now_vector.position - arg.position;
-			let now_vector_src = calculateVector(this.timingsrc.vector, now);
+			let now_vector_src = calculateVector(this.__get_timingsrc().vector, now);
 			arg.position = now_vector_src.position - diff;
 		}
 		return super.update(arg);
@@ -4166,7 +4184,7 @@ class RangeConverter extends TimingObject {
         	if (vector == undefined) {
         		// drop because motion is outside
 				// create new timeout for entering inside
-				this.__renewTimeout(this.timingsrc.vector, this.__range);
+				this.__renewTimeout(this.__get_timingsrc().vector, this.__range);
 				return;
         	} else {
         		// regular
@@ -4275,8 +4293,8 @@ class TimeshiftConverter extends TimingObject {
             // set offset and emulate new event from timingsrc
             this._offset = offset;
             this.__handleEvent({
-                ...this.timingsrc.vector,
-                range: this.timingsrc.range
+                ...this.__get_timingsrc().vector,
+                range: this.__get_timingsrc().range
             });
             this.eventifyTrigger("offsetchange", offset);
         }
@@ -7642,11 +7660,11 @@ class DatasetViewer {
         let node = this.elem.querySelector(`#${_id}`);
         if (node) {
             // update existing node
-            node.textContent = this.cue2string(eItem.new);
+            node.innerHTML = this.cue2string(eItem.new);
         } else {
             // create new node
             let node = document.createElement("div");
-            node.textContent = this.cue2string(eItem.new);
+            node.innerHTML = this.cue2string(eItem.new);
             node.setAttribute("id", _id);
             this.elem.appendChild(node);
         }
