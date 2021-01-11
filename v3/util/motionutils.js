@@ -292,9 +292,9 @@ function calculateMinPositiveRealSolution(vector, x) {
 */
 export function calculateDelta(vector, range) {
 	// Time delta to hit posBefore
-	const deltaBeforeSec = calculateMinPositiveRealSolution(vector, range[0]);
+	let deltaBeforeSec = calculateMinPositiveRealSolution(vector, range[0]);
 	// Time delta to hit posAfter
-	const deltaAfterSec = calculateMinPositiveRealSolution(vector, range[1]);
+	let deltaAfterSec = calculateMinPositiveRealSolution(vector, range[1]);
     // Infinity is no good solution
     if (deltaBeforeSec == Infinity) {
         deltaBeforeSec = undefined;
