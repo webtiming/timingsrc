@@ -72,6 +72,11 @@ class Subset extends ObservableMap {
         return this._src_ds;
     }
 
+    get dataset () {
+        return this._src_ds;
+    }
+
+
     get interval () {
         return this._interval;
     }

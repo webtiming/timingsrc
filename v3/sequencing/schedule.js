@@ -47,7 +47,7 @@ class Schedule {
         // current position interval
         this.posInterval;
         // dataset
-        this.ds = dataset;
+        this.dataset = dataset;
         // task queue
         this.queue = [];
         // callbacks
@@ -288,7 +288,7 @@ class Schedule {
         // advance schedule and load events if needed
         if (this.advance(now)) {
             // fetch cue endpoints for posInterval
-            let endpointItems = this.ds.lookup_endpoints(this.posInterval);
+            let endpointItems = this.dataset.lookup_endpoints(this.posInterval);
             // load events and push on queue
             this.push(this.load(endpointItems));
             // process - possibly new due events

@@ -247,7 +247,7 @@ class BaseSequencer extends ObservableMap {
      DATASET
     ***************************************************************/
 
-    get ds () { return this._ds;}
+    get dataset () { return this._ds;}
 
     _onDatasetCallback(eventMap, relevanceInterval) {
         throw new Error("not implemented");
@@ -380,23 +380,23 @@ class BaseSequencer extends ObservableMap {
     ***************************************************************/
 
     get builder() {
-        return this.ds.builder;
+        return this.dataset.builder;
     }
 
     addCue(key, interval, data) {
-        return this.ds.addCue(key, interval, data);
+        return this.dataset.addCue(key, interval, data);
     }
 
     removeCue(key) {
-        return this.ds.removeCue(key);
+        return this.dataset.removeCue(key);
     }
 
     update(cues, options) {
-        return this.ds.update(cues, options);
+        return this.dataset.update(cues, options);
     }
 
     clear() {
-        return this.ds.clear();
+        return this.dataset.clear();
     }
 
 }
