@@ -23,7 +23,7 @@ import * as utils from '../util/utils.js';
 import endpoint from '../util/endpoint.js';
 import Interval from '../util/interval.js';
 import BinarySearch from '../util/binarysearch.js';
-import ObservableMap from '../util/observablemap.js';
+import CueCollection from './cuecollection.js';
 
 const Relation = Interval.Relation;
 
@@ -255,7 +255,7 @@ class CueArgBuilder {
       based on cue interval length, for efficient lookup
 */
 
-class Dataset extends ObservableMap {
+class Dataset extends CueCollection {
 
     static sort_cues = sort_cues;
     static Delta = Delta;
@@ -281,7 +281,7 @@ class Dataset extends ObservableMap {
     };
 
     /**
-     * ObservableMap needs access to map 
+     * CueCollection (ObservableMap) needs access to map 
      */
     get datasource () {
         return this._map;

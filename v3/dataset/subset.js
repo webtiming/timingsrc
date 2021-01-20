@@ -18,7 +18,7 @@
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import ObservableMap from '../util/observablemap.js';
+import CueCollection from './cuecollection.js';
 import {array_concat, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
 

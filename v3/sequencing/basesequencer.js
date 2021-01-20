@@ -20,7 +20,7 @@
 
 import {map_intersect, map_difference} from '../util/utils.js';
 import Interval from '../util/interval.js';
-import ObservableMap from '../util/observablemap.js';
+import CueCollection from '../dataset/cuecollection.js';
 import Dataset from '../dataset/dataset.js';
 
 
@@ -173,7 +173,7 @@ function cues_cmp_backwards (cue_a, cue_b) {
     It implements common logic related to Dataset, events and activeCues.
 */
 
-class BaseSequencer extends ObservableMap {
+class BaseSequencer extends CueCollection {
 
     static Active = Active;
     static ActiveMap = ActiveMap;
@@ -192,7 +192,7 @@ class BaseSequencer extends ObservableMap {
     }
 
     /**
-     * ObservableMap needs access to map 
+     * CueCollection (ObservableMap) needs access to map 
      */
     get datasource () {
         return this._map;

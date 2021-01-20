@@ -30,7 +30,9 @@ import eventify from './eventify.js';
 
 class ObservableMap {
 
-    constructor () {
+    constructor (options={}) {
+        
+        this.options = options;
 
         // Events
         eventify.eventifyInstance(this);
@@ -50,9 +52,42 @@ class ObservableMap {
         throw new Error("not implemented");
     }
 
+
     /***************************************************************
-     EVENTS
+     ORDERING
     ***************************************************************/
+
+    sortOrder(options={}) {
+        // sort options override constructor options
+        let {order=this.options.order} = options;
+        if (typeof order == "function") {
+            return order;
+        }        
+        // fallback .sortCmp
+        if (this.sortCmp != undefined) {
+            return this.sortCmp.bind(this);
+        }
+        return;
+    }
+
+    /* 
+        Sort items
+        ordering specified by option order
+        or subclass implementation of sortCmp
+        noop if ordering not defined
+    */
+    sortItems(iter, options={}){
+        let order = this.sortOrder(options);
+        if (typeof order == "function") {
+            // sort
+            // if iterable not array - convert into array ahead of sorting
+            let arr = (Array.isArray(iter)) ? iter : [...iter];
+            return arr.sort(order);
+        } else {
+            // noop
+            return iter;
+        }
+    }
 
     /*
         value ordering
@@ -64,7 +99,6 @@ class ObservableMap {
 
         cmpValue(value_a, value_b) {}
 
-    */   
     _sortItems(items) {
         if (this.cmpValue) {
             let self = this;
@@ -75,6 +109,12 @@ class ObservableMap {
         return items;
     }
 
+    */   
+
+
+    /***************************************************************
+     EVENTS
+    ***************************************************************/
 
     /*
         Eventify: immediate events
@@ -85,7 +125,12 @@ class ObservableMap {
                 return {key:key, new:val, old:undefined};
             });
             // sort items
-            items = this._sortItems(items);
+            let order = this.sortOrder();
+            if (typeof order == "function") {
+                items.sort(function(item_a, item_b) {
+                    return order(item_a.new, item_b.new);
+                })
+            }
             return (name == "batch") ? [items] : items;
         }
     }
