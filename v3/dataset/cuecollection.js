@@ -19,7 +19,7 @@
 */
 
 import ObservableMap from '../util/observablemap.js';
-import Interval from `../util/interval.js`;
+import Interval from '../util/interval.js';
 
 /**
  *  Extends ObservableMap
@@ -39,19 +39,25 @@ class CueCollection extends ObservableMap {
 
     // extend sortOrder to accept order as string
     sortOrder(options={}) {
-        let order = super.sortOrder(options);
+        let order = options.order || super.sortOrder(options);
         if (order == "low") {
             return CueCollection.cmpLow;
         } else if (order == "high") {
-            return CueCollection.cmpLow;
+            return CueCollection.cmpHigh;
+        } else {
+            if (typeof order != "function") {
+                return;
+            }
         }
         return order;
     }
 
     // add cues method
     cues (options = {}) {
-        let iter = this.datasource.values();
-        return this.sortItems(iter, options);
+        let iter = this.values();
+        // ensure array
+        let arr = (Array.isArray(iter)) ? iter : [...iter];
+        return this.sortValues(arr, options);
     }
 }
 

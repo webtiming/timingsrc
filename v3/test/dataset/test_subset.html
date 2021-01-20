@@ -29,10 +29,17 @@
             new Interval(12, 17) 
         ]
 
+        // reverse ordering by key
+        function cmp(cue_a, cue_b) {
+            return cue_b.interval.low - cue_a.interval.low;
+        }
+
         let options = {
             key_filter: keep_odd_keys,
-            data_convert: convert
+            data_convert: convert,
+            order: cmp
         };
+        
         let dv = new Subset(ds, options);
         let dv_elem = document.getElementById("dataview");
         let dv_viewer = new DatasetViewer(dv, dv_elem);

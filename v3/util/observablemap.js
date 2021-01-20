@@ -71,12 +71,12 @@ class ObservableMap {
     }
 
     /* 
-        Sort items
+        Sort Map values
         ordering specified by option order
         or subclass implementation of sortCmp
         noop if ordering not defined
     */
-    sortItems(iter, options={}){
+    sortValues(iter, options={}){
         let order = this.sortOrder(options);
         if (typeof order == "function") {
             // sort
@@ -89,28 +89,18 @@ class ObservableMap {
         }
     }
 
-    /*
-        value ordering
-
-        if specific ordering is needed on initial events
-
-        subclass implements class method <cmpValue>
-        to be used with Array.sort(cmpValue)
-
-        cmpValue(value_a, value_b) {}
-
-    _sortItems(items) {
-        if (this.cmpValue) {
-            let self = this;
+    /* 
+        Sort init events by value 
+    */
+    _sortInitItems(items) {
+        let order = this.sortOrder();
+        if (typeof order == "function") {
             items.sort(function(item_a, item_b) {
-                return self.cmpValue(item_a.new, item_b.new)
-            });
+                return order(item_a.new, item_b.new);
+            })
         }
         return items;
     }
-
-    */   
-
 
     /***************************************************************
      EVENTS
@@ -124,13 +114,8 @@ class ObservableMap {
             let items = [...this.datasource.entries()].map(([key, val]) => {
                 return {key:key, new:val, old:undefined};
             });
-            // sort items
-            let order = this.sortOrder();
-            if (typeof order == "function") {
-                items.sort(function(item_a, item_b) {
-                    return order(item_a.new, item_b.new);
-                })
-            }
+            // sort init items if necessary
+            items = this._sortInitItems(items);
             return (name == "batch") ? [items] : items;
         }
     }

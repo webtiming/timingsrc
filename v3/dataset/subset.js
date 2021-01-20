@@ -44,10 +44,10 @@ import Interval from '../util/interval.js';
 
 */
 
-class Subset extends ObservableMap {
+class Subset extends CueCollection {
 
     constructor(dataset, options={}) {
-        super();
+        super(options);
         this._key_filter = options.key_filter;
         this._data_filter = options.data_filter;
         this._interval = options.interval;
@@ -265,7 +265,7 @@ class Subset extends ObservableMap {
                 return {key:cue.key, new:cue, old:undefined};
             });
             // sort
-            items = this._sortItems(items);
+            items = this._sortInitItems(items);
             return (name == "batch") ? [items] : items;
         }
     }
