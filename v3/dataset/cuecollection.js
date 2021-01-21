@@ -54,10 +54,9 @@ class CueCollection extends ObservableMap {
 
     // add cues method
     cues (options = {}) {
-        let iter = this.values();
+        let cues = this.sortValues(this.values(), options);
         // ensure array
-        let arr = (Array.isArray(iter)) ? iter : [...iter];
-        return this.sortValues(arr, options);
+        return (Array.isArray(cues)) ? cues : [...cues];
     }
 }
 

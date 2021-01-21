@@ -47,9 +47,9 @@ function movement_direction (now_vector_A, now_vector_B) {
 
 class IntervalModeSequencer extends BaseSequencer {
 
-    constructor (dataset, toA, toB) {
+    constructor (dataset, toA, toB, options) {
 
-        super(dataset);
+        super(dataset, options);
 
         // Timing objects
         this._toA = toA;
@@ -139,7 +139,7 @@ class IntervalModeSequencer extends BaseSequencer {
 
             // sort event items according to general movement direction
             let direction = movement_direction(now_vector_A, now_vector_B);
-            BaseSequencer.sort_items(items, direction);
+            this.sortItems(items, direction);
 
             // event notification
             this._notifyEvents(items, direction);
@@ -263,7 +263,7 @@ class IntervalModeSequencer extends BaseSequencer {
 
             // sort event items according to general movement direction
             let direction = movement_direction(new_vector, other_new_vector);
-            BaseSequencer.sort_items(items, direction);
+            this.sortItems(items, direction);
 
             // event notification
             this._notifyEvents(items);

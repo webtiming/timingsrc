@@ -132,37 +132,28 @@ const ActiveMap = new Map([
 
 
 /*******************************************************************
- EVENT ITEM ORDERING SORTING
+ DEFAULT EVENT ITEM ORDERING
 *******************************************************************/
 
-function item_cmp_forwards (item_a, item_b) {
-    let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
-    let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
-    return Interval.cmpLow(itv_a, itv_b);
-}
-
-function item_cmp_backwards (item_a, item_b) {
-    let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
-    let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
-    return -1 * Interval.cmpHigh(itv_a, itv_b);
-}
-
-function sort_items (items, direction=0) {
-    if (direction >= 0) {
-        items.sort(item_cmp_forwards);
-    } else {
-        items.sort(item_cmp_backwards);
-    }
-}
-
-function cues_cmp_forwards (cue_a, cue_b) {
+function cue_cmp_forwards (cue_a, cue_b) {
     return Interval.cmpLow(cue_a.interval, cue_b.interval);
 }
 
-function cues_cmp_backwards (cue_a, cue_b) {
+function cue_cmp_backwards (cue_a, cue_b) {
     return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
 }
 
+function item_cmp_forwards (item_a, item_b) {
+    let cue_a = (item_a.new) ? item_a.new : item_a.old;
+    let cue_b = (item_b.new) ? item_b.new : item_b.old;
+    return cue_cmp_forwards(cue_a, cue_b);
+}
+
+function item_cmp_backwards (item_a, item_b) {
+    let cue_a = (item_a.new) ? item_a.new : item_a.old;
+    let cue_b = (item_b.new) ? item_b.new : item_b.old;
+    return cue_cmp_backwards(cue_a, cue_b);
+}
 
 /*******************************************************************
  BASE SEQUENCER
@@ -177,10 +168,9 @@ class BaseSequencer extends CueCollection {
 
     static Active = Active;
     static ActiveMap = ActiveMap;
-    static sort_items = sort_items;
 
-    constructor (dataset) {
-        super();
+    constructor (dataset, options) {
+        super(options);
 
         // Active cues
         this._map = new Map();
@@ -198,6 +188,14 @@ class BaseSequencer extends CueCollection {
         return this._map;
     }
 
+    /**
+     * Access to dataset of sequencer
+     */
+
+    get dataset () { 
+        return this._ds;
+    }
+
     /***************************************************************
      EVENTS
     ***************************************************************/
@@ -210,22 +208,48 @@ class BaseSequencer extends CueCollection {
         throw new Error("not implemented");
     }
 
-    /*
-        event order based on movement direction
-
-        Implement ObservableMap.cmpValue to define
-        the ordering of event items delivered by
-        eventifyInitArgs
-     */
-    cmpValue(cue_a, cue_b) {
-        let direction = this._movementDirection();
-        if (direction >= 0) {
-            return cues_cmp_forwards(cue_a, cue_b);
+    // override ObservableMap.sortValues to add special support for
+    // direction sensitive ordering as default ordering
+    sortValues(iter, options={}) {
+        let order = this.sortOrder(options);
+        if (typeof order == "function") {
+            // use order specified by options
+            return super.sortValues(iter, options)
         } else {
-            return cues_cmp_backwards(cue_a, cue_b);
-        }
+            // if iterable not array - convert into array ahead of sorting
+            let cues = (Array.isArray(iter)) ? iter : [...iter];
+            // default order is direction sensitive
+            let direction = this._movementDirection();
+            if (direction >= 0) {
+                cues.sort(cue_cmp_forwards);
+            } else {
+                cues.sort(cue_cmp_backwards);
+            }
+            return cues
+        } 
     }
 
+
+    // override ObservableMap.sortItems to add special support for
+    // direction sensitive ordering as default ordering
+    sortItems(items, direction) {
+        let order = this.sortOrder(); 
+        if (typeof order == "function") {
+            // use order speciied by options
+            return super.sortItems(items)            
+        } 
+        if (order == undefined) {
+            // default order is direction sensitive
+            if (direction == undefined) {
+                direction = this._movementDirection();
+            }
+            if (direction >= 0) {
+                items.sort(item_cmp_forwards);
+            } else {
+                items.sort(item_cmp_backwards);
+            }
+        }
+    }
 
     /***************************************************************
      MAP METHODS
@@ -247,7 +271,7 @@ class BaseSequencer extends CueCollection {
      DATASET
     ***************************************************************/
 
-    get dataset () { return this._ds;}
+
 
     _onDatasetCallback(eventMap, relevanceInterval) {
         throw new Error("not implemented");

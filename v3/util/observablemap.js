@@ -52,7 +52,6 @@ class ObservableMap {
         throw new Error("not implemented");
     }
 
-
     /***************************************************************
      ORDERING
     ***************************************************************/
@@ -62,21 +61,16 @@ class ObservableMap {
         let {order=this.options.order} = options;
         if (typeof order == "function") {
             return order;
-        }        
-        // fallback .sortCmp
-        if (this.sortCmp != undefined) {
-            return this.sortCmp.bind(this);
-        }
-        return;
+        }       
     }
 
     /* 
-        Sort Map values
-        ordering specified by option order
-        or subclass implementation of sortCmp
-        noop if ordering not defined
+        Sort values of Observable map
+        ordering can be overidden by specifying option <order>
+        fallback to order from constructor
+        noop if no ordering is defined
     */
-    sortValues(iter, options={}){
+    sortValues(iter, options={}) {
         let order = this.sortOrder(options);
         if (typeof order == "function") {
             // sort
@@ -90,16 +84,18 @@ class ObservableMap {
     }
 
     /* 
-        Sort init events by value 
+        Sort items (in-place) by value {new:value, old:value} using
+        ordering function for values
     */
-    _sortInitItems(items) {
-        let order = this.sortOrder();
+    sortItems(items) {
+        let order = this.sortOrder();        
         if (typeof order == "function") {
             items.sort(function(item_a, item_b) {
-                return order(item_a.new, item_b.new);
-            })
+                let cue_a = (item_a.new) ? item_a.new : item_a.old;
+                let cue_b = (item_b.new) ? item_b.new : item_b.old;
+                return order(cue_a, cue_b);
+            });
         }
-        return items;
     }
 
     /***************************************************************
@@ -114,8 +110,8 @@ class ObservableMap {
             let items = [...this.datasource.entries()].map(([key, val]) => {
                 return {key:key, new:val, old:undefined};
             });
-            // sort init items if necessary
-            items = this._sortInitItems(items);
+            // sort init items (if order defined)
+            this.sortItems(items);
             return (name == "batch") ? [items] : items;
         }
     }

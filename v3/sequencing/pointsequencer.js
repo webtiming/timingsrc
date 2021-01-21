@@ -35,9 +35,9 @@ const ACTIVECUES_THRESHOLD = 5000;
 
 class PointModeSequencer extends BaseSequencer {
 
-    constructor (dataset, to) {
+    constructor (dataset, to, options) {
 
-        super(dataset);
+        super(dataset, options);
 
         // Timing Object
         this._to = to;
@@ -222,7 +222,7 @@ class PointModeSequencer extends BaseSequencer {
 
             // sort event items according to general movement direction
             let direction = motionutils.calculateDirection(new_vector);
-            BaseSequencer.sort_items(items, direction);
+            this.sortItems(items, direction);
 
             // event notification
             this._notifyEvents(items);

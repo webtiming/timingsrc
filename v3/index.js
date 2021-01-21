@@ -50,15 +50,20 @@ import {default as IntervalModeSequencer} from './sequencing/intervalsequencer.j
 
 // create single sequencer factory function
 export function Sequencer() {
+    // find datasets in arguments
     let ds_list = [...arguments].filter((e) => (e instanceof Dataset));
     let ds = (ds_list.length > 0) ? ds_list[0] : new Dataset();
-    let to_list = [...arguments].filter((e) => (e instanceof TimingObject)); 
+    // find timing objects in arguments
+    let to_list = [...arguments].filter((e) => (e instanceof TimingObject));
+    // find options (plain objects) in arguments
+    let obj_list = [...arguments].filter((e) => (Object.getPrototypeOf(e) === Object.prototype));
+    let options = (obj_list.length > 0) ? obj_list[0] : {};
     if (to_list.length == 0) {
         throw new Error("no timingobject in arguments");
     } else if (to_list.length == 1) {
-        return new PointModeSequencer(ds, to_list[0]);
+        return new PointModeSequencer(ds, to_list[0], options);
     } else {
-        return new IntervalModeSequencer(ds, to_list[0], to_list[1]);
+        return new IntervalModeSequencer(ds, to_list[0], to_list[1], options);
     }
 };
 

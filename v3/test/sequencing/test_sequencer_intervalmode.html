@@ -193,32 +193,6 @@
                 }
             });
 
-            /*
-            // add change handler
-            s.on("batch", function(events, eInfo) {
-                let pos = to.pos.toFixed(2);
-                events.forEach(function(item){
-                    let el = document.getElementById(`${item.key}`);
-                    if (!item.new && item.old) {
-                        if (el) {
-                            el.classList.remove("active");
-                        }
-                        let itv_str = item.old.interval.toString();
-                        console.log(`exit ${item.key} ${itv_str} ${pos}`);
-
-                    } else if (item.new && !item.old) {
-                        if (el) {
-                            el.classList.add("active");
-                        }
-                        let itv_str = item.new.interval.toString();
-                        console.log(`enter ${item.key} ${itv_str} ${pos}`);
-                    } else if (item.new && item.old) {
-                        // noop
-                        console.log("change", item.key);
-                    }
-                });
-            });
-            */
         };
 
 
@@ -227,7 +201,12 @@
         ds.update(get_cues());
         const to = new timingsrc.TimingObject({position:5.0});
         const toA = new timingsrc.SkewConverter(to, 4);
-        const s = new timingsrc.Sequencer(ds, toA, to);
+
+        const options = {
+            order: function (cue_a, cue_b) {return cue_a.key - cue_b.key}
+        }
+
+        const s = new timingsrc.Sequencer(ds, toA, to, options);
         // run
         run();
         window.to1 = to;

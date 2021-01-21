@@ -265,11 +265,10 @@ class Subset extends CueCollection {
                 return {key:cue.key, new:cue, old:undefined};
             });
             // sort
-            items = this._sortInitItems(items);
+            this.sortItems(items);
             return (name == "batch") ? [items] : items;
         }
     }
-
 
     /***************************************************************
      DATASET CALLBACK

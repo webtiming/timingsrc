@@ -229,7 +229,12 @@
         const ds = new timingsrc.Dataset();
         ds.update(get_cues());
         const to = new timingsrc.TimingObject({range:[0,15]});
-        const s = new timingsrc.Sequencer(ds, to);
+
+        function cmp(cue_a, cue_b) {
+            return cue_b.interval.low - cue_a.interval.low;
+        }
+
+        const s = new timingsrc.Sequencer(ds, to, {order:cmp});
 
         // run
         run();
