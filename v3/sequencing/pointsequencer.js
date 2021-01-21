@@ -141,7 +141,7 @@ class PointModeSequencer extends BaseSequencer {
 
             // sort event items according to general movement direction
             let direction = motionutils.calculateDirection(now_vector);
-            BaseSequencer.sort_items(items, direction);
+            this.sortItems(items, direction);
 
             // event notification
             this._notifyEvents(items);
