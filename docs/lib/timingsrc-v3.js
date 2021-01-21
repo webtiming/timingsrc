@@ -2453,7 +2453,9 @@ var TIMINGSRC = (function (exports) {
 
     class ObservableMap {
 
-        constructor () {
+        constructor (options={}) {
+            
+            this.options = options;
 
             // Events
             eventify.eventifyInstance(this);
@@ -2474,30 +2476,54 @@ var TIMINGSRC = (function (exports) {
         }
 
         /***************************************************************
-         EVENTS
+         ORDERING
         ***************************************************************/
 
-        /*
-            value ordering
-
-            if specific ordering is needed on initial events
-
-            subclass implements class method <cmpValue>
-            to be used with Array.sort(cmpValue)
-
-            cmpValue(value_a, value_b) {}
-
-        */   
-        _sortItems(items) {
-            if (this.cmpValue) {
-                let self = this;
-                items.sort(function(item_a, item_b) {
-                    return self.cmpValue(item_a.new, item_b.new)
-                });
-            }
-            return items;
+        sortOrder(options={}) {
+            // sort options override constructor options
+            let {order=this.options.order} = options;
+            if (typeof order == "function") {
+                return order;
+            }       
         }
 
+        /* 
+            Sort values of Observable map
+            ordering can be overidden by specifying option <order>
+            fallback to order from constructor
+            noop if no ordering is defined
+        */
+        sortValues(iter, options={}) {
+            let order = this.sortOrder(options);
+            if (typeof order == "function") {
+                // sort
+                // if iterable not array - convert into array ahead of sorting
+                let arr = (Array.isArray(iter)) ? iter : [...iter];
+                return arr.sort(order);
+            } else {
+                // noop
+                return iter;
+            }
+        }
+
+        /* 
+            Sort items (in-place) by value {new:value, old:value} using
+            ordering function for values
+        */
+        sortItems(items) {
+            let order = this.sortOrder();        
+            if (typeof order == "function") {
+                items.sort(function(item_a, item_b) {
+                    let cue_a = (item_a.new) ? item_a.new : item_a.old;
+                    let cue_b = (item_b.new) ? item_b.new : item_b.old;
+                    return order(cue_a, cue_b);
+                });
+            }
+        }
+
+        /***************************************************************
+         EVENTS
+        ***************************************************************/
 
         /*
             Eventify: immediate events
@@ -2507,8 +2533,8 @@ var TIMINGSRC = (function (exports) {
                 let items = [...this.datasource.entries()].map(([key, val]) => {
                     return {key:key, new:val, old:undefined};
                 });
-                // sort items
-                items = this._sortItems(items);
+                // sort init items (if order defined)
+                this.sortItems(items);
                 return (name == "batch") ? [items] : items;
             }
         }
@@ -4549,6 +4575,65 @@ var TIMINGSRC = (function (exports) {
         along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
     */
 
+    /**
+     *  Extends ObservableMap
+     * 
+     *  with logic specific to collections of cues.
+     */
+
+    class CueCollection extends ObservableMap {
+
+        static cmpLow(cue_a, cue_b) {
+            return Interval.cmpLow(cue_a.interval, cue_b.interval);
+        }
+
+        static cmpHigh(cue_a, cue_b) {
+            return Interval.cmpHigh(cue_a.interval, cue_b.interval);
+        }
+
+        // extend sortOrder to accept order as string
+        sortOrder(options={}) {
+            let order = options.order || super.sortOrder(options);
+            if (order == "low") {
+                return CueCollection.cmpLow;
+            } else if (order == "high") {
+                return CueCollection.cmpHigh;
+            } else {
+                if (typeof order != "function") {
+                    return;
+                }
+            }
+            return order;
+        }
+
+        // add cues method
+        cues (options = {}) {
+            let cues = this.sortValues(this.values(), options);
+            // ensure array
+            return (Array.isArray(cues)) ? cues : [...cues];
+        }
+    }
+
+    /*
+        Copyright 2020
+        Author : Ingar Arntzen
+
+        This file is part of the Timingsrc module.
+
+        Timingsrc is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Lesser General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        Timingsrc is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Lesser General Public License for more details.
+
+        You should have received a copy of the GNU Lesser General Public License
+        along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+    */
+
     const Relation$1 = Interval.Relation;
 
     /*
@@ -4754,7 +4839,7 @@ var TIMINGSRC = (function (exports) {
           based on cue interval length, for efficient lookup
     */
 
-    class Dataset extends ObservableMap {
+    class Dataset extends CueCollection {
 
         static sort_cues = sort_cues;
         static Delta = Delta;
@@ -4780,7 +4865,7 @@ var TIMINGSRC = (function (exports) {
         };
 
         /**
-         * ObservableMap needs access to map 
+         * CueCollection (ObservableMap) needs access to map 
          */
         get datasource () {
             return this._map;
@@ -5889,10 +5974,10 @@ var TIMINGSRC = (function (exports) {
 
     */
 
-    class Subset extends ObservableMap {
+    class Subset extends CueCollection {
 
         constructor(dataset, options={}) {
-            super();
+            super(options);
             this._key_filter = options.key_filter;
             this._data_filter = options.data_filter;
             this._interval = options.interval;
@@ -5916,6 +6001,11 @@ var TIMINGSRC = (function (exports) {
         get datasource () {
             return this._src_ds;
         }
+
+        get dataset () {
+            return this._src_ds;
+        }
+
 
         get interval () {
             return this._interval;
@@ -6105,11 +6195,10 @@ var TIMINGSRC = (function (exports) {
                     return {key:cue.key, new:cue, old:undefined};
                 });
                 // sort
-                items = this._sortItems(items);
+                this.sortItems(items);
                 return (name == "batch") ? [items] : items;
             }
         }
-
 
         /***************************************************************
          DATASET CALLBACK
@@ -6292,7 +6381,7 @@ var TIMINGSRC = (function (exports) {
             // current position interval
             this.posInterval;
             // dataset
-            this.ds = dataset;
+            this.dataset = dataset;
             // task queue
             this.queue = [];
             // callbacks
@@ -6533,7 +6622,7 @@ var TIMINGSRC = (function (exports) {
             // advance schedule and load events if needed
             if (this.advance(now)) {
                 // fetch cue endpoints for posInterval
-                let endpointItems = this.ds.lookup_endpoints(this.posInterval);
+                let endpointItems = this.dataset.lookup_endpoints(this.posInterval);
                 // load events and push on queue
                 this.push(this.load(endpointItems));
                 // process - possibly new due events
@@ -6677,37 +6766,28 @@ var TIMINGSRC = (function (exports) {
 
 
     /*******************************************************************
-     EVENT ITEM ORDERING SORTING
+     DEFAULT EVENT ITEM ORDERING
     *******************************************************************/
 
-    function item_cmp_forwards (item_a, item_b) {
-        let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
-        let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
-        return Interval.cmpLow(itv_a, itv_b);
-    }
-
-    function item_cmp_backwards (item_a, item_b) {
-        let itv_a = (item_a.new) ? item_a.new.interval : item_a.old.interval;
-        let itv_b = (item_b.new) ? item_b.new.interval : item_b.old.interval;
-        return -1 * Interval.cmpHigh(itv_a, itv_b);
-    }
-
-    function sort_items (items, direction=0) {
-        if (direction >= 0) {
-            items.sort(item_cmp_forwards);
-        } else {
-            items.sort(item_cmp_backwards);
-        }
-    }
-
-    function cues_cmp_forwards (cue_a, cue_b) {
+    function cue_cmp_forwards$1 (cue_a, cue_b) {
         return Interval.cmpLow(cue_a.interval, cue_b.interval);
     }
 
-    function cues_cmp_backwards (cue_a, cue_b) {
+    function cue_cmp_backwards$1 (cue_a, cue_b) {
         return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
     }
 
+    function item_cmp_forwards (item_a, item_b) {
+        let cue_a = (item_a.new) ? item_a.new : item_a.old;
+        let cue_b = (item_b.new) ? item_b.new : item_b.old;
+        return cue_cmp_forwards$1(cue_a, cue_b);
+    }
+
+    function item_cmp_backwards (item_a, item_b) {
+        let cue_a = (item_a.new) ? item_a.new : item_a.old;
+        let cue_b = (item_b.new) ? item_b.new : item_b.old;
+        return cue_cmp_backwards$1(cue_a, cue_b);
+    }
 
     /*******************************************************************
      BASE SEQUENCER
@@ -6718,14 +6798,13 @@ var TIMINGSRC = (function (exports) {
         It implements common logic related to Dataset, events and activeCues.
     */
 
-    class BaseSequencer extends ObservableMap {
+    class BaseSequencer extends CueCollection {
 
         static Active = Active;
         static ActiveMap = ActiveMap;
-        static sort_items = sort_items;
 
-        constructor (dataset) {
-            super();
+        constructor (dataset, options) {
+            super(options);
 
             // Active cues
             this._map = new Map();
@@ -6737,10 +6816,18 @@ var TIMINGSRC = (function (exports) {
         }
 
         /**
-         * ObservableMap needs access to map 
+         * CueCollection (ObservableMap) needs access to map 
          */
         get datasource () {
             return this._map;
+        }
+
+        /**
+         * Access to dataset of sequencer
+         */
+
+        get dataset () { 
+            return this._ds;
         }
 
         /***************************************************************
@@ -6755,22 +6842,48 @@ var TIMINGSRC = (function (exports) {
             throw new Error("not implemented");
         }
 
-        /*
-            event order based on movement direction
-
-            Implement ObservableMap.cmpValue to define
-            the ordering of event items delivered by
-            eventifyInitArgs
-         */
-        cmpValue(cue_a, cue_b) {
-            let direction = this._movementDirection();
-            if (direction >= 0) {
-                return cues_cmp_forwards(cue_a, cue_b);
+        // override ObservableMap.sortValues to add special support for
+        // direction sensitive ordering as default ordering
+        sortValues(iter, options={}) {
+            let order = this.sortOrder(options);
+            if (typeof order == "function") {
+                // use order specified by options
+                return super.sortValues(iter, options)
             } else {
-                return cues_cmp_backwards(cue_a, cue_b);
-            }
+                // if iterable not array - convert into array ahead of sorting
+                let cues = (Array.isArray(iter)) ? iter : [...iter];
+                // default order is direction sensitive
+                let direction = this._movementDirection();
+                if (direction >= 0) {
+                    cues.sort(cue_cmp_forwards$1);
+                } else {
+                    cues.sort(cue_cmp_backwards$1);
+                }
+                return cues
+            } 
         }
 
+
+        // override ObservableMap.sortItems to add special support for
+        // direction sensitive ordering as default ordering
+        sortItems(items, direction) {
+            let order = this.sortOrder(); 
+            if (typeof order == "function") {
+                // use order speciied by options
+                return super.sortItems(items)            
+            } 
+            if (order == undefined) {
+                // default order is direction sensitive
+                if (direction == undefined) {
+                    direction = this._movementDirection();
+                }
+                if (direction >= 0) {
+                    items.sort(item_cmp_forwards);
+                } else {
+                    items.sort(item_cmp_backwards);
+                }
+            }
+        }
 
         /***************************************************************
          MAP METHODS
@@ -6792,7 +6905,7 @@ var TIMINGSRC = (function (exports) {
          DATASET
         ***************************************************************/
 
-        get ds () { return this._ds;}
+
 
         _onDatasetCallback(eventMap, relevanceInterval) {
             throw new Error("not implemented");
@@ -6924,23 +7037,23 @@ var TIMINGSRC = (function (exports) {
         ***************************************************************/
 
         get builder() {
-            return this.ds.builder;
+            return this.dataset.builder;
         }
 
         addCue(key, interval, data) {
-            return this.ds.addCue(key, interval, data);
+            return this.dataset.addCue(key, interval, data);
         }
 
         removeCue(key) {
-            return this.ds.removeCue(key);
+            return this.dataset.removeCue(key);
         }
 
         update(cues, options) {
-            return this.ds.update(cues, options);
+            return this.dataset.update(cues, options);
         }
 
         clear() {
-            return this.ds.clear();
+            return this.dataset.clear();
         }
 
     }
@@ -6976,9 +7089,9 @@ var TIMINGSRC = (function (exports) {
 
     class PointModeSequencer extends BaseSequencer {
 
-        constructor (dataset, to) {
+        constructor (dataset, to, options) {
 
-            super(dataset);
+            super(dataset, options);
 
             // Timing Object
             this._to = to;
@@ -7163,7 +7276,7 @@ var TIMINGSRC = (function (exports) {
 
                 // sort event items according to general movement direction
                 let direction = calculateDirection(new_vector);
-                BaseSequencer.sort_items(items, direction);
+                this.sortItems(items, direction);
 
                 // event notification
                 this._notifyEvents(items);
@@ -7280,9 +7393,9 @@ var TIMINGSRC = (function (exports) {
 
     class IntervalModeSequencer extends BaseSequencer {
 
-        constructor (dataset, toA, toB) {
+        constructor (dataset, toA, toB, options) {
 
-            super(dataset);
+            super(dataset, options);
 
             // Timing objects
             this._toA = toA;
@@ -7372,7 +7485,7 @@ var TIMINGSRC = (function (exports) {
 
                 // sort event items according to general movement direction
                 let direction = movement_direction(now_vector_A, now_vector_B);
-                BaseSequencer.sort_items(items, direction);
+                this.sortItems(items, direction);
 
                 // event notification
                 this._notifyEvents(items, direction);
@@ -7496,7 +7609,7 @@ var TIMINGSRC = (function (exports) {
 
                 // sort event items according to general movement direction
                 let direction = movement_direction(new_vector, other_new_vector);
-                BaseSequencer.sort_items(items, direction);
+                this.sortItems(items, direction);
 
                 // event notification
                 this._notifyEvents(items);
@@ -7793,15 +7906,20 @@ var TIMINGSRC = (function (exports) {
 
     // create single sequencer factory function
     function Sequencer() {
+        // find datasets in arguments
         let ds_list = [...arguments].filter((e) => (e instanceof Dataset));
         let ds = (ds_list.length > 0) ? ds_list[0] : new Dataset();
-        let to_list = [...arguments].filter((e) => (e instanceof TimingObject)); 
+        // find timing objects in arguments
+        let to_list = [...arguments].filter((e) => (e instanceof TimingObject));
+        // find options (plain objects) in arguments
+        let obj_list = [...arguments].filter((e) => (Object.getPrototypeOf(e) === Object.prototype));
+        let options = (obj_list.length > 0) ? obj_list[0] : {};
         if (to_list.length == 0) {
             throw new Error("no timingobject in arguments");
         } else if (to_list.length == 1) {
-            return new PointModeSequencer(ds, to_list[0]);
+            return new PointModeSequencer(ds, to_list[0], options);
         } else {
-            return new IntervalModeSequencer(ds, to_list[0], to_list[1]);
+            return new IntervalModeSequencer(ds, to_list[0], to_list[1], options);
         }
     }
     // Add clone functions for backwards compatibility
