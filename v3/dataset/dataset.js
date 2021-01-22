@@ -344,11 +344,13 @@ class Dataset extends CueCollection {
     */
 
     addCue(key, interval, data) {
-        return this.builder.addCue(key, interval, data).submit();
+        let res = this.builder.addCue(key, interval, data).submit();
+        return (res.length > 0) ? res[0] : undefined;
     }
 
     removeCue(key) {
-        return this.builder.removeCue(key).submit();
+        let res = this.builder.removeCue(key).submit();
+        return (res.length > 0) ? res[0] : undefined;
     }
 
 

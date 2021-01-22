@@ -2658,6 +2658,65 @@ eventify.eventifyPrototype(ObservableMap.prototype);
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ *  Extends ObservableMap
+ * 
+ *  with logic specific to collections of cues.
+ */
+
+class CueCollection extends ObservableMap {
+
+    static cmpLow(cue_a, cue_b) {
+        return Interval.cmpLow(cue_a.interval, cue_b.interval);
+    }
+
+    static cmpHigh(cue_a, cue_b) {
+        return Interval.cmpHigh(cue_a.interval, cue_b.interval);
+    }
+
+    // extend sortOrder to accept order as string
+    sortOrder(options={}) {
+        let order = options.order || super.sortOrder(options);
+        if (order == "low") {
+            return CueCollection.cmpLow;
+        } else if (order == "high") {
+            return CueCollection.cmpHigh;
+        } else {
+            if (typeof order != "function") {
+                return;
+            }
+        }
+        return order;
+    }
+
+    // add cues method
+    cues (options = {}) {
+        let cues = this.sortValues(this.values(), options);
+        // ensure array
+        return (Array.isArray(cues)) ? cues : [...cues];
+    }
+}
+
+/*
+    Copyright 2020
+    Author : Ingar Arntzen
+
+    This file is part of the Timingsrc module.
+
+    Timingsrc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Timingsrc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 
 /*
     Wraps the built in setTimeout to provide a
@@ -4572,65 +4631,6 @@ class PositionCallback {
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  Extends ObservableMap
- * 
- *  with logic specific to collections of cues.
- */
-
-class CueCollection extends ObservableMap {
-
-    static cmpLow(cue_a, cue_b) {
-        return Interval.cmpLow(cue_a.interval, cue_b.interval);
-    }
-
-    static cmpHigh(cue_a, cue_b) {
-        return Interval.cmpHigh(cue_a.interval, cue_b.interval);
-    }
-
-    // extend sortOrder to accept order as string
-    sortOrder(options={}) {
-        let order = options.order || super.sortOrder(options);
-        if (order == "low") {
-            return CueCollection.cmpLow;
-        } else if (order == "high") {
-            return CueCollection.cmpHigh;
-        } else {
-            if (typeof order != "function") {
-                return;
-            }
-        }
-        return order;
-    }
-
-    // add cues method
-    cues (options = {}) {
-        let cues = this.sortValues(this.values(), options);
-        // ensure array
-        return (Array.isArray(cues)) ? cues : [...cues];
-    }
-}
-
-/*
-    Copyright 2020
-    Author : Ingar Arntzen
-
-    This file is part of the Timingsrc module.
-
-    Timingsrc is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Timingsrc is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 const Relation$1 = Interval.Relation;
 
 /*
@@ -4925,11 +4925,13 @@ class Dataset extends CueCollection {
     */
 
     addCue(key, interval, data) {
-        return this.builder.addCue(key, interval, data).submit();
+        let res = this.builder.addCue(key, interval, data).submit();
+        return (res.length > 0) ? res[0] : undefined;
     }
 
     removeCue(key) {
-        return this.builder.removeCue(key).submit();
+        let res = this.builder.removeCue(key).submit();
+        return (res.length > 0) ? res[0] : undefined;
     }
 
 
@@ -7935,5 +7937,5 @@ IntervalModeSequencer.prototype.clone = function () {
 
 const version = "v3.0";
 
-export { BinarySearch, Dataset, DatasetViewer, DelayConverter, Interval, LoopConverter, ObservableMap, PositionCallback, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Subset, Timeout, TimeshiftConverter, TimingObject, TimingProgress, TimingSampler, endpoint, eventify, motionutils, utils, version };
+export { BinarySearch, CueCollection, Dataset, DatasetViewer, DelayConverter, Interval, LoopConverter, PositionCallback, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Subset, Timeout, TimeshiftConverter, TimingObject, TimingProgress, TimingSampler, endpoint, eventify, motionutils, utils, version };
 //# sourceMappingURL=timingsrc-module-v3.js.map
