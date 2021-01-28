@@ -170,6 +170,11 @@ function cue_delta(cue_a, cue_b, equals) {
 }
 
 
+function cue_equals(cue_a, cue_b) {
+    let delta = cue_delta(cue_a, cue_b);
+    return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
+}
+
 /*
     CueArgBuilder
 
@@ -271,6 +276,7 @@ class Dataset extends CueCollection {
 
     static Delta = Delta;
     static cue_delta = cue_delta;
+    static cue_equals = cue_equals;
 
     constructor(options) {
         super(options);
@@ -469,6 +475,9 @@ class Dataset extends CueCollection {
         if (options.debug == undefined) {
             options.debug = true;
         }
+        if (options.copy == undefined) {
+            options.copy = true;
+        }
         if (!utils.isIterable(cues)) {
             cues = [cues];
         }
@@ -487,12 +496,24 @@ class Dataset extends CueCollection {
                     throw new Error("illegal cue", cue);
                 }
             }
+
             has_interval = cue.hasOwnProperty("interval");
             has_data = cue.hasOwnProperty("data");
             if (options.check && has_interval) {
                 if (!cue.interval instanceof Interval) {
                     throw new Error("interval must be Interval");
                 }
+            }
+
+            // copy cue to protect againt fiddling with internal cues
+            if (options.copy) {
+                let tmp = {key:cue.key};
+                if (has_interval) {tmp.interval = cue.interval;}
+                if (has_data) {tmp.data = cue.data};
+                cue = tmp;
+                /*
+                
+                */    
             }
 
             /*******************************************************
@@ -537,8 +558,6 @@ class Dataset extends CueCollection {
 
         // flush all buckets so updates take effect
         this._call_buckets("flush");
-
-        
 
         if (batchMap.size > 0) {
 
@@ -1116,7 +1135,7 @@ class CueBucket {
                         console.log("cuebucket:", this._maxLength);
                         console.log("lookup endpoints in interval", broader_interval.toString());
                         console.log("POINT:", point); 
-                        console.log("pointMap CUE:", cue.interval.toString())
+                        console.log("CUE:", cue.interval.toString())
                         this.integrity();
                         throw new Error("fatal: point cue mismatch");
                     }

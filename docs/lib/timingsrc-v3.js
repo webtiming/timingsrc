@@ -4761,6 +4761,11 @@ var TIMINGSRC = (function (exports) {
     }
 
 
+    function cue_equals(cue_a, cue_b) {
+        let delta = cue_delta(cue_a, cue_b);
+        return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
+    }
+
     /*
         CueArgBuilder
 
@@ -4862,6 +4867,7 @@ var TIMINGSRC = (function (exports) {
 
         static Delta = Delta;
         static cue_delta = cue_delta;
+        static cue_equals = cue_equals;
 
         constructor(options) {
             super(options);
@@ -5060,6 +5066,9 @@ var TIMINGSRC = (function (exports) {
             if (options.debug == undefined) {
                 options.debug = true;
             }
+            if (options.copy == undefined) {
+                options.copy = true;
+            }
             if (!isIterable(cues)) {
                 cues = [cues];
             }
@@ -5078,12 +5087,23 @@ var TIMINGSRC = (function (exports) {
                         throw new Error("illegal cue", cue);
                     }
                 }
+
                 has_interval = cue.hasOwnProperty("interval");
                 has_data = cue.hasOwnProperty("data");
                 if (options.check && has_interval) {
                     if (!cue.interval instanceof Interval) {
                         throw new Error("interval must be Interval");
                     }
+                }
+
+                // copy cue to protect againt fiddling with internal cues
+                if (options.copy) {
+                    let tmp = {key:cue.key};
+                    if (has_interval) {tmp.interval = cue.interval;}
+                    if (has_data) {tmp.data = cue.data;}                cue = tmp;
+                    /*
+                    
+                    */    
                 }
 
                 /*******************************************************
@@ -5126,8 +5146,6 @@ var TIMINGSRC = (function (exports) {
 
             // flush all buckets so updates take effect
             this._call_buckets("flush");
-
-            
 
             if (batchMap.size > 0) {
 
@@ -5705,7 +5723,7 @@ var TIMINGSRC = (function (exports) {
                             console.log("cuebucket:", this._maxLength);
                             console.log("lookup endpoints in interval", broader_interval.toString());
                             console.log("POINT:", point); 
-                            console.log("pointMap CUE:", cue.interval.toString());
+                            console.log("CUE:", cue.interval.toString());
                             this.integrity();
                             throw new Error("fatal: point cue mismatch");
                         }

@@ -157,7 +157,7 @@
             // test that reported old cue is equal to initial cue
             assertTrue(cue_equals(_init_cue, res[0].old))
             // test that resulting new cue is equal to cue
-            assertTrue(cue_equals(res[0].new, cue));
+            assertTrue(equals(res[0].new.data, _init_cue.data));
           }
 
           function test_replace_interval_delete_data() {
@@ -203,7 +203,7 @@
             // test that reported old cue is equal to initial cue
             assertTrue(cue_equals(_init_cue, res[0].old))
             // test that resulting new cue is equal to cue
-            assertTrue(cue_equals(res[0].new, cue));
+            assertTrue((res[0].new.interval.equals(init_cue.interval)));
           }
 
           function test_replace_data_delete_interval() {
@@ -530,7 +530,7 @@
             // test that reported new cue is equal to cue found in Dataset
             assertTrue(cue_equals(ds.get(1), res[0].new))
             // test that reported old cue is equal to the previous cue
-            assertTrue(cue_equals(cues[0], res[0].old))
+            assertTrue(res[0].old.interval.equals(cues[0].interval));
           }
 
 
@@ -637,10 +637,6 @@
             ds.update(cue);
 
             cues = ds.lookup(lookup_interval);
-
-            // test that cue object is the same as the initial update
-            assertTrue(cues[0] === init_cue);
-            assertTrue(cues[0] === ds.get(1));
             // test that cue.data is updated
             assertTrue(equals(cues[0].data, cue.data));
             // test that get returns same cue
@@ -675,7 +671,6 @@
 
             // test that get returns same cue
             assertTrue(cue_equals(cues[0], ds.get(1)));
-            assertTrue(cues[0] == init_cue);
             assertTrue(cue.interval.equals(cues[0].interval));
           }
 
