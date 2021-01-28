@@ -5,7 +5,7 @@
     <!--  main -->
     <script type="module">
 
-        import {utils, Interval, Dataset} from '../../index.js';
+        import {utils, Interval, Dataset, endpoint} from '../../index.js';
 
         const Delta = Dataset.Delta;
         const cue_delta = Dataset.cue_delta;
@@ -391,8 +391,8 @@
 
           test_insert();
           test_insert_interval();
-          test_insert_data();
-
+          test_insert_data();          
+          
           test_replace();
           test_replace_interval_preserve_data();
           test_replace_interval_delete_data();
@@ -478,7 +478,7 @@
           }
 
 
- /*
+            /*
             verify that original data is not preserved when interval is given
             after delete
           */
@@ -741,11 +741,38 @@
         };
 
 
+        function test_truncate () {
+
+            let ds = new Dataset();
+
+            ds.update([
+                {key:"k", interval: new Interval(612, 10000), data: "k"}
+            ]);
+            ds.update([
+                {key:"l", interval: new Interval(614, 10000), data: "l"},
+                {key:"k", interval: new Interval(612, 614), data: "k"},
+            ]);
+            ds.update([
+                {key:"m", interval: new Interval(616, 10000), data: "m"},
+                {key:"l", interval: new Interval(614, 616), data: "l"},
+ 
+            ]);
+
+            let eps = ds.lookup_endpoints(new Interval(600, 700));
+
+            for (let ep of eps) {
+                console.log(endpoint.toString(ep.endpoint), ep.cue.interval.toString());
+            }
+        }
+
+
         var run = function () {
-          test_update();
-          test_update_multiple();
-          test_update_lookup();
-          test_event();
+
+            test_update_multiple();
+            test_update();            
+            test_update_lookup();
+            test_event();
+            test_truncate();
         };
 
         if (document.readyState === "complete") run();

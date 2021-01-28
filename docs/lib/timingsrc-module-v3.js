@@ -45,6 +45,13 @@ function isIn(as) {
     };
 }
 
+function set_difference(as, bs) {
+    return new Set([...as].filter((e) => !bs.has(e)));
+}
+
+
+
+
 
 /*
     get the difference of two Maps
@@ -232,6 +239,7 @@ var utils = /*#__PURE__*/Object.freeze({
     eqSet: eqSet,
     all: all,
     isIn: isIn,
+    set_difference: set_difference,
     map_difference: map_difference,
     map_intersect: map_intersect,
     map_merge: map_merge,
@@ -4852,8 +4860,8 @@ class Dataset extends CueCollection {
     static Delta = Delta;
     static cue_delta = cue_delta;
 
-    constructor() {
-        super();
+    constructor(options) {
+        super(options);
 
         this._map = new Map();
         this._builder = new CueArgBuilder(this);
@@ -5034,22 +5042,21 @@ class Dataset extends CueCollection {
 
     ***************************************************************/
 
-    update(cues, options) {
+    update(cues, options = {}) {
         const batchMap = new Map();
         let current_cue;
         let has_interval, has_data;
         let init = this._map.size == 0;
         // options
-        options = options || {};
-        // check is false by default
         if (options.check == undefined) {
             options.check = false;
         }
-        // chaining is true by default
         if (options.chaining == undefined) {
             options.chaining = true;
         }
-
+        if (options.debug == undefined) {
+            options.debug = true;
+        }
         if (!isIterable(cues)) {
             cues = [cues];
         }
@@ -5111,11 +5118,14 @@ class Dataset extends CueCollection {
                 - update cueBuckets
                 - create batchMap
             *******************************************************/
-
             this._update_cue(batchMap, current_cue, cue, options);
         }
+
         // flush all buckets so updates take effect
         this._call_buckets("flush");
+
+        
+
         if (batchMap.size > 0) {
 
             /*
@@ -5151,8 +5161,13 @@ class Dataset extends CueCollection {
                 events from sequencers.
             */
             this._notify_callbacks(batchMap, relevanceInterval);
+          
+            // debug
+            if (options.debug) {this.integrity();}
             return items;
         }
+        // debug
+        if (options.debug) {this.integrity();}
         return [];
     };
 
@@ -5226,8 +5241,7 @@ class Dataset extends CueCollection {
             the previous batchMap item
 
             recalculate delta relative to old_cue
-            - this delta is only for sequencers
-            - continue processing with the original delta defined
+            - continue processing with the original (delta, old_cue) defined
             above, as this is required to correctly change cueBuckets
             which have already been affected by previous item.
         */
@@ -5240,6 +5254,8 @@ class Dataset extends CueCollection {
         }
 
         batchMap.set(cue.key, item);
+
+
 
         /***********************************************************
             update cueBuckets
@@ -5281,19 +5297,19 @@ class Dataset extends CueCollection {
         } else if (delta.interval == Delta.REPLACE) {
             remove_needed = true;
             add_needed = true;
-            low_changed = item.new.interval.low != item.old.interval.low;
-            high_changed = item.new.interval.high != item.old.interval.high;
+            low_changed = new_cue.interval.low != old_cue.interval.low;
+            high_changed = new_cue.interval.high != old_cue.interval.high;
         }
 
         /*
             old cue and new cue might not belong to the same cue bucket
         */
         if (remove_needed){
-            let old_bid = getCueBucketId(item.old.interval.length);
+            let old_bid = getCueBucketId(old_cue.interval.length);
             oldCueBucket = this._cueBuckets.get(old_bid);
         }
         if (add_needed) {
-            let new_bid = getCueBucketId(item.new.interval.length);
+            let new_bid = getCueBucketId(new_cue.interval.length);
             newCueBucket = this._cueBuckets.get(new_bid);
         }
 
@@ -5320,29 +5336,24 @@ class Dataset extends CueCollection {
             cues added to CueBucket must be the correct object
             (current_cue), so that later in-place modifications become
             reflected in CueBucket.
-            batchMap item.new is the current cue object.
         */
 
         // update low point - if changed
         if (low_changed) {
             if (remove_needed) {
-                // console.log("remove old low", item.old.interval.low);
-                oldCueBucket.del_endpoint(item.old.interval.low, item.old);
+                oldCueBucket.del_endpoint(old_cue.interval.low, old_cue);
             }
             if (add_needed) {
-                // console.log("add new low", item.new.interval.low);
-                newCueBucket.add_endpoint(item.new.interval.low, item.new);
+                newCueBucket.add_endpoint(new_cue.interval.low, new_cue);
             }
         }
         // update high point - if changed
         if (high_changed) {
-            if (remove_needed && !item.old.interval.singular) {
-                // console.log("remove old high", item.old.interval.high);
-                oldCueBucket.del_endpoint(item.old.interval.high, item.old);
+            if (remove_needed && !old_cue.interval.singular) {
+                oldCueBucket.del_endpoint(old_cue.interval.high, old_cue);
             }
-            if (add_needed && !item.new.interval.singular) {
-                // console.log("add new high", item.new.interval.high);
-                newCueBucket.add_endpoint(item.new.interval.high, item.new);
+            if (add_needed && !new_cue.interval.singular) {
+                newCueBucket.add_endpoint(new_cue.interval.high, new_cue);
             }
         }
     }
@@ -5444,15 +5455,38 @@ class Dataset extends CueCollection {
         // remove point duplicates if any
         points = [...new Set(points)];
 
-        if (cues.length != this._map.size) {
-            throw new Error("inconsistent cue count _map and aggregate cueBuckets " + cues-this._map.size);
+        // check map cues versus all cues in all buckets
+        // map cues may include cues with no interval
+        let no_interval_cues = [...this._map.values()].filter(cue => cue.interval == undefined);
+
+        let count_buckets = cues.length;
+        let count_no_interval = no_interval_cues.length;
+        let count_map = this._map.size;
+        let diff = count_map - count_buckets - count_no_interval;
+        if (diff != 0) {
+            console.log("count buckets", count_buckets);
+            console.log("count no intervals", count_no_interval);
+            console.log("count map", count_map);
+            console.log("count diff", diff);
+            throw new Error("inconsistent cue count");
         }
 
-        // check that cues are the same
-        for (let cue of cues.values()) {
-            if (!this._map.has(cue.key)) {
-                throw new Error("inconsistent cues _map and aggregate cueBuckets");
-            }
+        // check that cue maps are non overlapping
+        let bucket_map = new Map(cues.map(cue => [cue.key, cue]));
+        let map_map = new Map([...this._map.entries()].filter(([key, cue]) => {
+            return (cue.interval != undefined);
+        }));
+
+        let missing = map_difference(bucket_map, map_map);
+        if (missing.size > 0) {
+            console.log("buckets missing cues:");
+            console.log([...missing.keys()]);
+            throw new Error(`buckets missing cues: ${[...missing.keys()]}`);
+        }
+        
+        missing = map_difference(map_map, bucket_map);
+        if (missing.size > 0) {
+            throw new Error(`buckets too many cues: ${[...missing.keys()]}`);
         }
 
         return {
@@ -5664,14 +5698,18 @@ class CueBucket {
                     } else if (point == cue.interval.high) {
                         _endpoint = cue.interval.endpointHigh;
                     } else {
-                        console.log(point);
-                        console.log(cue);
+                        console.log("DS INDEX ERROR");
+                        console.log("cuebucket:", this._maxLength);
+                        console.log("lookup endpoints in interval", broader_interval.toString());
+                        console.log("POINT:", point); 
+                        console.log("pointMap CUE:", cue.interval.toString());
+                        this.integrity();
                         throw new Error("fatal: point cue mismatch");
                     }
                     if (interval.covers_endpoint(_endpoint)) {
                         result.push({endpoint:_endpoint, cue:cue});
                     }
-                });
+                }, this);
         }
         return result;
     }
@@ -5892,48 +5930,111 @@ class CueBucket {
     */
     integrity() {
 
-        if (this._pointMap.size !== this._pointIndex.length) {
-            throw new Error("unequal number of points " + (this._pointMap.size - this._pointIndex.length));
+        /* 
+            invariable - pointMap and pointIndex always manage the same set of points
+        */
+        const index_point_set = new Set([...this._pointIndex.values()]);
+        const map_point_set = new Set([...this._pointMap.keys()]);
+
+        if (!eqSet(index_point_set, map_point_set)) {
+            let missing = set_difference(index_point_set, map_point_set);
+            if (missing.size > 0) {
+                throw new Error(`pointMap missing points: ${[...missing]}`);
+            }
+            
+            missing = set_difference(map_point_set, index_point_set);
+            if (missing.size > 0) {
+                throw new Error(`pointIndex missing points: ${[...missing]}`);
+            }
         }
 
-        // check that the same cues are present in both pointMap and pointIndex
-        const missing = new Set();
-        for (let point of this._pointIndex.values()) {
-            if (!this._pointMap.has(point)){
-                missing.add(point);
-            }
+        /*
+            invariable - pointIndex shall always be sorted and not contain duplicates
+        */
+        let points = [...this._pointIndex.values()];
+        if (points.length != index_point_set.size) {
+            throw new Error("pointIndex include duplicate points");
         }
-        if (missing.size > 0) {
-            throw new Error("differences in points " + [...missing]);
+        for (let i=1; i<points.length; i++) {
+            if (points[i-1] >= points[i]) {
+                throw new Error("pointIndex not ordered");
+            }            
         }
 
-        // collect all cues
-        let cues = [];
-        for (let _cues of this._pointMap.values()) {
-            for (let cue of _cues.values()) {
-                cues.push(cue);
-            }
-        }
-        // remove duplicates
-        cues = [...new Map(cues.map(function(cue){
-            return [cue.key, cue];
-        })).values()];
-
-        // check all cues
-        for (let cue of cues.values()) {
-            if (cue.interval.length > this._maxLength) {
-                throw new Error("cue interval violates maxLength ",  cue);
-            }
-            let points;
-            if (cue.singular) {
-                points = [cue.interval.low];
-            } else {
-                points = [cue.interval.low, cue.interval.high];
-            }
-            for (let point of points.values()) {
-                if (!this._pointIndex.has(point)) {
-                    throw new Error("point from pointMap cue not found in pointIndex ", point);
+        /**
+         *  invariable - pointMap point -> cues 
+         *  cues shall only include cues which are relevant to given point
+         */
+        for (let point of points) {
+            let cues = this._pointMap.get(point);
+            for (let cue of cues) {
+                if (cue.interval == undefined) {
+                    console.log(cue);
                 }
+                // figure out if point is endpoint low or high
+                if (point == cue.interval.low) {
+                    continue;
+                } else if (point == cue.interval.high) {
+                    continue;
+                } else {
+                    console.log("POINT:", point); 
+                    console.log("CUE:", cue.interval.toString());
+                    throw new Error("pointMap: wrong cue");
+                }
+            }        
+        }
+
+
+        /**
+         * invariable - all endpoints from all cues from pointMap are found as points in pointMap
+         */
+
+        for (let _cue_list of [...this._pointMap.values()]) {
+            for (let cue of _cue_list) {
+                for (let p of [cue.interval.low, cue.interval.high]) {
+                    if (!this._pointMap.has(p)) {
+                        throw new Error(`cue found with low or high point not in pointMap ${p} -> ${cue.interval.toString()} `);
+                    }
+                }
+            }
+        }
+
+
+        /*
+            invariable - all cues in pointMap with same key are same object
+        */
+
+        // collect all cues from pointMap
+        let _cues = [];
+        for (let _cue_list of this._pointMap.values()) {
+            for (let cue of _cue_list) {
+                _cues.push(cue);
+            }
+        }
+
+        // remove and check dumplicates
+        let cueMap = new Map();
+        for (let cue of _cues) {
+            let _cue = cueMap.get(cue.key);
+            if (_cue == undefined) {
+                cueMap.set(cue.key, cue);
+            } else {
+                // duplicate
+                if (cue !== _cue) {
+                    throw new Error("pointMap: different cue objects for same key");
+                }
+            }
+        }
+        let cues = [...cueMap.values()];
+
+        /**
+         * invariable - all cues belong to this bucket
+         */
+
+        for (let cue of cues.values()) {
+            // check that cue belongs to this bucket
+            if (cue.interval.length > this._maxLength) {
+                throw new Error(`cue in wrong cue bucket  ${this._maxLength}, ${cue.interval.toString()}`);
             }
         }
 

@@ -45,6 +45,13 @@ export function isIn(as) {
     };
 }
 
+export function set_difference(as, bs) {
+    return new Set([...as].filter((e) => !bs.has(e)));
+}
+
+
+
+
 
 /*
     get the difference of two Maps
