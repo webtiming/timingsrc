@@ -69,14 +69,14 @@ export function Sequencer() {
 
 // Add clone functions for backwards compatibility
 PointModeSequencer.prototype.clone = function () {
-    let args = [this.ds];
+    let args = [this.dataset];
     args.push.apply(args, [...arguments]);
     return Sequencer(...args);
 };
 
 // Add clone functions for backwards compatibility
 IntervalModeSequencer.prototype.clone = function () {
-    let args = [this.ds];
+    let args = [this.dataset];
     args.push.apply(args, [...arguments]);
     return Sequencer(...args);
 };

@@ -398,7 +398,7 @@ class BaseSequencer extends CueCollection {
     }
 
     /***************************************************************
-     BACKWARD COMPATIBILTY
+     V2 COMPATIBILTY
 
      Sequencers forward dataset operation to datase
     ***************************************************************/
@@ -421,6 +421,30 @@ class BaseSequencer extends CueCollection {
 
     clear() {
         return this.dataset.clear();
+    }
+
+    hasCue(key) {
+        return this.dataset.has(key);
+    }
+
+    getCue(key) {
+        return this.dataset.get(key);
+    }
+
+    getCues() {
+        return this.dataset.cues();
+    }
+
+    getActiveKeys() {
+        return [...this.keys()];
+    }
+
+    getActiveCues() {
+        return this.cues();
+    }
+
+    isActive(key) {
+        return this.has(key);
     }
 
 }

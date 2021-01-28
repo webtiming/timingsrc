@@ -4750,45 +4750,63 @@ function cue_delta(cue_a, cue_b, equals) {
 }
 
 
-
-/*
-    CUE ORDERING AND SORTING
-*/
-
-function cue_cmp_forwards (cue_a, cue_b) {
-    return Interval.cmpLow(cue_a.iterval, cue_b.interval);
-}
-
-function cue_cmp_backwards (cue_a, cue_b) {
-    return -1 * Interval.cmpHigh(cue_a.iterval, cue_b.interval);
-}
-
-function sort_cues (cues, direction=0) {
-    if (direction >= 0) {
-        cues.sort(cue_cmp_forwards);
-    } else {
-        cuess.sort(cue_cmp_backwards);
-    }
-}
-
-
 /*
     CueArgBuilder
 
     AddCue - adds or changes a cue.
     RemoveCue - removes a cue
-    Submit - submits the cues to the dataset update operation
     Clear - remove un-submitted cues
+
+    Cues are submitted to dataset update by ".done" promise (after task processing), which also makes the result available
 
 */
 
 class CueArgBuilder {
 
-    constructor (dataset) {
-        this._cues = [];
+    constructor (dataset, options) {
+        // dataset
         this._ds = dataset;
+        // options
+        this._options = options;
+        // cue arg buffer
+        this._cues;
+        // batch started
+        this._started;
+        // done promise
+        this.done;
+        // initialise
+        this._reset();
     }
 
+    _reset() {
+        this._cues = [];
+        this._started = new eventify.EventBoolean();
+        // done promise
+        this.done = eventify.makePromise(this._started).then(() => {
+            return this._submit.bind(this)();
+        });
+    }
+
+    _push(cue_arg) {
+        this._cues.push(cue_arg);
+        if (this._cues.length == 1) {
+            // start batch - resolves done promise
+            this._started.value = true;
+        }
+    }
+
+    _submit() {
+        let result = [];
+        // carry out update if necessary
+        if (this._cues.length > 0) {
+            result = this._ds.update(this._cues, this._options);    
+        }
+        // reset cue arg builder
+        this._reset();
+        // update result
+        return result;
+    }    
+    
     /*
         AddCue
     
@@ -4798,16 +4816,16 @@ class CueArgBuilder {
         to undefined
     */
     addCue(key, interval, data) {
-        let cue = {key:key, data:data};
+        let cue_arg = {key:key, data:data};
         if (interval instanceof Interval) {
-            cue.interval = interval;
+            cue_arg.interval = interval;
         }
-        this._cues.push(cue);
+        this._push(cue_arg);
         return this;
     }
 
     removeCue(key) {
-        this._cues.push({key:key});
+        this._push({key:key});
         return this;
     }
 
@@ -4815,14 +4833,7 @@ class CueArgBuilder {
         this._cues = [];
         return this;
     }
-
-    submit(options) {
-        let cues = this._cues;
-        this._cues = [];
-        return this._ds.update(cues, options);
-    }
 }
-
 
 
 /*
@@ -4838,7 +4849,6 @@ class CueArgBuilder {
 
 class Dataset extends CueCollection {
 
-    static sort_cues = sort_cues;
     static Delta = Delta;
     static cue_delta = cue_delta;
 
@@ -4846,6 +4856,7 @@ class Dataset extends CueCollection {
         super();
 
         this._map = new Map();
+        this._builder = new CueArgBuilder(this);
 
         /*
             Initialise set of CueBuckets
@@ -4911,27 +4922,30 @@ class Dataset extends CueCollection {
     /***************************************************************
      CUE ARG BUILDER
     */
-
-    get builder() {
-        return new CueArgBuilder(this);
+ 
+    makeBuilder(options) {
+        return new CueArgBuilder(this, options);
     }
 
+    get builder () {return this._builder;};
+
+    
     /***************************************************************
      ADD CUE, REMOVE CUE
 
         - CONVENIENCE for interactive use
-        - DO NOT USE REPEATEDLY (e.g. in for loop) ANTIPATTERN  
-        - use CUE ARG BUILDER instead to build up cue batch before submit.
+        - COMPATIBILTY WITH V2
+        - SAFE TO USE repeatedly (batched using promise)
     */
 
     addCue(key, interval, data) {
-        let res = this.builder.addCue(key, interval, data).submit();
-        return (res.length > 0) ? res[0] : undefined;
+        this._builder.addCue(key, interval, data);
+        return this._builder.done;
     }
 
     removeCue(key) {
-        let res = this.builder.removeCue(key).submit();
-        return (res.length > 0) ? res[0] : undefined;
+        this._builder.removeCue(key);
+        return this._builder.done;
     }
 
 
@@ -6768,24 +6782,24 @@ const ActiveMap = new Map([
  DEFAULT EVENT ITEM ORDERING
 *******************************************************************/
 
-function cue_cmp_forwards$1 (cue_a, cue_b) {
+function cue_cmp_forwards (cue_a, cue_b) {
     return Interval.cmpLow(cue_a.interval, cue_b.interval);
 }
 
-function cue_cmp_backwards$1 (cue_a, cue_b) {
+function cue_cmp_backwards (cue_a, cue_b) {
     return -1 * Interval.cmpHigh(cue_a.interval, cue_b.interval);
 }
 
 function item_cmp_forwards (item_a, item_b) {
     let cue_a = (item_a.new) ? item_a.new : item_a.old;
     let cue_b = (item_b.new) ? item_b.new : item_b.old;
-    return cue_cmp_forwards$1(cue_a, cue_b);
+    return cue_cmp_forwards(cue_a, cue_b);
 }
 
 function item_cmp_backwards (item_a, item_b) {
     let cue_a = (item_a.new) ? item_a.new : item_a.old;
     let cue_b = (item_b.new) ? item_b.new : item_b.old;
-    return cue_cmp_backwards$1(cue_a, cue_b);
+    return cue_cmp_backwards(cue_a, cue_b);
 }
 
 /*******************************************************************
@@ -6854,9 +6868,9 @@ class BaseSequencer extends CueCollection {
             // default order is direction sensitive
             let direction = this._movementDirection();
             if (direction >= 0) {
-                cues.sort(cue_cmp_forwards$1);
+                cues.sort(cue_cmp_forwards);
             } else {
-                cues.sort(cue_cmp_backwards$1);
+                cues.sort(cue_cmp_backwards);
             }
             return cues
         } 
@@ -7030,7 +7044,7 @@ class BaseSequencer extends CueCollection {
     }
 
     /***************************************************************
-     BACKWARD COMPATIBILTY
+     V2 COMPATIBILTY
 
      Sequencers forward dataset operation to datase
     ***************************************************************/
@@ -7053,6 +7067,30 @@ class BaseSequencer extends CueCollection {
 
     clear() {
         return this.dataset.clear();
+    }
+
+    hasCue(key) {
+        return this.dataset.has(key);
+    }
+
+    getCue(key) {
+        return this.dataset.get(key);
+    }
+
+    getCues() {
+        return this.dataset.cues();
+    }
+
+    getActiveKeys() {
+        return [...this.keys()];
+    }
+
+    getActiveCues() {
+        return this.cues();
+    }
+
+    isActive(key) {
+        return this.has(key);
     }
 
 }
@@ -7923,14 +7961,14 @@ function Sequencer() {
 }
 // Add clone functions for backwards compatibility
 PointModeSequencer.prototype.clone = function () {
-    let args = [this.ds];
+    let args = [this.dataset];
     args.push.apply(args, [...arguments]);
     return Sequencer(...args);
 };
 
 // Add clone functions for backwards compatibility
 IntervalModeSequencer.prototype.clone = function () {
-    let args = [this.ds];
+    let args = [this.dataset];
     args.push.apply(args, [...arguments]);
     return Sequencer(...args);
 };

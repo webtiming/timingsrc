@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!--  main -->
+    <script type="module">
+
+        import {Interval, Dataset} from '../../index.js';
+
+    
+        function assertTrue(val) {
+          if (!val) {
+            throw new Error("not true: " + val);
+          }
+        }
+
+        let ds = new Dataset();
+
+        /*
+            Mockup Timed Data
+        */
+        const data1 = [
+            {id:"a", text: 'A', start: 0, end: 1 },
+            {id:"b", text: 'B', start: 2, end: 3 },
+            {id:"c", text: 'C', start: 4, end: 5 },
+            {id:"d", text: 'D', start: 6, end: 7 },
+            {id:"e", text: 'E', start: 8, end: 9 },
+            {id:"f", text: 'F', start: 10, end: 11 },
+            {id:"g", text: 'G', start: 12, end: 13 },
+        ];
+                
+        const data2 = [
+            {id:"h", text: 'H', start: 14, end: 15 },
+            {id:"i", text: 'I', start: 16, end: 17 },
+            {id:"j", text: 'J', start: 18, end: 19 },
+            {id:"k", text: 'K', start: 20, end: 21 },
+            {id:"l", text: 'L', start: 22, end: 23 },
+            {id:"m", text: 'M', start: 24, end: 25 },
+            {id:"n", text: 'N', start: 26, end: 27 },
+            {id:"o", text: 'O', start: 28, end: 29 }
+        ];
+
+        function update(data) {
+
+            // update promise
+            let up;
+
+            // use repeated addCue
+            for (let item of data) {
+                up = ds.addCue(item.id, new Interval(item.start, item.end), item);
+            }
+            console.log("added cues", data.length);
+
+            // check promise result
+            up.then((res) => {
+                console.log("got result");
+                console.log(res);
+            });
+        }
+
+        update(data1);
+        setTimeout(() => {update(data2);}, 1000);
+
+        window.ds = ds;
+    </script>
+  </head>
+  <body>
+    <h1>Test Dataset</h1>
+  </body>
+</html>
