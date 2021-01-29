@@ -755,19 +755,73 @@
 
             let eps = ds.lookup_endpoints(new Interval(600, 700));
 
+            /*
             for (let ep of eps) {
                 console.log(endpoint.toString(ep.endpoint), ep.cue.interval.toString());
             }
+            */
+
+            console.log("done test truncate");
         }
 
 
-        var run = function () {
+        function test_update_done_promise() {
 
+            let ds = new Dataset();
+
+            function show_result(result_items) {
+                /*
+                console.log("result");
+                for (let item of result_items) {
+                    console.log(item);
+                }
+                */
+            }
+
+            ds.updateDone.then(show_result);
+            ds
+                .addCue("k", new Interval(612, 10000), "k")
+                .addCue("k", new Interval(612, 614), "k")
+                .addCue("l", new Interval(614, 10000), "l")
+                .addCue("m", new Interval(616, 10000), "m")
+                .addCue("l", new Interval(614, 616));
+              
+            setTimeout(() => {
+                ds.addCue("l",  new Interval(614, 10000), "l")
+                ds.updateDone
+                    .then(show_result).then(()=>{
+                        console.log("done test update done promise");
+                    });
+            }, 1000);
+        }
+
+
+        function test_custom_builder() {
+
+            let ds = new Dataset();
+            let options = {chaining:false};
+            let builder = ds.makeBuilder(options);
+
+            builder.updateDone
+                .then(()=>{
+                    console.log("done test custom builder")
+                });
+            builder
+                .addCue("key_1", new Interval(1,2), "data")
+                .removeCue("key_2")
+                .clear();
+        }
+
+
+
+        var run = function () {
             test_update_multiple();
             test_update();            
             test_update_lookup();
             test_event();
             test_truncate();
+            test_update_done_promise();
+            test_custom_builder()
         };
 
         if (document.readyState === "complete") run();

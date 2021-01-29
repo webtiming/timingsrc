@@ -4789,7 +4789,7 @@ var TIMINGSRC = (function (exports) {
             // batch started
             this._started;
             // done promise
-            this.done;
+            this.updateDone;
             // initialise
             this._reset();
         }
@@ -4798,7 +4798,7 @@ var TIMINGSRC = (function (exports) {
             this._cues = [];
             this._started = new eventify.EventBoolean();
             // done promise
-            this.done = eventify.makePromise(this._started).then(() => {
+            this.updateDone = eventify.makePromise(this._started).then(() => {
                 return this._submit.bind(this)();
             });
         }
@@ -4944,27 +4944,44 @@ var TIMINGSRC = (function (exports) {
             return new CueArgBuilder(this, options);
         }
 
+        // not really useful (v2 complience)
         get builder () {return this._builder;};
 
         
         /***************************************************************
          ADD CUE, REMOVE CUE
 
-            - CONVENIENCE for interactive use
             - COMPATIBILTY WITH V2
             - SAFE TO USE repeatedly (batched using promise)
         */
 
         addCue(key, interval, data) {
             this._builder.addCue(key, interval, data);
-            return this._builder.done;
+            return this;
         }
 
         removeCue(key) {
             this._builder.removeCue(key);
-            return this._builder.done;
+            return this;
         }
 
+        get updateDone() {return this._builder.updateDone};
+
+        /***************************************************************
+         ADD CUE, REMOVE CUE - INTERACTIVE USE
+
+            - CONVENIENCE for interactive use
+            - COMPATIBILTY WITH V2
+            - NOT RECOMMENDED TO USE repeatedly (batched using promise)
+        */
+
+        _addCue(key, interval, data) {
+            return this.update({key:key, interval:interval, data:data});
+        }
+
+        _removeCue(key) {
+            return this.update({key:key});
+        }
 
         /***************************************************************
             UPDATE
@@ -5055,7 +5072,6 @@ var TIMINGSRC = (function (exports) {
             const batchMap = new Map();
             let current_cue;
             let has_interval, has_data;
-            let init = this._map.size == 0;
             // options
             if (options.check == undefined) {
                 options.check = false;
@@ -5101,9 +5117,6 @@ var TIMINGSRC = (function (exports) {
                     let tmp = {key:cue.key};
                     if (has_interval) {tmp.interval = cue.interval;}
                     if (has_data) {tmp.data = cue.data;}                cue = tmp;
-                    /*
-                    
-                    */    
                 }
 
                 /*******************************************************
@@ -5112,7 +5125,7 @@ var TIMINGSRC = (function (exports) {
                     - includeds preservation of values from current cue
                 *******************************************************/
 
-                current_cue = (init) ? undefined : this._map.get(cue.key);
+                current_cue = this._map.get(cue.key);
                 if (current_cue == undefined) {
                     // make sure properties are defined
                     if (!has_interval) {
@@ -5274,9 +5287,11 @@ var TIMINGSRC = (function (exports) {
                 }
             }
 
+
             batchMap.set(cue.key, item);
 
-
+            //console.log("OLD:", cue_to_string(old_cue));
+            //console.log("NEW:", cue_to_string(new_cue));
 
             /***********************************************************
                 update cueBuckets
@@ -5462,6 +5477,7 @@ var TIMINGSRC = (function (exports) {
             utility
         */
         integrity() {
+
             const res = this._call_buckets("integrity");
 
             // sum up cues and points
@@ -5989,9 +6005,6 @@ var TIMINGSRC = (function (exports) {
             for (let point of points) {
                 let cues = this._pointMap.get(point);
                 for (let cue of cues) {
-                    if (cue.interval == undefined) {
-                        console.log(cue);
-                    }
                     // figure out if point is endpoint low or high
                     if (point == cue.interval.low) {
                         continue;
@@ -7181,6 +7194,14 @@ var TIMINGSRC = (function (exports) {
 
         removeCue(key) {
             return this.dataset.removeCue(key);
+        }
+
+        _addCue(key, interval, data) {
+            return this.dataset._addCue(key, interval, data);
+        }
+
+        _removeCue(key) {
+            return this.dataset._removeCue(key);
         }
 
         update(cues, options) {

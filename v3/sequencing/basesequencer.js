@@ -415,6 +415,14 @@ class BaseSequencer extends CueCollection {
         return this.dataset.removeCue(key);
     }
 
+    _addCue(key, interval, data) {
+        return this.dataset._addCue(key, interval, data);
+    }
+
+    _removeCue(key) {
+        return this.dataset._removeCue(key);
+    }
+
     update(cues, options) {
         return this.dataset.update(cues, options);
     }
