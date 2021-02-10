@@ -297,12 +297,23 @@ class Interval {
 	static intersectAll = intersectAll;
 	static unionAll = unionAll;
 
+	// private variables
+	#low;
+	#high; 
+	#lowInclude;
+	#highInclude;
+	#length; 
+	#singular;
+	#finite;
+	#endpointLow;
+	#endpointHigh;
+
+
 	/*
 		Constructor
 	*/
 	constructor (low, high, lowInclude, highInclude) {
 		var lowIsNumber = isNumber(low);
-		var highIsNumber = isNumber(high);
 		// new Interval(3.0) defines singular - low === high
 		if (lowIsNumber && high === undefined) high = low;
 		if (!isNumber(low)) throw new IntervalError("low not a number");
@@ -318,13 +329,13 @@ class Interval {
 		if (highInclude === undefined) highInclude = false;
 		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
 		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
-		this.low = low;
-		this.high = high;
-		this.lowInclude = lowInclude;
-		this.highInclude = highInclude;
-		this.length = this.high - this.low;
-		this.singular = (this.low === this.high);
-		this.finite = (isFinite(this.low) && isFinite(this.high));
+		this.#low = low;
+		this.#high = high;
+		this.#lowInclude = lowInclude;
+		this.#highInclude = highInclude;
+		this.#length = this.#high - this.#low;
+		this.#singular = (this.#low === this.#high);
+		this.#finite = (isFinite(this.#low) && isFinite(this.#high));
 
 		/*
 			Accessors for full endpoint representationo
@@ -332,30 +343,40 @@ class Interval {
 
 			- use with inside(endpoint, interval)
 		*/
-		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
-		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
+		this.#endpointLow = endpoint.create(this.#low, false, this.#lowInclude, this.#singular);
+		this.#endpointHigh = endpoint.create(this.#high, true, this.#highInclude, this.#singular);
 	}
 
-
+	// accessors
+	get low () {return this.#low;}
+	get high () {return this.#high;}
+	get lowInclude () {return this.#lowInclude;}
+	get highInclude () {return this.#highInclude;}
+	get length () {return this.#length;}
+	get singular () {return this.#singular;}
+	get finite () {return this.#finite;}
+	get endpointLow () {return this.#endpointLow;}
+	get endpointHigh () {return this.#endpointHigh;}
+	
 	/**
 	 *  Instance methods
 	 */
 
 	toString () {
 		const toString = endpoint.toString;
-		if (this.singular) {
-			let p = this.endpointLow[0];
+		if (this.#singular) {
+			let p = this.#endpointLow[0];
 			return `[${p}]`;
 		} else {
-			let low = endpoint.toString(this.endpointLow);
-			let high = endpoint.toString(this.endpointHigh);
+			let low = endpoint.toString(this.#endpointLow);
+			let high = endpoint.toString(this.#endpointHigh);
 			return `${low},${high}`;
 		}
 	};
 
 	covers_endpoint (p) {
-		let leftof = endpoint.leftof(p, this.endpointLow);
-		let rightof = endpoint.rightof(p, this.endpointHigh);
+		let leftof = endpoint.leftof(p, this.#endpointLow);
+		let rightof = endpoint.rightof(p, this.#endpointHigh);
 		return !leftof && !rightof;
 	}
 

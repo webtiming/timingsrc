@@ -249,9 +249,7 @@ class CueArgBuilder {
     */
     addCue(key, interval, data) {
         let cue_arg = {key:key};
-        if (interval instanceof Interval) {
-            cue_arg.interval = interval;
-        }
+        cue_arg.interval = interval;        
         if (arguments.length > 2) {
             cue_arg.data = data;
         }
@@ -503,7 +501,7 @@ class Dataset extends CueCollection {
             options.chaining = true;
         }
         if (options.debug == undefined) {
-            options.debug = true;
+            options.debug = false;
         }
         if (options.copy == undefined) {
             options.copy = true;
@@ -530,6 +528,11 @@ class Dataset extends CueCollection {
             has_interval = cue.hasOwnProperty("interval");
             has_data = cue.hasOwnProperty("data");
             if (options.check && has_interval) {
+                if (Array.isArray(cue.interval) ) {
+                    // support intervals as arrays
+                    let [low, high, lowInclude, highInclude] = cue.interval;
+                    cue.interval = new Interval(low, high, lowInclude, highInclude);
+                }
                 if (!cue.interval instanceof Interval) {
                     throw new Error("interval must be Interval");
                 }
