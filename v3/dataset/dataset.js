@@ -440,7 +440,6 @@ class Dataset extends CueCollection {
 
         <cues> ordered list of cues to be updated
         <equals> - equality function for data objects
-        <check> - check cue integrity if true
 
         cue = {
             key:key,
@@ -522,7 +521,7 @@ class Dataset extends CueCollection {
         let has_interval, has_data;
 
         // options
-        let {check=false, debug=false} = options;
+        let {debug=false} = options;
 
         // support single cue arg for convenience
         if (!utils.isIterable(cues)) {
@@ -538,15 +537,13 @@ class Dataset extends CueCollection {
                 check validity of cue argument
             *******************************************************/
 
-            if (options.check) {
-                if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-                    throw new Error("illegal cue", cue);
-                }
+            if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
+                throw new Error("illegal cue", cue);
             }
 
             has_interval = cue.hasOwnProperty("interval");
             has_data = cue.hasOwnProperty("data");
-            if (check && has_interval) {
+            if (has_interval) {
                 if (Array.isArray(cue.interval) ) {
                     // support intervals as arrays
                     let [low, high, lowInclude, highInclude] = cue.interval;

@@ -772,6 +772,8 @@ var TIMINGSRC = (function (exports) {
     	static intersectAll = intersectAll;
     	static unionAll = unionAll;
 
+    	// private variables
+
     	/*
     		Constructor
     	*/
@@ -792,13 +794,13 @@ var TIMINGSRC = (function (exports) {
     		if (highInclude === undefined) highInclude = false;
     		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
     		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
-    		this.low = low;
-    		this.high = high;
-    		this.lowInclude = lowInclude;
-    		this.highInclude = highInclude;
-    		this.length = this.high - this.low;
-    		this.singular = (this.low === this.high);
-    		this.finite = (isFinite(this.low) && isFinite(this.high));
+    		this._low = low;
+    		this._high = high;
+    		this._lowInclude = lowInclude;
+    		this._highInclude = highInclude;
+    		this._length = this._high - this._low;
+    		this._singular = (this._low === this._high);
+    		this._finite = (isFinite(this._low) && isFinite(this._high));
 
     		/*
     			Accessors for full endpoint representationo
@@ -806,29 +808,39 @@ var TIMINGSRC = (function (exports) {
 
     			- use with inside(endpoint, interval)
     		*/
-    		this.endpointLow = endpoint.create(this.low, false, this.lowInclude, this.singular);
-    		this.endpointHigh = endpoint.create(this.high, true, this.highInclude, this.singular);
+    		this._endpointLow = endpoint.create(this._low, false, this._lowInclude, this._singular);
+    		this._endpointHigh = endpoint.create(this._high, true, this._highInclude, this._singular);
     	}
 
-
+    	// accessors
+    	get low () {return this._low;}
+    	get high () {return this._high;}
+    	get lowInclude () {return this._lowInclude;}
+    	get highInclude () {return this._highInclude;}
+    	get length () {return this._length;}
+    	get singular () {return this._singular;}
+    	get finite () {return this._finite;}
+    	get endpointLow () {return this._endpointLow;}
+    	get endpointHigh () {return this._endpointHigh;}
+    	
     	/**
     	 *  Instance methods
     	 */
 
     	toString () {
-    		if (this.singular) {
-    			let p = this.endpointLow[0];
+    		if (this._singular) {
+    			let p = this._endpointLow[0];
     			return `[${p}]`;
     		} else {
-    			let low = endpoint.toString(this.endpointLow);
-    			let high = endpoint.toString(this.endpointHigh);
+    			let low = endpoint.toString(this._endpointLow);
+    			let high = endpoint.toString(this._endpointHigh);
     			return `${low},${high}`;
     		}
     	};
 
     	covers_endpoint (p) {
-    		let leftof = endpoint.leftof(p, this.endpointLow);
-    		let rightof = endpoint.rightof(p, this.endpointHigh);
+    		let leftof = endpoint.leftof(p, this._endpointLow);
+    		let rightof = endpoint.rightof(p, this._endpointHigh);
     		return !leftof && !rightof;
     	}
 
@@ -4649,7 +4661,7 @@ var TIMINGSRC = (function (exports) {
         - noop if cue does not exist
         - returns array empty
     */
-    var removeCueFromArray = function (arr, cue) {
+    function removeCueFromArray(arr, cue) {
         // cue equality defined by key property
         if (arr.length == 1) {
             if (arr[0].key == cue.key) {
@@ -4668,7 +4680,33 @@ var TIMINGSRC = (function (exports) {
             }
             return arr.length == 0;
         }
-    };
+    }
+    /*
+        Replace cue in array
+        - noop if cue does not exist in array
+        - returns sucess
+    */
+
+    function replaceCueInArray (arr, cue) {
+        if (arr.length == 0) {
+            return false;
+        } else if (arr.length == 1) {
+            if (arr[0].key == cue.key) {
+                arr[0] = cue;
+                return true;
+            }
+        } else {
+            let idx = arr.findIndex(function (_cue) {
+                return _cue.key == cue.key;
+            });
+            if (idx > -1) {
+                arr[idx] = cue;
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /*
         Setup ID's for cue buckets.
@@ -4695,20 +4733,6 @@ var TIMINGSRC = (function (exports) {
         REPLACE: 2,
         DELETE: 3
     });
-
-    /*
-        make a shallow copy of a cue
-    */
-    function cue_copy(cue) {
-        if (cue == undefined) {
-            return;
-        }
-        return {
-            key: cue.key,
-            interval: cue.interval,
-            data: cue.data
-        };
-    }
 
     /*
         Characterize the transition from cue_a to cue_b
@@ -4832,9 +4856,10 @@ var TIMINGSRC = (function (exports) {
             to undefined
         */
         addCue(key, interval, data) {
-            let cue_arg = {key:key, data:data};
-            if (interval instanceof Interval) {
-                cue_arg.interval = interval;
+            let cue_arg = {key:key};
+            cue_arg.interval = interval;        
+            if (arguments.length > 2) {
+                cue_arg.data = data;
             }
             this._push(cue_arg);
             return this;
@@ -4956,7 +4981,11 @@ var TIMINGSRC = (function (exports) {
         */
 
         addCue(key, interval, data) {
-            this._builder.addCue(key, interval, data);
+            if (arguments.length > 2) {
+                this._builder.addCue(key, interval, data);
+            } else {
+                this._builder.addCue(key, interval);
+            }
             return this;
         }
 
@@ -4992,7 +5021,6 @@ var TIMINGSRC = (function (exports) {
 
             <cues> ordered list of cues to be updated
             <equals> - equality function for data objects
-            <check> - check cue integrity if true
 
             cue = {
                 key:key,
@@ -5072,19 +5100,11 @@ var TIMINGSRC = (function (exports) {
             const batchMap = new Map();
             let current_cue;
             let has_interval, has_data;
+
             // options
-            if (options.check == undefined) {
-                options.check = false;
-            }
-            if (options.chaining == undefined) {
-                options.chaining = true;
-            }
-            if (options.debug == undefined) {
-                options.debug = true;
-            }
-            if (options.copy == undefined) {
-                options.copy = true;
-            }
+            let {debug=false} = options;
+
+            // support single cue arg for convenience
             if (!isIterable(cues)) {
                 cues = [cues];
             }
@@ -5098,25 +5118,21 @@ var TIMINGSRC = (function (exports) {
                     check validity of cue argument
                 *******************************************************/
 
-                if (options.check) {
-                    if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-                        throw new Error("illegal cue", cue);
-                    }
+                if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
+                    throw new Error("illegal cue", cue);
                 }
 
                 has_interval = cue.hasOwnProperty("interval");
                 has_data = cue.hasOwnProperty("data");
-                if (options.check && has_interval) {
+                if (has_interval) {
+                    if (Array.isArray(cue.interval) ) {
+                        // support intervals as arrays
+                        let [low, high, lowInclude, highInclude] = cue.interval;
+                        cue.interval = new Interval(low, high, lowInclude, highInclude);
+                    }
                     if (!cue.interval instanceof Interval) {
                         throw new Error("interval must be Interval");
                     }
-                }
-
-                // copy cue to protect againt fiddling with internal cues
-                if (options.copy) {
-                    let tmp = {key:cue.key};
-                    if (has_interval) {tmp.interval = cue.interval;}
-                    if (has_data) {tmp.data = cue.data;}                cue = tmp;
                 }
 
                 /*******************************************************
@@ -5197,11 +5213,11 @@ var TIMINGSRC = (function (exports) {
                 this._notify_callbacks(batchMap, relevanceInterval);
               
                 // debug
-                if (options.debug) {this.integrity();}
+                if (debug) {this.integrity();}
                 return items;
             }
             // debug
-            if (options.debug) {this.integrity();}
+            if (debug) {this.integrity();}
             return [];
         };
 
@@ -5218,14 +5234,16 @@ var TIMINGSRC = (function (exports) {
         ***************************************************************/
 
         _update_cue(batchMap, current_cue, cue, options) {
+
             let old_cue, new_cue;
             let item, _item;
             let oldCueBucket, newCueBucket;
             let low_changed, high_changed;
             let remove_needed, add_needed;
-            let equals = options.equals;
-            let chaining = options.chaining;
 
+            // options
+            let {chaining=true, safe=false, equals} = options;
+            
             if (current_cue === cue) {
                 throw Error("illegal cue arg: same object as current cue");
             }
@@ -5250,7 +5268,7 @@ var TIMINGSRC = (function (exports) {
             if (current_cue == undefined) {
                 // INSERT - add cue object to _map
                 old_cue = undefined;
-                new_cue = cue;
+                new_cue = (safe)? Object.freeze(cue) : cue;
                 this._map.set(cue.key, new_cue);
             } else if (cue.interval == undefined && cue.data == undefined) {
                 // DELETE - remove cue object from _map
@@ -5259,13 +5277,49 @@ var TIMINGSRC = (function (exports) {
                 this._map.delete(cue.key);
             } else {
                 // REPLACE
-                // in-place modification of current cue
-                // copy old cue before modification
-                old_cue = cue_copy(current_cue);
-                new_cue = current_cue;
-                // update current cue in place
-                new_cue.interval = cue.interval;
-                new_cue.data = cue.data;
+                /*
+                    Solution used to be in-place modification
+                    of current cue.
+                    Now we instead implement replace by inserting
+                    a new cue object as current cue.
+                    Since current cue is referenced both in
+                    _map and in pointMap - it must be replaced both
+                    places.
+
+                    Adjustments to pointMap as a result of interval
+                    changes are handled further down
+
+                    Another design option would be to let point map
+                    manage only keys of cues. This however would 
+                    impose an extra map lookup per item in lookup - 
+                    so better to pay this modest price in update
+                */
+                old_cue = current_cue;
+                new_cue = {
+                    key: cue.key,
+                    interval: cue.interval,
+                    data: cue.data
+                };
+                if (safe) {
+                    new_cue = Object.freeze(new_cue);
+                }
+
+                // replace in cue map
+                this._map.set(cue.key, new_cue);
+
+                // replace in point map
+                // - only necessary if old cue is in pointMap
+                //  i.e. if old_cue has interval
+                if (old_cue.interval) {
+                    let bid = getCueBucketId(old_cue.interval.length);
+                    let cueBucket = this._cueBuckets.get(bid);
+                    // replace for low
+                    cueBucket.replace_endpoint(old_cue.interval.low, new_cue);
+                    // replace for high
+                    if (!old_cue.singular) {
+                        cueBucket.replace_endpoint(old_cue.interval.high, new_cue);
+                    }
+                }
             }
             item = {key:cue.key, new:new_cue, old:old_cue, delta:delta};
 
@@ -5286,7 +5340,6 @@ var TIMINGSRC = (function (exports) {
                     item.delta = cue_delta(new_cue, item.old, equals);
                 }
             }
-
 
             batchMap.set(cue.key, item);
 
@@ -5315,10 +5368,7 @@ var TIMINGSRC = (function (exports) {
             ***********************************************************/
 
             if (delta.interval == Delta.NOOP) {
-                // data changes are reflected in _map changes,
-                // since data changes are made in-place, these
-                // changes will be visible in cues registered in
-                // CueBuckets
+                // no changes to interval - no change needed in pointMap 
                 return;
             } else if (delta.interval == Delta.INSERT) {
                 remove_needed = false;
@@ -5640,6 +5690,22 @@ var TIMINGSRC = (function (exports) {
                 }
             }
         };
+
+        /* 
+            in case of data update without touching the interval
+            the new cue needs to be insert in place of the old
+        */
+        replace_endpoint(point, cue) {
+            let init = (this._pointMap.size == 0);
+            let cues = (init) ? undefined : this._pointMap.get(point);
+            if (cues != undefined) {
+                let ok = replaceCueInArray (cues, cue);
+                if (!ok) {
+                    console.log("WARNING: attempt to replace non-existent cue in pointMap");
+                }
+            }
+        }
+
 
         /*
             Batch processing is completed
@@ -6046,7 +6112,7 @@ var TIMINGSRC = (function (exports) {
                 }
             }
 
-            // remove and check dumplicates
+            // remove and check duplicates
             let cueMap = new Map();
             for (let cue of _cues) {
                 let _cue = cueMap.get(cue.key);

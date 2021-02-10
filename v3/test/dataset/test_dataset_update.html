@@ -384,6 +384,8 @@
           }
 
 
+
+
           /*
             RUN
           */
@@ -841,6 +843,19 @@
         }
 
 
+        function test_array_intervals() {
+                let ds = new Dataset();
+              
+                ds._addCue("k", [1,2], "k");
+                ds._addCue("j", [1,2, false, true], "k");
+                
+                let cues = ds.cues();
+
+                assertTrue(ds.get("k").interval instanceof Interval);
+                assertTrue(ds.get("j").interval.highInclude);
+
+        }
+
         var run = function () {
             test_update_multiple();
             test_update();
@@ -851,6 +866,7 @@
             test_truncate();
             test_persistence_with_batching()
             test_update_to_singular_and_back();
+            test_array_intervals();
         };
 
         if (document.readyState === "complete") run();
