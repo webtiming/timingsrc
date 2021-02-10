@@ -534,8 +534,6 @@
           }
 
 
-
-
           /*
             verify that data is preserved through multiple interval replacements
           */
@@ -559,6 +557,7 @@
             let delta = cue_delta(res[0].old, res[0].new);
             assertTrue(delta.interval == Delta.REPLACE);
             assertTrue(delta.data == Delta.NOOP);
+
             // test that reported new cue is equal to cue found in Dataset
             assertTrue(cue_equals(ds.get(1), res[0].new))
             // test that reported old cue is equal to initial cue
@@ -597,6 +596,7 @@
             // test that resulting data is from second cue
             assertTrue(equals(res[0].new.data, cues[1].data));
           }
+
 
           test_delete_first();
           test_delete_last();
@@ -753,18 +753,12 @@
  
             ]);
 
-            let eps = ds.lookup_endpoints(new Interval(600, 700));
-
             /*
+            let eps = ds.lookup_endpoints(new Interval(600, 700));
             for (let ep of eps) {
                 console.log(endpoint.toString(ep.endpoint), ep.cue.interval.toString());
             }
             */
-
-            // test with addCue removeCue
-
-
-
 
             console.log("done test truncate");
         }
@@ -849,7 +843,7 @@
 
         var run = function () {
             test_update_multiple();
-            test_update();            
+            test_update();
             test_update_lookup();
             test_event();
             test_update_done_promise();
