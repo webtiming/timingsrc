@@ -761,7 +761,31 @@
             }
             */
 
+            // test with addCue removeCue
+
+
+
+
             console.log("done test truncate");
+        }
+
+
+        function test_persistence_with_batching() {
+            let ds = new Dataset();
+
+            ds._addCue("k", new Interval(612, 10000), "k");
+
+            ds.addCue("k", new Interval(612, 614));
+            ds.addCue("m", new Interval(614, 10000), "m");
+            ds.updateDone.then(() => {
+                for (let cue of ds.cues()) {
+                    if (cue.key == "k") {
+                        assertTrue(cue.data == "k");
+                    }
+                } 
+            });
+
+            console.log("done test persistence with batching");
         }
 
 
@@ -796,6 +820,16 @@
         }
 
 
+        function test_update_to_singular_and_back() {
+            let ds = new Dataset({debug:true});
+            ds._addCue("c62-1", new Interval(62.114,100062.114), "data");
+            ds.addCue("c62-1", new Interval(62.114,62.114), "data");
+            ds.addCue("c62-1", new Interval(62.114, 100062.114), "data");
+            console.log("done test update singular and back");
+        }
+
+
+
         function test_custom_builder() {
 
             let ds = new Dataset();
@@ -813,15 +847,16 @@
         }
 
 
-
         var run = function () {
             test_update_multiple();
             test_update();            
             test_update_lookup();
             test_event();
-            test_truncate();
             test_update_done_promise();
             test_custom_builder()
+            test_truncate();
+            test_persistence_with_batching()
+            test_update_to_singular_and_back();
         };
 
         if (document.readyState === "complete") run();

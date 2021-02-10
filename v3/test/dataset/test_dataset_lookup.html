@@ -163,7 +163,7 @@
           _cues = ds.lookup(searchInterval1, OVERLAP);
           check(_cues, _expect);
 
-          // inside search interval 1
+          // covers search interval 1
           console.log("covers", searchInterval1)
           _expect = ["C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "F", "G3"];
           _cues = ds.lookup(searchInterval1, COVERS);
@@ -181,7 +181,7 @@
           _cues = ds.lookup(searchInterval2, OVERLAP);
           check(_cues, _expect);
 
-          // inside search interval 2
+          // covers search interval 2
           console.log("covers", searchInterval2)
           _expect = ["B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G4", "F"];
           _cues = ds.lookup(searchInterval2, COVERS);
@@ -199,7 +199,7 @@
           _cues = ds.lookup(searchInterval3, OVERLAP);
           check(_cues, _expect);
 
-          // inside search interval 3
+          // covers search interval 3
           console.log("covers", searchInterval3)
           _expect = ["B2", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G3", "G2", "F"];
           _cues = ds.lookup(searchInterval3, COVERS);
@@ -217,7 +217,7 @@
           _cues = ds.lookup(searchInterval4, OVERLAP);
           check(_cues, _expect);
 
-          // inside search interval 4
+          // covers search interval 4
           console.log("covers", searchInterval4)
           _expect = ["B2", "B4", "C1", "C2", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1", "E2", "E3", "E4", "G2", "G3", "G4", "F"];
           _cues = ds.lookup(searchInterval4, COVERS);

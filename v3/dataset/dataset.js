@@ -248,9 +248,12 @@ class CueArgBuilder {
         to undefined
     */
     addCue(key, interval, data) {
-        let cue_arg = {key:key, data:data};
+        let cue_arg = {key:key};
         if (interval instanceof Interval) {
             cue_arg.interval = interval;
+        }
+        if (arguments.length > 2) {
+            cue_arg.data = data;
         }
         this._push(cue_arg);
         return this;
@@ -372,7 +375,11 @@ class Dataset extends CueCollection {
     */
 
     addCue(key, interval, data) {
-        this._builder.addCue(key, interval, data);
+        if (arguments.length > 2) {
+            this._builder.addCue(key, interval, data);
+        } else {
+            this._builder.addCue(key, interval);
+        }
         return this;
     }
 
