@@ -18,7 +18,6 @@
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 import * as utils from '../util/utils.js';
 import eventify from '../util/eventify.js';
 import endpoint from '../util/endpoint.js';
@@ -557,7 +556,7 @@ class Dataset extends CueCollection {
             /*******************************************************
                 adjust cue so that it correctly represents
                 the new cue to replace the current cue
-                - includeds preservation of values from current cue
+                - includes preservation of values from current cue
             *******************************************************/
 
             current_cue = this._map.get(cue.key);
