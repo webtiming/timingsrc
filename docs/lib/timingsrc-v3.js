@@ -5132,7 +5132,7 @@ var TIMINGSRC = (function (exports) {
             let has_interval, has_data;
 
             // options
-            let {debug=false} = options;
+            let {debug=false, equals} = options;
 
             // support single cue arg for convenience
             if (!isIterable(cues)) {
@@ -5226,8 +5226,15 @@ var TIMINGSRC = (function (exports) {
                     }
                     return {key:item.key, new:item.new, old:item.old};
                 });
+
+                // extra filter items to remove NOOP transitions
+                let event_items = items.filter((item) => {
+                    let delta = cue_delta(item.new, item.old, equals);
+                    return (delta.interval != Delta.NOOP || delta.data != Delta.NOOP);
+                });
+
                 // event notification
-                this._notifyEvents(items);
+                this._notifyEvents(event_items);
 
                 // create relevance Interval
                 let relevanceInterval = undefined;
@@ -5280,6 +5287,7 @@ var TIMINGSRC = (function (exports) {
 
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
+
 
             // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
