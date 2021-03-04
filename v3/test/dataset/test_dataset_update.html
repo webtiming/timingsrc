@@ -856,6 +856,62 @@
 
         }
 
+
+        function test_null_update() {
+            /*
+                verify that updating with the same cues does not generate any events
+            */
+
+            let ds = new Dataset();
+            let count = 0
+
+
+            let cues_1 = [
+                {key: 1, interval:[1,2], data: {data:"jalla"}},
+                {key: 2, interval:[2,3], data: {data:"palla"}},
+                {key: 3, interval:[3,4], data: {data:"kalla"}},
+                {key: 4, interval:[4,5], data: {data:"talla"}}
+            ]
+
+            ds.update(cues_1);
+
+
+            ds.on("batch", (batch, info) => {
+                count++;
+            })
+
+            let cues_2 = [
+                {key: 1, interval:[1,2], data: {data:"jalla"}},
+                {key: 2, interval:[2,3], data: {data:"palla"}},
+                {key: 3, interval:[3,4], data: {data:"kalla"}},
+                {key: 4, interval:[4,5], data: {data:"talla"}}
+            ]
+
+            // repeat operation
+            ds.update(cues_2);            
+
+
+            // delete all and repeat all in one operation
+            // would like this to yield no events
+            let cues_3 = [
+                {key: 1, interval:[1,2], data: {data:"jalla"}},
+                {key: 2, interval:[2,3], data: {data:"palla"}},
+                {key: 3, interval:[3,4], data: {data:"kalla"}},
+                {key: 4, interval:[4,5], data: {data:"talla"}}
+            ]
+
+            ds.builder.update([...ds.keys()].map((key) => {
+                return {key:key};
+            }))
+            ds.builder.update(cues_3);
+
+            setTimeout(() => {
+                assertTrue(count == 1);
+            }, 10);
+
+        }
+
+
         var run = function () {
             test_update_multiple();
             test_update();
@@ -867,6 +923,7 @@
             test_persistence_with_batching()
             test_update_to_singular_and_back();
             test_array_intervals();
+            test_null_update();
         };
 
         if (document.readyState === "complete") run();
