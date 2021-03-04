@@ -5,7 +5,7 @@ title: Timing Provider API
 
 - [Timing Provider Background](background_timingprovider.html)
 - [Timing Provider API](api_timingprovider.html)
-- [Timing Provider Example](exp_timingprovider.html)
+- [Shared Motion Timing Provider](shared_motion.html)
 
 This describes the API of the Timing Provider, as required by the timingsrc library (i.e. Timing Object).
 
