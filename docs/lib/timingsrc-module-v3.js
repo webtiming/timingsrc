@@ -4796,19 +4796,24 @@ function cue_equals(cue_a, cue_b) {
 
     Cues are submitted to dataset update by ".done" promise (after task processing), which also makes the result available
 
+    manual submit if autosubmit is false
+
 */
 
 class CueArgBuilder {
 
-    constructor (dataset, options) {
+    constructor (dataset, options={}) {
+        
+        
         // dataset
         this._ds = dataset;
         // options
-        this._options = options;
+        let defaults = {autosubmit:true};
+        this._options = Object.assign({}, defaults, options);
         // cue arg buffer
         this._cues;
-        // batch started
-        this._started;
+        // batch done flag
+        this._done;
         // done promise
         this.updateDone;
         // initialise
@@ -4817,18 +4822,25 @@ class CueArgBuilder {
 
     _reset() {
         this._cues = [];
-        this._started = new eventify.EventBoolean();
-        // done promise
-        this.updateDone = eventify.makePromise(this._started).then(() => {
+        // create new done promise
+        this._done = new eventify.EventBoolean();
+        this.updateDone = eventify.makePromise(this._done).then(() => {
             return this._submit.bind(this)();
         });
     }
 
-    _push(cue_arg) {
-        this._cues.push(cue_arg);
-        if (this._cues.length == 1) {
-            // start batch - resolves done promise
-            this._started.value = true;
+    _push(cue_args) {
+        // append cue args
+        let m = this._cues.length;
+        let n = cue_args.length;
+        this._cues.length += n;
+        for (let i=0; i<n; i++) {
+            this._cues[m++] = cue_args[i];
+        }
+        if (this._options.autosubmit && m == 0 && n > 0) {
+            // batch done immediately 
+            // will be submitted by donePromise in next microtask
+            this._done.value = true;
         }
     }
 
@@ -4845,7 +4857,7 @@ class CueArgBuilder {
     }    
     
     /*
-        AddCue
+        add or change single cue
     
         if both interval and data are undefined
         this is not interpreted as remove,
@@ -4858,18 +4870,35 @@ class CueArgBuilder {
         if (arguments.length > 2) {
             cue_arg.data = data;
         }
-        this._push(cue_arg);
+        this._push([cue_arg]);
         return this;
     }
 
+    /* remove single cue */
     removeCue(key) {
-        this._push({key:key});
+        this._push([{key:key}]);
         return this;
     }
 
+    /* load array of cue args into argbuilder */
+    update(cue_args) {
+        this._push(cue_args);
+    }
+
+    /* clear args currently in argbuilder */
     clear() {
         this._cues = [];
         return this;
+    }
+
+    /* manually submit cue args from cue arg builder */
+    submit() {
+        if (this._options.autosubmit) {
+            throw new Error("manual submit while options.autosubmit is true");
+        }
+        // mark batch as done
+        // will be submitted by donePromise in next microtask
+        this._done.value = true;
     }
 }
 
@@ -5135,7 +5164,7 @@ class Dataset extends CueCollection {
             /*******************************************************
                 adjust cue so that it correctly represents
                 the new cue to replace the current cue
-                - includeds preservation of values from current cue
+                - includes preservation of values from current cue
             *******************************************************/
 
             current_cue = this._map.get(cue.key);
