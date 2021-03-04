@@ -253,12 +253,13 @@ class CueArgBuilder {
     _push(cue_args) {
         // append cue args
         let m = this._cues.length;
+        let was_empty = m == 0;
         let n = cue_args.length;
         this._cues.length += n;
         for (let i=0; i<n; i++) {
             this._cues[m++] = cue_args[i];
         }
-        if (this._options.autosubmit && m == 0 && n > 0) {
+        if (this._options.autosubmit && was_empty && n > 0) {
             // batch done immediately 
             // will be submitted by donePromise in next microtask
             this._done.value = true;
