@@ -648,13 +648,13 @@ class Dataset extends CueCollection {
             });
 
             // extra filter items to remove NOOP transitions
-            items = items.filter((item) => {
+            let event_items = items.filter((item) => {
                 let delta = cue_delta(item.new, item.old, equals);
                 return (delta.interval != Delta.NOOP || delta.data != Delta.NOOP);
             });
 
             // event notification
-            this._notifyEvents(items);
+            this._notifyEvents(event_items);
 
             // create relevance Interval
             let relevanceInterval = undefined;
