@@ -239,7 +239,7 @@ function union(a, b) {
 	} else if (rel == Relation.OUTSIDE_RIGHT) {
 		// merge
 		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
-		if (a.high == b.low) {
+		if (b.high == a.low) {
 			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
 		} else {
 			return [b, a];
