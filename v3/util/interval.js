@@ -221,10 +221,12 @@ function union(a, b) {
 	if (rel == Relation.OUTSIDE_LEFT) {
 		// merge
 		// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
-		if (a.high == b.low) {
-			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
-		} else {
+		if (a.high != b.low || (!a.highInclude && !b.lowInclude)) {
+			// no merge
 			return [a, b];
+		} else {
+			// merge
+			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
 		}
 	} else if (rel == Relation.OVERLAP_LEFT) {
 		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
@@ -239,10 +241,12 @@ function union(a, b) {
 	} else if (rel == Relation.OUTSIDE_RIGHT) {
 		// merge
 		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
-		if (b.high == a.low) {
-			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
-		} else {
+		if (b.high != a.low || (!b.highInclude && !a.lowInclude)) {
+			// no merge
 			return [b, a];
+		} else {
+			// merge
+			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
 		}
 	}
 }
