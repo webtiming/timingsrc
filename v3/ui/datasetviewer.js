@@ -54,7 +54,7 @@ class DatasetViewer {
     onremove(eItem) {
         // remove node
         let _id = `${this.nonce}-${eItem.key}`;
-        let node = this.elem.querySelector(`#${_id}`);
+        let node = document.getElementById(_id);
         if (node) {
             node.parentNode.removeChild(node);
         }
