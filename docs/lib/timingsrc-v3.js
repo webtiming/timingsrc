@@ -696,10 +696,12 @@ var TIMINGSRC = (function (exports) {
     	if (rel == Relation.OUTSIDE_LEFT) {
     		// merge
     		// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
-    		if (a.high == b.low) {
-    			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
-    		} else {
+    		if (a.high != b.low || (!a.highInclude && !b.lowInclude)) {
+    			// no merge
     			return [a, b];
+    		} else {
+    			// merge
+    			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
     		}
     	} else if (rel == Relation.OVERLAP_LEFT) {
     		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
@@ -714,10 +716,12 @@ var TIMINGSRC = (function (exports) {
     	} else if (rel == Relation.OUTSIDE_RIGHT) {
     		// merge
     		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
-    		if (a.high == b.low) {
-    			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)]; 
-    		} else {
+    		if (b.high != a.low || (!b.highInclude && !a.lowInclude)) {
+    			// no merge
     			return [b, a];
+    		} else {
+    			// merge
+    			return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
     		}
     	}
     }
@@ -8073,7 +8077,7 @@ var TIMINGSRC = (function (exports) {
         onremove(eItem) {
             // remove node
             let _id = `${this.nonce}-${eItem.key}`;
-            let node = this.elem.querySelector(`#${_id}`);
+            let node = document.getElementById(_id);
             if (node) {
                 node.parentNode.removeChild(node);
             }
