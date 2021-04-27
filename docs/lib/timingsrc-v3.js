@@ -842,6 +842,11 @@ var TIMINGSRC = (function (exports) {
     		}
     	};
 
+
+    	asArray() {
+    		return [this._low, this._high, this._lowInclude, this._highInclude];
+    	}
+
     	covers_endpoint (p) {
     		let leftof = endpoint.leftof(p, this._endpointLow);
     		let rightof = endpoint.rightof(p, this._endpointHigh);
@@ -4661,6 +4666,28 @@ var TIMINGSRC = (function (exports) {
     const Relation$1 = Interval.Relation;
 
     /*
+        UTILITY
+    */
+
+    function epoch() {
+        return Date.now();
+    }
+
+
+    function asInterval(input) {
+        if (input instanceof Interval || input == undefined) {
+            return input;
+        }
+        else if (Array.isArray(input) ) {
+            // support intervals as arrays
+            let [low, high, lowInclude, highInclude] = input;
+            return new Interval(low, high, lowInclude, highInclude);
+        } else {
+            throw new Error ("input not an Interval", input);
+        }
+    }
+
+    /*
         Remove cue from array
         - noop if cue does not exist
         - returns array empty
@@ -5146,28 +5173,30 @@ var TIMINGSRC = (function (exports) {
             /***********************************************************
                 process all cues
             ***********************************************************/
+            let epoch_ts = epoch();
             for (let cue of cues) {
 
                 /*******************************************************
                     check validity of cue argument
                 *******************************************************/
 
-                if (!(cue) || !cue.hasOwnProperty("key") || cue.key == undefined) {
-                    throw new Error("illegal cue", cue);
+                if (cue == undefined || !cue.hasOwnProperty("key") || cue.key == undefined) {
+
+                    if (cue == undefined) {
+                        throw new Error("cue is undefined");
+                    } else if (!cue.hasOwnProperty("key")) {
+                        throw new Error("cue missing key property", cue);
+                    } else if (cue.key == undefined) {
+                        throw new Error("cue.key is undefined", cue);                    
+                    }
                 }
 
                 has_interval = cue.hasOwnProperty("interval");
                 has_data = cue.hasOwnProperty("data");
                 if (has_interval) {
-                    if (Array.isArray(cue.interval) ) {
-                        // support intervals as arrays
-                        let [low, high, lowInclude, highInclude] = cue.interval;
-                        cue.interval = new Interval(low, high, lowInclude, highInclude);
-                    }
-                    if (!cue.interval instanceof Interval) {
-                        throw new Error("interval must be Interval");
-                    }
+                    cue.interval = asInterval(cue.interval);
                 }
+
 
                 /*******************************************************
                     adjust cue so that it correctly represents
@@ -5204,7 +5233,7 @@ var TIMINGSRC = (function (exports) {
                     - update cueBuckets
                     - create batchMap
                 *******************************************************/
-                this._update_cue(batchMap, current_cue, cue, options);
+                this._update_cue(batchMap, current_cue, cue, epoch_ts, options);
             }
 
             // flush all buckets so updates take effect
@@ -5274,7 +5303,7 @@ var TIMINGSRC = (function (exports) {
             - update CueBucket
         ***************************************************************/
 
-        _update_cue(batchMap, current_cue, cue, options) {
+        _update_cue(batchMap, current_cue, cue, epoch_ts, options) {
 
             let old_cue, new_cue;
             let item, _item;
@@ -5292,7 +5321,6 @@ var TIMINGSRC = (function (exports) {
             // check for equality
             let delta = cue_delta(current_cue, cue, equals);
 
-
             // (NOOP, NOOP)
             if (delta.interval == Delta.NOOP && delta.data == Delta.NOOP) {
                 item = {
@@ -5303,22 +5331,49 @@ var TIMINGSRC = (function (exports) {
                 return;
             }
 
+
             /***********************************************************
                 update _map and batchMap
             ***********************************************************/
 
             if (current_cue == undefined) {
                 // INSERT - add cue object to _map
+
+                // cue info: add if missing
+                if (cue.info == undefined) {
+                    cue.info = {
+                        ts: epoch_ts,
+                        change_ts: epoch_ts,
+                        change_id: 0
+                    };
+                }
+
                 old_cue = undefined;
                 new_cue = (safe)? Object.freeze(cue) : cue;
                 this._map.set(cue.key, new_cue);
+
+
             } else if (cue.interval == undefined && cue.data == undefined) {
                 // DELETE - remove cue object from _map
                 old_cue = current_cue;
                 new_cue = undefined;
                 this._map.delete(cue.key);
+
+                // cue info: noop
+
             } else {
                 // REPLACE
+
+                // cue info - update if missing
+                // preserve ts from current cue, update update_ts
+                if (cue.info == undefined) {
+                    cue.info = {
+                        ts: current_cue.info.ts,
+                        change_ts: epoch_ts,
+                        change_id: current_cue.info.change_id + 1
+                    };
+                }
+
                 /*
                     Solution used to be in-place modification
                     of current cue.
@@ -5340,8 +5395,10 @@ var TIMINGSRC = (function (exports) {
                 new_cue = {
                     key: cue.key,
                     interval: cue.interval,
-                    data: cue.data
+                    data: cue.data,
+                    info: cue.info
                 };
+
                 if (safe) {
                     new_cue = Object.freeze(new_cue);
                 }
@@ -5503,6 +5560,7 @@ var TIMINGSRC = (function (exports) {
             return array_concat(arrays);
         };
 
+
         /*
             LOOKUP ENDPOINTS
 
@@ -5513,6 +5571,7 @@ var TIMINGSRC = (function (exports) {
         */
 
         lookup_endpoints(interval) {
+            interval = asInterval(interval);
             return this._call_buckets("lookup_endpoints", interval);
         };
 
@@ -5522,6 +5581,7 @@ var TIMINGSRC = (function (exports) {
         */
 
         lookup(interval, mask) {
+            interval = asInterval(interval);
             return this._call_buckets("lookup", interval, mask);
         };
 
@@ -5530,6 +5590,7 @@ var TIMINGSRC = (function (exports) {
             REMOVE CUES BY INTERVAL
         */
         lookup_delete(interval, mask) {
+            interval = asInterval(interval);
             const cues = this._call_buckets("lookup_delete", interval, mask);
             // remove from _map and make event items
             const items = [];

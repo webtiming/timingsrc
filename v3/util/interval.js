@@ -368,6 +368,11 @@ class Interval {
 		}
 	};
 
+
+	asArray() {
+		return [this._low, this._high, this._lowInclude, this._highInclude];
+	}
+
 	covers_endpoint (p) {
 		let leftof = endpoint.leftof(p, this._endpointLow);
 		let rightof = endpoint.rightof(p, this._endpointHigh);
