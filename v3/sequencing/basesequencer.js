@@ -269,8 +269,6 @@ class BaseSequencer extends CueCollection {
      DATASET
     ***************************************************************/
 
-
-
     _onDatasetCallback(eventMap, relevanceInterval) {
         throw new Error("not implemented");
     }
