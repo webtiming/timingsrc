@@ -357,10 +357,6 @@ class CueArgBuilder {
 
 class Dataset extends CueCollection {
 
-    static Delta = Delta;
-    static cue_delta = cue_delta;
-    static cue_equals = cue_equals;
-
     constructor(options) {
         super(options);
 
@@ -1094,6 +1090,11 @@ class Dataset extends CueCollection {
     };
 
 }
+
+
+Dataset.Delta = Delta;
+Dataset.cue_delta = cue_delta;
+Dataset.cue_equals = cue_equals;
 
 
 /*

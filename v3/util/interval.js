@@ -288,18 +288,6 @@ INTERVAL CLASS
 
 class Interval {
 
-	/*
-		Add static variables to Interval class.
-	*/
-	static Relation = Relation;
-	static Match = Match;
-	static cmpLow = _make_interval_cmp(true);
-	static cmpHigh = _make_interval_cmp(false);
-	static fromEndpoints = fromEndpoints;
-	static intersect = intersect;
-	static union = union;
-	static intersectAll = intersectAll;
-	static unionAll = unionAll;
 
 	// private variables
 
@@ -396,6 +384,21 @@ class Interval {
 		return Boolean(mask & relation);
 	}
 }
+
+/*
+	Add static properties to Interval class.
+*/
+
+Interval.Relation = Relation;
+Interval.Match = Match;
+Interval.cmpLow = _make_interval_cmp(true);
+Interval.cmpHigh = _make_interval_cmp(false);
+Interval.fromEndpoints = fromEndpoints;
+Interval.intersect = intersect;
+Interval.union = union;
+Interval.intersectAll = intersectAll;
+Interval.unionAll = unionAll;
+
 
 export default Interval;
 

@@ -30,10 +30,10 @@ function queueCmp(a,b) {
     return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
 };
 
-class Schedule {
+// Default lookahead in seconds
+const LOOKAHEAD = 5
 
-    // Default lookahead in seconds
-    static LOOKAHEAD = 5
+class Schedule {
 
     constructor(dataset, to, options) {
         // timingobject
@@ -54,7 +54,7 @@ class Schedule {
         this.callbacks = [];
         // options
         options = options || {};
-        options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
+        options.lookahead = options.lookahead || LOOKAHEAD;
         this.options = options;
     }
 

@@ -760,18 +760,6 @@ INTERVAL CLASS
 
 class Interval {
 
-	/*
-		Add static variables to Interval class.
-	*/
-	static Relation = Relation;
-	static Match = Match;
-	static cmpLow = _make_interval_cmp(true);
-	static cmpHigh = _make_interval_cmp(false);
-	static fromEndpoints = fromEndpoints;
-	static intersect = intersect;
-	static union = union;
-	static intersectAll = intersectAll;
-	static unionAll = unionAll;
 
 	// private variables
 
@@ -867,6 +855,20 @@ class Interval {
 		return Boolean(mask & relation);
 	}
 }
+
+/*
+	Add static properties to Interval class.
+*/
+
+Interval.Relation = Relation;
+Interval.Match = Match;
+Interval.cmpLow = _make_interval_cmp(true);
+Interval.cmpHigh = _make_interval_cmp(false);
+Interval.fromEndpoints = fromEndpoints;
+Interval.intersect = intersect;
+Interval.union = union;
+Interval.intersectAll = intersectAll;
+Interval.unionAll = unionAll;
 
 /*
 	Copyright 2020
@@ -1435,29 +1437,29 @@ function endpointEvents (timeInterval, posInterval, vector, endpointItems) {
 */
 
 
+/* Static properties */
+
+const PosDelta = Object.freeze({
+    NOOP: 0,                // no change in position
+    CHANGE: 1               // change in position
+});
+
+
+const MoveDelta = Object.freeze({
+    NOOP: 0,                // no change in movement, not moving
+    NOOP_MOVING: 1,         // no change in movement, moving
+    START: 2,               // not moving -> moving
+    CHANGE: 3,              // keep moving, movement changed
+    STOP: 4                 // moving -> not moving
+});
+
+
 class MotionDelta {
-
-
-    static PosDelta = Object.freeze({
-        NOOP: 0,                // no change in position
-        CHANGE: 1               // change in position
-    });
-
-
-    static MoveDelta = Object.freeze({
-        NOOP: 0,                // no change in movement, not moving
-        NOOP_MOVING: 1,         // no change in movement, moving
-        START: 2,               // not moving -> moving
-        CHANGE: 3,              // keep moving, movement changed
-        STOP: 4                 // moving -> not moving
-    });
 
     constructor (old_vector, new_vector) {
         let ts = new_vector.timestamp;
         let is_moving = isMoving(new_vector);
         let init = (old_vector == undefined || old_vector.position == undefined);
-        const PosDelta = MotionDelta.PosDelta;
-        const MoveDelta = MotionDelta.MoveDelta;
 
         if (init) {
             /*
@@ -1529,25 +1531,8 @@ class MotionDelta {
 }
 
 
-// return module object
-/*
-export default {
-    isMoving,
-    // equalVectors,
-    // copyVector,
-	calculateVector,
-	calculateDirection,
-	// calculateMinPositiveRealSolution,
-	calculateDelta,
-	// correctRangeState,
-	// checkRange,
-	// RangeState,
-    posInterval_from_timeInterval,
-    endpointEvents,
-    rangeIntersect,
-    MotionDelta
-};
-*/
+MotionDelta.PosDelta = PosDelta;
+MotionDelta.MoveDelta = MoveDelta;
 
 var motionutils = /*#__PURE__*/Object.freeze({
     __proto__: null,
@@ -4948,10 +4933,6 @@ class CueArgBuilder {
 
 class Dataset extends CueCollection {
 
-    static Delta = Delta;
-    static cue_delta = cue_delta;
-    static cue_equals = cue_equals;
-
     constructor(options) {
         super(options);
 
@@ -5683,6 +5664,11 @@ class Dataset extends CueCollection {
     };
 
 }
+
+
+Dataset.Delta = Delta;
+Dataset.cue_delta = cue_delta;
+Dataset.cue_equals = cue_equals;
 
 
 /*
@@ -6678,10 +6664,10 @@ const pft = posInterval_from_timeInterval;
 function queueCmp(a,b) {
     return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
 }
-class Schedule {
+// Default lookahead in seconds
+const LOOKAHEAD = 5;
 
-    // Default lookahead in seconds
-    static LOOKAHEAD = 5
+class Schedule {
 
     constructor(dataset, to, options) {
         // timingobject
@@ -6702,7 +6688,7 @@ class Schedule {
         this.callbacks = [];
         // options
         options = options || {};
-        options.lookahead = options.lookahead || Schedule.LOOKAHEAD;
+        options.lookahead = options.lookahead || LOOKAHEAD;
         this.options = options;
     }
 
@@ -7114,8 +7100,6 @@ function item_cmp_backwards (item_a, item_b) {
 
 class BaseSequencer extends CueCollection {
 
-    static Active = Active;
-    static ActiveMap = ActiveMap;
 
     constructor (dataset, options) {
         super(options);
@@ -7404,6 +7388,9 @@ class BaseSequencer extends CueCollection {
 
 }
 
+BaseSequencer.Active = Active;
+BaseSequencer.ActiveMap = ActiveMap;
+
 /*
     Copyright 2020
     Author : Ingar Arntzen
@@ -7424,8 +7411,8 @@ class BaseSequencer extends CueCollection {
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const PosDelta = MotionDelta.PosDelta;
-const MoveDelta = MotionDelta.MoveDelta;
+const PosDelta$1 = MotionDelta.PosDelta;
+const MoveDelta$1 = MotionDelta.MoveDelta;
 const Active$1 = BaseSequencer.Active;
 const ActiveMap$1 = BaseSequencer.ActiveMap;
 
@@ -7597,7 +7584,7 @@ class PointModeSequencer extends BaseSequencer {
             restriction)
         */
         const items = [];
-        if (delta.posDelta == PosDelta.CHANGE || delta.moveDelta == MoveDelta.STOP) {
+        if (delta.posDelta == PosDelta$1.CHANGE || delta.moveDelta == MoveDelta$1.STOP) {
             // make position interval
             let low = new_vector.position;
             let high = new_vector.position;
@@ -7716,8 +7703,8 @@ class PointModeSequencer extends BaseSequencer {
     along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const PosDelta$1 = MotionDelta.PosDelta;
-const MoveDelta$1 = MotionDelta.MoveDelta;
+const PosDelta$2 = MotionDelta.PosDelta;
+const MoveDelta$2 = MotionDelta.MoveDelta;
 const Active$2 = BaseSequencer.Active;
 const ActiveMap$2 = BaseSequencer.ActiveMap;
 
@@ -7928,7 +7915,7 @@ class IntervalModeSequencer extends BaseSequencer {
             restriction)
         */
         const items = [];
-        if (delta.posDelta == PosDelta$1.CHANGE || delta.MoveDelta == MoveDelta$1.STOP) {
+        if (delta.posDelta == PosDelta$2.CHANGE || delta.MoveDelta == MoveDelta$2.STOP) {
 
             // make position interval
             let low = Math.min(new_vector.position, other_new_vector.position);

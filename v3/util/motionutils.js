@@ -581,29 +581,29 @@ export function endpointEvents (timeInterval, posInterval, vector, endpointItems
 */
 
 
+/* Static properties */
+
+const PosDelta = Object.freeze({
+    NOOP: 0,                // no change in position
+    CHANGE: 1               // change in position
+});
+
+
+const MoveDelta = Object.freeze({
+    NOOP: 0,                // no change in movement, not moving
+    NOOP_MOVING: 1,         // no change in movement, moving
+    START: 2,               // not moving -> moving
+    CHANGE: 3,              // keep moving, movement changed
+    STOP: 4                 // moving -> not moving
+});
+
+
 export class MotionDelta {
-
-
-    static PosDelta = Object.freeze({
-        NOOP: 0,                // no change in position
-        CHANGE: 1               // change in position
-    });
-
-
-    static MoveDelta = Object.freeze({
-        NOOP: 0,                // no change in movement, not moving
-        NOOP_MOVING: 1,         // no change in movement, moving
-        START: 2,               // not moving -> moving
-        CHANGE: 3,              // keep moving, movement changed
-        STOP: 4                 // moving -> not moving
-    });
 
     constructor (old_vector, new_vector) {
         let ts = new_vector.timestamp;
         let is_moving = isMoving(new_vector)
         let init = (old_vector == undefined || old_vector.position == undefined);
-        const PosDelta = MotionDelta.PosDelta;
-        const MoveDelta = MotionDelta.MoveDelta;
 
         if (init) {
             /*
@@ -675,23 +675,6 @@ export class MotionDelta {
 }
 
 
-// return module object
-/*
-export default {
-    isMoving,
-    // equalVectors,
-    // copyVector,
-	calculateVector,
-	calculateDirection,
-	// calculateMinPositiveRealSolution,
-	calculateDelta,
-	// correctRangeState,
-	// checkRange,
-	// RangeState,
-    posInterval_from_timeInterval,
-    endpointEvents,
-    rangeIntersect,
-    MotionDelta
-};
-*/
+MotionDelta.PosDelta = PosDelta;
+MotionDelta.MoveDelta = MoveDelta;
 

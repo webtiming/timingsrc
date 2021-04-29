@@ -166,8 +166,6 @@ function item_cmp_backwards (item_a, item_b) {
 
 class BaseSequencer extends CueCollection {
 
-    static Active = Active;
-    static ActiveMap = ActiveMap;
 
     constructor (dataset, options) {
         super(options);
@@ -456,5 +454,9 @@ class BaseSequencer extends CueCollection {
     }
 
 }
+
+BaseSequencer.Active = Active;
+BaseSequencer.ActiveMap = ActiveMap;
+
 
 export default BaseSequencer;
