@@ -3080,11 +3080,15 @@ var TIMINGSRC = (function (exports) {
     		*/
     		this._clock;
 
-
     		// register event handlers
     		this._provider.on("vectorchange", this._onVectorChange.bind(this));
     		this._provider.on("skewchange", this._onSkewChange.bind(this));
-    		if (this._provider.skew != undefined) ;
+
+    		// check if provider is ready
+    		if (this._provider.skew != undefined) {
+    			// initialise immediately - without a callback
+    			this._onSkewChange(true);
+    		}
     	};
 
     	isReady() {return this._ready;};
@@ -3121,7 +3125,7 @@ var TIMINGSRC = (function (exports) {
     	get provider() {return this._provider;};
 
 
-    	_onSkewChange() {
+    	_onSkewChange(init=false) {
     		if (!this._clock) {
     			this._provider_clock = new MasterClock({skew: this._provider.skew});
     			this._clock = new MasterClock({skew:0});
@@ -3139,13 +3143,21 @@ var TIMINGSRC = (function (exports) {
     			this._ready = true;
     			this._range = this._provider.range;
     			this._vector = this._provider.vector;
-    			let eArg = {
-    				range: this.range,
-    				...this.vector,
-    				live: false
-    			};
-    			this._callback(eArg);
+
+    			// no upcalls on skew change
+    			/*
+    			if (!init) {
+    				let eArg = {
+    					range: this.range,
+    					...this.vector,
+    					live: false
+    				}	
+    				this._callback(eArg);
+    			}
+    			*/
     		}
+
+
     	};
 
     	_onVectorChange() {
@@ -3229,10 +3241,17 @@ var TIMINGSRC = (function (exports) {
     		return checkRange(vector, range);
     	} else {
     		let now_vector = calculateVector(vector, now);
-    		return checkRange(now_vector, range);
+    		// check now vector
+    		let state = correctRangeState(now_vector, range);
+    		if (state == RangeState.INSIDE) {
+    			// keep original vector
+    			return vector;
+    		} else {
+    			// update to legal vector
+    			return checkRange(now_vector, range);
+    		}
     	}
     }
-
 
 
     /*
@@ -7205,8 +7224,6 @@ var TIMINGSRC = (function (exports) {
         /***************************************************************
          DATASET
         ***************************************************************/
-
-
 
         _onDatasetCallback(eventMap, relevanceInterval) {
             throw new Error("not implemented");
