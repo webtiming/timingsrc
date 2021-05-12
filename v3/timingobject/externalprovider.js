@@ -70,18 +70,14 @@ class ExternalProvider {
 		*/
 		this._clock;
 
-
 		// register event handlers
 		this._provider.on("vectorchange", this._onVectorChange.bind(this));
 		this._provider.on("skewchange", this._onSkewChange.bind(this));
 
 		// check if provider is ready
-		let self = this;
 		if (this._provider.skew != undefined) {
-			let self = this;
-			Promise.resolve(function () {
-				self._onSkewChange();
-			});
+			// initialise immediately - without a callback
+			this._onSkewChange(true);
 		}
 	};
 
@@ -119,7 +115,7 @@ class ExternalProvider {
 	get provider() {return this._provider;};
 
 
-	_onSkewChange() {
+	_onSkewChange(init=false) {
 		if (!this._clock) {
 			this._provider_clock = new MasterClock({skew: this._provider.skew});
 			this._clock = new MasterClock({skew:0});
@@ -137,13 +133,21 @@ class ExternalProvider {
 			this._ready = true;
 			this._range = this._provider.range;
 			this._vector = this._provider.vector;
-			let eArg = {
-				range: this.range,
-				...this.vector,
-				live: false
+
+			// no upcalls on skew change
+			/*
+			if (!init) {
+				let eArg = {
+					range: this.range,
+					...this.vector,
+					live: false
+				}	
+				this._callback(eArg);
 			}
-			this._callback(eArg);
+			*/
 		}
+
+
 	};
 
 	_onVectorChange() {

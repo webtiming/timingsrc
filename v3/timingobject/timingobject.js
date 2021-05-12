@@ -46,10 +46,17 @@ function checkRange(live, now, vector, range) {
 		return motionutils.checkRange(vector, range);
 	} else {
 		let now_vector = motionutils.calculateVector(vector, now);
-		return motionutils.checkRange(now_vector, range);
+		// check now vector
+		let state = motionutils.correctRangeState(now_vector, range);
+		if (state == motionutils.RangeState.INSIDE) {
+			// keep original vector
+			return vector;
+		} else {
+			// update to legal vector
+			return motionutils.checkRange(now_vector, range);
+		}
 	}
 }
-
 
 
 /*
