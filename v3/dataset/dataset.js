@@ -467,12 +467,12 @@ class Dataset extends CueCollection {
         - NOT RECOMMENDED TO USE repeatedly (batched using promise)
     */
 
-    _addCue(key, interval, data) {
-        return this.update({key:key, interval:interval, data:data});
+    _addCue(key, interval, data, options) {
+        return this.update({key:key, interval:interval, data:data}, options);
     }
 
-    _removeCue(key) {
-        return this.update({key:key});
+    _removeCue(key, options) {
+        return this.update({key:key}, options);
     }
 
     /***************************************************************
@@ -575,7 +575,12 @@ class Dataset extends CueCollection {
         /***********************************************************
             process all cues
         ***********************************************************/
-        let epoch_ts = epoch();
+        const epoch_ts = epoch();
+        const info = {
+            ts: epoch_ts,
+            author: options.author
+        };
+
         for (let cue of cues) {
 
             /*******************************************************
@@ -637,7 +642,7 @@ class Dataset extends CueCollection {
                 - update cueBuckets
                 - create batchMap
             *******************************************************/
-            this._update_cue(batchMap, current_cue, cue, epoch_ts, options);
+            this._update_cue(batchMap, current_cue, cue, info, options);
         }
 
         // flush all buckets so updates take effect
@@ -661,7 +666,7 @@ class Dataset extends CueCollection {
                     relevance.low = endpoint.min(relevance.low, item.old.interval.endpointLow);
                     relevance.high = endpoint.max(relevance.high, item.old.interval.endpointHigh);
                 }
-                return {key:item.key, new:item.new, old:item.old};
+                return {key:item.key, new:item.new, old:item.old, info: item.info};
             });
 
             // extra filter items to remove NOOP transitions
@@ -707,7 +712,7 @@ class Dataset extends CueCollection {
         - update CueBucket
     ***************************************************************/
 
-    _update_cue(batchMap, current_cue, cue, epoch_ts, options) {
+    _update_cue(batchMap, current_cue, cue, info, options) {
 
         let old_cue, new_cue;
         let item, _item;
@@ -746,8 +751,8 @@ class Dataset extends CueCollection {
             // cue info: add if missing
             if (cue.info == undefined) {
                 cue.info = {
-                    ts: epoch_ts,
-                    change_ts: epoch_ts,
+                    ts: info.ts,
+                    change_ts: info.ts,
                     change_id: 0
                 }
             }
@@ -773,7 +778,7 @@ class Dataset extends CueCollection {
             if (cue.info == undefined) {
                 cue.info = {
                     ts: current_cue.info.ts,
-                    change_ts: epoch_ts,
+                    change_ts: info.ts,
                     change_id: current_cue.info.change_id + 1
                 };
             }
@@ -824,7 +829,7 @@ class Dataset extends CueCollection {
                 }
             }
         }
-        item = {key:cue.key, new:new_cue, old:old_cue, delta:delta};
+        item = {key:cue.key, new:new_cue, old:old_cue, delta:delta, info};
 
         /*
             if this item has been set earlier in batchMap
@@ -993,17 +998,21 @@ class Dataset extends CueCollection {
     /*
         REMOVE CUES BY INTERVAL
     */
-    lookup_delete(interval, mask) {
+    lookup_delete(interval, mask, options={}) {
         interval = asInterval(interval);
         const cues = this._call_buckets("lookup_delete", interval, mask);
         // remove from _map and make event items
         const items = [];
+        const info = {
+            ts: epoch(),
+            author: options.author
+        };
         let cue;
         for (let i=0; i<cues.length; i++) {
             cue = cues[i];
             this._map.delete(cue.key);
             // check for equality
-            items.push({key:cue.key, new: undefined, old: cue});
+            items.push({key:cue.key, new: undefined, old: cue, info});
         }
         // event notification
         this._notifyEvents(items);
@@ -1013,7 +1022,7 @@ class Dataset extends CueCollection {
     /*
         CLEAR ALL CUES
     */
-    clear() {
+    clear(options={}) {
         // clear cue Buckets
         this._call_buckets("clear");
         // clear _map
@@ -1021,8 +1030,12 @@ class Dataset extends CueCollection {
         this._map = new Map();
         // create change events for all cues
         const items = [];
+        const info = {
+            ts: epoch(),
+            author: options.author
+        };
         for (let cue of _map.values()) {
-            items.push({key: cue.key, new: undefined, old: cue});
+            items.push({key: cue.key, new: undefined, old: cue, info});
         }
         // event notification
         this._notifyEvents(items);

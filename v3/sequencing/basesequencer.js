@@ -297,15 +297,15 @@ class BaseSequencer extends CueCollection {
             }
             if (is_active && !should_be_active) {
                 // exit
-                _item = {key:item.key, new:undefined, old:item.old};
+                _item = {key:item.key, new:undefined, old:item.old, info:item.info};
                 exitEvents.push(_item);
             } else if (!is_active && should_be_active) {
                 // enter
-                _item = {key:item.key, new:item.new, old:undefined};
+                _item = {key:item.key, new:item.new, old:undefined, info:item.info};
                 enterEvents.push(_item);
             } else if (is_active && should_be_active) {
                 // change
-                _item = {key:item.key, new:item.new, old:item.old};
+                _item = {key:item.key, new:item.new, old:item.old, info:item.info};
                 changeEvents.push(_item);
             }
         };
@@ -389,6 +389,18 @@ class BaseSequencer extends CueCollection {
             .map(cue => {
                 return {key:cue.key, new:cue, old:undefined};
             });
+
+        /*
+            Preserve .info from eventMap
+        */
+        for (let eventList in [exitEvents, changeEvents, enterEvents]) {
+            for (let item of eventList) {
+                let _item = eventMap.get(item.key);
+                if (_item != undefined) {
+                    item.info = _item.info;
+                }
+            }    
+        }
 
         return [exitEvents, changeEvents, enterEvents];
     }
