@@ -134,13 +134,15 @@ class IntervalModeSequencer extends BaseSequencer {
                 this._map.set(item.key, item.new);
             });
 
-            // notifications
-            const items = array_concat([exit, change, enter], {copy:true, order:true});
-
             // sort event items according to general movement direction
             let direction = movement_direction(now_vector_A, now_vector_B);
-            this.sortItems(items, direction);
+            this.sortItems(exit, direction);
+            this.sortItems(change, direction);
+            this.sortItems(enter, direction);
 
+            // notifications
+            const items = array_concat([exit, change, enter], {copy:true, order:true});
+            
             // event notification
             this._notifyEvents(items, direction);
         }
@@ -235,7 +237,6 @@ class IntervalModeSequencer extends BaseSequencer {
             or if the motion stopped without jumping (pause or halt at range
             restriction)
         */
-        const items = [];
         if (delta.posDelta == PosDelta.CHANGE || delta.MoveDelta == MoveDelta.STOP) {
 
             // make position interval
@@ -254,16 +255,20 @@ class IntervalModeSequencer extends BaseSequencer {
             // update active cues
             this._map = activeCues;
             // make event items
-            for (let cue of exitCues.values()) {
-                items.push({key:cue.key, new:undefined, old:cue});
-            }
-            for (let cue of enterCues.values()) {
-                items.push({key:cue.key, new:cue, old:undefined});
-            }
 
+            let exitItems = [...exitCues.values()].map(cue => {
+                return {key:cue.key, new:undefined, old:cue};
+            });
+            let enterItems = [...enterCues.values()].map(cue => {
+                return {key:cue.key, new:cue, old:undefined};
+            }); 
             // sort event items according to general movement direction
             let direction = movement_direction(new_vector, other_new_vector);
-            this.sortItems(items, direction);
+            this.sortItems(exitItems, direction);
+            this.sortItems(enterItems, direction);
+
+            // notifications
+            const items = array_concat([exitItems, enterItems], {copy:true, order:true});
 
             // event notification
             this._notifyEvents(items);

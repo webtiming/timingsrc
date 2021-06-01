@@ -233,7 +233,7 @@ class BaseSequencer extends CueCollection {
     sortItems(items, direction) {
         let order = this.sortOrder(); 
         if (typeof order == "function") {
-            // use order speciied by options
+            // use order specified by options
             return super.sortItems(items)            
         } 
         if (order == undefined) {

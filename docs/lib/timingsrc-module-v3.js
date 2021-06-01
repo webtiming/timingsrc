@@ -5062,12 +5062,12 @@ class Dataset extends CueCollection {
         - NOT RECOMMENDED TO USE repeatedly (batched using promise)
     */
 
-    _addCue(key, interval, data) {
-        return this.update({key:key, interval:interval, data:data});
+    _addCue(key, interval, data, options) {
+        return this.update({key:key, interval:interval, data:data}, options);
     }
 
-    _removeCue(key) {
-        return this.update({key:key});
+    _removeCue(key, options) {
+        return this.update({key:key}, options);
     }
 
     /***************************************************************
@@ -5170,7 +5170,12 @@ class Dataset extends CueCollection {
         /***********************************************************
             process all cues
         ***********************************************************/
-        let epoch_ts = epoch();
+        const epoch_ts = epoch();
+        const info = {
+            ts: epoch_ts,
+            author: options.author
+        };
+
         for (let cue of cues) {
 
             /*******************************************************
@@ -5230,7 +5235,7 @@ class Dataset extends CueCollection {
                 - update cueBuckets
                 - create batchMap
             *******************************************************/
-            this._update_cue(batchMap, current_cue, cue, epoch_ts, options);
+            this._update_cue(batchMap, current_cue, cue, info, options);
         }
 
         // flush all buckets so updates take effect
@@ -5254,7 +5259,7 @@ class Dataset extends CueCollection {
                     relevance.low = endpoint.min(relevance.low, item.old.interval.endpointLow);
                     relevance.high = endpoint.max(relevance.high, item.old.interval.endpointHigh);
                 }
-                return {key:item.key, new:item.new, old:item.old};
+                return {key:item.key, new:item.new, old:item.old, info: item.info};
             });
 
             // extra filter items to remove NOOP transitions
@@ -5300,7 +5305,7 @@ class Dataset extends CueCollection {
         - update CueBucket
     ***************************************************************/
 
-    _update_cue(batchMap, current_cue, cue, epoch_ts, options) {
+    _update_cue(batchMap, current_cue, cue, info, options) {
 
         let old_cue, new_cue;
         let item, _item;
@@ -5339,8 +5344,8 @@ class Dataset extends CueCollection {
             // cue info: add if missing
             if (cue.info == undefined) {
                 cue.info = {
-                    ts: epoch_ts,
-                    change_ts: epoch_ts,
+                    ts: info.ts,
+                    change_ts: info.ts,
                     change_id: 0
                 };
             }
@@ -5366,7 +5371,7 @@ class Dataset extends CueCollection {
             if (cue.info == undefined) {
                 cue.info = {
                     ts: current_cue.info.ts,
-                    change_ts: epoch_ts,
+                    change_ts: info.ts,
                     change_id: current_cue.info.change_id + 1
                 };
             }
@@ -5417,7 +5422,7 @@ class Dataset extends CueCollection {
                 }
             }
         }
-        item = {key:cue.key, new:new_cue, old:old_cue, delta:delta};
+        item = {key:cue.key, new:new_cue, old:old_cue, delta:delta, info};
 
         /*
             if this item has been set earlier in batchMap
@@ -5586,17 +5591,21 @@ class Dataset extends CueCollection {
     /*
         REMOVE CUES BY INTERVAL
     */
-    lookup_delete(interval, mask) {
+    lookup_delete(interval, mask, options={}) {
         interval = asInterval(interval);
         const cues = this._call_buckets("lookup_delete", interval, mask);
         // remove from _map and make event items
         const items = [];
+        const info = {
+            ts: epoch(),
+            author: options.author
+        };
         let cue;
         for (let i=0; i<cues.length; i++) {
             cue = cues[i];
             this._map.delete(cue.key);
             // check for equality
-            items.push({key:cue.key, new: undefined, old: cue});
+            items.push({key:cue.key, new: undefined, old: cue, info});
         }
         // event notification
         this._notifyEvents(items);
@@ -5606,7 +5615,7 @@ class Dataset extends CueCollection {
     /*
         CLEAR ALL CUES
     */
-    clear() {
+    clear(options={}) {
         // clear cue Buckets
         this._call_buckets("clear");
         // clear _map
@@ -5614,8 +5623,12 @@ class Dataset extends CueCollection {
         this._map = new Map();
         // create change events for all cues
         const items = [];
+        const info = {
+            ts: epoch(),
+            author: options.author
+        };
         for (let cue of _map.values()) {
-            items.push({key: cue.key, new: undefined, old: cue});
+            items.push({key: cue.key, new: undefined, old: cue, info});
         }
         // event notification
         this._notifyEvents(items);
@@ -7186,7 +7199,7 @@ class BaseSequencer extends CueCollection {
     sortItems(items, direction) {
         let order = this.sortOrder(); 
         if (typeof order == "function") {
-            // use order speciied by options
+            // use order specified by options
             return super.sortItems(items)            
         } 
         if (order == undefined) {
@@ -7250,15 +7263,15 @@ class BaseSequencer extends CueCollection {
             }
             if (is_active && !should_be_active) {
                 // exit
-                _item = {key:item.key, new:undefined, old:item.old};
+                _item = {key:item.key, new:undefined, old:item.old, info:item.info};
                 exitEvents.push(_item);
             } else if (!is_active && should_be_active) {
                 // enter
-                _item = {key:item.key, new:item.new, old:undefined};
+                _item = {key:item.key, new:item.new, old:undefined, info:item.info};
                 enterEvents.push(_item);
             } else if (is_active && should_be_active) {
                 // change
-                _item = {key:item.key, new:item.new, old:item.old};
+                _item = {key:item.key, new:item.new, old:item.old, info:item.info};
                 changeEvents.push(_item);
             }
         }        return [exitEvents, changeEvents, enterEvents];
@@ -7341,6 +7354,18 @@ class BaseSequencer extends CueCollection {
             .map(cue => {
                 return {key:cue.key, new:cue, old:undefined};
             });
+
+        /*
+            Preserve .info from eventMap
+        */
+        for (let eventList in [exitEvents, changeEvents, enterEvents]) {
+            for (let item of eventList) {
+                let _item = eventMap.get(item.key);
+                if (_item != undefined) {
+                    item.info = _item.info;
+                }
+            }    
+        }
 
         return [exitEvents, changeEvents, enterEvents];
     }
@@ -7540,12 +7565,14 @@ class PointModeSequencer extends BaseSequencer {
                 this._map.set(item.key, item.new);
             });
 
-            // notifications
-            const items = array_concat([exit, change, enter], {copy:true, order:true});
-
             // sort event items according to general movement direction
             let direction = calculateDirection(now_vector);
-            this.sortItems(items, direction);
+            this.sortItems(exit, direction);
+            this.sortItems(change, direction);
+            this.sortItems(enter, direction);
+
+            // notifications
+            const items = array_concat([exit, change, enter], {copy:true, order:true});
 
             // event notification
             this._notifyEvents(items);
@@ -7600,7 +7627,6 @@ class PointModeSequencer extends BaseSequencer {
             or if the motion stopped without jumping (pause or halt at range
             restriction)
         */
-        const items = [];
         if (delta.posDelta == PosDelta$1.CHANGE || delta.moveDelta == MoveDelta$1.STOP) {
             // make position interval
             let low = new_vector.position;
@@ -7616,17 +7642,22 @@ class PointModeSequencer extends BaseSequencer {
             let enterCues = map_difference(activeCues, this._map);
             // update active cues
             this._map = activeCues;
+
             // make event items
-            for (let cue of exitCues.values()) {
-                items.push({key:cue.key, new:undefined, old:cue});
-            }
-            for (let cue of enterCues.values()) {
-                items.push({key:cue.key, new:cue, old:undefined});
-            }
+            let exitItems = [...exitCues.values()].map(cue => {
+                return {key:cue.key, new:undefined, old:cue};
+            });
+            let enterItems = [...enterCues.values()].map(cue => {
+                return {key:cue.key, new:cue, old:undefined};
+            }); 
 
             // sort event items according to general movement direction
             let direction = calculateDirection(new_vector);
-            this.sortItems(items, direction);
+            this.sortItems(exitItems, direction);
+            this.sortItems(enterItems, direction);
+
+            // notifications
+            const items = array_concat([exitItems, enterItems], {copy:true, order:true});
 
             // event notification
             this._notifyEvents(items);
@@ -7830,13 +7861,15 @@ class IntervalModeSequencer extends BaseSequencer {
                 this._map.set(item.key, item.new);
             });
 
-            // notifications
-            const items = array_concat([exit, change, enter], {copy:true, order:true});
-
             // sort event items according to general movement direction
             let direction = movement_direction(now_vector_A, now_vector_B);
-            this.sortItems(items, direction);
+            this.sortItems(exit, direction);
+            this.sortItems(change, direction);
+            this.sortItems(enter, direction);
 
+            // notifications
+            const items = array_concat([exit, change, enter], {copy:true, order:true});
+            
             // event notification
             this._notifyEvents(items, direction);
         }
@@ -7931,7 +7964,6 @@ class IntervalModeSequencer extends BaseSequencer {
             or if the motion stopped without jumping (pause or halt at range
             restriction)
         */
-        const items = [];
         if (delta.posDelta == PosDelta$2.CHANGE || delta.MoveDelta == MoveDelta$2.STOP) {
 
             // make position interval
@@ -7950,16 +7982,20 @@ class IntervalModeSequencer extends BaseSequencer {
             // update active cues
             this._map = activeCues;
             // make event items
-            for (let cue of exitCues.values()) {
-                items.push({key:cue.key, new:undefined, old:cue});
-            }
-            for (let cue of enterCues.values()) {
-                items.push({key:cue.key, new:cue, old:undefined});
-            }
 
+            let exitItems = [...exitCues.values()].map(cue => {
+                return {key:cue.key, new:undefined, old:cue};
+            });
+            let enterItems = [...enterCues.values()].map(cue => {
+                return {key:cue.key, new:cue, old:undefined};
+            }); 
             // sort event items according to general movement direction
             let direction = movement_direction(new_vector, other_new_vector);
-            this.sortItems(items, direction);
+            this.sortItems(exitItems, direction);
+            this.sortItems(enterItems, direction);
+
+            // notifications
+            const items = array_concat([exitItems, enterItems], {copy:true, order:true});
 
             // event notification
             this._notifyEvents(items);
