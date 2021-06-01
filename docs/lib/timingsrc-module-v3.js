@@ -7561,6 +7561,9 @@ class PointModeSequencer extends BaseSequencer {
             exit.forEach(item => {
                 this._map.delete(item.key);
             });
+            change.forEach(item => {
+                this._map.set(item.key, item.new);
+            });
             enter.forEach(item => {
                 this._map.set(item.key, item.new);
             });
@@ -7856,6 +7859,9 @@ class IntervalModeSequencer extends BaseSequencer {
             // update activeCues
             exit.forEach(item => {
                 this._map.delete(item.key);
+            });
+            change.forEach(item => {
+                this._map.set(item.key, item.new);
             });
             enter.forEach(item => {
                 this._map.set(item.key, item.new);

@@ -7564,6 +7564,9 @@ var TIMINGSRC = (function (exports) {
                 exit.forEach(item => {
                     this._map.delete(item.key);
                 });
+                change.forEach(item => {
+                    this._map.set(item.key, item.new);
+                });
                 enter.forEach(item => {
                     this._map.set(item.key, item.new);
                 });
@@ -7859,6 +7862,9 @@ var TIMINGSRC = (function (exports) {
                 // update activeCues
                 exit.forEach(item => {
                     this._map.delete(item.key);
+                });
+                change.forEach(item => {
+                    this._map.set(item.key, item.new);
                 });
                 enter.forEach(item => {
                     this._map.set(item.key, item.new);

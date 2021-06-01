@@ -213,15 +213,16 @@
 
                 // console
                 let pos = to.pos.toFixed(2);
+                let itv_str = item.new.interval.toString();
                 if (item.old) {
                     // change
-                    console.log("change", item.key);
+                    console.log(`change ${item.key}, ${itv_str}`);
                 } else {
                     // enter
-                    let itv_str = item.new.interval.toString();
                     console.log(`enter ${item.key} ${itv_str} ${pos}`);
                 }
             });
+
         };
 
 

@@ -130,6 +130,9 @@ class IntervalModeSequencer extends BaseSequencer {
             exit.forEach(item => {
                 this._map.delete(item.key);
             });
+            change.forEach(item => {
+                this._map.set(item.key, item.new);
+            });
             enter.forEach(item => {
                 this._map.set(item.key, item.new);
             });
