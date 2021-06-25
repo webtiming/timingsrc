@@ -36,13 +36,13 @@ def build(version):
         subprocess.call(args)
 
         # module export - unminified
-        out = os.path.join(libdir, f'timingsrc-module-{version}.js')
+        out = os.path.join(libdir, f'timingsrc-esm-{version}.js')
         args = ["rollup", "-m", "-f", "es", "-o", out, entry_file]
         print(" ".join(args))
         subprocess.call(args)
 
         # module export - minified
-        out = os.path.join(libdir, f'timingsrc-module-min-{version}.js')
+        out = os.path.join(libdir, f'timingsrc-min-esm-{version}.js')
         args = ["rollup",
                 "-f", "es",
                 "-m",

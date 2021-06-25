@@ -8326,4 +8326,4 @@ IntervalModeSequencer.prototype.clone = function () {
 const version = "v3.0";
 
 export { BinarySearch, CueCollection, Dataset, DatasetViewer, DelayConverter, Interval, LoopConverter, PositionCallback, RangeConverter, ScaleConverter, Sequencer, SkewConverter, Subset, Timeout, TimeshiftConverter, TimingObject, TimingProgress, TimingSampler, endpoint, eventify, motionutils, utils, version };
-//# sourceMappingURL=timingsrc-module-v3.js.map
+//# sourceMappingURL=timingsrc-esm-v3.js.map
