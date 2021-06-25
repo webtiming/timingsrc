@@ -128,46 +128,29 @@ class ExternalProvider {
 			let skew_delta = this._provider.skew - current_skew;
 			this._clock.adjust({skew: skew_delta});
 		}
-		if (!this.isReady() && this._provider.vector != undefined) {
-			// just became ready
-			this._ready = true;
-			this._range = this._provider.range;
-			this._vector = this._provider.vector;
-
-			// no upcalls on skew change
-			/*
-			if (!init) {
-				let eArg = {
-					range: this.range,
-					...this.vector,
-					live: false
-				}	
-				this._callback(eArg);
-			}
-			*/
-		}
-
-
+		// no upcalls on skew change
 	};
 
 	_onVectorChange() {
-		if (this._clock) {
+		if (this._clock) {			
 			// is ready (onSkewChange has fired earlier)
-			if (!this._ready) {
+			if (!this._ready && this._provider.vector != undefined) {
+				// become ready
 				this._ready = true;
 			}
-			if (!this._range) {
-				this._range = this._provider.range;
+			if (this._ready) {
+				if (!this._range) {
+					this._range = this._provider.range;
+				}
+				this._vector = this._provider.vector;
+				let eArg = {
+					range: this.range,
+					...this.vector
+				}
+				this._callback(eArg);
 			}
-			this._vector = this._provider.vector;
-			let eArg = {
-				range: this.range,
-				...this.vector
-			}
-			this._callback(eArg);
 		}
 	};
-
 
 	// update
 	/*

@@ -1,0 +1,38 @@
+<<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://mcorp.no/lib/mcorp-2.0.js"></script>
+
+    <!--
+    <script src="https://webtiming.github.io/timingsrc/lib/timingsrc-v3.js"></script>
+    -->
+
+</head>
+<body>
+
+<script type="module">
+    import * as TIMINGSRC from '../../index.js';
+
+    var to = new TIMINGSRC.TimingObject();
+    var to_loop = new TIMINGSRC.LoopConverter(to, [0, 30]);
+
+    to_loop.on("change", (eArg, eInfo) => {
+        console.log("to loop onchange", to_loop.vector);
+    });
+
+    var app = MCorp.app("2898346883410567352", {anon:true});
+    app.ready.then(() => {
+        to.timingsrc = app.motions.shared;
+    });
+
+    setInterval(function() {
+        console.log(`${to.pos} -> ${to_loop.pos}`);
+    }, 1000);
+    window.to = to;
+    window.to_loop = to_loop;
+</script>
+
+</body>
+</html>

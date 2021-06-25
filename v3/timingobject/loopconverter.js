@@ -52,6 +52,10 @@ class LoopConverter extends TimingObject {
 
 	constructor(timingsrc, range) {
 		super(timingsrc, {timeout:true});
+
+		if (!Array.isArray(range) || range.length != 2) {
+			throw new Error(`range must be array [low, high], ${range}`);
+		}
 		this.__range = range;
 	};
 
@@ -89,14 +93,9 @@ class LoopConverter extends TimingObject {
 	};
 
 	// overrides
-	onRangeViolation(vector) {
-		// vector is moving
-		if (vector.position <= this.__range[0]) {
-			vector.position = this.__range[1];
-		} else if (this.__range[1] <= vector.position) {
-			vector.position = this.__range[0];
-		}
-		return vector;
+	onRangeViolation(now_vector) {
+		now_vector.position = transform(now_vector.position, this.__range);
+		return now_vector;
 	};
 
 	// overrides
@@ -109,8 +108,12 @@ class LoopConverter extends TimingObject {
         if (arg.position != undefined) {
         	// vector change
         	arg.position = transform(arg.position, this.__range);
+			/* 
+			vector change must also apply to timestamp
+			this is handlet in onRangeViolation 
+			*/
         }
-        return arg;
+		return arg;
 	};
 
 }

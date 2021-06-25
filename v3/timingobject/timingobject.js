@@ -41,23 +41,6 @@ function isTimingProvider(obj){
 	return true;
 }
 
-function checkRange(live, now, vector, range) {
-	if (live) {
-		return motionutils.checkRange(vector, range);
-	} else {
-		let now_vector = motionutils.calculateVector(vector, now);
-		// check now vector
-		let state = motionutils.correctRangeState(now_vector, range);
-		if (state == motionutils.RangeState.INSIDE) {
-			// keep original vector
-			return vector;
-		} else {
-			// update to legal vector
-			return motionutils.checkRange(now_vector, range);
-		}
-	}
-}
-
 
 /*
 	TIMING BASE
@@ -248,7 +231,7 @@ class TimingObject {
 		if (this.__timeout.isSet()) {
 			if (vector.position < this.__range[0] || this.__range[1] < vector.position) {
 				// emulate update event to trigger range restriction
-				this.__process({...this.onRangeViolation(vector)});
+				this.__process({...vector});
 			}
 			// re-evaluate query after state transition
 			return motionutils.calculateVector(this.__vector, this.clock.now());
@@ -341,8 +324,8 @@ class TimingObject {
 		do not override
 		handle timeout
 	*/
-	__handleTimeout(now, vector) {
-		this.__process({...this.onRangeViolation(vector)});
+	__handleTimeout(now, timeout_vector) {
+		this.__process({...timeout_vector});
 	}
 
 	/*
@@ -374,38 +357,50 @@ class TimingObject {
 			}
 		}
 
-		// update vector
-		let vector;
-		let vector_change = false;
-		let now = this.clock.now();
-
-		// make sure vector is consistent with range
-		if (position != undefined) {
-			// vector change
-			vector = {position, velocity, acceleration, timestamp};
-			// make sure vector is consistent with range
-			vector = checkRange(live, now, vector, this.__range);
-		} else {
-			// there is no vector change, but if range was changed,
-			// the current vector must be checked for new range.
-			if (range_change) {
-				vector = checkRange(false, now, this.__vector, this.__range);
-			}
+		/*
+			- vector change (all vector elements defined)
+			- range change (no vector elements defined)
+			- both (all vector elements and range defined)
+		*/
+		let vector_change = (position != undefined);
+		if (!vector_change && !range_change) {
+			console.log("__process: WARNING - no vector change and no range change")
 		}
 
-		if (vector != undefined) {
+		/*
+			check if vector is consistent with range
+			range violation may occur if 
+			- vector change
+			- range change
+			- both
+
+			- vector must be recalculated for present for detection
+			  of range violation
+		*/
+		let vector;
+		if (vector_change) {
+			// vector change
+			vector = {position, velocity, acceleration, timestamp};
+		} else {
+			vector = {...this.__vector};
+		}
+		let now = this.clock.now();
+		let now_vector = motionutils.calculateVector(vector, now);
+		let violation = motionutils.detectRangeViolation(now_vector, this.__range);
+		if (violation) {
+			vector = this.onRangeViolation(now_vector);
+			live = true;
+		}
+
+		// reevaluate vector change and live
+		vector_change = vector_change || !motionutils.equalVectors(vector, this.__vector);
+
+		// update vector		
+		if (vector_change) {
+			// save old vector
+			this.__old_vector = this.__vector;
 			// update vector
-			if (this.__vector != undefined) {
-				vector_change = !motionutils.equalVectors(vector, this.__vector);
-			} else {
-				vector_change = true;
-			}
-			if (vector_change) {
-				// save old vector
-				this.__old_vector = this.__vector;
-				// update vector
-				this.__vector = vector;
-			}
+			this.__vector = vector;
 		}
 
 		let _arg;
@@ -492,7 +487,9 @@ class TimingObject {
 	/*
 		may be overridden
 	*/
-	onRangeViolation(vector) {return vector;};
+	onRangeViolation(now_vector) {
+		return motionutils.checkRange(now_vector, this.__range);
+	};
 
 	/*
 		may be overridden

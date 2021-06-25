@@ -136,10 +136,21 @@ export function correctRangeState(vector, range) {
 	return RangeState.INSIDE;
 };
 
-/*
 
+/* 
+    detect range violation
+    vector assumed to be valid now
+*/
+export function detectRangeViolation(now_vector, range) {
+    return (correctRangeState(now_vector, range) != RangeState.INSIDE);
+}
+
+
+/*
 	A snapshot vector is checked with respect to range.
 	Returns vector corrected for range violations, or input vector unchanged.
+
+    vector assumed to be valid now
 */
 export function checkRange(vector, range) {
 	const state = correctRangeState(vector, range);

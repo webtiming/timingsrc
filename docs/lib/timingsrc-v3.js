@@ -1002,10 +1002,21 @@ var TIMINGSRC = (function (exports) {
     	}
     	return RangeState.INSIDE;
     }
-    /*
 
+    /* 
+        detect range violation
+        vector assumed to be valid now
+    */
+    function detectRangeViolation(now_vector, range) {
+        return (correctRangeState(now_vector, range) != RangeState.INSIDE);
+    }
+
+
+    /*
     	A snapshot vector is checked with respect to range.
     	Returns vector corrected for range violations, or input vector unchanged.
+
+        vector assumed to be valid now
     */
     function checkRange(vector, range) {
     	const state = correctRangeState(vector, range);
@@ -1546,6 +1557,7 @@ var TIMINGSRC = (function (exports) {
         isMoving: isMoving,
         RangeState: RangeState,
         correctRangeState: correctRangeState,
+        detectRangeViolation: detectRangeViolation,
         checkRange: checkRange,
         rangeIntersect: rangeIntersect,
         calculateDelta: calculateDelta,
@@ -3138,46 +3150,29 @@ var TIMINGSRC = (function (exports) {
     			let skew_delta = this._provider.skew - current_skew;
     			this._clock.adjust({skew: skew_delta});
     		}
-    		if (!this.isReady() && this._provider.vector != undefined) {
-    			// just became ready
-    			this._ready = true;
-    			this._range = this._provider.range;
-    			this._vector = this._provider.vector;
-
-    			// no upcalls on skew change
-    			/*
-    			if (!init) {
-    				let eArg = {
-    					range: this.range,
-    					...this.vector,
-    					live: false
-    				}	
-    				this._callback(eArg);
-    			}
-    			*/
-    		}
-
-
+    		// no upcalls on skew change
     	};
 
     	_onVectorChange() {
-    		if (this._clock) {
+    		if (this._clock) {			
     			// is ready (onSkewChange has fired earlier)
-    			if (!this._ready) {
+    			if (!this._ready && this._provider.vector != undefined) {
+    				// become ready
     				this._ready = true;
     			}
-    			if (!this._range) {
-    				this._range = this._provider.range;
+    			if (this._ready) {
+    				if (!this._range) {
+    					this._range = this._provider.range;
+    				}
+    				this._vector = this._provider.vector;
+    				let eArg = {
+    					range: this.range,
+    					...this.vector
+    				};
+    				this._callback(eArg);
     			}
-    			this._vector = this._provider.vector;
-    			let eArg = {
-    				range: this.range,
-    				...this.vector
-    			};
-    			this._callback(eArg);
     		}
     	};
-
 
     	// update
     	/*
@@ -3234,23 +3229,6 @@ var TIMINGSRC = (function (exports) {
     		}
     	}
     	return true;
-    }
-
-    function checkRange$1(live, now, vector, range) {
-    	if (live) {
-    		return checkRange(vector, range);
-    	} else {
-    		let now_vector = calculateVector(vector, now);
-    		// check now vector
-    		let state = correctRangeState(now_vector, range);
-    		if (state == RangeState.INSIDE) {
-    			// keep original vector
-    			return vector;
-    		} else {
-    			// update to legal vector
-    			return checkRange(now_vector, range);
-    		}
-    	}
     }
 
 
@@ -3442,7 +3420,7 @@ var TIMINGSRC = (function (exports) {
     		if (this.__timeout.isSet()) {
     			if (vector.position < this.__range[0] || this.__range[1] < vector.position) {
     				// emulate update event to trigger range restriction
-    				this.__process({...this.onRangeViolation(vector)});
+    				this.__process({...vector});
     			}
     			// re-evaluate query after state transition
     			return calculateVector(this.__vector, this.clock.now());
@@ -3535,8 +3513,8 @@ var TIMINGSRC = (function (exports) {
     		do not override
     		handle timeout
     	*/
-    	__handleTimeout(now, vector) {
-    		this.__process({...this.onRangeViolation(vector)});
+    	__handleTimeout(now, timeout_vector) {
+    		this.__process({...timeout_vector});
     	}
 
     	/*
@@ -3568,38 +3546,50 @@ var TIMINGSRC = (function (exports) {
     			}
     		}
 
-    		// update vector
-    		let vector;
-    		let vector_change = false;
-    		let now = this.clock.now();
-
-    		// make sure vector is consistent with range
-    		if (position != undefined) {
-    			// vector change
-    			vector = {position, velocity, acceleration, timestamp};
-    			// make sure vector is consistent with range
-    			vector = checkRange$1(live, now, vector, this.__range);
-    		} else {
-    			// there is no vector change, but if range was changed,
-    			// the current vector must be checked for new range.
-    			if (range_change) {
-    				vector = checkRange$1(false, now, this.__vector, this.__range);
-    			}
+    		/*
+    			- vector change (all vector elements defined)
+    			- range change (no vector elements defined)
+    			- both (all vector elements and range defined)
+    		*/
+    		let vector_change = (position != undefined);
+    		if (!vector_change && !range_change) {
+    			console.log("__process: WARNING - no vector change and no range change");
     		}
 
-    		if (vector != undefined) {
+    		/*
+    			check if vector is consistent with range
+    			range violation may occur if 
+    			- vector change
+    			- range change
+    			- both
+
+    			- vector must be recalculated for present for detection
+    			  of range violation
+    		*/
+    		let vector;
+    		if (vector_change) {
+    			// vector change
+    			vector = {position, velocity, acceleration, timestamp};
+    		} else {
+    			vector = {...this.__vector};
+    		}
+    		let now = this.clock.now();
+    		let now_vector = calculateVector(vector, now);
+    		let violation = detectRangeViolation(now_vector, this.__range);
+    		if (violation) {
+    			vector = this.onRangeViolation(now_vector);
+    			live = true;
+    		}
+
+    		// reevaluate vector change and live
+    		vector_change = vector_change || !equalVectors(vector, this.__vector);
+
+    		// update vector		
+    		if (vector_change) {
+    			// save old vector
+    			this.__old_vector = this.__vector;
     			// update vector
-    			if (this.__vector != undefined) {
-    				vector_change = !equalVectors(vector, this.__vector);
-    			} else {
-    				vector_change = true;
-    			}
-    			if (vector_change) {
-    				// save old vector
-    				this.__old_vector = this.__vector;
-    				// update vector
-    				this.__vector = vector;
-    			}
+    			this.__vector = vector;
     		}
 
     		let _arg;
@@ -3686,7 +3676,9 @@ var TIMINGSRC = (function (exports) {
     	/*
     		may be overridden
     	*/
-    	onRangeViolation(vector) {return vector;};
+    	onRangeViolation(now_vector) {
+    		return checkRange(now_vector, this.__range);
+    	};
 
     	/*
     		may be overridden
@@ -4139,6 +4131,10 @@ var TIMINGSRC = (function (exports) {
 
     	constructor(timingsrc, range) {
     		super(timingsrc, {timeout:true});
+
+    		if (!Array.isArray(range) || range.length != 2) {
+    			throw new Error(`range must be array [low, high], ${range}`);
+    		}
     		this.__range = range;
     	};
 
@@ -4176,14 +4172,9 @@ var TIMINGSRC = (function (exports) {
     	};
 
     	// overrides
-    	onRangeViolation(vector) {
-    		// vector is moving
-    		if (vector.position <= this.__range[0]) {
-    			vector.position = this.__range[1];
-    		} else if (this.__range[1] <= vector.position) {
-    			vector.position = this.__range[0];
-    		}
-    		return vector;
+    	onRangeViolation(now_vector) {
+    		now_vector.position = transform(now_vector.position, this.__range);
+    		return now_vector;
     	};
 
     	// overrides
@@ -4196,8 +4187,12 @@ var TIMINGSRC = (function (exports) {
             if (arg.position != undefined) {
             	// vector change
             	arg.position = transform(arg.position, this.__range);
+    			/* 
+    			vector change must also apply to timestamp
+    			this is handlet in onRangeViolation 
+    			*/
             }
-            return arg;
+    		return arg;
     	};
 
     }
