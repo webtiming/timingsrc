@@ -147,7 +147,9 @@ class ExternalProvider {
 					range: this.range,
 					...this.vector
 				}
-				this._callback(eArg);
+				if (this._callback) {
+					this._callback(eArg);
+				}
 			}
 		}
 	};
@@ -172,6 +174,11 @@ class ExternalProvider {
 		// return success
 		return true;
 	};
+
+	close() {
+		this._callback = undefined;
+	}
+
 }
 
 export default ExternalProvider;

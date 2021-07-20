@@ -3166,7 +3166,9 @@ class ExternalProvider {
 					range: this.range,
 					...this.vector
 				};
-				this._callback(eArg);
+				if (this._callback) {
+					this._callback(eArg);
+				}
 			}
 		}
 	};
@@ -3191,6 +3193,11 @@ class ExternalProvider {
 		// return success
 		return true;
 	};
+
+	close() {
+		this._callback = undefined;
+	}
+
 }
 
 /*
@@ -5221,7 +5228,7 @@ class Dataset extends CueCollection {
                 } else if (!has_interval) {
                     // REPLACE_DATA, preserve interval
                     cue.interval = current_cue.interval;
-                }
+                } else ;
             }
 
             /*******************************************************

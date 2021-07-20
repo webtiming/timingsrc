@@ -3169,7 +3169,9 @@ var TIMINGSRC = (function (exports) {
     					range: this.range,
     					...this.vector
     				};
-    				this._callback(eArg);
+    				if (this._callback) {
+    					this._callback(eArg);
+    				}
     			}
     		}
     	};
@@ -3194,6 +3196,11 @@ var TIMINGSRC = (function (exports) {
     		// return success
     		return true;
     	};
+
+    	close() {
+    		this._callback = undefined;
+    	}
+
     }
 
     /*
@@ -5224,7 +5231,7 @@ var TIMINGSRC = (function (exports) {
                     } else if (!has_interval) {
                         // REPLACE_DATA, preserve interval
                         cue.interval = current_cue.interval;
-                    }
+                    } else ;
                 }
 
                 /*******************************************************
