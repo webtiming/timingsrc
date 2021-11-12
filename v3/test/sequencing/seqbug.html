@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+
+    <!--
+    <script src="https://webtiming.github.io/timingsrc/lib/timingsrc-v3.js"></script>
+    -->
+
+
+    <script type="module">
+
+        import * as TIMINGSRC from '../../index.js';
+    
+        let use_skew_converter = false;
+        let _skew = 1;
+        let toA, toB;
+    
+        function init() {
+            toA = new TIMINGSRC.TimingObject();
+            if (use_skew_converter) {
+                toB = new TIMINGSRC.SkewConverter(toA, _skew); 
+            } else {
+                toB = new TIMINGSRC.TimingObject({position:_skew});
+            }
+        }
+    
+        function start () {
+            toA.update({velocity:1});
+            if (!use_skew_converter) {            
+                toB.update({velocity:1});
+            }
+        }
+    
+    
+        function inc () {
+            let new_pos = toA.pos + 1;
+            toA.update({position:new_pos})
+            if (!use_skew_converter) {
+                toB.update({position:new_pos + _skew});
+            }
+        }
+    
+    
+        function stop () {
+            toA.update({velocity:0});
+            if (!use_skew_converter) {            
+                toB.update({velocity:0});
+            }
+        }
+    
+        function skew(skew) {
+            _skew = skew;
+            if (use_skew_converter) {
+                toB.skew = _skew;
+            } else {
+                toB.update({position:toA.pos + _skew});
+            }
+        }
+    
+    
+        init(1);
+    
+        let sequencer = new TIMINGSRC.Sequencer(toA, toB);
+        for (let i=0; i<100; i++) {
+            sequencer.addCue("i" + i, [i, i], i);        
+        }
+    
+        sequencer.on("batch", itemList => {
+            console.log("EVENT", performance.now().toFixed(0), toA.pos, toB.pos);
+            for (let item of itemList) {
+                if (item.new) {
+                    console.log("change", item.new.interval.toString());
+                } else if (item.old) {
+                    console.log("remove", item.old.interval.toString());
+                }
+            }
+            console.log(sequencer.cues().map(cue => {
+                return cue.interval.toString();
+            }).join(","));
+
+        });
+    
+        
+        function log() {
+            console.log("log")
+            console.log(toA.pos, toB.pos);
+            for (let cue of sequencer.cues()) {
+                console.log(cue.interval.toString());
+            }
+        }
+        
+        /*
+        sequencer.on("change", evt => console.log(sequencer.getActiveCues().length));
+        sequencer.on("remove", evt => console.log(sequencer.getActiveCues().length));
+        */
+    
+        //toA.update({velocity: 1});
+        // setTimeout(() => toB.skew = 2, 5000);
+    
+        
+    
+        document.getElementById("start").onclick = () => {
+            start();
+        }
+        document.getElementById("stop").onclick = () => {
+            stop();
+        }
+        document.getElementById("skew_1").onclick = () => {
+            skew(1);
+        }
+        document.getElementById("skew_2").onclick = () => {
+            skew(2);
+        }
+        document.getElementById("skew_3").onclick = () => {
+            skew(3);
+        }
+        document.getElementById("inc").onclick = () => {
+            inc();
+        }
+
+
+
+    </script>
+    
+</head>
+<body>
+
+<button id="start">Start</button>
+<button id="stop">Stop</button>
+<button id="inc">Inc</button>
+<button id="skew_1">Skew 1</button>
+<button id="skew_2">Skew 2</button>
+<button id="skew_3">Skew 3</button>
+
+</body>
+</html>
