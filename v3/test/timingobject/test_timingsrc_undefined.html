@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <script type="text/javascript" src="http://www.mcorp.no/lib/mcorp-2.0.js"></script>
+  <script type="module">
+    let app, motion, to;
+
+    // import {TimingObject} from "https://webtiming.github.io/timingsrc/lib/timingsrc-esm-v3.js";
+    // import {TimingObject} from '../../../docs/lib/timingsrc-esm-v3.js';
+    import TimingObject from '../../timingobject/timingobject.js';
+
+    function run() {
+        console.log("document ready");
+
+        // Hook up buttons UI
+        document.getElementById('srcplay').onclick = function () {
+            to.update({velocity:1.0});
+        };
+        document.getElementById('srcpause').onclick = function () {
+            to.update({velocity:0.0});
+        };
+        document.getElementById('srcreset').onclick = function () {
+            to.update({position: 0.0, velocity:0.0});
+        };
+        document.getElementById('srcback').onclick = function () {
+            to.update({velocity:-1.0});
+        };
+
+        // Hook up text UI
+        let srcvalue = document.getElementById('srcvalue');
+        to.on("timeupdate", function () {
+            srcvalue.innerHTML = to.query().position.toFixed(2);
+        });
+
+        // connect - disconnect - to test undefined as assignment
+        document.getElementById('connect').onclick = function () {
+            to.timingsrc = motion;
+        }
+        document.getElementById('disconnect').onclick = function () {
+            to.timingsrc = undefined;
+        }
+
+        window.to = to;
+
+    };
+
+
+    // app
+    app = MCorp.app("8456579076771837888", {anon:true});
+    app.ready.then(function() {
+        console.log("motion ready");
+        motion = app.motions.shared;
+        to.timingsrc = motion;
+    });
+
+    to = new TimingObject();
+
+    // timing object
+    to.on("change", function (eArg, eInfo) {
+        console.log("onchange", eArg);
+    });
+
+    to.ready.then(function(){
+        console.log("to ready");
+    });
+
+    run();
+
+</script>
+</head>
+<body>
+<h1>Test Timingsrc Undefined </h1>
+
+<h3>Source</h3>
+<div id="srcvalue"></div>
+<button id="srcplay">Play</button>
+<button id="srcpause">Pause</button>
+<button id="srcreset">Reset</button>
+<button id="srcback">Back</button>
+<p>
+   <button id="connect">Set timingsrc to motion</button>
+   <button id="disconnect">Set timingsrc to undefined</button>
+</p>
+</body>
+</html>
