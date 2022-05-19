@@ -182,12 +182,11 @@ class PointModeSequencer extends BaseSequencer {
             This is represented by the new_vector.
         */
         let new_vector;
-
         if (eArg.live) {
-            new_vector = this._to.vector;
+            new_vector = eArg;
         } else {
             // make a live vector from to vector
-            new_vector = motionutils.calculateVector(this._to.vector, this._to.clock.now());
+            new_vector = motionutils.calculateVector(eArg, this._to.clock.now());
         }
 
         /*
@@ -249,9 +248,11 @@ class PointModeSequencer extends BaseSequencer {
     ***************************************************************/
 
     _onScheduleCallback = function(now, endpointItems, schedule) {
+
         if (!this._to.isReady()) {
             return;
         }
+
 
         const items = [];
         endpointItems.forEach(function (item) {

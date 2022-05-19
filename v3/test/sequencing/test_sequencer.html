@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--  main -->
+    <script type="module">
+
+        import * as timingsrc from '../../index.js';
+
+        const Interval = timingsrc.Interval;
+
+
+        function make_interval_cues() {
+            const cues = [];
+            for (let i=0; i<20; i++) {
+                cues.push({key: `key-${i}`,
+                    interval: new Interval(i, i+1),
+                    data: `data-${i}`
+                })
+            }
+            return cues;
+        }
+
+        function make_point_cues() {
+            const cues = [];
+            for (let i=0; i<20; i++) {
+                cues.push({key: `key-${i}`,
+                    interval: new Interval(i),
+                    data: `data-${i}`
+                })
+            }
+            return cues;
+        }
+
+        const cues = make_point_cues();
+
+
+        // dataset
+        const ds = new timingsrc.Dataset();
+        ds.update(cues);
+
+        // timing object
+        const to = new timingsrc.TimingObject({range:[0,25]});
+
+        document.getElementById("playBtn").onclick = () => {
+            to.update({velocity:1});
+        }
+        document.getElementById("pauseBtn").onclick = () => {
+            to.update({velocity:0});
+        }
+        document.getElementById("resetBtn").onclick = () => {
+            to.update({position:0, velocity:0});
+        }
+
+        let posElem = document.getElementById("pos");
+        to.on("timeupdate", () => {
+            posElem.innerHTML = `${to.pos.toFixed(2)}`;
+        });
+
+
+        // sequencer
+        function cmp(cue_a, cue_b) {
+            return cue_b.interval.low - cue_a.interval.low;
+        }
+        const s = new timingsrc.Sequencer(ds, to, {order:cmp});
+
+
+        // map used for test bookkeeping
+        const m = new Map();
+
+        function handler (eArgList) {
+            let cues = s.cues();
+            if (cues.length > 1) {
+                console.log("error - multiple cues", cues);
+            }
+            let pos = to.pos;
+            for (let eArg of eArgList) {
+                let key = eArg.key;
+                if (eArg.new == undefined) {
+                    // exit
+                    if (!m.has(key)) {
+                        console.log("error - cue exit after exit")
+                    } else {
+                        if (m.get(key) == false) {
+                            console.log("error - cue exit before enter");
+                        } else {
+                            m.delete(key);
+                        }
+                    }
+                    console.log("EXIT", eArg.key, pos.toFixed(2));
+                } else {
+                    // enter
+                    if (!m.has(key)) {
+                        console.log("error - cue enter after remove");
+                    } else {
+                        if (m.get(key)) {
+                            console.log("error - cue enter after enter")
+                        }
+                        m.set(key, true);
+                    }
+                    console.log("ENTER", eArg.key, pos.toFixed(2));
+                }
+            }
+        };
+
+
+
+        function test() {
+
+            /*
+                This tests the integrity of enter/exit events
+                while running the sequencer.
+            */
+
+            // initialize test map
+            for (let cue of cues) {
+                m.set(cue.key, false);
+            }
+
+            s.on("batch", handler);
+
+            // start from zero
+            to.update({position:0, velocity:1});
+        }
+
+        document.getElementById("testBtn").onclick = test;
+        document.getElementById("checkBtn").onclick = () => {
+            let keys = [...m.keys()];
+            if (keys.length == 0) {
+                console.log("test passed")
+            } else {
+                console.log("test not passed", keys)
+            }
+        }
+
+    </script>
+  </head>
+  <body>
+    <h1>Test Sequencer</h1>
+    <h3>Timing Object</h3>
+    <button id="playBtn">Play</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="resetBtn">Reset</button>
+    <p>
+        <span>Pos: </span><span id="pos"></span>
+    </p>
+    <button id="testBtn">Test</button>
+    <button id="checkBtn">Check</button>
+
+
+  </body>
+</html>

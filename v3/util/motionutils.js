@@ -21,6 +21,55 @@
 import endpoint from './endpoint.js';
 import Interval from './interval.js';
 
+// Closure
+(function() {
+  /**
+   * Decimal adjustment of a number.
+   *
+   * @param {String}  type  The type of adjustment.
+   * @param {Number}  value The number.
+   * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+   * @returns {Number} The adjusted value.
+   */
+  function decimalAdjust(type, value, exp) {
+    // If the exp is undefined or zero...
+    if (typeof exp === 'undefined' || +exp === 0) {
+      return Math[type](value);
+    }
+    value = +value;
+    exp = +exp;
+    // If the value is not a number or the exp is not an integer...
+    if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+      return NaN;
+    }
+    // Shift
+    value = value.toString().split('e');
+    value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+    // Shift back
+    value = value.toString().split('e');
+    return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+  }
+
+  // Decimal round
+  if (!Math.round10) {
+    Math.round10 = function(value, exp) {
+      return decimalAdjust('round', value, exp);
+    };
+  }
+  // Decimal floor
+  if (!Math.floor10) {
+    Math.floor10 = function(value, exp) {
+      return decimalAdjust('floor', value, exp);
+    };
+  }
+  // Decimal ceil
+  if (!Math.ceil10) {
+    Math.ceil10 = function(value, exp) {
+      return decimalAdjust('ceil', value, exp);
+    };
+  }
+})();
+
 
 // sort func
 const cmp = function (a, b) {return a - b;};
@@ -338,8 +387,13 @@ export function calculateDelta(vector, range) {
     given
     - a time interval
     - a vector describing motion within the time interval
-    figure out the smallest interval (of positions)
-    that covers all possible positions during the time interval
+
+    figure out an interval (of positions)
+    which covers all possible positions during the time interval
+
+    the interval may be a little bigger, so we will round down and up
+    to the nearest integer. Also, the interval will always be closed.
+
 */
 
 export function posInterval_from_timeInterval (timeInterval, vector) {
@@ -361,6 +415,8 @@ export function posInterval_from_timeInterval (timeInterval, vector) {
     let v0 = vector0.velocity;
     let a0 = vector0.acceleration;
     let p1 = calculateVector(vector, t1).position;
+
+    let low, high;
 
     if (a0 != 0) {
 
@@ -398,19 +454,25 @@ export function posInterval_from_timeInterval (timeInterval, vector) {
                 // p_extrem is minimum
                 // figure out if p0 or p1 is maximum
                 if (p0 < p1) {
-                    return new Interval(p_extrem, p1, true, t1_closed);
+                    low = p_extrem;
+                    high = p1;
                 } else {
-                    return new Interval(p_extrem, p0, true, t0_closed);
+                    low = p_extrem;
+                    high = p0;
                 }
             } else {
                 // p_extrem is maximum
                 // figure out if p0 or p1 is minimum
                 if (p0 < p1) {
-                    return new Interval(p0, p_extrem, t0_closed, true);
+                    low = p0;
+                    high = p_extrem;
                 } else {
-                    return new Interval(p1, p_extrem, t1_closed, true);
+                    low = p1;
+                    high = p_extrem;
                 }
             }
+        } else {
+            // see below
         }
     }
 
@@ -423,14 +485,30 @@ export function posInterval_from_timeInterval (timeInterval, vector) {
 
         extrem positions are associated with p0 and p1.
     */
-
     if (p0 < p1) {
         // forward
-        return new Interval(p0, p1, t0_closed, t1_closed);
+        low = p0;
+        high = p1;
     } else {
         // backward
-        return new Interval(p1, p0, t1_closed, t0_closed);
+        low = p1;
+        high = p0;
     }
+
+    /*
+        round down and up - to the nearest decimal
+
+        Math.floor10(4.999999, -1) -> 4.9
+        Math.floor10(5, -1)        -> 5
+        Math.floor10(5.000001, -1) -> 5
+
+        Math.ceil10(4.999999, -1) -> 5
+        Math.ceil10(5, -1)        -> 5
+        Math.ceil10(5.000001, -1)   -> 5.1
+    */
+    low = Math.floor10(low, -1);
+    high = Math.ceil10(high, -1);
+    return new Interval(low, high, true, true);
 }
 
 
@@ -464,8 +542,8 @@ export function timeEndpoint_from_posEndpoint(posEndpoint, ts, direction) {
 /*
     endpointEvents
 
-    Given a motion and a set of endpoing, calculate when
-    the motion will pass by each endpoing.
+    Given a motion and a set of endpoints, calculate when
+    the motion will pass by each endpoint.
 
     Given
     - timeInterval
@@ -513,10 +591,10 @@ export function endpointEvents (timeInterval, posInterval, vector, endpointItems
         no motion or singular time interval
     */
     if (timeInterval.singular) {
-        throw new Error("getEventItems: timeInterval is singular");
+        throw new Error("endpointEvents: timeInterval is singular");
     }
     if (!isMoving(vector)) {
-        throw new Error("getEventItems: no motion")
+        throw new Error("endpointEvents: no motion")
     }
 
     let p0 = vector.position;
@@ -531,11 +609,13 @@ export function endpointEvents (timeInterval, posInterval, vector, endpointItems
     endpointItems.forEach(function(item) {
         // check that endpoint is inside given posInterval
         if (!posInterval.covers_endpoint(item.endpoint)) {
+            console.log("fuck 1");
             return;
         }
         value = item.endpoint[0];
         // check if equation has any solutions
         if (!hasRealSolution(p0, v0, a0, value)) {
+            console.log("fuck 2");
             return;
         }
         // find time when motion will pass value
@@ -560,6 +640,17 @@ export function endpointEvents (timeInterval, posInterval, vector, endpointItems
         return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
     };
     eventItems.sort(cmp);
+
+    /*
+    if (eventItems.length != endpointItems.length) {
+        console.log("BADNESS");
+        console.log("timeInterval", timeInterval);
+        console.log("posInterval", posInterval);
+        console.log("vector", vector);
+        console.log("endpointItems", JSON.stringify(endpointItems));
+    }
+    */
+
     return eventItems;
 };
 

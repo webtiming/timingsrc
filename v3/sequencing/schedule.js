@@ -120,6 +120,7 @@ class Schedule {
     push(eventItems) {
         eventItems.forEach(function(item) {
             if (this.timeInterval.covers_endpoint(item.tsEndpoint)) {
+                // note - this test has also been done within the load function
                 this.queue.push(item);
             }
         }, this);
@@ -168,6 +169,9 @@ class Schedule {
         if (advance) {
             // advance intervals
             this.timeInterval = new Interval(start, start + delta, true, false);
+            // calculate position interval
+            // ensure that floats only have limited precision (10 decimals)
+            // or else interval comparisons may not be safe.
             this.posInterval = pft(this.timeInterval, this.vector);
             // clear task queue
             this.queue = [];
@@ -189,6 +193,7 @@ class Schedule {
                                                         this.posInterval,
                                                         this.vector,
                                                         endpoints);
+
 
         /*
             ISSUE 1
@@ -248,15 +253,14 @@ class Schedule {
         return endpointEvents.filter(function(item) {
             // ISSUE 1
             if (range_ts <= item.tsEndpoint[0]) {
-                // console.log("issue1");
                 return false;
             }
 
             // ISSUE 2
             if (endpoint.leftof(item.tsEndpoint, minimum_tsEndpoint)) {
-                // console.log("issue2");
                 return false;
             }
+
             // ISSUE 3
             // checks every event. alternative approach would be
             // to calculate the ts of this event once, and compare
@@ -283,16 +287,55 @@ class Schedule {
         run schedule
     */
     run(now) {
+
+        /*
+        function events2string(events) {
+            return events.map((e) => {
+                return `${e.cue.key} -> ${endpoint.toString(e.endpoint)}`;
+            });
+        }
+        */
+
         // process - due events
         let dueEvents = this.pop(now);
+
+        /*
+        if (dueEvents.length > 0) {
+            console.log("due", events2string(dueEvents));
+        }
+        */
+
         // advance schedule and load events if needed
         if (this.advance(now)) {
             // fetch cue endpoints for posInterval
             let endpointItems = this.dataset.lookup_endpoints(this.posInterval);
+
+            /*
+            if (endpointItmes.length > 0) {
+                console.log("fetch", events2string(endpointItems));
+            }
+            */
+
             // load events and push on queue
-            this.push(this.load(endpointItems));
+            let loaded = this.load(endpointItems);
+            this.push(loaded);
+
+            /*
+            if (loaded.length > 0) {
+                console.log("load", events2string(loaded));
+            }
+            */
+
+            // POP ADVANCE
             // process - possibly new due events
-            dueEvents.push(...this.pop(now));
+            let popped = this.pop(now);
+
+            /*
+            if (popped.length > 0) {
+                console.log("due-immediate", events2string(popped));
+            }
+            */
+            dueEvents.push(...popped);
         }
         if (dueEvents.length > 0) {
             this._notify_callbacks(now, dueEvents, this);

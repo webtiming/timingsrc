@@ -323,7 +323,7 @@ var TIMINGSRC = (function (exports) {
     	// if right, closed is given
     	// use that instead of singular
     	let [val, right, closed, singular] = e;
-    	if (right == undefined) {
+    	if (singular || right == undefined) {
     		return MODE_SINGULAR;
     	} else if (right) {
     		if (closed) {
@@ -893,6 +893,55 @@ var TIMINGSRC = (function (exports) {
         along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
     */
 
+    // Closure
+    (function() {
+      /**
+       * Decimal adjustment of a number.
+       *
+       * @param {String}  type  The type of adjustment.
+       * @param {Number}  value The number.
+       * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+       * @returns {Number} The adjusted value.
+       */
+      function decimalAdjust(type, value, exp) {
+        // If the exp is undefined or zero...
+        if (typeof exp === 'undefined' || +exp === 0) {
+          return Math[type](value);
+        }
+        value = +value;
+        exp = +exp;
+        // If the value is not a number or the exp is not an integer...
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+          return NaN;
+        }
+        // Shift
+        value = value.toString().split('e');
+        value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+      }
+
+      // Decimal round
+      if (!Math.round10) {
+        Math.round10 = function(value, exp) {
+          return decimalAdjust('round', value, exp);
+        };
+      }
+      // Decimal floor
+      if (!Math.floor10) {
+        Math.floor10 = function(value, exp) {
+          return decimalAdjust('floor', value, exp);
+        };
+      }
+      // Decimal ceil
+      if (!Math.ceil10) {
+        Math.ceil10 = function(value, exp) {
+          return decimalAdjust('ceil', value, exp);
+        };
+      }
+    })();
+
 
     // sort func
     const cmp$1 = function (a, b) {return a - b;};
@@ -1198,8 +1247,13 @@ var TIMINGSRC = (function (exports) {
         given
         - a time interval
         - a vector describing motion within the time interval
-        figure out the smallest interval (of positions)
-        that covers all possible positions during the time interval
+
+        figure out an interval (of positions)
+        which covers all possible positions during the time interval
+
+        the interval may be a little bigger, so we will round down and up
+        to the nearest integer. Also, the interval will always be closed.
+
     */
 
     function posInterval_from_timeInterval (timeInterval, vector) {
@@ -1221,6 +1275,8 @@ var TIMINGSRC = (function (exports) {
         let v0 = vector0.velocity;
         let a0 = vector0.acceleration;
         let p1 = calculateVector(vector, t1).position;
+
+        let low, high;
 
         if (a0 != 0) {
 
@@ -1258,17 +1314,21 @@ var TIMINGSRC = (function (exports) {
                     // p_extrem is minimum
                     // figure out if p0 or p1 is maximum
                     if (p0 < p1) {
-                        return new Interval(p_extrem, p1, true, t1_closed);
+                        low = p_extrem;
+                        high = p1;
                     } else {
-                        return new Interval(p_extrem, p0, true, t0_closed);
+                        low = p_extrem;
+                        high = p0;
                     }
                 } else {
                     // p_extrem is maximum
                     // figure out if p0 or p1 is minimum
                     if (p0 < p1) {
-                        return new Interval(p0, p_extrem, t0_closed, true);
+                        low = p0;
+                        high = p_extrem;
                     } else {
-                        return new Interval(p1, p_extrem, t1_closed, true);
+                        low = p1;
+                        high = p_extrem;
                     }
                 }
             }
@@ -1283,14 +1343,30 @@ var TIMINGSRC = (function (exports) {
 
             extrem positions are associated with p0 and p1.
         */
-
         if (p0 < p1) {
             // forward
-            return new Interval(p0, p1, t0_closed, t1_closed);
+            low = p0;
+            high = p1;
         } else {
             // backward
-            return new Interval(p1, p0, t1_closed, t0_closed);
+            low = p1;
+            high = p0;
         }
+
+        /*
+            round down and up - to the nearest decimal
+
+            Math.floor10(4.999999, -1) -> 4.9
+            Math.floor10(5, -1)        -> 5
+            Math.floor10(5.000001, -1) -> 5
+
+            Math.ceil10(4.999999, -1) -> 5
+            Math.ceil10(5, -1)        -> 5
+            Math.ceil10(5.000001, -1)   -> 5.1
+        */
+        low = Math.floor10(low, -1);
+        high = Math.ceil10(high, -1);
+        return new Interval(low, high, true, true);
     }
 
 
@@ -1324,8 +1400,8 @@ var TIMINGSRC = (function (exports) {
     /*
         endpointEvents
 
-        Given a motion and a set of endpoing, calculate when
-        the motion will pass by each endpoing.
+        Given a motion and a set of endpoints, calculate when
+        the motion will pass by each endpoint.
 
         Given
         - timeInterval
@@ -1373,10 +1449,10 @@ var TIMINGSRC = (function (exports) {
             no motion or singular time interval
         */
         if (timeInterval.singular) {
-            throw new Error("getEventItems: timeInterval is singular");
+            throw new Error("endpointEvents: timeInterval is singular");
         }
         if (!isMoving(vector)) {
-            throw new Error("getEventItems: no motion")
+            throw new Error("endpointEvents: no motion")
         }
 
         let p0 = vector.position;
@@ -1391,11 +1467,13 @@ var TIMINGSRC = (function (exports) {
         endpointItems.forEach(function(item) {
             // check that endpoint is inside given posInterval
             if (!posInterval.covers_endpoint(item.endpoint)) {
+                console.log("fuck 1");
                 return;
             }
             value = item.endpoint[0];
             // check if equation has any solutions
             if (!hasRealSolution(p0, v0, a0, value)) {
+                console.log("fuck 2");
                 return;
             }
             // find time when motion will pass value
@@ -1420,6 +1498,17 @@ var TIMINGSRC = (function (exports) {
             return endpoint.cmp(a.tsEndpoint, b.tsEndpoint);
         };
         eventItems.sort(cmp);
+
+        /*
+        if (eventItems.length != endpointItems.length) {
+            console.log("BADNESS");
+            console.log("timeInterval", timeInterval);
+            console.log("posInterval", posInterval);
+            console.log("vector", vector);
+            console.log("endpointItems", JSON.stringify(endpointItems));
+        }
+        */
+
         return eventItems;
     }
 
@@ -6791,6 +6880,7 @@ var TIMINGSRC = (function (exports) {
         push(eventItems) {
             eventItems.forEach(function(item) {
                 if (this.timeInterval.covers_endpoint(item.tsEndpoint)) {
+                    // note - this test has also been done within the load function
                     this.queue.push(item);
                 }
             }, this);
@@ -6839,6 +6929,9 @@ var TIMINGSRC = (function (exports) {
             if (advance) {
                 // advance intervals
                 this.timeInterval = new Interval(start, start + delta, true, false);
+                // calculate position interval
+                // ensure that floats only have limited precision (10 decimals)
+                // or else interval comparisons may not be safe.
                 this.posInterval = pft(this.timeInterval, this.vector);
                 // clear task queue
                 this.queue = [];
@@ -6860,6 +6953,7 @@ var TIMINGSRC = (function (exports) {
                                                             this.posInterval,
                                                             this.vector,
                                                             endpoints);
+
 
             /*
                 ISSUE 1
@@ -6919,15 +7013,14 @@ var TIMINGSRC = (function (exports) {
             return endpointEvents$1.filter(function(item) {
                 // ISSUE 1
                 if (range_ts <= item.tsEndpoint[0]) {
-                    // console.log("issue1");
                     return false;
                 }
 
                 // ISSUE 2
                 if (endpoint.leftof(item.tsEndpoint, minimum_tsEndpoint)) {
-                    // console.log("issue2");
                     return false;
                 }
+
                 // ISSUE 3
                 // checks every event. alternative approach would be
                 // to calculate the ts of this event once, and compare
@@ -6954,16 +7047,55 @@ var TIMINGSRC = (function (exports) {
             run schedule
         */
         run(now) {
+
+            /*
+            function events2string(events) {
+                return events.map((e) => {
+                    return `${e.cue.key} -> ${endpoint.toString(e.endpoint)}`;
+                });
+            }
+            */
+
             // process - due events
             let dueEvents = this.pop(now);
+
+            /*
+            if (dueEvents.length > 0) {
+                console.log("due", events2string(dueEvents));
+            }
+            */
+
             // advance schedule and load events if needed
             if (this.advance(now)) {
                 // fetch cue endpoints for posInterval
                 let endpointItems = this.dataset.lookup_endpoints(this.posInterval);
+
+                /*
+                if (endpointItmes.length > 0) {
+                    console.log("fetch", events2string(endpointItems));
+                }
+                */
+
                 // load events and push on queue
-                this.push(this.load(endpointItems));
+                let loaded = this.load(endpointItems);
+                this.push(loaded);
+
+                /*
+                if (loaded.length > 0) {
+                    console.log("load", events2string(loaded));
+                }
+                */
+
+                // POP ADVANCE
                 // process - possibly new due events
-                dueEvents.push(...this.pop(now));
+                let popped = this.pop(now);
+
+                /*
+                if (popped.length > 0) {
+                    console.log("due-immediate", events2string(popped));
+                }
+                */
+                dueEvents.push(...popped);
             }
             if (dueEvents.length > 0) {
                 this._notify_callbacks(now, dueEvents, this);
@@ -7616,12 +7748,11 @@ var TIMINGSRC = (function (exports) {
                 This is represented by the new_vector.
             */
             let new_vector;
-
             if (eArg.live) {
-                new_vector = this._to.vector;
+                new_vector = eArg;
             } else {
                 // make a live vector from to vector
-                new_vector = calculateVector(this._to.vector, this._to.clock.now());
+                new_vector = calculateVector(eArg, this._to.clock.now());
             }
 
             /*
@@ -7683,9 +7814,11 @@ var TIMINGSRC = (function (exports) {
         ***************************************************************/
 
         _onScheduleCallback = function(now, endpointItems, schedule) {
+
             if (!this._to.isReady()) {
                 return;
             }
+
 
             const items = [];
             endpointItems.forEach(function (item) {
