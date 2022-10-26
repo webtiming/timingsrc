@@ -325,7 +325,7 @@ function calculatePositiveRealSolutions(p,v,a,x) {
     has solutions for some real number t.
     Calculate and return the least positive real solution.
 */
-function calculateMinPositiveRealSolution(vector, x) {
+export function calculateMinPositiveRealSolution(vector, x) {
     const {position: p, velocity: v, acceleration: a} = vector;
 	const res = calculatePositiveRealSolutions(p,v,a,x);
 	if (res.length === 0) {
