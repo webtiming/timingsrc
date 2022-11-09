@@ -1456,13 +1456,19 @@ class CueBucket {
         */
         if (mask & Relation.COVERS) {
 
-
-            let low = interval.high - this._maxLength;
-            let high = interval.low;
-            // protect against float rounding effects creating
-            // high < low by a very small margin
-            [low, high] = [Math.min(low, high), Math.max(low, high)];
-            let left_interval = new Interval(low, high, true, true);
+            let left_interval;
+            if (this._maxLength == Infinity) {
+                // no limitation on interval length
+                // must search entire timeline to the left
+                left_interval = new Interval(-Infinity, interval.low);
+            } else {
+                let low = interval.high - this._maxLength;
+                let high = interval.low;
+                // protect against float rounding effects creating
+                // high < low by a very small margin
+                [low, high] = [Math.min(low, high), Math.max(low, high)];
+                left_interval = new Interval(low, high, true, true);
+            }
             this._lookup_cues(left_interval)
                 .forEach(function(cue){
                     if (cue.interval.match(interval, Relation.COVERS)) {
