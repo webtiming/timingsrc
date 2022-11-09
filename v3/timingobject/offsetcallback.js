@@ -55,7 +55,7 @@ export default class OffsetCallback {
             let side = get_side(vector, this._offset);
             if (side != this._side) {
                 // terminate - by skip to other side
-                this._terminate(vector.position);
+                this._terminate(vector);
             }     
         }
         // register timeout for reacing offset if not paused
@@ -68,7 +68,7 @@ export default class OffsetCallback {
     _handleTimeout() {
         if (this._tid != undefined) {
             // terminate - by timeout during playback
-            this._terminate(this._to.pos);
+            this._terminate(this._to.query());
         }
     }
 
@@ -79,13 +79,13 @@ export default class OffsetCallback {
         }
     }
 
-    _terminate(pos) {
+    _terminate(vector) {
         if (!this._terminated) {
             this._clearTimeout();
             this._terminated = true;
             this._to.off(this._sub);
-            if (pos) {
-                this._callback(pos);
+            if (vector) {
+                this._callback(vector);
             }
         }
     }
