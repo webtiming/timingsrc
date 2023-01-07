@@ -223,9 +223,6 @@ class IntervalModeSequencer extends BaseSequencer {
             new_vector = motionutils.calculateVector(to.vector, to.clock.now());
         }
 
-        console.log(to.vector)
-        console.log(new_vector);
-
         /*
             The nature of the vector change
         */
@@ -249,8 +246,6 @@ class IntervalModeSequencer extends BaseSequencer {
             let low = Math.min(new_vector.position, other_new_vector.position);
             let high = Math.max(new_vector.position, other_new_vector.position);
             let itv = new Interval(low, high, true, true);
-            console.log("jump", new_vector.position, other_new_vector.position);
-            console.log("jump new interval", itv.toString());
 
             // new active cues
             let activeCues = new Map(this._ds.lookup(itv).map(cue => {

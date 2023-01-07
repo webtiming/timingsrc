@@ -1649,6 +1649,7 @@ var TIMINGSRC = (function (exports) {
         detectRangeViolation: detectRangeViolation,
         checkRange: checkRange,
         rangeIntersect: rangeIntersect,
+        calculateMinPositiveRealSolution: calculateMinPositiveRealSolution,
         calculateDelta: calculateDelta,
         posInterval_from_timeInterval: posInterval_from_timeInterval,
         timeEndpoint_from_posEndpoint: timeEndpoint_from_posEndpoint,
@@ -6142,13 +6143,19 @@ var TIMINGSRC = (function (exports) {
             */
             if (mask & Relation$1.COVERS) {
 
-
-                let low = interval.high - this._maxLength;
-                let high = interval.low;
-                // protect against float rounding effects creating
-                // high < low by a very small margin
-                [low, high] = [Math.min(low, high), Math.max(low, high)];
-                let left_interval = new Interval(low, high, true, true);
+                let left_interval;
+                if (this._maxLength == Infinity) {
+                    // no limitation on interval length
+                    // must search entire timeline to the left
+                    left_interval = new Interval(-Infinity, interval.low);
+                } else {
+                    let low = interval.high - this._maxLength;
+                    let high = interval.low;
+                    // protect against float rounding effects creating
+                    // high < low by a very small margin
+                    [low, high] = [Math.min(low, high), Math.max(low, high)];
+                    left_interval = new Interval(low, high, true, true);
+                }
                 this._lookup_cues(left_interval)
                     .forEach(function(cue){
                         if (cue.interval.match(interval, Relation$1.COVERS)) {
@@ -8091,9 +8098,6 @@ var TIMINGSRC = (function (exports) {
                 new_vector = calculateVector(to.vector, to.clock.now());
             }
 
-            console.log(to.vector);
-            console.log(new_vector);
-
             /*
                 The nature of the vector change
             */
@@ -8117,8 +8121,6 @@ var TIMINGSRC = (function (exports) {
                 let low = Math.min(new_vector.position, other_new_vector.position);
                 let high = Math.max(new_vector.position, other_new_vector.position);
                 let itv = new Interval(low, high, true, true);
-                console.log("jump", new_vector.position, other_new_vector.position);
-                console.log("jump new interval", itv.toString());
 
                 // new active cues
                 let activeCues = new Map(this._ds.lookup(itv).map(cue => {
