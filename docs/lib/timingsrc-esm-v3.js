@@ -7751,14 +7751,20 @@ class PointModeSequencer extends BaseSequencer {
             Else, the new vector is "live" and we use the timestamp
             when it was created as the official time for the update.
             This is represented by the new_vector.
+
+            REMOVE SUPPOERT FOR LIVE
         */
+        /*
         let new_vector;
         if (eArg.live) {
             new_vector = eArg;
         } else {
             // make a live vector from to vector
-            new_vector = calculateVector$1(eArg, this._to.clock.now());
+            new_vector = motionutils.calculateVector(eArg, this._to.clock.now());
         }
+        */
+        let new_vector = calculateVector$1(eArg, this._to.clock.now());
+
 
         /*
             The nature of the vector change
