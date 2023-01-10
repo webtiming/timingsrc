@@ -186,6 +186,7 @@ class IntervalModeSequencer extends BaseSequencer {
     */
     _onTimingCallback (eArg, eInfo) {
 
+
         /*
             make sure both timingobjects are ready
         */
@@ -215,14 +216,23 @@ class IntervalModeSequencer extends BaseSequencer {
             Else, the new vector is "live" and we use the timestamp
             when it was created as the official time for the update.
             This is represented by the new_vector.
+
+            USE OF LIVE creates problems with online switching timingsrc,
+            because this is reported as live even though it is not.
+
+            Ignore.
         */
+        /*
         let new_vector;
         if (eArg.live) {
+            console.log("LIVE")
             new_vector = to.vector;
         } else {
+            console.log("NOT LIVE")
             new_vector = motionutils.calculateVector(to.vector, to.clock.now());
         }
-
+        */
+        let new_vector = motionutils.calculateVector(to.vector, to.clock.now());
         /*
             The nature of the vector change
         */
@@ -233,6 +243,8 @@ class IntervalModeSequencer extends BaseSequencer {
         */
         let ts = new_vector.timestamp;
         let other_new_vector = motionutils.calculateVector(other_to.vector, ts);
+
+        //console.log("timing callback", new_vector.position, other_new_vector.position);
 
         /*
             Reevaluate active state.
