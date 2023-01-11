@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+
+  <script src="https://mcorp.no/lib/mcorp-2.0.1.js"></script>
+  <!--
+  <script src="https://webtiming.github.io/timingsrc/lib/timingsrc-v3.js"></script>
+	-->
+
+</head>
+<body>
+
+
+<script type="module">
+
+/*
+	This tests a specific bug with window sequencer
+	which turns out to be that 
+	on single change on the timing objects apply to
+	both timing objects of the window sequencer, then
+	it was possible for the sequencer to see an
+	intermediate state of only one being updated,
+	if data is updated in between.
+	This error is now removed by ensuring that
+	sequencer only sees timing object state changes 
+	which have been communicated through the timing callback.
+	This is achieved by caching timing object vectors,
+	and referring to cached valus on the datacallback
+*/
+
+
+var app = MCorp.app("6103795620225218883");
+
+/*
+import * as TIMINGSRC from "https://webtiming.github.io/timingsrc/lib/timingsrc-esm-v3.js";
+*/
+import * as TIMINGSRC from '../../index.js';
+
+
+// set up local timing objects and sequencer
+let base_to = new TIMINGSRC.TimingObject();
+let loop_to;
+let to = new TIMINGSRC.TimingObject();
+let prefetch_to = new TIMINGSRC.SkewConverter(to, 1.1);
+
+// set up dataset and sequencer
+let ds = new TIMINGSRC.Dataset();
+let seq = new TIMINGSRC.Sequencer(ds, to, prefetch_to);
+
+// load cues
+let num_cues = 0;
+function load_cues() {
+	let i;
+	for (i=0; i<10; i++) {
+		ds.addCue("q" + i, [i, i+1], {"item": i});
+	}
+	num_cues = i;
+}
+
+
+// Add some test data into the dataset
+let load = function() {
+	console.log("LOAD CUES")
+	load_cues();
+	// switch to to loop_to
+	loop_to = new TIMINGSRC.LoopConverter(base_to, [0, num_cues-1]);
+	console.log("SWITCH TO LOOP")
+	to.timingsrc = loop_to;
+}
+
+function batch_handler (eArgList) {
+    let active = [seq._toA.pos, seq._toB.pos];
+    console.log("BATCH", active.map((e) => e.toFixed(2)));
+    for (let eArg of eArgList) {
+        if (eArg.new != undefined) {
+            let cue = eArg.new;
+		   	let s = `CHANGE interval ${cue.interval.toString()}`;
+		    if (cue.interval.low > active[1] || cue.interval.high < active[0]) {
+		    	console.log(`BUG ${s}`);      
+		    } else {
+		    	console.log(s);      
+		    }
+        } else if (eArg.old != undefined) {
+            let cue = eArg.old;
+		   	let s = `REMOVE interval ${cue.interval.toString()}`;
+	    	console.log(s);      
+        }
+    }	
+}
+seq.on("batch", batch_handler);
+
+// app
+app.ready.then(() => {
+	console.log("SWITCH TO EPOCH");
+	//base_to.timingsrc = app.motions.epoc
+	base_to.update({position:6, velocity:0.04});
+});
+
+// delayed load
+setTimeout(load, 1000);
+
+
+/*
+function load_cues_1() {
+	// cues
+	let cues = Array.from({length: 10}).map((e, idx) => {
+		return {
+			key: `key-${idx}`,
+			interval: [idx, idx+1],
+			data: {"item": idx}
+		}
+	});
+	ds.update(cues);
+	num_cues = cues.length;
+}
+*/
+
+
+</script>
+
+</body>
+</html>
