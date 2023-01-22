@@ -58,10 +58,10 @@ class Event {
 	    	let self = this;
 	    	Promise.resolve().then(function () {
 	    		const eArgs = self.publisher.eventifyInitEventArgs(self.name) || [];
+	    		sub.init_pending = false;
 	    		for (let eArg of eArgs) {
 	    			self.trigger(eArg, [sub], true);
 	    		}
-	    		sub.init_pending = false;
 	    	});
 	    }
 		return sub
