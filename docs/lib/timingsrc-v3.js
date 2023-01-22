@@ -137,7 +137,7 @@ var TIMINGSRC = (function (exports) {
     }
 
 
-    function divmod (n, d) {
+    function divmod$1 (n, d) {
         let r = n % d;
         let q = (n-r)/d;
         return [q, r];
@@ -246,7 +246,7 @@ var TIMINGSRC = (function (exports) {
         map_difference: map_difference,
         map_intersect: map_intersect,
         map_merge: map_merge,
-        divmod: divmod,
+        divmod: divmod$1,
         isIterable: isIterable,
         array_concat: array_concat,
         object_equals: object_equals,
@@ -274,7 +274,7 @@ var TIMINGSRC = (function (exports) {
     */
 
 
-    const isNumber = function(n) {
+    const isNumber$1 = function(n) {
     	let N = parseFloat(n);
         return (n===N && !isNaN(N));
     };
@@ -367,13 +367,13 @@ var TIMINGSRC = (function (exports) {
     function get_order(e1, e2) {
     	// support plain numbers (not endpoints)
     	if (e1.length === undefined) {
-    		if (!isNumber(e1)) {
+    		if (!isNumber$1(e1)) {
     			throw new Error("e1 not a number", e1);
     		}
     		e1 = create(e1, undefined, undefined, true);
     	}
     	if (e2.length === undefined) {
-    		if (!isNumber(e2)) {
+    		if (!isNumber$1(e2)) {
     			throw new Error("e2 not a number", e2);
     		}
     		e2 = create(e2, undefined, undefined, true);
@@ -422,7 +422,7 @@ var TIMINGSRC = (function (exports) {
     	return 1 if ordering e1, e2 is incorrect
     */
 
-    function cmp(e1, e2) {
+    function cmp$2(e1, e2) {
     	let [order1, order2] = get_order(e1, e2);
     	let diff = order1 - order2;
     	if (diff == 0) return 0;
@@ -431,12 +431,12 @@ var TIMINGSRC = (function (exports) {
 
 
     function min(e1, e2) {
-        return (cmp(e1, e2) <= 0) ? e1 : e2;
+        return (cmp$2(e1, e2) <= 0) ? e1 : e2;
     }
 
 
     function max(e1, e2) {
-        return (cmp(e1, e2) <= 0) ? e2 : e1;
+        return (cmp$2(e1, e2) <= 0) ? e2 : e1;
     }
 
 
@@ -468,7 +468,7 @@ var TIMINGSRC = (function (exports) {
 
 
     var endpoint = {
-    	cmp,
+    	cmp: cmp$2,
     	toString,
     	equals,
     	rightof,
@@ -499,7 +499,7 @@ var TIMINGSRC = (function (exports) {
     */
 
 
-    const isNumber$1 = function(n) {
+    const isNumber = function(n) {
     	let N = parseFloat(n);
         return (n===N && !isNaN(N));
     };
@@ -520,7 +520,7 @@ var TIMINGSRC = (function (exports) {
     **********************************************************/
 
     // Interval Relations
-    const Relation = Object.freeze({
+    const Relation$1 = Object.freeze({
     	OUTSIDE_LEFT: 64,  	// 0b1000000
     	OVERLAP_LEFT: 32,  	// 0b0100000
     	COVERED: 16,		// 0b0010000
@@ -533,11 +533,11 @@ var TIMINGSRC = (function (exports) {
     /*
         Masks for Interval matching
     */
-    const MATCH_OUTSIDE = Relation.OUTSIDE_LEFT + Relation.OUTSIDE_RIGHT;
-    const MATCH_INSIDE = Relation.EQUALS + Relation.COVERED;
+    const MATCH_OUTSIDE = Relation$1.OUTSIDE_LEFT + Relation$1.OUTSIDE_RIGHT;
+    const MATCH_INSIDE = Relation$1.EQUALS + Relation$1.COVERED;
     const MATCH_OVERLAP = MATCH_INSIDE +
-    	Relation.OVERLAP_LEFT + Relation.OVERLAP_RIGHT;
-    const MATCH_COVERS = MATCH_OVERLAP + Relation.COVERS;
+    	Relation$1.OVERLAP_LEFT + Relation$1.OVERLAP_RIGHT;
+    const MATCH_COVERS = MATCH_OVERLAP + Relation$1.COVERS;
     const MATCH_ALL = MATCH_COVERS + MATCH_OUTSIDE;
 
     const Match = Object.freeze({
@@ -584,7 +584,7 @@ var TIMINGSRC = (function (exports) {
     function compare(a, b) {
     	if (! a instanceof Interval) {
     		// could be a number
-    		if (isNumber$1(a)) {
+    		if (isNumber(a)) {
     			a = new Interval(a);
     		} else {
     			throw new IntervalError("a not interval", a);
@@ -592,7 +592,7 @@ var TIMINGSRC = (function (exports) {
     	}
     	if (! b instanceof Interval) {
     		// could be a number
-    		if (isNumber$1(b)) {
+    		if (isNumber(b)) {
     			b = new Interval(b);
     		} else {
     			throw new IntervalError("b not interval", b);
@@ -606,23 +606,23 @@ var TIMINGSRC = (function (exports) {
     	if (key == 11) {
     		// OUTSIDE_LEFT or PARTIAL_LEFT
     		if (endpoint.leftof(b.endpointHigh, a.endpointLow)) {
-    			return Relation.OUTSIDE_RIGHT;
+    			return Relation$1.OUTSIDE_RIGHT;
     		} else {
-    			return Relation.OVERLAP_RIGHT;
+    			return Relation$1.OVERLAP_RIGHT;
     		}
     	} else if ([-1, 9, 10].includes(key)) {
-    		return Relation.COVERED;
+    		return Relation$1.COVERED;
     	} else if ([1, -9, -10].includes(key)) {
-    		return Relation.COVERS;
+    		return Relation$1.COVERS;
     	} else if (key == 0) {
-    		return Relation.EQUALS;
+    		return Relation$1.EQUALS;
     	} else {
     		// key == -11
     		// OUTSIDE_RIGHT, PARTIAL_RIGHT
     		if (endpoint.rightof(b.endpointLow, a.endpointHigh)) {
-    			return Relation.OUTSIDE_LEFT;
+    			return Relation$1.OUTSIDE_LEFT;
     		} else {
-    			return Relation.OVERLAP_LEFT;
+    			return Relation$1.OVERLAP_LEFT;
     		}
     	}
     }
@@ -673,19 +673,19 @@ var TIMINGSRC = (function (exports) {
     // intersect two intervals
     function intersect(a, b) {
     	let rel = compare(a, b);
-    	if (rel == Relation.OUTSIDE_LEFT) {
+    	if (rel == Relation$1.OUTSIDE_LEFT) {
     		return [];
-    	} else if (rel == Relation.OVERLAP_LEFT) {
+    	} else if (rel == Relation$1.OVERLAP_LEFT) {
     		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
-    	} else if (rel == Relation.COVERS) {
+    	} else if (rel == Relation$1.COVERS) {
     		return [b];
-    	} else if (rel == Relation.EQUALS) {
+    	} else if (rel == Relation$1.EQUALS) {
     		return [a]; // or b
-    	} else if (rel == Relation.COVERED) {
+    	} else if (rel == Relation$1.COVERED) {
     		return [a];
-    	} else if (rel == Relation.OVERLAP_RIGHT) {
+    	} else if (rel == Relation$1.OVERLAP_RIGHT) {
     		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
-    	} else if (rel == Relation.OUTSIDE_RIGHT) {
+    	} else if (rel == Relation$1.OUTSIDE_RIGHT) {
     		return [];
     	}
     }
@@ -693,7 +693,7 @@ var TIMINGSRC = (function (exports) {
     // union of two intervals
     function union(a, b) {
     	let rel = compare(a, b);
-    	if (rel == Relation.OUTSIDE_LEFT) {
+    	if (rel == Relation$1.OUTSIDE_LEFT) {
     		// merge
     		// [aLow,aHigh)[bLow, bHigh] or [aLow,aHigh](bLow, bHigh]
     		if (a.high != b.low || (!a.highInclude && !b.lowInclude)) {
@@ -703,17 +703,17 @@ var TIMINGSRC = (function (exports) {
     			// merge
     			return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)]; 
     		}
-    	} else if (rel == Relation.OVERLAP_LEFT) {
+    	} else if (rel == Relation$1.OVERLAP_LEFT) {
     		return [Interval.fromEndpoints(a.endpointLow, b.endpointHigh)];
-    	} else if (rel == Relation.COVERS) {
+    	} else if (rel == Relation$1.COVERS) {
     		return [a];
-    	} else if (rel == Relation.EQUALS) {
+    	} else if (rel == Relation$1.EQUALS) {
     		return [a]; // or b
-    	} else if (rel == Relation.COVERED) {
+    	} else if (rel == Relation$1.COVERED) {
     		return [b];
-    	} else if (rel == Relation.OVERLAP_RIGHT) {
+    	} else if (rel == Relation$1.OVERLAP_RIGHT) {
     		return [Interval.fromEndpoints(b.endpointLow, a.endpointHigh)];
-    	} else if (rel == Relation.OUTSIDE_RIGHT) {
+    	} else if (rel == Relation$1.OUTSIDE_RIGHT) {
     		// merge
     		// [bLow,bHigh)[aLow, aHigh] or [bLow,bHigh](aLow, aHigh]
     		if (b.high != a.low || (!b.highInclude && !a.lowInclude)) {
@@ -770,11 +770,11 @@ var TIMINGSRC = (function (exports) {
     		Constructor
     	*/
     	constructor (low, high, lowInclude, highInclude) {
-    		var lowIsNumber = isNumber$1(low);
+    		var lowIsNumber = isNumber(low);
     		// new Interval(3.0) defines singular - low === high
     		if (lowIsNumber && high === undefined) high = low;
-    		if (!isNumber$1(low)) throw new IntervalError("low not a number");
-    		if (!isNumber$1(high)) throw new IntervalError("high not a number");
+    		if (!isNumber(low)) throw new IntervalError("low not a number");
+    		if (!isNumber(high)) throw new IntervalError("high not a number");
     		if (low > high) throw new IntervalError("low > high");
     		if (low === high) {
     			lowInclude = true;
@@ -820,6 +820,7 @@ var TIMINGSRC = (function (exports) {
     	 */
 
     	toString () {
+    		endpoint.toString;
     		if (this._singular) {
     			let p = this._endpointLow[0];
     			return `[${p}]`;
@@ -846,7 +847,7 @@ var TIMINGSRC = (function (exports) {
     	}
 
     	equals (other) {
-    		return compare(this, other) == Relation.EQUALS;
+    		return compare(this, other) == Relation$1.EQUALS;
     	}
 
     	/*
@@ -863,7 +864,7 @@ var TIMINGSRC = (function (exports) {
     	Add static properties to Interval class.
     */
 
-    Interval.Relation = Relation;
+    Interval.Relation = Relation$1;
     Interval.Match = Match;
     Interval.cmpLow = _make_interval_cmp(true);
     Interval.cmpHigh = _make_interval_cmp(false);
@@ -973,7 +974,7 @@ var TIMINGSRC = (function (exports) {
         t0 and ts are absolute time from same clock, in seconds
     */
 
-    function calculateVector(vector, ts) {
+    function calculateVector$1(vector, ts) {
     	if (ts === undefined) {
     	    throw new Error ("no ts provided for calculateVector");
     	}
@@ -1001,7 +1002,7 @@ var TIMINGSRC = (function (exports) {
         if (ts == undefined) {
             freshVector = vector;
         } else {
-            freshVector = calculateVector(vector, ts);
+            freshVector = calculateVector$1(vector, ts);
         }
         // check velocity
         let direction = cmp$1(freshVector.velocity, 0.0);
@@ -1267,14 +1268,14 @@ var TIMINGSRC = (function (exports) {
 
         let t0 = timeInterval.low;
         let t1 = timeInterval.high;
-        let t0_closed = timeInterval.lowInclude;
-        let t1_closed = timeInterval.highInclude;
+        timeInterval.lowInclude;
+        timeInterval.highInclude;
 
-        let vector0 = calculateVector(vector, t0);
+        let vector0 = calculateVector$1(vector, t0);
         let p0 = vector0.position;
         let v0 = vector0.velocity;
         let a0 = vector0.acceleration;
-        let p1 = calculateVector(vector, t1).position;
+        let p1 = calculateVector$1(vector, t1).position;
 
         let low, high;
 
@@ -1542,13 +1543,13 @@ var TIMINGSRC = (function (exports) {
 
     /* Static properties */
 
-    const PosDelta = Object.freeze({
+    const PosDelta$2 = Object.freeze({
         NOOP: 0,                // no change in position
         CHANGE: 1               // change in position
     });
 
 
-    const MoveDelta = Object.freeze({
+    const MoveDelta$2 = Object.freeze({
         NOOP: 0,                // no change in movement, not moving
         NOOP_MOVING: 1,         // no change in movement, moving
         START: 2,               // not moving -> moving
@@ -1571,18 +1572,18 @@ var TIMINGSRC = (function (exports) {
                     Not sure if this is needed.
                 */
                 if (is_moving) {
-                    this._mc = [PosDelta.CHANGE, MoveDelta.START];
+                    this._mc = [PosDelta$2.CHANGE, MoveDelta$2.START];
                 } else {
-                    this._mc = [PosDelta.CHANGE, MoveDelta.NOOP];
+                    this._mc = [PosDelta$2.CHANGE, MoveDelta$2.NOOP];
                 }
             } else {
                 let was_moving = isMoving(old_vector);
-                let end_vector = calculateVector(old_vector, ts);
-                let start_vector = calculateVector(new_vector, ts);
+                let end_vector = calculateVector$1(old_vector, ts);
+                let start_vector = calculateVector$1(new_vector, ts);
 
                 // position change
                 let pos_changed = (end_vector.position != start_vector.position);
-                let pct = (pos_changed) ? PosDelta.CHANGE : PosDelta.NOOP;
+                let pct = (pos_changed) ? PosDelta$2.CHANGE : PosDelta$2.NOOP;
 
                 // movement change
                 let mct;
@@ -1591,16 +1592,16 @@ var TIMINGSRC = (function (exports) {
                     let acc_changed = (end_vector.acceleration != start_vector.acceleration);
                     let move_changed = (vel_changed || acc_changed);
                     if (move_changed) {
-                        mct = MoveDelta.CHANGE;
+                        mct = MoveDelta$2.CHANGE;
                     } else {
-                        mct = MoveDelta.NOOP_MOVING;
+                        mct = MoveDelta$2.NOOP_MOVING;
                     }
                 } else if (!was_moving && is_moving) {
-                    mct = MoveDelta.START;
+                    mct = MoveDelta$2.START;
                 } else if (was_moving && !is_moving) {
-                    mct = MoveDelta.STOP;
+                    mct = MoveDelta$2.STOP;
                 } else if (!was_moving && !is_moving) {
-                    mct = MoveDelta.NOOP;
+                    mct = MoveDelta$2.NOOP;
                 }
                 this._mc = [pct, mct];
             }
@@ -1634,14 +1635,14 @@ var TIMINGSRC = (function (exports) {
     }
 
 
-    MotionDelta.PosDelta = PosDelta;
-    MotionDelta.MoveDelta = MoveDelta;
+    MotionDelta.PosDelta = PosDelta$2;
+    MotionDelta.MoveDelta = MoveDelta$2;
 
     var motionutils = /*#__PURE__*/Object.freeze({
         __proto__: null,
         equalVectors: equalVectors,
         copyVector: copyVector,
-        calculateVector: calculateVector,
+        calculateVector: calculateVector$1,
         calculateDirection: calculateDirection,
         isMoving: isMoving,
         RangeState: RangeState,
@@ -1733,7 +1734,7 @@ var TIMINGSRC = (function (exports) {
 
     */
 
-    function cmp$2(a, b) {return a-b;}
+    function cmp(a, b) {return a-b;}
 
     class BinarySearch {
 
@@ -1902,7 +1903,7 @@ var TIMINGSRC = (function (exports) {
             // concat
             this.array = this.array.concat(to_insert);
             // sort
-            this.array.sort(cmp$2);
+            this.array.sort(cmp);
             // remove undefined values at the end if any
             if (to_remove.length > 0) {
                 let index = this.array.indexOf(undefined);
@@ -2941,7 +2942,7 @@ var TIMINGSRC = (function (exports) {
     	now : function () {return performance.now()/1000.0;}
     };
 
-    function calculateVector$1(vector, tsSec) {
+    function calculateVector(vector, tsSec) {
     	if (tsSec === undefined) tsSec = local_clock.now();
     	var deltaSec = tsSec - vector.timestamp;
     	return {
@@ -2990,7 +2991,7 @@ var TIMINGSRC = (function (exports) {
     		- shorthand for query
     	*/
     	now() {
-    		return calculateVector$1(this._vector, local_clock.now()).position;
+    		return calculateVector(this._vector, local_clock.now()).position;
     	};
 
     	/*
@@ -2999,7 +3000,7 @@ var TIMINGSRC = (function (exports) {
     		- result vector includes position and velocity
     	*/
     	query(now) {
-    		return calculateVector$1(this._vector, now);
+    		return calculateVector(this._vector, now);
     	};
 
     }
@@ -3070,7 +3071,7 @@ var TIMINGSRC = (function (exports) {
     		// record state from current motion
     		let p = 0, v = 0, a = 0;
     		if (this._vector != undefined) {
-    			let nowVector = calculateVector(this._vector, ts);
+    			let nowVector = calculateVector$1(this._vector, ts);
     			nowVector = checkRange(nowVector, this._range);
     			p = nowVector.position;
     			v = nowVector.velocity;
@@ -3282,7 +3283,7 @@ var TIMINGSRC = (function (exports) {
     		// calc back to provider ts
     		// local_ts = provider_ts - skew
     		vector.timestamp = vector.timestamp + this._provider.skew;
-    		let res = this._provider.update(vector);
+    		this._provider.update(vector);
     		// return success
     		return true;
     	};
@@ -3512,7 +3513,7 @@ var TIMINGSRC = (function (exports) {
     			throw new Error("query before timing object is ready");
     		}
     		// reevaluate state to handle range violation
-    		let vector = calculateVector(this.__vector, this.clock.now());
+    		let vector = calculateVector$1(this.__vector, this.clock.now());
     		// detect range violation - only if timeout is set {
     		if (this.__timeout.isSet()) {
     			if (vector.position < this.__range[0] || this.__range[1] < vector.position) {
@@ -3520,7 +3521,7 @@ var TIMINGSRC = (function (exports) {
     				this.__process({...vector});
     			}
     			// re-evaluate query after state transition
-    			return calculateVector(this.__vector, this.clock.now());
+    			return calculateVector$1(this.__vector, this.clock.now());
     		}
     		return vector;
     	};
@@ -3671,7 +3672,7 @@ var TIMINGSRC = (function (exports) {
     			vector = {...this.__vector};
     		}
     		let now = this.clock.now();
-    		let now_vector = calculateVector(vector, now);
+    		let now_vector = calculateVector$1(vector, now);
     		let violation = detectRangeViolation(now_vector, this.__range);
     		if (violation) {
     			vector = this.onRangeViolation(now_vector);
@@ -3822,13 +3823,13 @@ var TIMINGSRC = (function (exports) {
     		vector = vector || this.__vector;
     		range = range || this.__range;
     		let now = this.clock.now();
-    		let now_vector = calculateVector(vector, now);
+    		let now_vector = calculateVector$1(vector, now);
     		let [delta, pos] = calculateDelta(now_vector, range);
     		if (delta == undefined) {
     			return;
     		}
     		// vector when range restriction will be reached
-    		let timeout_vector = calculateVector(vector, now + delta);
+    		let timeout_vector = calculateVector$1(vector, now + delta);
     		// possibly avoid rounding errors
     		timeout_vector.position = pos;
     		return timeout_vector;
@@ -4210,13 +4211,13 @@ var TIMINGSRC = (function (exports) {
 
 
     // ovverride modulo to behave better for negative numbers
-    function mod(n, m) {
+    function mod$1(n, m) {
     	return ((n % m) + m) % m;
     }
     function transform(x, range) {
     	let skew = range[0];
     	let length = range[1] - range[0];
-    	return skew + mod(x-skew, length);
+    	return skew + mod$1(x-skew, length);
     }
 
 
@@ -4260,9 +4261,9 @@ var TIMINGSRC = (function (exports) {
     			// coordinates to timingsrc coordinates
     			// preserve relative position diff
     			let now = this.clock.now();
-    			let now_vector = calculateVector(this.vector, now);
+    			let now_vector = calculateVector$1(this.vector, now);
     			let diff = now_vector.position - arg.position;
-    			let now_vector_src = calculateVector(this.__get_timingsrc().vector, now);
+    			let now_vector_src = calculateVector$1(this.__get_timingsrc().vector, now);
     			arg.position = now_vector_src.position - diff;
     		}
     		return super.update(arg);
@@ -4490,7 +4491,7 @@ var TIMINGSRC = (function (exports) {
             if (arg.position != undefined) {
                 // calculate timeshifted vector
                 let ts = arg.timestamp;
-                let new_vector = calculateVector(arg, ts + this._offset);
+                let new_vector = calculateVector$1(arg, ts + this._offset);
                 arg.position = new_vector.position;
                 arg.velocity = new_vector.velocity;
                 arg.acceleration = new_vector.acceleration;
@@ -4614,7 +4615,7 @@ var TIMINGSRC = (function (exports) {
     /*
         modify modulo operation
     */
-    function mod$1(n,m) {
+    function mod(n,m) {
         return ((n % m) + m) % m;   
     }
 
@@ -4623,9 +4624,9 @@ var TIMINGSRC = (function (exports) {
         find q (integer) and r such that  
         n = q*m + r 
     */
-    function divmod$1(n, m) {
+    function divmod(n, m) {
         let q = Math.floor(n/m);
-        let r = mod$1(n, m);
+        let r = mod(n, m);
         return [q,r];
     }
 
@@ -4636,7 +4637,7 @@ var TIMINGSRC = (function (exports) {
      */
 
     function float2point(n, stride, offset) {
-        return divmod$1(n-offset, stride);
+        return divmod(n-offset, stride);
     }
 
     function point2float(p, stride, offset) {
@@ -4759,7 +4760,7 @@ var TIMINGSRC = (function (exports) {
         along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-    const Relation$1 = Interval.Relation;
+    const Relation = Interval.Relation;
 
     /*
         UTILITY
@@ -5321,7 +5322,7 @@ var TIMINGSRC = (function (exports) {
                     } else if (!has_interval) {
                         // REPLACE_DATA, preserve interval
                         cue.interval = current_cue.interval;
-                    }
+                    } else ;
                 }
 
                 /*******************************************************
@@ -6104,9 +6105,9 @@ var TIMINGSRC = (function (exports) {
             mask &= Interval.Match.COVERS;
 
             // special case only [EQUALS]
-            if (mask == Relation$1.EQUALS) {
+            if (mask == Relation.EQUALS) {
                 return this._pointMap.get(interval.low).filter(function(cue) {
-                    return cue.interval.match(interval, Relation$1.EQUALS);
+                    return cue.interval.match(interval, Relation.EQUALS);
                 });
             }
 
@@ -6141,7 +6142,7 @@ var TIMINGSRC = (function (exports) {
                 it would be possible to search right too, but we
                 have to choose one.
             */
-            if (mask & Relation$1.COVERS) {
+            if (mask & Relation.COVERS) {
 
                 let left_interval;
                 if (this._maxLength == Infinity) {
@@ -6158,7 +6159,7 @@ var TIMINGSRC = (function (exports) {
                 }
                 this._lookup_cues(left_interval)
                     .forEach(function(cue){
-                        if (cue.interval.match(interval, Relation$1.COVERS)) {
+                        if (cue.interval.match(interval, Relation.COVERS)) {
                             cues.push(cue);
                         }
                     });
@@ -6861,7 +6862,7 @@ var TIMINGSRC = (function (exports) {
         setVector(vector) {
             let now = vector.timestamp;
             // clean up current motion
-            let current_vector = this.vector;
+            this.vector;
             if (this.vector != undefined) {
                 this.timeout.clear();
                 this.timeInterval = undefined;
@@ -6900,7 +6901,7 @@ var TIMINGSRC = (function (exports) {
         */
         pop(now) {
             let res = [];
-            let len = this.queue.length;
+            this.queue.length;
             while (this.queue.length > 0 && this.queue[0].tsEndpoint[0] <= now) {
                 res.push(this.queue.shift());
             }
@@ -7035,7 +7036,7 @@ var TIMINGSRC = (function (exports) {
                 if (this.vector.acceleration != 0.0) {
                     let ts = item.tsEndpoint[0];
                     if (ts > this.timeInterval.endpointLow[0]) {
-                        let v = calculateVector(this.vector, ts);
+                        let v = calculateVector$1(this.vector, ts);
                         if (v.position == item.endpoint[0] && v.velocity == 0) {
                             return false;
                         }
@@ -7211,32 +7212,32 @@ var TIMINGSRC = (function (exports) {
 
     */
 
-    const Active = Object.freeze({
+    const Active$2 = Object.freeze({
         ENTER: 1,
         STAY: 0,
         EXIT: -1,
         ENTER_EXIT: 2
     });
 
-    const ActiveMap = new Map([
-        ["LRL", Active.STAY],
-        ["LRR", Active.EXIT],
-        ["LRS", Active.EXIT],
-        ["LLL", Active.STAY],
-        ["LLR", Active.ENTER],
-        ["LLS", Active.ENTER],
-        ["RRL", Active.ENTER],
-        ["RRR", Active.STAY],
-        ["RRS", Active.ENTER],
-        ["RLL", Active.EXIT],
-        ["RLR", Active.STAY],
-        ["RLS", Active.EXIT],
-        ["SRL", Active.ENTER],
-        ["SRR", Active.EXIT],
-        ["SRS", Active.ENTER_EXIT],
-        ["SLL", Active.EXIT],
-        ["SLR", Active.ENTER],
-        ["SLS", Active.ENTER_EXIT]
+    const ActiveMap$2 = new Map([
+        ["LRL", Active$2.STAY],
+        ["LRR", Active$2.EXIT],
+        ["LRS", Active$2.EXIT],
+        ["LLL", Active$2.STAY],
+        ["LLR", Active$2.ENTER],
+        ["LLS", Active$2.ENTER],
+        ["RRL", Active$2.ENTER],
+        ["RRR", Active$2.STAY],
+        ["RRS", Active$2.ENTER],
+        ["RLL", Active$2.EXIT],
+        ["RLR", Active$2.STAY],
+        ["RLS", Active$2.EXIT],
+        ["SRL", Active$2.ENTER],
+        ["SRR", Active$2.EXIT],
+        ["SRS", Active$2.ENTER_EXIT],
+        ["SLL", Active$2.EXIT],
+        ["SLR", Active$2.ENTER],
+        ["SLS", Active$2.ENTER_EXIT]
     ]);
 
 
@@ -7574,8 +7575,8 @@ var TIMINGSRC = (function (exports) {
 
     }
 
-    BaseSequencer.Active = Active;
-    BaseSequencer.ActiveMap = ActiveMap;
+    BaseSequencer.Active = Active$2;
+    BaseSequencer.ActiveMap = ActiveMap$2;
 
     /*
         Copyright 2020
@@ -7602,8 +7603,8 @@ var TIMINGSRC = (function (exports) {
     const Active$1 = BaseSequencer.Active;
     const ActiveMap$1 = BaseSequencer.ActiveMap;
 
-    const EVENTMAP_THRESHOLD = 5000;
-    const ACTIVECUES_THRESHOLD = 5000;
+    const EVENTMAP_THRESHOLD$1 = 5000;
+    const ACTIVECUES_THRESHOLD$1 = 5000;
 
 
     class PointModeSequencer extends BaseSequencer {
@@ -7681,7 +7682,7 @@ var TIMINGSRC = (function (exports) {
             }
 
             const now = this._to.clock.now();
-            const now_vector = calculateVector(this._to.vector, now);
+            const now_vector = calculateVector$1(this._to.vector, now);
 
             // activeInterval
             const activeInterval = new Interval(now_vector.position);
@@ -7692,8 +7693,8 @@ var TIMINGSRC = (function (exports) {
 
                 // choose approach to get events
                 let get_items = this._items_from_dataset_events.bind(this);
-                if (EVENTMAP_THRESHOLD < eventMap.size) {
-                    if (this._map.size < ACTIVECUES_THRESHOLD) {
+                if (EVENTMAP_THRESHOLD$1 < eventMap.size) {
+                    if (this._map.size < ACTIVECUES_THRESHOLD$1) {
                         get_items = this._items_from_dataset_lookup.bind(this);
                     }
                 }
@@ -7753,14 +7754,20 @@ var TIMINGSRC = (function (exports) {
                 Else, the new vector is "live" and we use the timestamp
                 when it was created as the official time for the update.
                 This is represented by the new_vector.
+
+                REMOVE SUPPOERT FOR LIVE
             */
+            /*
             let new_vector;
             if (eArg.live) {
                 new_vector = eArg;
             } else {
                 // make a live vector from to vector
-                new_vector = calculateVector(eArg, this._to.clock.now());
+                new_vector = motionutils.calculateVector(eArg, this._to.clock.now());
             }
+            */
+            let new_vector = calculateVector$1(eArg, this._to.clock.now());
+
 
             /*
                 The nature of the vector change
@@ -7899,13 +7906,13 @@ var TIMINGSRC = (function (exports) {
         along with Timingsrc.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-    const PosDelta$2 = MotionDelta.PosDelta;
-    const MoveDelta$2 = MotionDelta.MoveDelta;
-    const Active$2 = BaseSequencer.Active;
-    const ActiveMap$2 = BaseSequencer.ActiveMap;
+    const PosDelta = MotionDelta.PosDelta;
+    const MoveDelta = MotionDelta.MoveDelta;
+    const Active = BaseSequencer.Active;
+    const ActiveMap = BaseSequencer.ActiveMap;
 
-    const EVENTMAP_THRESHOLD$1 = 5000;
-    const ACTIVECUES_THRESHOLD$1 = 5000;
+    const EVENTMAP_THRESHOLD = 5000;
+    const ACTIVECUES_THRESHOLD = 5000;
 
     /*
         calculate general movement direction for double sequencer
@@ -7941,6 +7948,9 @@ var TIMINGSRC = (function (exports) {
             this._schedA_cb = this._schedA.add_callback(sched_cb);
             this._schedB = new Schedule(this._ds, toB);
             this._schedB_cb = this._schedB.add_callback(sched_cb);
+
+            this._toA_vector;
+            this._toB_vector;
         }
 
 
@@ -7955,8 +7965,8 @@ var TIMINGSRC = (function (exports) {
 
         _movementDirection() {
             const now = this._toA.clock.now();
-            const now_vector_A = calculateVector(this._toA.vector, now);
-            const now_vector_B = calculateVector(this._toB.vector, now);
+            const now_vector_A = calculateVector$1(this._toA.vector, now);
+            const now_vector_B = calculateVector$1(this._toB.vector, now);
             return movement_direction(now_vector_A, now_vector_B);
         }
 
@@ -7978,8 +7988,8 @@ var TIMINGSRC = (function (exports) {
 
             // assuming both timing objects have the same clock
             const now = this._toA.clock.now();
-            const now_vector_A = calculateVector(this._toA.vector, now);
-            const now_vector_B = calculateVector(this._toB.vector, now);
+            const now_vector_A = calculateVector$1(this._toA_vector, now);
+            const now_vector_B = calculateVector$1(this._toB_vector, now);
 
             // active interval
             let [pos_A, pos_B] = [now_vector_A.position, now_vector_B.position];
@@ -7992,8 +8002,8 @@ var TIMINGSRC = (function (exports) {
 
                 // choose approach to get events
                 let get_items = this._items_from_dataset_events.bind(this);
-                if (EVENTMAP_THRESHOLD$1 < eventMap.size) {
-                    if (this._map.size < ACTIVECUES_THRESHOLD$1) {
+                if (EVENTMAP_THRESHOLD < eventMap.size) {
+                    if (this._map.size < ACTIVECUES_THRESHOLD) {
                         get_items = this._items_from_dataset_lookup.bind(this);
                     }
                 }
@@ -8061,6 +8071,7 @@ var TIMINGSRC = (function (exports) {
         */
         _onTimingCallback (eArg, eInfo) {
 
+
             /*
                 make sure both timingobjects are ready
             */
@@ -8078,6 +8089,10 @@ var TIMINGSRC = (function (exports) {
                 }
             }
 
+            // cache new vectors
+            this._toA_vector = this._toA.vector;
+            this._toB_vector = this._toB.vector;
+
             /*
                 figure out which timing object was firing
             */
@@ -8085,29 +8100,16 @@ var TIMINGSRC = (function (exports) {
             const other_to = (to == this._toA) ? this._toB : this._toA;
 
             /*
-                If update is the initial vector from the timing object,
-                we set current time as the official time for the update.
-                Else, the new vector is "live" and we use the timestamp
-                when it was created as the official time for the update.
-                This is represented by the new_vector.
-            */
-            let new_vector;
-            if (eArg.live) {
-                new_vector = to.vector;
-            } else {
-                new_vector = calculateVector(to.vector, to.clock.now());
-            }
-
-            /*
                 The nature of the vector change
             */
+            let new_vector = calculateVector$1(to.vector, to.clock.now());
             const delta = new MotionDelta(to.old_vector, new_vector);
 
             /*
                 Sample the state of the other timing object at same time.
             */
             let ts = new_vector.timestamp;
-            let other_new_vector = calculateVector(other_to.vector, ts);
+            let other_new_vector = calculateVector$1(other_to.vector, ts);
 
             /*
                 Reevaluate active state.
@@ -8115,7 +8117,7 @@ var TIMINGSRC = (function (exports) {
                 or if the motion stopped without jumping (pause or halt at range
                 restriction)
             */
-            if (delta.posDelta == PosDelta$2.CHANGE || delta.MoveDelta == MoveDelta$2.STOP) {
+            if (delta.posDelta == PosDelta.CHANGE || delta.MoveDelta == MoveDelta.STOP) {
 
                 // make position interval
                 let low = Math.min(new_vector.position, other_new_vector.position);
@@ -8200,7 +8202,7 @@ var TIMINGSRC = (function (exports) {
                 let [pos, right, closed, singular] = item.endpoint;
                 // position of other to at time of event
                 let ts = item.tsEndpoint[0];
-                let other_vector = calculateVector(other_to.vector, ts);
+                let other_vector = calculateVector$1(other_to.vector, ts);
                 let pos_other = other_vector.position;
 
                 /*
@@ -8213,7 +8215,7 @@ var TIMINGSRC = (function (exports) {
                 // endpoint type
                 let ep_type = (singular) ? "S": (right) ? "R" : "L";
                 // action code, enter, exit, stay, enter-exit
-                let action_code = ActiveMap$2.get(`${to_role}${to_dir}${ep_type}`);
+                let action_code = ActiveMap.get(`${to_role}${to_dir}${ep_type}`);
 
                 /*
                     state of cue
@@ -8222,7 +8224,7 @@ var TIMINGSRC = (function (exports) {
                 let has_cue = this._map.has(cue.key);
 
                 // filter action code
-                if (action_code == Active$2.ENTER_EXIT) {
+                if (action_code == Active.ENTER_EXIT) {
                     /*
                         both timing objects evaluated to same position
                         either
@@ -8236,29 +8238,29 @@ var TIMINGSRC = (function (exports) {
                     let other_moving = isMoving(other_vector);
                     if (!other_moving) {
                         // other not moving
-                        action_code = Active$2.ENTER;
+                        action_code = Active.ENTER;
                     } else {
                         // both moving
                         let direction = calculateDirection(other_vector);                        // movement direction
-                        action_code = (direction != item.direction) ? Active$2.ENTER : Active$2.EXIT;
+                        action_code = (direction != item.direction) ? Active.ENTER : Active.EXIT;
                     }
                 }
-                if (action_code == Active$2.STAY) {
-                    action_code = Active$2.ENTER;
+                if (action_code == Active.STAY) {
+                    action_code = Active.ENTER;
                 }
-                if (action_code == Active$2.ENTER && has_cue) {
+                if (action_code == Active.ENTER && has_cue) {
                     return;
                 }
-                if (action_code == Active$2.EXIT && !has_cue) {
+                if (action_code == Active.EXIT && !has_cue) {
                     return;
                 }
 
                 // enter or exit
-                if (action_code == Active$2.ENTER) {
+                if (action_code == Active.ENTER) {
                     // enter
                     items.push({key:cue.key, new:cue, old:undefined});
                     this._map.set(cue.key, cue);
-                } else if (action_code == Active$2.EXIT) {
+                } else if (action_code == Active.EXIT) {
                     // exit
                     items.push({key:cue.key, new:undefined, old:cue});
                     this._map.delete(cue.key);
@@ -8499,7 +8501,9 @@ var TIMINGSRC = (function (exports) {
     exports.utils = utils;
     exports.version = version;
 
+    Object.defineProperty(exports, '__esModule', { value: true });
+
     return exports;
 
-}({}));
+})({});
 //# sourceMappingURL=timingsrc-v3.js.map

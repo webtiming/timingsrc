@@ -66,6 +66,9 @@ class IntervalModeSequencer extends BaseSequencer {
         this._schedA_cb = this._schedA.add_callback(sched_cb);
         this._schedB = new Schedule(this._ds, toB);
         this._schedB_cb = this._schedB.add_callback(sched_cb);
+
+        this._toA_vector;
+        this._toB_vector;
     }
 
 
@@ -103,8 +106,8 @@ class IntervalModeSequencer extends BaseSequencer {
 
         // assuming both timing objects have the same clock
         const now = this._toA.clock.now();
-        const now_vector_A = motionutils.calculateVector(this._toA.vector, now);
-        const now_vector_B = motionutils.calculateVector(this._toB.vector, now);
+        const now_vector_A = motionutils.calculateVector(this._toA_vector, now);
+        const now_vector_B = motionutils.calculateVector(this._toB_vector, now);
 
         // active interval
         let [pos_A, pos_B] = [now_vector_A.position, now_vector_B.position];
@@ -186,6 +189,7 @@ class IntervalModeSequencer extends BaseSequencer {
     */
     _onTimingCallback (eArg, eInfo) {
 
+
         /*
             make sure both timingobjects are ready
         */
@@ -203,6 +207,10 @@ class IntervalModeSequencer extends BaseSequencer {
             }
         }
 
+        // cache new vectors
+        this._toA_vector = this._toA.vector;
+        this._toB_vector = this._toB.vector;
+
         /*
             figure out which timing object was firing
         */
@@ -210,22 +218,9 @@ class IntervalModeSequencer extends BaseSequencer {
         const other_to = (to == this._toA) ? this._toB : this._toA;
 
         /*
-            If update is the initial vector from the timing object,
-            we set current time as the official time for the update.
-            Else, the new vector is "live" and we use the timestamp
-            when it was created as the official time for the update.
-            This is represented by the new_vector.
-        */
-        let new_vector;
-        if (eArg.live) {
-            new_vector = to.vector;
-        } else {
-            new_vector = motionutils.calculateVector(to.vector, to.clock.now());
-        }
-
-        /*
             The nature of the vector change
         */
+        let new_vector = motionutils.calculateVector(to.vector, to.clock.now());
         const delta = new motionutils.MotionDelta(to.old_vector, new_vector);
 
         /*
