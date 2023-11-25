@@ -298,9 +298,9 @@ class Interval {
 		var lowIsNumber = isNumber(low);
 		// new Interval(3.0) defines singular - low === high
 		if (lowIsNumber && high === undefined) high = low;
-		if (!isNumber(low)) throw new IntervalError("low not a number");
-		if (!isNumber(high)) throw new IntervalError("high not a number");
-		if (low > high) throw new IntervalError("low > high");
+		if (!isNumber(low)) throw new IntervalError(`low not a number, ${low}`);
+		if (!isNumber(high)) throw new IntervalError(`high not a number, ${high}`);
+		if (low > high) throw new IntervalError(`low > high, ${low}, ${high}`);
 		if (low === high) {
 			lowInclude = true;
 			highInclude = true;
@@ -309,8 +309,12 @@ class Interval {
 		if (high === Infinity) highInclude = true;
 		if (lowInclude === undefined) lowInclude = true;
 		if (highInclude === undefined) highInclude = false;
-		if (typeof lowInclude !== "boolean") throw new IntervalError("lowInclude not boolean");
-		if (typeof highInclude !== "boolean") throw new IntervalError("highInclude not boolean");
+		if (typeof lowInclude !== "boolean") {
+			throw new IntervalError(`lowInclude not boolean, ${lowInclude}`);
+		}
+		if (typeof highInclude !== "boolean") {
+			throw new IntervalError(`highInclude not boolean, ${highInclude}`);
+		}
 		this._low = low;
 		this._high = high;
 		this._lowInclude = lowInclude;
