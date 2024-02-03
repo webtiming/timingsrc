@@ -384,6 +384,25 @@
           }
 
 
+          /*
+            ERROR
+          */
+
+          function test_error() {
+            ds.clear();
+            let cues = [
+              {key: "one", interval: [1,2]},
+              {key: "two", interval: [3,2]}, // ERROR
+              {key: "three", interval: [3,4]},
+              {keys: "error", interval: [100,102]}
+            ]
+            for (let {key, interval} of cues) {
+              ds.addCue(key, interval, "data");
+            }
+            ds.updateDone.then(() => {
+              assertTrue(ds.size == 2);
+            });
+          }
 
 
           /*
@@ -410,6 +429,7 @@
           test_delete_nonexistent_interval_data();
 
           test_noop();
+          test_error();
 
           console.log("done test update");
 
@@ -913,8 +933,8 @@
 
 
         var run = function () {
-            test_update_multiple();
             test_update();
+            test_update_multiple();
             test_update_lookup();
             test_event();
             test_update_done_promise();
@@ -924,6 +944,8 @@
             test_update_to_singular_and_back();
             test_array_intervals();
             test_null_update();
+            /*
+            */
         };
 
         if (document.readyState === "complete") run();

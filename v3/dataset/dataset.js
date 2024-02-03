@@ -587,23 +587,26 @@ class Dataset extends CueCollection {
                 check validity of cue argument
             *******************************************************/
 
-            if (cue == undefined || !cue.hasOwnProperty("key") || cue.key == undefined) {
+            try {
+                if (cue == undefined || !cue.hasOwnProperty("key") || cue.key == undefined) {
 
-                if (cue == undefined) {
-                    throw new Error("cue is undefined");
-                } else if (!cue.hasOwnProperty("key")) {
-                    throw new Error("cue missing key property", cue);
-                } else if (cue.key == undefined) {
-                    throw new Error("cue.key is undefined", cue);                    
+                    if (cue == undefined) {
+                        throw new Error("cue is undefined");
+                    } else if (!cue.hasOwnProperty("key")) {
+                        throw new Error("cue missing key property", cue);
+                    } else if (cue.key == undefined) {
+                        throw new Error("cue.key is undefined", cue);
+                    }
                 }
+                has_interval = cue.hasOwnProperty("interval");
+                has_data = cue.hasOwnProperty("data");
+                if (has_interval) {
+                    cue.interval = asInterval(cue.interval);
+                }
+            } catch (err) {
+                console.log(err, cue)
+                continue;
             }
-
-            has_interval = cue.hasOwnProperty("interval");
-            has_data = cue.hasOwnProperty("data");
-            if (has_interval) {
-                cue.interval = asInterval(cue.interval);
-            }
-
 
             /*******************************************************
                 adjust cue so that it correctly represents
