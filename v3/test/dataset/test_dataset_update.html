@@ -397,7 +397,12 @@
               {keys: "error", interval: [100,102]}
             ]
             for (let {key, interval} of cues) {
-              ds.addCue(key, interval, "data");
+              try {
+                ds.addCue(key, interval, "data");
+              } catch (err) {
+                console.log(err);
+                continue;
+              }
             }
             ds.updateDone.then(() => {
               assertTrue(ds.size == 2);

@@ -227,6 +227,31 @@ function cue_equals(cue_a, cue_b) {
     return delta.interval == Delta.NOOP && delta.data == Delta.NOOP;
 }
 
+
+
+/*
+    check that cue arg is valid
+    throws exception
+*/
+
+function cue_check(cue) {
+    if (cue == undefined || !cue.hasOwnProperty("key") || cue.key == undefined) {
+        if (cue == undefined) {
+            throw new Error("cue is undefined");
+        } else if (!cue.hasOwnProperty("key")) {
+            throw new Error("cue missing key property", cue);
+        } else if (cue.key == undefined) {
+            throw new Error("cue.key is undefined", cue);
+        }
+    }
+    if (cue.hasOwnProperty("interval")) {
+        cue.interval = asInterval(cue.interval);
+    }
+    return cue;
+}
+
+
+
 /*
     CueArgBuilder
 
@@ -243,12 +268,10 @@ function cue_equals(cue_a, cue_b) {
 class CueArgBuilder {
 
     constructor (dataset, options={}) {
-        
-        
         // dataset
         this._ds = dataset;
         // options
-        let defaults = {autosubmit:true};
+        let defaults = {autosubmit:true, check_needed:false};
         this._options = Object.assign({}, defaults, options);
         // cue arg buffer
         this._cues;
@@ -311,6 +334,7 @@ class CueArgBuilder {
         if (arguments.length > 2) {
             cue_arg.data = data;
         }
+        cue_arg = cue_check(cue_arg)
         this._push([cue_arg]);
         return this;
     }
@@ -323,6 +347,7 @@ class CueArgBuilder {
 
     /* load array of cue args into argbuilder */
     update(cue_args) {
+        cue_args = cue_args.map((cue_arg) => cue_check(cue_arg));
         this._push(cue_args);
     }
 
@@ -468,7 +493,9 @@ class Dataset extends CueCollection {
     */
 
     _addCue(key, interval, data, options) {
-        return this.update({key:key, interval:interval, data:data}, options);
+        let cue = {key:key, interval:interval, data:data};
+        cue = cue_check(cue);
+        return this.update(cue, options);
     }
 
     _removeCue(key, options) {
@@ -559,13 +586,16 @@ class Dataset extends CueCollection {
 
     ***************************************************************/
 
+
+
+
     update(cues, options = {}) {
         const batchMap = new Map();
         let current_cue;
         let has_interval, has_data;
 
         // options
-        let {debug=false, equals} = options;
+        let {debug=false, equals, check_needed=true} = options;
 
         // support single cue arg for convenience
         if (!utils.isIterable(cues)) {
@@ -586,27 +616,16 @@ class Dataset extends CueCollection {
             /*******************************************************
                 check validity of cue argument
             *******************************************************/
-
-            try {
-                if (cue == undefined || !cue.hasOwnProperty("key") || cue.key == undefined) {
-
-                    if (cue == undefined) {
-                        throw new Error("cue is undefined");
-                    } else if (!cue.hasOwnProperty("key")) {
-                        throw new Error("cue missing key property", cue);
-                    } else if (cue.key == undefined) {
-                        throw new Error("cue.key is undefined", cue);
-                    }
+            if (check_needed) {
+                try {
+                    cue = cue_check(cue)
+                } catch (err) {
+                    console.log(err, cue)
+                    continue;
                 }
-                has_interval = cue.hasOwnProperty("interval");
-                has_data = cue.hasOwnProperty("data");
-                if (has_interval) {
-                    cue.interval = asInterval(cue.interval);
-                }
-            } catch (err) {
-                console.log(err, cue)
-                continue;
             }
+            has_interval = cue.hasOwnProperty("interval");
+            has_data = cue.hasOwnProperty("data");
 
             /*******************************************************
                 adjust cue so that it correctly represents
