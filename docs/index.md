@@ -21,7 +21,8 @@ For **multi-device** timing support, simply plug a *timing provider* into your *
 
 ## Standardization
 
-The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) advocates standardization of the timing object.
+The [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/), advocated for the standardization of the timing object. The group was closed early 2025 but hopes that renewed discussions on a timing model for the Web will take place and encourages interested parties to reach out to the [Media and Entertainment Interest Group](https://www.w3.org/groups/ig/me) for coordination, through its [public-web-and-tv@w3.org](mailto:public-web-and-tv@w3.org) mailing-list.
+
 Agreement on a common API for timing resources would enable:
 
 #### 1) temporal interoperability
@@ -41,7 +42,7 @@ online timing providers may focus on the challenges of distributed timing, while
 
 ## Relation to timing object specification
 
-The timingsrc library serves as a reference implementation for the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/) and will be maintained by the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/).
+The timingsrc library serves as a reference implementation for the [Timing Object Draft Spec](http://webtiming.github.io/timingobject/). It was maintained by the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/) until early 2025. It is now maintained by individual authors.
 
 ## Authors
 
@@ -60,8 +61,7 @@ Njål T. Borch
 
 ## Acknowledgements
 
-The timingsrc library is developed at [Norut Northern Research Institute](http://norut.no/) and funded in part by the [EU FP7 MediaScape project](http://mediascapeproject.eu). Results are contributed from MediaScape as reference implementation to the [W3C Multi-device Timing Community Group](https://www.w3.org/community/webtiming/).
-
+The timingsrc library is developed at [Norut Northern Research Institute](http://norut.no/) and received initial funding by the EU FP7 MediaScape project.
 
 ## License
 
